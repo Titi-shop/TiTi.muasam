@@ -7,6 +7,7 @@ import { KR_PROVINCES } from "./kr";
 import { IN_PROVINCES } from "./in";
 import { ID_PROVINCES } from "./id";
 import { MY_PROVINCES } from "./my";
+import { AU_PROVINCES } from "./au";
 
 export const PROVINCES_BY_COUNTRY = {
   US: US_PROVINCES,
@@ -18,6 +19,7 @@ export const PROVINCES_BY_COUNTRY = {
   IN: IN_PROVINCES,
   ID: ID_PROVINCES,
   MY: MY_PROVINCES,
+  AU: AU_PROVINCES,
 } as const;
 
 export type CountryCodeWithProvinces = keyof typeof PROVINCES_BY_COUNTRY;
