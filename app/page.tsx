@@ -78,19 +78,16 @@ export default function HomePage() {
     (b.createdAt || "").localeCompare(a.createdAt || "")
   );
 
-
   /* =======================
      LOADING
   ======================= */
   if (loading) {
     return (
       <p className="text-center mt-10 text-sm">
-        
+        ⏳ {t.loading_products}
       </p>
     );
   }
-
-
 
   /* =======================
      RENDER
