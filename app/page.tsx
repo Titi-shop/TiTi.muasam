@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import BannerCarousel from "./components/BannerCarousel";
@@ -11,15 +11,15 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 ======================= */
 
 interface Product {
-  id: string; // 🔥 UUID từ DB
+  id: string;
   name: string;
   price: number;
   images?: string[];
-  views?: number;
   sold?: number;
   finalPrice?: number;
   isSale?: boolean;
   categoryId?: string | null;
+  createdAt?: string;
 }
 
 interface Category {
@@ -37,67 +37,54 @@ export default function HomePage() {
   const { t } = useTranslation();
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [visibleCount, setVisibleCount] = useState(20);
   const [selectedCategory, setSelectedCategory] =
     useState<string | "all">("all");
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   /* =======================
-     LOAD CATEGORIES
+     LOAD DATA
   ======================= */
   useEffect(() => {
-    fetch("/api/categories")
-      .then((res) => res.json())
-      .then((data: Category[]) => setCategories(data))
-      .finally(() => setLoadingCategories(false));
+    Promise.all([
+      fetch("/api/products").then((r) => r.json()),
+      fetch("/api/categories").then((r) => r.json()),
+    ]).then(([productData, categoryData]: [Product[], Category[]]) => {
+      const normalized = productData.map((p) => ({
+        ...p,
+        sold: p.sold ?? 0,
+        finalPrice: p.finalPrice ?? p.price,
+        isSale:
+          typeof p.finalPrice === "number" &&
+          p.finalPrice < p.price,
+      }));
+
+      setProducts(normalized);
+      setCategories(categoryData);
+      setLoading(false);
+    });
   }, []);
 
   /* =======================
-     LOAD PRODUCTS
+     FILTERS
   ======================= */
-  useEffect(() => {
-    fetch("/api/products")
-      .then((res) => res.json())
-      .then((data: Product[]) => {
-        const normalized: Product[] = data.map((p) => ({
-          ...p,
-          views: p.views ?? 0,
-          sold: p.sold ?? 0,
-          finalPrice: p.finalPrice ?? p.price,
-          isSale:
-            typeof p.finalPrice === "number" &&
-            p.finalPrice < p.price,
-        }));
-
-        setProducts(normalized);
-        setFilteredProducts(normalized);
-      })
-      .finally(() => setLoadingProducts(false));
-  }, []);
-
-  /* =======================
-     FILTER BY CATEGORY
-  ======================= */
-  useEffect(() => {
-    let list = [...products];
-
-    if (selectedCategory !== "all") {
-      list = list.filter(
-        (p) => p.categoryId === selectedCategory
-      );
-    }
-
-    setFilteredProducts(list);
-    setVisibleCount(20);
+  const filtered = useMemo(() => {
+    if (selectedCategory === "all") return products;
+    return products.filter(
+      (p) => p.categoryId === selectedCategory
+    );
   }, [products, selectedCategory]);
+
+  const saleProducts = filtered.filter((p) => p.isSale);
+
+  const newestProducts = [...filtered].sort((a, b) =>
+    (b.createdAt || "").localeCompare(a.createdAt || "")
+  );
 
   /* =======================
      LOADING
   ======================= */
-  if (loadingProducts) {
+  if (loading) {
     return (
       <p className="text-center mt-10">
         ⏳ {t.loading_products}
@@ -109,135 +96,148 @@ export default function HomePage() {
      RENDER
   ======================= */
   return (
-    <main className="bg-gray-50 min-h-screen pb-24">
+    <main className="bg-[#fafafa] min-h-screen pb-24">
       <BannerCarousel />
 
-      <div className="px-3 space-y-5 max-w-6xl mx-auto">
+      <div className="space-y-8 mt-4">
         {/* ===================
             CATEGORIES
         =================== */}
-        <section>
-          <h2 className="text-base font-semibold mb-2">
-            {t.featured_categories}
-          </h2>
+        <section className="px-4">
+          <div className="flex gap-4 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setSelectedCategory("all")}
+              className={`min-w-[64px] text-xs ${
+                selectedCategory === "all"
+                  ? "font-bold text-orange-600"
+                  : "text-gray-500"
+              }`}
+            >
+              🛍 {t.all}
+            </button>
 
-          {loadingCategories ? (
-            <p>{t.loading_categories}</p>
-          ) : (
-            <div className="flex overflow-x-auto space-x-4 scrollbar-hide">
-              {/* ALL */}
+            {categories.map((c) => (
               <button
-                onClick={() => setSelectedCategory("all")}
-                className={`min-w-[56px] h-[56px] flex items-center justify-center rounded-full border ${
-                  selectedCategory === "all"
-                    ? "border-orange-600 text-orange-600"
-                    : "border-gray-300 text-gray-500"
+                key={c.id}
+                onClick={() => setSelectedCategory(c.id)}
+                className={`min-w-[64px] text-xs ${
+                  selectedCategory === c.id
+                    ? "font-bold text-orange-600"
+                    : "text-gray-500"
                 }`}
-                title={t.all}
               >
-                🛍
+                <Image
+                  src={c.icon || "/placeholder.png"}
+                  alt={c.name}
+                  width={48}
+                  height={48}
+                  className="rounded-full mx-auto mb-1"
+                />
+                <span className="line-clamp-1">{c.name}</span>
               </button>
-
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedCategory(c.id)}
-                  className={`min-w-[72px] text-xs text-center ${
-                    selectedCategory === c.id
-                      ? "font-bold text-orange-600"
-                      : "text-gray-600"
-                  }`}
-                >
-                  <Image
-                    src={c.icon || "/placeholder.png"}
-                    alt={c.name}
-                    width={56}
-                    height={56}
-                    className="rounded-full mx-auto mb-1 border"
-                  />
-                  <span className="line-clamp-1">
-                    {t["category_" + c.id] || c.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+            ))}
+          </div>
         </section>
 
         {/* ===================
-            PRODUCTS
+            SALE PRODUCTS
         =================== */}
-        <section>
-          <h2 className="text-base font-bold mb-2">
-            {t.all_products}
-          </h2>
+        {saleProducts.length > 0 && (
+          <section>
+            <h2 className="px-4 mb-3 text-base font-bold text-red-500">
+              🔥 Sale hôm nay
+            </h2>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {filteredProducts
-              .slice(0, visibleCount)
-              .map((p) => (
+            <div className="flex gap-4 overflow-x-auto px-4">
+              {saleProducts.map((p) => (
                 <div
                   key={p.id}
                   onClick={() =>
                     router.push(`/product/${p.id}`)
                   }
-                  className="bg-white rounded-xl border shadow-sm cursor-pointer hover:shadow-md transition"
+                  className="min-w-[160px] cursor-pointer"
                 >
                   <div className="relative">
+                    <span className="absolute top-2 right-2 z-10 bg-red-500 text-white text-[10px] px-2 py-[2px] rounded-full">
+                      SALE
+                    </span>
+
                     <Image
                       src={p.images?.[0] || "/placeholder.png"}
                       alt={p.name}
                       width={300}
                       height={300}
-                      className="w-full h-36 object-cover rounded-t-xl"
+                      className="rounded-xl aspect-square object-cover"
                     />
-
-                    {/* 👁 Views */}
-                    <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-2 py-[2px] rounded-full">
-                      👁 {p.views}
-                    </div>
-
-                    {/* 🛒 Sold */}
-                    {p.sold && p.sold > 0 && (
-                      <div className="absolute top-1 right-1 bg-orange-600 text-white text-[10px] px-2 py-[2px] rounded-full">
-                        🛒 {p.sold}
-                      </div>
-                    )}
                   </div>
 
-                  <div className="p-2 space-y-1">
-                    <p className="text-sm font-medium line-clamp-2">
-                      {p.name}
+                  <p className="mt-2 text-sm line-clamp-2">
+                    {p.name}
+                  </p>
+
+                  <div className="flex items-center gap-1">
+                    <span className="text-red-500 font-bold">
+                      {p.finalPrice} π
+                    </span>
+                    <span className="text-xs line-through text-gray-400">
+                      {p.price} π
+                    </span>
+                  </div>
+
+                  {p.sold ? (
+                    <p className="text-xs text-gray-400">
+                      Đã bán {p.sold}
                     </p>
-
-                    <div className="flex items-center gap-1">
-                      <span className="text-orange-600 font-bold text-sm">
-                        {p.finalPrice} π
-                      </span>
-
-                      {p.isSale && (
-                        <span className="text-xs text-gray-400 line-through">
-                          {p.price} π
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  ) : null}
                 </div>
               ))}
-          </div>
-
-          {visibleCount < filteredProducts.length && (
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={() =>
-                  setVisibleCount((v) => v + 20)
-                }
-                className="px-6 py-2 bg-orange-600 text-white rounded-full text-sm"
-              >
-                {t.load_more}
-              </button>
             </div>
-          )}
+          </section>
+        )}
+
+        {/* ===================
+            NEW → OLD PRODUCTS
+        =================== */}
+        <section className="px-4">
+          <h2 className="mb-3 text-base font-semibold">
+            🆕 Sản phẩm mới
+          </h2>
+
+          <div className="grid grid-cols-2 gap-4">
+            {newestProducts.map((p) => (
+              <div
+                key={p.id}
+                onClick={() =>
+                  router.push(`/product/${p.id}`)
+                }
+                className="cursor-pointer"
+              >
+                <Image
+                  src={p.images?.[0] || "/placeholder.png"}
+                  alt={p.name}
+                  width={300}
+                  height={300}
+                  className="rounded-xl aspect-square object-cover"
+                />
+
+                <p className="mt-2 text-sm line-clamp-2">
+                  {p.name}
+                </p>
+
+                <div className="flex items-center gap-1">
+                  <span className="font-bold text-orange-600">
+                    {p.finalPrice} π
+                  </span>
+
+                  {p.isSale && (
+                    <span className="text-xs line-through text-gray-400">
+                      {p.price} π
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
       </div>
     </main>
