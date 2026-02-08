@@ -1,25 +1,28 @@
-import { US_PROVINCES } from "./us";
-import { FR_PROVINCES } from "./fr";
-import { GB_PROVINCES } from "./gb";
-import { CA_PROVINCES } from "./ca";
-import { JP_PROVINCES } from "./jp";
-import { KR_PROVINCES } from "./kr";
-import { IN_PROVINCES } from "./in";
-import { ID_PROVINCES } from "./id";
-import { MY_PROVINCES } from "./my";
-import { AU_PROVINCES } from "./au";
+import VN from "./vn";
+import US from "./us";
+import FR from "./fr";
+import GB from "./gb";
+import CA from "./ca";
+import JP from "./jp";
+import KR from "./kr";
+import IN from "./in";
+import ID from "./id";
+import MY from "./my";
+import AU from "./au";
 
 export const PROVINCES_BY_COUNTRY = {
-  US: US_PROVINCES,
-  FR: FR_PROVINCES,
-  GB: GB_PROVINCES,
-  CA: CA_PROVINCES,
-  JP: JP_PROVINCES,
-  KR: KR_PROVINCES,
-  IN: IN_PROVINCES,
-  ID: ID_PROVINCES,
-  MY: MY_PROVINCES,
-  AU: AU_PROVINCES,
+  VN,
+  US,
+  FR,
+  GB,
+  CA,
+  JP,
+  KR,
+  IN,
+  ID,
+  MY,
+  AU,
 } as const;
 
-export type CountryCodeWithProvinces = keyof typeof PROVINCES_BY_COUNTRY;
+export type CountryCodeWithProvinces =
+  keyof typeof PROVINCES_BY_COUNTRY;
