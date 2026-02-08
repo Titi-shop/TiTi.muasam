@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { countries } from "@/data/countries";
-import { provincesByCountry } from "@/data/provinces";
+import { PROVINCES_BY_COUNTRY } from "@/data/provinces";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { useAuth } from "@/context/AuthContext";
 import { getPiAccessToken } from "@/lib/piAuth";
@@ -128,7 +128,10 @@ export default function EditProfilePage() {
     }
   };
 
-  const provinceList = provincesByCountry[info.country] || [];
+  const provinceList =
+  PROVINCES_BY_COUNTRY[
+    info.country as keyof typeof PROVINCES_BY_COUNTRY
+  ] || [];
 
   /* =========================
      UI STATES
