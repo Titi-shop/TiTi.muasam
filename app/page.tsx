@@ -78,6 +78,18 @@ export default function HomePage() {
     (b.createdAt || "").localeCompare(a.createdAt || "")
   );
 
+
+
+   /* =======================
+     LOADING
+  ======================= */
+  if (loading) {
+    return (
+   
+      </p>
+    );
+  }
+
   /* =======================
      RENDER
   ======================= */
