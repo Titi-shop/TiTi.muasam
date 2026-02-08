@@ -79,16 +79,18 @@ export default function HomePage() {
   );
 
 
-
-   /* =======================
+  /* =======================
      LOADING
   ======================= */
   if (loading) {
     return (
-   
+      <p className="text-center mt-10 text-sm">
+        
       </p>
     );
   }
+
+
 
   /* =======================
      RENDER
