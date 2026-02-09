@@ -40,6 +40,7 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
 
   const [shipping, setShipping] = useState<ShippingInfo | null>(null);
   const [processing, setProcessing] = useState(false);
+   const [quantity, setQuantity] = useState(1);
    
   const [qtyDraft, setQtyDraft] = useState<string>("");
 const item = useMemo(() => {
@@ -176,8 +177,6 @@ const item = useMemo(() => {
                 total,
               }),
             });
-
-            clearCart();
             onClose();
             router.push("/customer/pending");
           },
