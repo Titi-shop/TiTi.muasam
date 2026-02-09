@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
+import { useCart } from "@/app/context/CartContext";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
 import CheckoutSheet from "./CheckoutSheet";
 
