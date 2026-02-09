@@ -19,15 +19,23 @@ interface ShippingInfo {
   country?: string;
 }
 
+
 interface Props {
   open: boolean;
   onClose: () => void;
+  product: {
+    id: number;
+    name: string;
+    price: number;
+    finalPrice?: number;
+    image?: string;
+    images?: string[];
+  };
 }
-
 /* =========================
    COMPONENT
 ========================= */
-export default function CheckoutSheet({ open, onClose }: Props) {
+export default function CheckoutSheet({ open, onClose, product }: Props) {
   const router = useRouter();
   const { t } = useTranslation();
 
@@ -36,12 +44,30 @@ export default function CheckoutSheet({ open, onClose }: Props) {
 
   const [shipping, setShipping] = useState<ShippingInfo | null>(null);
   const [processing, setProcessing] = useState(false);
+   
 
-  /** chỉ xử lý 1 sản phẩm */
-  const item = cart[0];
 
   /** quantity draft cho 1 sản phẩm */
   const [qtyDraft, setQtyDraft] = useState<string>("");
+   const { cart, updateQuantity, clearCart } = useCart();
+const { user, piReady } = useAuth();
+
+const [shipping, setShipping] = useState<ShippingInfo | null>(null);
+const [processing, setProcessing] = useState(false);
+
+const item = useMemo(() => {
+  if (!product) return null;
+
+  return {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    finalPrice: product.finalPrice,
+    image: product.image,
+    images: product.images,
+    quantity: 1,
+  };
+}, [product]);
 
   /* =========================
      LOCK BODY SCROLL
@@ -53,14 +79,7 @@ export default function CheckoutSheet({ open, onClose }: Props) {
     };
   }, [open]);
 
-  /* =========================
-     INIT QTY
-  ========================= */
-  useEffect(() => {
-    if (open && item) {
-      setQtyDraft(String(item.quantity));
-    }
-  }, [open, item]);
+
 
   /* =========================
      LOAD ADDRESS
@@ -101,15 +120,12 @@ export default function CheckoutSheet({ open, onClose }: Props) {
      PRICE + TOTAL (SALE FIRST)
   ========================= */
   const unitPrice = useMemo(() => {
-    if (!item) return 0;
-    return (item as { sale_price?: number }).sale_price ?? item.price;
-  }, [item]);
-
-  const quantity = useMemo(() => {
-    if (!item) return 1;
-    return qtyDraft === "" ? item.quantity : Number(qtyDraft);
-  }, [qtyDraft, item]);
-
+  if (!item) return 0;
+  return typeof item.finalPrice === "number"
+    ? item.finalPrice
+    : item.price;
+}, [item]);
+   
   const total = useMemo(() => {
     return unitPrice * quantity;
   }, [unitPrice, quantity]);
@@ -235,23 +251,16 @@ export default function CheckoutSheet({ open, onClose }: Props) {
               </p>
 
               <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={qtyDraft}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (/^\d*$/.test(v)) setQtyDraft(v);
-                }}
-                onBlur={() => {
-                  const v = Number(qtyDraft);
-                  if (v >= 1) {
-                    updateQuantity(item.id, v);
-                    setQtyDraft(String(v));
-                  } else {
-                    setQtyDraft(String(item.quantity));
-                  }
-                }}
+  type="text"
+  inputMode="numeric"
+  value={quantity}
+  onChange={(e) => {
+    const v = Number(e.target.value);
+    if (v >= 1) setQuantity(v);
+  }}
+  className="mt-1 w-16 border rounded px-2 py-1 text-sm text-center"
+/>
+                 
                 className="mt-1 w-16 border rounded px-2 py-1 text-sm text-center"
               />
             </div>
