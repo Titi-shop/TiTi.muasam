@@ -260,9 +260,6 @@ const item = useMemo(() => {
   }}
   className="mt-1 w-16 border rounded px-2 py-1 text-sm text-center"
 />
-                 
-                className="mt-1 w-16 border rounded px-2 py-1 text-sm text-center"
-              />
             </div>
 
             <p className="font-semibold text-orange-600">
