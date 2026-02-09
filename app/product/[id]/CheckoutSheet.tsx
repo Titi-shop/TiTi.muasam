@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-
-import { useCart } from "@/app/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { getPiAccessToken } from "@/lib/piAuth";
@@ -49,7 +47,6 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
 
   /** quantity draft cho 1 sản phẩm */
   const [qtyDraft, setQtyDraft] = useState<string>("");
-   const { cart, updateQuantity, clearCart } = useCart();
 const { user, piReady } = useAuth();
 
 const [shipping, setShipping] = useState<ShippingInfo | null>(null);
