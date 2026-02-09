@@ -41,15 +41,7 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
   const [shipping, setShipping] = useState<ShippingInfo | null>(null);
   const [processing, setProcessing] = useState(false);
    
-
-
-  /** quantity draft cho 1 sản phẩm */
   const [qtyDraft, setQtyDraft] = useState<string>("");
-const { user, piReady } = useAuth();
-
-const [shipping, setShipping] = useState<ShippingInfo | null>(null);
-const [processing, setProcessing] = useState(false);
-
 const item = useMemo(() => {
   if (!product) return null;
 
