@@ -36,8 +36,6 @@ interface Props {
 export default function CheckoutSheet({ open, onClose, product }: Props) {
   const router = useRouter();
   const { t } = useTranslation();
-
-  const { cart, updateQuantity, clearCart } = useCart();
   const { user, piReady } = useAuth();
 
   const [shipping, setShipping] = useState<ShippingInfo | null>(null);
