@@ -258,9 +258,16 @@ export default function ProductDetail() {
 
       {/* CHECKOUT SHEET */}
       <CheckoutSheet
-        open={openCheckout}
-        onClose={() => setOpenCheckout(false)}
-      />
+  open={openCheckout}
+  onClose={() => setOpenCheckout(false)}
+  product={{
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    finalPrice: product.finalPrice,
+    images: product.images,
+  }}
+/>
     </div>
   );
 }
