@@ -13,7 +13,9 @@ function formatDetail(text: string) {
     .replace(/\r\n/g, "\n")     // FIX Windows newline
     .trim();
 }
-function formatShortDescription(text: string) {
+function formatShortDescription(text?: string) {
+  if (!text || typeof text !== "string") return [];
+
   return text
     .replace(/\\n/g, "\n")
     .replace(/\r\n/g, "\n")
@@ -237,19 +239,19 @@ export default function ProductDetail() {
   </h3>
 
   {product.description ? (
-    <ul className="space-y-1 text-sm text-gray-700 leading-relaxed">
-      {formatShortDescription(product.description).map((line, i) => (
-        <li key={i} className="flex gap-2">
-          <span className="text-orange-500">•</span>
-          <span>{line}</span>
-        </li>
-      ))}
-    </ul>
-  ) : (
-    <p className="text-sm text-gray-400">
-      {t.no_description}
-    </p>
-  )}
+  <ul className="space-y-1 text-sm text-gray-700 leading-relaxed">
+    {formatShortDescription(product.description).map((line, i) => (
+      <li key={i} className="flex gap-2">
+        <span className="text-orange-500">•</span>
+        <span>{line}</span>
+      </li>
+    ))}
+  </ul>
+) : (
+  <p className="text-sm text-gray-400">
+    {t.no_description}
+  </p>
+)}
 </div>
 
       {/* DETAIL IMAGES */}
