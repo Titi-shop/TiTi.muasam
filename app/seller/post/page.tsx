@@ -302,6 +302,39 @@ export default function SellerPostPage() {
           }
           className="w-full border p-2 rounded"
         />
+         {salePrice && (
+  <div className="space-y-2">
+    <p className="text-sm text-gray-600 font-medium">
+      📅 {t.sale_time || "Thời gian khuyến mãi"}
+    </p>
+
+    <div className="grid grid-cols-2 gap-3">
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-gray-500">
+          {t.start_date || "Bắt đầu"}
+        </label>
+        <input
+          type="datetime-local"
+          value={saleStart}
+          onChange={(e) => setSaleStart(e.target.value)}
+          className="border p-2 rounded"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-gray-500">
+          {t.end_date || "Kết thúc"}
+        </label>
+        <input
+          type="datetime-local"
+          value={saleEnd}
+          onChange={(e) => setSaleEnd(e.target.value)}
+          className="border p-2 rounded"
+        />
+      </div>
+    </div>
+  </div>
+)}
 
         {salePrice && (
           <div className="grid grid-cols-2 gap-3">
