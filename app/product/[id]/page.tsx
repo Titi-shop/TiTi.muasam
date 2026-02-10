@@ -235,7 +235,7 @@ export default function ProductDetail() {
       {/* SHORT DESCRIPTION (Shopee style) */}
 <div className="bg-white p-4">
   <h3 className="text-sm font-semibold mb-2">
-    🧾 {t.product_description ?? "Mô tả sản phẩm"}
+    {t.product_description ?? "Mô tả sản phẩm"}
   </h3>
 
   {product.description ? (
@@ -271,7 +271,7 @@ export default function ProductDetail() {
       {/* DETAIL CONTENT */}
       <div className="bg-white mt-2 px-4 py-5">
   <h3 className="text-base font-semibold mb-3">
-    📋 Chi tiết sản phẩm
+    Chi tiết sản phẩm
   </h3>
 
   <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
