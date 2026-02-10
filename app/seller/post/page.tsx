@@ -12,7 +12,8 @@ import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 ========================= */
 interface Category {
   id: number;
-  name: string;
+  key: string;
+  icon?: string;
 }
 
 interface MessageState {
@@ -234,8 +235,8 @@ export default function SellerPostPage() {
 
   {categories.map((c) => (
   <option key={c.id} value={c.id}>
-    {c.name}
-  </option>
+  {t[c.key] ?? c.key}
+</option>
 ))}
 </select>
 
