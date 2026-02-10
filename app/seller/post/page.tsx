@@ -310,26 +310,26 @@ export default function SellerPostPage() {
 
     <div className="grid grid-cols-2 gap-3">
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-350">
+        <label className="text-xs text-gray-500">
           {t.start_date || "Bắt đầu"}
         </label>
         <input
           type="datetime-local"
           value={saleStart}
           onChange={(e) => setSaleStart(e.target.value)}
-          className="border p-2 rounded"
+          className="border p-2 rounded max-w-[220px]"
         />
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-350">
+        <label className="text-xs text-gray-500">
           {t.end_date || "Kết thúc"}
         </label>
         <input
           type="datetime-local"
           value={saleEnd}
           onChange={(e) => setSaleEnd(e.target.value)}
-          className="border p-2 rounded"
+          className="border p-2 rounded max-w-[220px]"
         />
       </div>
     </div>
