@@ -40,10 +40,10 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
 
   const [shipping, setShipping] = useState<ShippingInfo | null>(null);
   const [processing, setProcessing] = useState(false);
-   const [quantity, setQuantity] = useState(1);
+  const [qtyDraft, setQtyDraft] = useState<string>("1");
    
   const [qtyDraft, setQtyDraft] = useState<string>("");
-const item = useMemo(() => {
+  const item = useMemo(() => {
   if (!product) return null;
 
   return {
@@ -237,15 +237,24 @@ const item = useMemo(() => {
               </p>
 
               <input
-  type="text"
-  inputMode="numeric"
-  value={quantity}
-  onChange={(e) => {
-    const v = Number(e.target.value);
-    if (v >= 1) setQuantity(v);
-  }}
-  className="mt-1 w-16 border rounded px-2 py-1 text-sm text-center"
-/>
+            type="text"
+          inputMode="numeric"
+       value={qtyDraft}
+         onChange={(e) => {
+          const v = e.target.value;
+    // chỉ cho nhập số hoặc rỗng
+    if (/^\d*$/.test(v)) {
+      setQtyDraft(v);
+       }
+      }}
+      onBlur={() => {
+    // khi rời ô → đảm bảo >= 1
+      if (qtyDraft === "" || Number(qtyDraft) < 1) {
+      setQtyDraft("1");
+      }
+         }}
+         className="mt-1 w-16 border rounded px-2 py-1 text-sm text-center"
+        />
             </div>
 
             <p className="font-semibold text-orange-600">
