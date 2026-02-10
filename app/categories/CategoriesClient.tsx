@@ -27,11 +27,7 @@ type Product = {
    CLIENT PAGE
 ========================= */
 export default function CategoriesClient() {
-  const i18n = useTranslation();
-const t =
-  typeof i18n === "function"
-    ? i18n
-    : i18n?.t ?? ((key: string) => key);
+  const t = useTranslation() as Record<string, string>;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -101,7 +97,7 @@ const t =
                   : "text-gray-500"
               }`}
             >
-              🛍 {t("all")}
+            🛍 {t["all"] || "Tất cả"}
             </button>
 
             {categories.map((c) => {
@@ -125,12 +121,12 @@ const t =
                   >
                     <img
                       src={c.icon || "/placeholder.png"}
-                      alt={t(`category_${c.id}`)}
+                      alt={t[`category_${c.id}`] || c.name}
                       className="w-6 h-6 object-contain"
                     />
                   </div>
                   <span className="text-[10px] text-center line-clamp-2">
-                    {t(`category_${c.id}`)}
+                    {t[`category_${c.id}`] || c.name}
                   </span>
                 </button>
               );
@@ -142,11 +138,11 @@ const t =
         <section className="col-span-10 px-2">
           {loading ? (
             <p className="text-sm text-gray-400">
-              {t("loading_products")}
+              {t["loading_products"] || "Đang tải..."}
             </p>
           ) : visibleProducts.length === 0 ? (
             <p className="text-sm text-gray-400">
-              {t("no_product")}
+              {t["no_product"] || "Chưa có sản phẩm"}
             </p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
