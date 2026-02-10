@@ -348,7 +348,7 @@ export default function SellerPostPage() {
           placeholder="Mô tả chi tiết sản phẩm"
           value={detail}
           onChange={(e) => setDetail(e.target.value)}
-          className="w-full border p-2 rounded min-h-[120px]"
+          className="w-full border p-2 rounded min-h-[90px]"
         />
 
         {/* DETAIL IMAGES */}
