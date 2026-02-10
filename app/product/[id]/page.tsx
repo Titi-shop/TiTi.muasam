@@ -1,30 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { useCart } from "@/app/context/CartContext";
-import Link from "next/link";
+import { ArrowLeft, ShoppingCart } from "lucide-react";
 import CheckoutSheet from "./CheckoutSheet";
 
-/* =======================
-   HELPERS
-======================= */
-
-function formatDetail(text: string): string {
+function formatDetail(text: string) {
   return text
-    .replace(/\\n/g, "\n")
-    .replace(/\r\n/g, "\n")
+    .replace(/\\n/g, "\n")      // FIX dữ liệu lưu dạng \n
+    .replace(/\r\n/g, "\n")     // FIX Windows newline
     .trim();
 }
+function formatShortDescription(text?: string) {
+  if (!text || typeof text !== "string") return [];
 
-function formatShortDescription(text?: string): string[] {
-  if (!text) return [];
   return text
     .replace(/\\n/g, "\n")
     .replace(/\r\n/g, "\n")
     .split("\n")
-    .map((l) => l.trim())
+    .map(line => line.trim())
     .filter(Boolean);
 }
 
@@ -49,8 +45,8 @@ interface ApiProduct {
 interface Product {
   id: string;
   name: string;
-  price: number;
-  finalPrice: number;
+  price: number;        // giá gốc
+  finalPrice: number;   // giá sale / giá thanh toán
   isSale: boolean;
   description: string;
   detail: string;
@@ -65,34 +61,31 @@ interface Product {
    PAGE
 ======================= */
 
-export default function ProductDetailPage() {
-
+export default function ProductDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { addToCart } = useCart();
-  const i18n = useTranslation();
-const t =
-  typeof i18n === "object" && i18n.t
-    ? i18n.t
-    : {};
 
   const [product, setProduct] = useState<Product | null>(null);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [openCheckout, setOpenCheckout] = useState(false);
 
+  const quantity = 1;
+
   /* =======================
-     LOAD DATA
+     LOAD PRODUCT
   ======================= */
   useEffect(() => {
-    async function load() {
+    async function loadProduct() {
       try {
-        const res = await fetch("/api/products", { cache: "no-store" });
-        const raw: unknown = await res.json();
-        if (!Array.isArray(raw)) return;
+        const res = await fetch("/api/products");
+        const data: unknown = await res.json();
 
-        const normalized: Product[] = raw.map((p) => {
+        if (!Array.isArray(data)) return;
+
+        const normalized: Product[] = data.map((p) => {
           const api = p as ApiProduct;
           const finalPrice =
             typeof api.finalPrice === "number"
@@ -117,7 +110,6 @@ const t =
           };
         });
 
-        setAllProducts(normalized);
         const found = normalized.find((p) => p.id === id);
         if (found) setProduct(found);
       } finally {
@@ -125,13 +117,12 @@ const t =
       }
     }
 
-    load();
+    loadProduct();
   }, [id]);
 
   /* =======================
      STATES
   ======================= */
-
   if (loading) return <p className="p-4">{t.loading}</p>;
   if (!product) return <p className="p-4">{t.no_products}</p>;
 
@@ -140,24 +131,23 @@ const t =
       ? product.images
       : ["/placeholder.png"];
 
-  const relatedProducts = useMemo(() => {
-    if (!product.categoryId) return [];
-    return allProducts.filter(
-      (p) =>
-        p.id !== product.id &&
-        p.categoryId === product.categoryId
-    ).slice(0, 6);
-  }, [allProducts, product]);
+  const next = () =>
+    setCurrentIndex((i) => (i + 1) % images.length);
+
+  const prev = () =>
+    setCurrentIndex((i) =>
+      i === 0 ? images.length - 1 : i - 1
+    );
 
   /* =======================
-     ACTIONS
+     ACTIONS (FIXED)
   ======================= */
 
   const add = () => {
     addToCart({
       ...product,
-      price: product.finalPrice,
-      quantity: 1,
+      price: product.finalPrice, // ✅ DÙNG GIÁ SALE
+      quantity,
     });
     router.push("/cart");
   };
@@ -165,8 +155,8 @@ const t =
   const buy = () => {
     addToCart({
       ...product,
-      price: product.finalPrice,
-      quantity: 1,
+      price: product.finalPrice, // ✅ DÙNG GIÁ SALE
+      quantity,
     });
     setOpenCheckout(true);
   };
@@ -174,109 +164,122 @@ const t =
   /* =======================
      RENDER
   ======================= */
-
   return (
-    <div className="pb-32 bg-gray-50 min-h-screen">
-      {/* IMAGES */}
-      <div className="relative mt-14 bg-white">
+     <div className="pb-32 bg-gray-50 min-h-screen">
+      {/* MAIN IMAGES */}
+      <div className="mt-14 relative w-full h-80 bg-white">
         <img
           src={images[currentIndex]}
           alt={product.name}
-          className="w-full h-80 object-cover"
+          className="w-full h-full object-cover"
         />
 
-        {product.isSale && (
-          <span className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-            SALE
-          </span>
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white px-2 rounded"
+            >
+              ‹
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white px-2 rounded"
+            >
+              ›
+            </button>
+
+            <div className="absolute bottom-3 flex gap-2 w-full justify-center">
+              {images.map((_, i) => (
+                <span
+                  key={i}
+                  className={`w-2 h-2 rounded-full ${
+                    i === currentIndex
+                      ? "bg-orange-500"
+                      : "bg-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
 
-      {/* PRICE & NAME */}
-      <div className="bg-white p-4">
-        <h1 className="text-lg font-medium mb-2">
+      {/* INFO */}
+      <div className="bg-white p-4 flex justify-between">
+        <h2 className="text-lg font-medium">
           {product.name}
-        </h1>
+        </h2>
 
-        <div className="flex items-end gap-2">
-          <span className="text-xl font-bold text-orange-600">
+        <div className="text-right">
+          <p className="text-xl font-bold text-orange-600">
             π {product.finalPrice}
-          </span>
+          </p>
 
           {product.isSale && (
-            <span className="text-sm text-gray-400 line-through">
+            <p className="text-sm text-gray-400 line-through">
               π {product.price}
-            </span>
+            </p>
           )}
         </div>
       </div>
 
-      {/* SHORT DESCRIPTION */}
-      <div className="bg-white mt-2 p-4">
-        <h3 className="text-sm font-semibold mb-2">
-          {t.product_description ?? "Mô tả sản phẩm"}
-        </h3>
-
-        {product.description ? (
-          <ul className="space-y-1 text-sm text-gray-700">
-            {formatShortDescription(product.description).map((line, i) => (
-              <li key={i} className="flex gap-2">
-                <span className="text-orange-500">•</span>
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gray-400">
-            {t.no_description}
-          </p>
-        )}
+      {/* META */}
+      <div className="bg-white px-4 pb-4 flex gap-4 text-gray-600 text-sm">
+        <span>👁 {product.views}</span>
+        <span>
+          🛒 {product.sold} {t.orders}
+        </span>
       </div>
 
-      {/* DETAIL */}
-      <div className="bg-white mt-2 p-4">
-        <h3 className="text-base font-semibold mb-3">
-          Chi tiết sản phẩm
-        </h3>
+      {/* SHORT DESCRIPTION (Shopee style) */}
+<div className="bg-white p-4">
+  <h3 className="text-sm font-semibold mb-2">
+    🧾 {t.product_description ?? "Mô tả sản phẩm"}
+  </h3>
 
-        <div className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-          {product.detail
-            ? formatDetail(product.detail)
-            : "📌 Đang cập nhật chi tiết sản phẩm"}
-        </div>
-      </div>
+  {product.description ? (
+  <ul className="space-y-1 text-sm text-gray-700 leading-relaxed">
+    {formatShortDescription(product.description).map((line, i) => (
+      <li key={i} className="flex gap-2">
+        <span className="text-orange-500">•</span>
+        <span>{line}</span>
+      </li>
+    ))}
+  </ul>
+) : (
+  <p className="text-sm text-gray-400">
+    {t.no_description}
+  </p>
+)}
+</div>
 
-      {/* RELATED PRODUCTS */}
-      {relatedProducts.length > 0 && (
-        <div className="bg-white mt-2 p-4">
-          <h3 className="text-base font-semibold mb-3">
-            🔗 {t.related_products ?? "Sản phẩm liên quan"}
-          </h3>
-
-          <div className="grid grid-cols-2 gap-3">
-            {relatedProducts.map((p) => (
-              <Link
-                key={p.id}
-                href={`/product/${p.id}`}
-                className="bg-gray-50 rounded-lg p-2"
-              >
-                <img
-                  src={p.images[0] || "/placeholder.png"}
-                  className="w-full h-32 object-cover rounded"
-                />
-                <p className="text-sm mt-1 line-clamp-2">
-                  {p.name}
-                </p>
-                <p className="text-orange-600 font-semibold text-sm">
-                  π {p.finalPrice}
-                </p>
-              </Link>
-            ))}
-          </div>
+      {/* DETAIL IMAGES */}
+      {product.detailImages.length > 0 && (
+        <div className="bg-white mt-2 space-y-2">
+          {product.detailImages.map((url, i) => (
+            <img
+              key={i}
+              src={url}
+              alt={`detail-${i}`}
+              className="w-full object-cover"
+            />
+          ))}
         </div>
       )}
 
-      {/* ACTION BAR */}
+      {/* DETAIL CONTENT */}
+      <div className="bg-white mt-2 px-4 py-5">
+  <h3 className="text-base font-semibold mb-3">
+    📋 Chi tiết sản phẩm
+  </h3>
+
+  <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+    {formatDetail(product.detail || t.no_description)}
+  </div>
+</div>
+
+      {/* ACTIONS */}
       <div className="fixed bottom-16 left-0 right-0 bg-white p-3 shadow flex gap-2 z-50">
         <button
           onClick={add}
@@ -284,6 +287,7 @@ const t =
         >
           {t.add_to_cart}
         </button>
+
         <button
           onClick={buy}
           className="flex-1 bg-red-500 text-white py-2 rounded-md"
@@ -292,18 +296,18 @@ const t =
         </button>
       </div>
 
-      {/* CHECKOUT */}
+      {/* CHECKOUT SHEET */}
       <CheckoutSheet
-        open={openCheckout}
-        onClose={() => setOpenCheckout(false)}
-        product={{
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          finalPrice: product.finalPrice,
-          images: product.images,
-        }}
-      />
+  open={openCheckout}
+  onClose={() => setOpenCheckout(false)}
+  product={{
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    finalPrice: product.finalPrice,
+    images: product.images,
+  }}
+/>
     </div>
   );
 }
