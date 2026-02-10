@@ -310,7 +310,7 @@ export default function SellerPostPage() {
 
     <div className="grid grid-cols-2 gap-3">
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-500">
+        <label className="text-xs text-gray-350">
           {t.start_date || "Bắt đầu"}
         </label>
         <input
@@ -322,7 +322,7 @@ export default function SellerPostPage() {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-500">
+        <label className="text-xs text-gray-350">
           {t.end_date || "Kết thúc"}
         </label>
         <input
