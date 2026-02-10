@@ -235,9 +235,15 @@ export default function ProductDetail() {
       )}
 
       {/* DETAIL CONTENT */}
-      <div className="bg-white p-4 mt-2 whitespace-pre-line">
-        {product.detail || t.no_description}
-      </div>
+      <div className="bg-white mt-2 px-4 py-5">
+  <h3 className="text-base font-semibold mb-3">
+    📋 Chi tiết sản phẩm
+  </h3>
+
+  <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+    {formatDetail(product.detail || t.no_description)}
+  </div>
+</div>
 
       {/* ACTIONS */}
       <div className="fixed bottom-16 left-0 right-0 bg-white p-3 shadow flex gap-2 z-50">
