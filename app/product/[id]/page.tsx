@@ -13,6 +13,14 @@ function formatDetail(text: string) {
     .replace(/\r\n/g, "\n")     // FIX Windows newline
     .trim();
 }
+function formatShortDescription(text: string) {
+  return text
+    .replace(/\\n/g, "\n")
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean);
+}
 
 /* =======================
    TYPES
@@ -222,10 +230,27 @@ export default function ProductDetail() {
         </span>
       </div>
 
-      {/* SHORT DESCRIPTION */}
-      <div className="bg-white p-4">
-        {product.description || t.no_description}
-      </div>
+      {/* SHORT DESCRIPTION (Shopee style) */}
+<div className="bg-white p-4">
+  <h3 className="text-sm font-semibold mb-2">
+    🧾 {t.product_description ?? "Mô tả sản phẩm"}
+  </h3>
+
+  {product.description ? (
+    <ul className="space-y-1 text-sm text-gray-700 leading-relaxed">
+      {formatShortDescription(product.description).map((line, i) => (
+        <li key={i} className="flex gap-2">
+          <span className="text-orange-500">•</span>
+          <span>{line}</span>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p className="text-sm text-gray-400">
+      {t.no_description}
+    </p>
+  )}
+</div>
 
       {/* DETAIL IMAGES */}
       {product.detailImages.length > 0 && (
