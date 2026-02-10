@@ -70,7 +70,7 @@ export default function SellerPostPage() {
   }, []);
 
   /* =========================
-     IMAGE UPLOAD (REUSE)
+     IMAGE UPLOAD
   ========================= */
   async function uploadImages(
     files: File[],
@@ -90,44 +90,11 @@ export default function SellerPostPage() {
         const data = (await res.json()) as { url?: string };
         if (!res.ok || !data.url) throw new Error();
 
-        setter((prev) => [...prev, data.url!]);
+        setter((prev) => [...prev, data.url]);
       }
-    } catch {
-      setMessage({
-        text: "❌ Upload ảnh thất bại",
-        type: "error",
-      });
     } finally {
       setUploadingImage(false);
     }
-  }
-
-  async function handleMainImageChange(
-    e: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-
-    if (images.length + files.length > 6) {
-      setMessage({
-        text: "⚠️ Tối đa 6 ảnh cho mỗi sản phẩm",
-        type: "error",
-      });
-      return;
-    }
-
-    await uploadImages(files, setImages);
-    e.target.value = "";
-  }
-
-  async function handleDetailImageChange(
-    e: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-
-    await uploadImages(files, setDetailImages);
-    e.target.value = "";
   }
 
   function removeImage(index: number) {
@@ -143,15 +110,7 @@ export default function SellerPostPage() {
 
     if (!images.length) {
       setMessage({
-        text: "⚠️ Cần ít nhất 1 ảnh sản phẩm",
-        type: "error",
-      });
-      return;
-    }
-
-    if (salePrice && (!saleStart || !saleEnd)) {
-      setMessage({
-        text: "⚠️ Sale cần có ngày bắt đầu và kết thúc",
+        text: t.need_image || "⚠️ Cần ít nhất 1 ảnh sản phẩm",
         type: "error",
       });
       return;
@@ -164,27 +123,24 @@ export default function SellerPostPage() {
       price: Number(
         (form.elements.namedItem("price") as HTMLInputElement).value
       ),
-
       salePrice: salePrice || null,
       saleStart: salePrice ? saleStart || null : null,
       saleEnd: salePrice ? saleEnd || null : null,
-
       description: (
         form.elements.namedItem("description") as HTMLTextAreaElement
       ).value,
       detail,
       images,
       detailImages,
-
       categoryId:
         Number(
           (form.elements.namedItem("categoryId") as HTMLSelectElement).value
         ) || null,
     };
 
-    if (!payload.name || payload.price <= 0) {
+    if (!payload.name || payload.price <= 0 || !payload.categoryId) {
       setMessage({
-        text: t.enter_valid_name_price || "⚠️ Nhập tên & giá hợp lệ",
+        text: t.enter_valid_name_price || "⚠️ Nhập đủ danh mục, tên và giá",
         type: "error",
       });
       return;
@@ -218,11 +174,7 @@ export default function SellerPostPage() {
   }
 
   if (loading || !user) {
-    return (
-      <main className="p-8 text-center text-gray-500">
-        ⏳ {t.loading}
-      </main>
-    );
+    return <main className="p-8 text-center">⏳ {t.loading}</main>;
   }
 
   /* =========================
@@ -230,105 +182,16 @@ export default function SellerPostPage() {
   ========================= */
   return (
     <main className="max-w-2xl mx-auto p-4 pb-28">
-      <button
-        onClick={() => router.back()}
-        className="mb-4 text-blue-600 underline"
-      >
-        ← {t.back}
-      </button>
-
-      <h1 className="text-2xl font-bold text-center mb-4 text-[#ff6600]">
-        ➕ {t.post_product || "Thêm sản phẩm mới"}
+      <h1 className="text-xl font-bold text-center mb-4 text-[#ff6600]">
+        ➕ {t.post_product}
       </h1>
 
-      {message.text && (
-        <p
-          className={`text-center mb-4 ${
-            message.type === "success"
-              ? "text-green-600"
-              : "text-red-600"
-          }`}
-        >
-          {message.text}
-        </p>
-      )}
-
-      {/* MAIN IMAGES */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        {images.map((url, i) => (
-          <div key={url} className="relative h-28 rounded overflow-hidden">
-            <Image src={url} alt="" fill className="object-cover" />
-            <button
-              type="button"
-              onClick={() => removeImage(i)}
-              className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 rounded"
-            >
-              ✕
-            </button>
-          </div>
-        ))}
-
-        {images.length < 6 && (
-          <label className="flex items-center justify-center border-2 border-dashed rounded cursor-pointer text-gray-400 h-28">
-            {uploadingImage ? "⏳" : "＋"}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={handleMainImageChange}
-            />
-          </label>
-        )}
-      </div>
-
-      {/* FORM */}
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input
-          name="name"
-          placeholder={t.product_name}
-          className="w-full border p-2 rounded"
-        />
-
-        <input
-          name="price"
-          type="number"
-          step="any"
-          inputMode="decimal"
-          placeholder="Giá Pi (vd: 0.00000001)"
-          className="w-full border p-2 rounded"
-        />
-
-        <input
-          type="number"
-          step="any"
-          inputMode="decimal"
-          placeholder="Giá sale (không bắt buộc)"
-          value={salePrice}
-          onChange={(e) =>
-            setSalePrice(e.target.value ? Number(e.target.value) : "")
-          }
-          className="w-full border p-2 rounded"
-        />
-
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            type="date"
-            value={saleStart}
-            onChange={(e) => setSaleStart(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <input
-            type="date"
-            value={saleEnd}
-            onChange={(e) => setSaleEnd(e.target.value)}
-            className="border p-2 rounded"
-          />
-        </div>
-
+      {/* CATEGORY FIRST */}
+      <form onSubmit={handleSubmit} className="space-y-4">
         <select
           name="categoryId"
           className="w-full border p-2 rounded"
+          required
         >
           <option value="">{t.select_category}</option>
           {categories.map((c) => (
@@ -338,6 +201,65 @@ export default function SellerPostPage() {
           ))}
         </select>
 
+        <input
+          name="name"
+          placeholder={t.product_name}
+          className="w-full border p-2 rounded"
+          required
+        />
+
+        {/* IMAGES */}
+        <div className="grid grid-cols-3 gap-3">
+          {images.map((url, i) => (
+            <div key={url} className="relative h-28">
+              <Image src={url} alt="" fill className="object-cover rounded" />
+              <button
+                type="button"
+                onClick={() => removeImage(i)}
+                className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 rounded"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {images.length < 6 && (
+            <label className="flex items-center justify-center border-2 border-dashed rounded cursor-pointer h-28">
+              ＋
+              <input
+                type="file"
+                multiple
+                hidden
+                onChange={(e) =>
+                  uploadImages(
+                    Array.from(e.target.files || []),
+                    setImages
+                  )
+                }
+              />
+            </label>
+          )}
+        </div>
+
+        <input
+          name="price"
+          type="number"
+          step="any"
+          placeholder={t.price_pi}
+          className="w-full border p-2 rounded"
+          required
+        />
+
+        <input
+          type="number"
+          step="any"
+          placeholder={t.sale_price_optional}
+          value={salePrice}
+          onChange={(e) =>
+            setSalePrice(e.target.value ? Number(e.target.value) : "")
+          }
+          className="w-full border p-2 rounded"
+        />
+
         <textarea
           name="description"
           placeholder={t.description}
@@ -345,31 +267,11 @@ export default function SellerPostPage() {
         />
 
         <textarea
-          placeholder="Mô tả chi tiết sản phẩm"
+          placeholder={t.product_detail}
           value={detail}
           onChange={(e) => setDetail(e.target.value)}
-          className="w-full border p-2 rounded min-h-[90px]"
+          className="w-full border p-2 rounded min-h-[120px]"
         />
-
-        {/* DETAIL IMAGES */}
-        <div className="grid grid-cols-3 gap-3">
-          {detailImages.map((url) => (
-            <div key={url} className="relative h-28">
-              <Image src={url} alt="" fill className="object-cover rounded" />
-            </div>
-          ))}
-
-          <label className="flex items-center justify-center border-2 border-dashed rounded cursor-pointer text-gray-400 h-28">
-            {uploadingImage ? "⏳" : "＋"}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={handleDetailImageChange}
-            />
-          </label>
-        </div>
 
         <button
           disabled={saving}
