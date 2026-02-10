@@ -66,10 +66,15 @@ interface Product {
 ======================= */
 
 export default function ProductDetailPage() {
-  const { t } = useTranslation();
+
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { addToCart } = useCart();
+  const i18n = useTranslation();
+const t =
+  typeof i18n === "object" && i18n.t
+    ? i18n.t
+    : {};
 
   const [product, setProduct] = useState<Product | null>(null);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
