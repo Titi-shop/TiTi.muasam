@@ -27,7 +27,11 @@ type Product = {
    CLIENT PAGE
 ========================= */
 export default function CategoriesClient() {
-  const { t } = useTranslation();
+  const i18n = useTranslation();
+const t =
+  typeof i18n === "function"
+    ? i18n
+    : i18n?.t ?? ((key: string) => key);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
