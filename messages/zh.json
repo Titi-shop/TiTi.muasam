@@ -301,7 +301,12 @@
   "status_cancelled": "已取消",
   "status_returned": "已退货",
 
-  "all": "全部"
+  "all": "全部",
+  
+  "sale_time": "促销时间",
+  "sale_price_optional": "促销价（可选）",
+  "product_detail": "商品详细描述"
+
 
 
 }
