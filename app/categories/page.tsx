@@ -28,8 +28,7 @@ type Product = {
    PAGE
 ========================= */
 export default function CategoriesPage() {
-  const i18n = useTranslation();
-  const t = typeof i18n === "function" ? i18n : i18n?.t;
+  const { t } = useTranslation();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
