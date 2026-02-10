@@ -289,6 +289,10 @@
   "order_shipping": "Chờ giao hàng",
   "order_received": "Đã giao",
   "order_returned": "Trả hàng",
-  "order_cancelled": "Huỷ"
+  "order_cancelled": "Huỷ",
+
+  "sale_time": "Thời gian khuyến mãi",
+  "sale_price_optional": "Giá khuyến mãi (không bắt buộc)",
+  "product_detail": "Mô tả chi tiết sản phẩm"
 
 }
