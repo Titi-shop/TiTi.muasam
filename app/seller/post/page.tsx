@@ -12,7 +12,7 @@ import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 ========================= */
 interface Category {
   id: number;
-  name: string;
+  key: string;
 }
 
 interface MessageState {
@@ -196,8 +196,8 @@ export default function SellerPostPage() {
           <option value="">{t.select_category}</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
+          {t(c.key)}
+       </option>
           ))}
         </select>
 
@@ -259,6 +259,24 @@ export default function SellerPostPage() {
           }
           className="w-full border p-2 rounded"
         />
+         {/* SALE DATE */}
+{salePrice && (
+  <div className="grid grid-cols-2 gap-3">
+    <input
+      type="datetime-local"
+      value={saleStart}
+      onChange={(e) => setSaleStart(e.target.value)}
+      className="w-full border p-2 rounded"
+    />
+
+    <input
+      type="datetime-local"
+      value={saleEnd}
+      onChange={(e) => setSaleEnd(e.target.value)}
+      className="w-full border p-2 rounded"
+    />
+  </div>
+)}
 
         <textarea
           name="description"
