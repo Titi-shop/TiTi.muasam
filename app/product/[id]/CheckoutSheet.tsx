@@ -200,7 +200,7 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
      UI
   ========================= */
   return (
-    <div className="fixed inset-0 z-[70]">
+    <div className="fixed inset-0 z-[100]">
       {/* BACKDROP */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
