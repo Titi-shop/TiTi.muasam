@@ -336,23 +336,6 @@ export default function SellerPostPage() {
   </div>
 )}
 
-        {salePrice && (
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="datetime-local"
-              value={saleStart}
-              onChange={(e) => setSaleStart(e.target.value)}
-              className="border p-2 rounded"
-            />
-            <input
-              type="datetime-local"
-              value={saleEnd}
-              onChange={(e) => setSaleEnd(e.target.value)}
-              className="border p-2 rounded"
-            />
-          </div>
-        )}
-
         {/* DESCRIPTION */}
         <textarea
           name="description"
