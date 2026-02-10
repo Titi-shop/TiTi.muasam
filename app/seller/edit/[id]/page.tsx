@@ -8,19 +8,6 @@ import { useAuth } from "@/context/AuthContext";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
 /* =========================
-   HELPERS
-========================= */
-function formatDateToInput(dateString: string | null) {
-  if (!dateString) return "";
-  const d = new Date(dateString);
-  if (isNaN(d.getTime())) return "";
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-    2,
-    "0"
-  )}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-/* =========================
    TYPES
 ========================= */
 interface ProductData {
@@ -39,7 +26,7 @@ interface ProductData {
 
 interface Category {
   id: number;
-  name: string;
+  key: string;
 }
 
 interface MessageState {
@@ -52,7 +39,7 @@ interface MessageState {
 ========================= */
 export default function EditProductPage() {
   const { t } = useTranslation();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
@@ -66,10 +53,7 @@ export default function EditProductPage() {
   const [saleStart, setSaleStart] = useState("");
   const [saleEnd, setSaleEnd] = useState("");
 
-  const [loadingPage, setLoadingPage] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-
   const [message, setMessage] = useState<MessageState>({
     text: "",
     type: "",
@@ -80,13 +64,7 @@ export default function EditProductPage() {
   ========================= */
   useEffect(() => {
     if (authLoading) return;
-
-    if (!user) {
-      router.replace("/pilogin");
-      return;
-    }
-
-    if (user.role !== "seller" && user.role !== "admin") {
+    if (!user || (user.role !== "seller" && user.role !== "admin")) {
       router.replace("/account");
     }
   }, [authLoading, user, router]);
@@ -97,7 +75,7 @@ export default function EditProductPage() {
   useEffect(() => {
     apiAuthFetch("/api/categories")
       .then((r) => r.json())
-      .then((d: Category[]) => setCategories(d || []))
+      .then((d) => setCategories(Array.isArray(d) ? d : []))
       .catch(() => setCategories([]));
   }, []);
 
@@ -105,10 +83,7 @@ export default function EditProductPage() {
      LOAD PRODUCT
   ========================= */
   useEffect(() => {
-    if (!id) {
-      setLoadingPage(false);
-      return;
-    }
+    if (!id) return;
 
     apiAuthFetch("/api/products")
       .then((r) => r.json())
@@ -116,7 +91,6 @@ export default function EditProductPage() {
         const p = list.find((x) => String(x.id) === String(id));
         if (!p) {
           setMessage({ text: t.product_not_found, type: "error" });
-          setTimeout(() => router.push("/seller/stock"), 1000);
           return;
         }
 
@@ -125,68 +99,30 @@ export default function EditProductPage() {
         setDetailImages(p.detailImages || []);
         setDetail(p.detail || "");
         setSalePrice(p.salePrice ?? "");
-        setSaleStart(formatDateToInput(p.saleStart || null));
-        setSaleEnd(formatDateToInput(p.saleEnd || null));
-      })
-      .finally(() => setLoadingPage(false));
-  }, [id, router, t]);
+        setSaleStart(p.saleStart || "");
+        setSaleEnd(p.saleEnd || "");
+      });
+  }, [id, t]);
 
   /* =========================
-     IMAGE UPLOAD (REUSE)
+     IMAGE UPLOAD
   ========================= */
   async function uploadImages(
     files: File[],
     setter: React.Dispatch<React.SetStateAction<string[]>>
   ) {
-    setUploadingImage(true);
-    try {
-      for (const file of files) {
-        const form = new FormData();
-        form.append("file", file);
+    for (const file of files) {
+      const form = new FormData();
+      form.append("file", file);
 
-        const res = await apiAuthFetch("/api/upload", {
-          method: "POST",
-          body: form,
-        });
-
-        const data = (await res.json()) as { url?: string };
-        if (!res.ok || !data.url) throw new Error();
-
-        setter((prev) => [...prev, data.url!]);
-      }
-    } catch {
-      setMessage({ text: "❌ Upload ảnh thất bại", type: "error" });
-    } finally {
-      setUploadingImage(false);
-    }
-  }
-
-  async function handleMainImageChange(
-    e: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-
-    if (images.length + files.length > 6) {
-      setMessage({
-        text: "⚠️ Tối đa 6 ảnh cho mỗi sản phẩm",
-        type: "error",
+      const res = await apiAuthFetch("/api/upload", {
+        method: "POST",
+        body: form,
       });
-      return;
+
+      const data = await res.json();
+      if (data?.url) setter((prev) => [...prev, data.url]);
     }
-
-    await uploadImages(files, setImages);
-    e.target.value = "";
-  }
-
-  async function handleDetailImageChange(
-    e: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-
-    await uploadImages(files, setDetailImages);
-    e.target.value = "";
   }
 
   function removeImage(
@@ -203,17 +139,9 @@ export default function EditProductPage() {
     e.preventDefault();
     if (!product) return;
 
-    if (!images.length) {
-      setMessage({
-        text: "⚠️ Sản phẩm cần ít nhất 1 ảnh",
-        type: "error",
-      });
-      return;
-    }
-
     if (salePrice && (!saleStart || !saleEnd)) {
       setMessage({
-        text: "⚠️ Sale cần có ngày bắt đầu và kết thúc",
+        text: t.need_sale_date,
         type: "error",
       });
       return;
@@ -227,72 +155,31 @@ export default function EditProductPage() {
       price: Number(
         (form.elements.namedItem("price") as HTMLInputElement).value
       ),
-
       salePrice: salePrice || null,
-      saleStart: salePrice ? saleStart || null : null,
-      saleEnd: salePrice ? saleEnd || null : null,
-
+      saleStart: salePrice ? saleStart : null,
+      saleEnd: salePrice ? saleEnd : null,
       description: (
         form.elements.namedItem("description") as HTMLTextAreaElement
       ).value,
       detail,
       images,
       detailImages,
-
-      categoryId:
-        Number(
-          (form.elements.namedItem("categoryId") as HTMLSelectElement).value
-        ) || null,
+      categoryId: Number(
+        (form.elements.namedItem("categoryId") as HTMLSelectElement).value
+      ),
     };
 
-    if (!payload.name || payload.price <= 0) {
-      setMessage({
-        text: t.enter_valid_name_price || "⚠️ Nhập tên & giá hợp lệ",
-        type: "error",
-      });
-      return;
-    }
-
     setSaving(true);
-    setMessage({ text: "", type: "" });
+    await apiAuthFetch("/api/products", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
 
-    try {
-      const res = await apiAuthFetch("/api/products", {
-        method: "PUT",
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error();
-
-      setMessage({
-        text: t.save_success || "✅ Lưu thành công",
-        type: "success",
-      });
-
-      setTimeout(() => router.push("/seller/stock"), 900);
-    } catch {
-      setMessage({
-        text: t.save_failed || "❌ Lưu thất bại",
-        type: "error",
-      });
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  /* =========================
-     UI STATES
-  ========================= */
-  if (authLoading || loadingPage) {
-    return <p className="text-center mt-10">⏳ {t.loading}...</p>;
+    router.push("/seller/stock");
   }
 
   if (!product) {
-    return (
-      <p className="text-center mt-10 text-red-500">
-        ❌ {t.product_not_found}
-      </p>
-    );
+    return <p className="text-center mt-10">⏳ {t.loading}</p>;
   }
 
   /* =========================
@@ -300,34 +187,19 @@ export default function EditProductPage() {
   ========================= */
   return (
     <main className="max-w-2xl mx-auto p-4 pb-32">
-      <button
-        onClick={() => router.back()}
-        className="mb-4 text-blue-600 underline"
-      >
-        ← {t.back}
-      </button>
-
-      <h1 className="text-2xl font-bold text-center mb-4 text-[#ff6600]">
+      <h1 className="text-xl font-bold text-center mb-4 text-[#ff6600]">
         ✏️ {t.edit_product}
       </h1>
 
       {message.text && (
-        <p
-          className={`text-center mb-4 ${
-            message.type === "success"
-              ? "text-green-600"
-              : "text-red-600"
-          }`}
-        >
-          {message.text}
-        </p>
+        <p className="text-center text-red-600 mb-3">{message.text}</p>
       )}
 
-      {/* MAIN IMAGES */}
+      {/* IMAGES */}
       <div className="grid grid-cols-3 gap-3 mb-4">
         {images.map((url, i) => (
-          <div key={url} className="relative h-28 rounded overflow-hidden">
-            <Image src={url} alt="" fill className="object-cover" />
+          <div key={url} className="relative h-28">
+            <Image src={url} alt="" fill className="object-cover rounded" />
             <button
               type="button"
               onClick={() => removeImage(i, setImages)}
@@ -337,22 +209,22 @@ export default function EditProductPage() {
             </button>
           </div>
         ))}
-
-        {images.length < 6 && (
-          <label className="flex items-center justify-center border-2 border-dashed rounded cursor-pointer text-gray-400 h-28">
-            {uploadingImage ? "⏳" : "＋"}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={handleMainImageChange}
-            />
-          </label>
-        )}
       </div>
 
-      <form onSubmit={handleSave} className="space-y-3">
+      <form onSubmit={handleSave} className="space-y-4">
+        <select
+          name="categoryId"
+          defaultValue={product.categoryId || ""}
+          className="w-full border p-2 rounded"
+        >
+          <option value="">{t.select_category}</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {t[c.key] ?? c.key}
+            </option>
+          ))}
+        </select>
+
         <input
           name="name"
           defaultValue={product.name}
@@ -363,17 +235,16 @@ export default function EditProductPage() {
           name="price"
           type="number"
           step="any"
-          inputMode="decimal"
           defaultValue={product.price}
-          placeholder="Giá Pi (vd: 0.00000001)"
+          placeholder={t.price_pi}
           className="w-full border p-2 rounded"
         />
 
+        {/* SALE PRICE */}
         <input
           type="number"
           step="any"
-          inputMode="decimal"
-          placeholder="Giá sale (không bắt buộc)"
+          placeholder={t.sale_price_optional}
           value={salePrice}
           onChange={(e) =>
             setSalePrice(e.target.value ? Number(e.target.value) : "")
@@ -381,79 +252,48 @@ export default function EditProductPage() {
           className="w-full border p-2 rounded"
         />
 
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            type="date"
-            value={saleStart}
-            onChange={(e) => setSaleStart(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <input
-            type="date"
-            value={saleEnd}
-            onChange={(e) => setSaleEnd(e.target.value)}
-            className="border p-2 rounded"
-          />
-        </div>
-
-        <select
-          name="categoryId"
-          defaultValue={product.categoryId || ""}
-          className="w-full border p-2 rounded"
-        >
-          <option value="">{t.select_category}</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        {/* SALE TIME (NGANG – NGẮN) */}
+        {salePrice && (
+          <div className="space-y-1">
+            <p className="text-sm text-gray-600 font-medium">
+              📅 {t.sale_time}
+            </p>
+            <div className="flex gap-3">
+              <input
+                type="datetime-local"
+                value={saleStart}
+                onChange={(e) => setSaleStart(e.target.value)}
+                className="border p-2 rounded w-auto max-w-[220px]"
+              />
+              <input
+                type="datetime-local"
+                value={saleEnd}
+                onChange={(e) => setSaleEnd(e.target.value)}
+                className="border p-2 rounded w-auto max-w-[220px]"
+              />
+            </div>
+          </div>
+        )}
 
         <textarea
           name="description"
           defaultValue={product.description}
-className="w-full border p-2 rounded min-h-[120px]"
+          placeholder={t.description}
+          className="w-full border p-2 rounded min-h-[80px]"
         />
 
         <textarea
-          placeholder="Mô tả chi tiết sản phẩm"
+          placeholder={t.product_detail}
           value={detail}
           onChange={(e) => setDetail(e.target.value)}
-          className="w-full border p-2 rounded min-h-[90px]"
+          className="w-full border p-2 rounded min-h-[120px]"
         />
-
-        {/* DETAIL IMAGES */}
-        <div className="grid grid-cols-3 gap-3">
-          {detailImages.map((url, i) => (
-            <div key={url} className="relative h-28">
-              <Image src={url} alt="" fill className="object-cover rounded" />
-              <button
-                type="button"
-                onClick={() => removeImage(i, setDetailImages)}
-                className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 rounded"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-
-          <label className="flex items-center justify-center border-2 border-dashed rounded cursor-pointer text-gray-400 h-28">
-            {uploadingImage ? "⏳" : "＋"}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={handleDetailImageChange}
-            />
-          </label>
-        </div>
 
         <button
           disabled={saving}
           className="w-full bg-[#ff6600] text-white py-3 rounded-lg font-semibold"
         >
-          {saving ? t.saving : "💾 " + t.save_changes}
+          {saving ? t.saving : t.save_changes}
         </button>
       </form>
     </main>
