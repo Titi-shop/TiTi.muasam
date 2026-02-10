@@ -27,7 +27,7 @@ type Product = {
    CLIENT PAGE
 ========================= */
 export default function CategoriesClient() {
-  const t = useTranslation() as Record<string, string>;
+  const { t } = useTranslation();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -143,7 +143,7 @@ export default function CategoriesClient() {
             </p>
           ) : visibleProducts.length === 0 ? (
             <p className="text-sm text-gray-400">
-              {t["no_product"] || "Chưa có sản phẩm"}
+              {t["no_products"] ?? "Chưa có sản phẩm"}
             </p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
