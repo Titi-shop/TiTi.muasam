@@ -7,6 +7,13 @@ import { useCart } from "@/app/context/CartContext";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
 import CheckoutSheet from "./CheckoutSheet";
 
+function formatDetail(text: string) {
+  return text
+    .replace(/\\n/g, "\n")      // FIX dữ liệu lưu dạng \n
+    .replace(/\r\n/g, "\n")     // FIX Windows newline
+    .trim();
+}
+
 /* =======================
    TYPES
 ======================= */
