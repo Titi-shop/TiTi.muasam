@@ -412,14 +412,14 @@ export default function EditProductPage() {
         <textarea
           name="description"
           defaultValue={product.description}
-          className="w-full border p-2 rounded"
+className="w-full border p-2 rounded min-h-[120px]"
         />
 
         <textarea
           placeholder="Mô tả chi tiết sản phẩm"
           value={detail}
           onChange={(e) => setDetail(e.target.value)}
-          className="w-full border p-2 rounded min-h-[120px]"
+          className="w-full border p-2 rounded min-h-[90px]"
         />
 
         {/* DETAIL IMAGES */}
