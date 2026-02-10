@@ -70,16 +70,17 @@ export default function CategoriesClient() {
   }, [products, activeCategoryId]);
 
   return (
-    <main className="bg-gradient-to-b from-orange-50 to-white min-h-screen pb-24">
+    <main className="bg-[#fff7ed] min-h-screen pb-24">
       {/* =========================
           BANNER
       ========================= */}
-      <div className="px-3 mt-4">
+      <div className="mt-3">
         <img
           src="/banners/30FD1BCC-E31C-4702-9E63-8BF08C5E311C.png"
           alt="Banner"
-          className="w-full h-[160px] rounded-3xl object-cover shadow-md"
-        />
+  className="w-full h-[160px] object-cover
+             rounded-none sm:rounded-3xl"
+/>
       </div>
 
       {/* =========================
@@ -135,7 +136,7 @@ export default function CategoriesClient() {
         </aside>
 
         {/* ===== RIGHT: PRODUCTS ===== */}
-        <section className="col-span-10 px-2">
+        <section className="col-span-10 px-1">
           {loading ? (
             <p className="text-sm text-gray-400">
               {t["loading_products"] || "Đang tải..."}
@@ -164,7 +165,7 @@ export default function CategoriesClient() {
                     href={`/product/${p.id}`}
                     className="group"
                   >
-                    <div className="relative overflow-hidden rounded-2xl">
+                    <div className="relative overflow-hidden rounded-3xl bg-white">
                       {/* SALE BADGE */}
                       {isSale && (
                         <div className="absolute top-2 right-2 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow">
