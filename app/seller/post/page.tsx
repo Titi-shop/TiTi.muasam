@@ -226,17 +226,18 @@ export default function SellerPostPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* CATEGORY */}
         <select
-          name="categoryId"
-          className="w-full border p-2 rounded"
-          required
-        >
-          <option value="">{t.select_category}</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {t(c.key)}
-            </option>
-          ))}
-        </select>
+  name="categoryId"
+  className="w-full border p-2 rounded"
+  required
+>
+  <option value="">{t.select_category}</option>
+
+  {categories.map((c) => (
+    <option key={c.id} value={c.id}>
+      {t[c.key] || c.key}
+    </option>
+  ))}
+</select>
 
         {/* NAME */}
         <input
