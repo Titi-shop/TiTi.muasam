@@ -205,7 +205,7 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
       {/* SHEET */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl h-[30vh] flex flex-col">
+      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl h-[45vh] flex flex-col">
         {/* HANDLE */}
         <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mt-2 mb-2" />
 
@@ -251,7 +251,6 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
        }
       }}
       onBlur={() => {
-    // khi rời ô → đảm bảo >= 1
       if (qtyDraft === "" || Number(qtyDraft) < 1) {
       setQtyDraft("1");
       }
