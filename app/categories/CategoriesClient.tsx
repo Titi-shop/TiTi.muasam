@@ -98,7 +98,7 @@ export default function CategoriesClient() {
                   : "text-gray-500"
               }`}
             >
-            🛍  {t["all_categories"] ?? "Tất cả"}
+            🛍 {t["all"] ?? "Tất cả"}
             </button>
 
             {categories.map((c) => {
