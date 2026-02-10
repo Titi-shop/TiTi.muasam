@@ -24,6 +24,10 @@ function formatShortDescription(text?: string) {
     .filter(Boolean);
 }
 
+function calcSalePercent(price: number, finalPrice: number) {
+  if (finalPrice >= price) return 0;
+  return Math.round(((price - finalPrice) / price) * 100);
+}
 /* =======================
    TYPES
 ======================= */
@@ -68,6 +72,7 @@ export default function ProductDetail() {
   const { addToCart } = useCart();
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [openCheckout, setOpenCheckout] = useState(false);
@@ -110,8 +115,10 @@ export default function ProductDetail() {
           };
         });
 
-        const found = normalized.find((p) => p.id === id);
-        if (found) setProduct(found);
+        setProducts(normalized);
+
+const found = normalized.find((p) => p.id === id);
+if (found) setProduct(found);
       } finally {
         setLoading(false);
       }
@@ -125,7 +132,12 @@ export default function ProductDetail() {
   ======================= */
   if (loading) return <p className="p-4">{t.loading}</p>;
   if (!product) return <p className="p-4">{t.no_products}</p>;
-
+const relatedProducts = products.filter(
+  (p) =>
+    p.id !== product.id &&
+    p.categoryId &&
+    p.categoryId === product.categoryId
+);
   const images =
     product.images.length > 0
       ? product.images
@@ -168,11 +180,17 @@ export default function ProductDetail() {
      <div className="pb-32 bg-gray-50 min-h-screen">
       {/* MAIN IMAGES */}
       <div className="mt-14 relative w-full h-80 bg-white">
-        <img
-          src={images[currentIndex]}
-          alt={product.name}
-          className="w-full h-full object-cover"
-        />
+  <img
+    src={images[currentIndex]}
+    alt={product.name}
+    className="w-full h-full object-cover"
+  />
+
+  {product.isSale && (
+    <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+      -{calcSalePercent(product.price, product.finalPrice)}%
+    </div>
+  )}
 
         {images.length > 1 && (
           <>
@@ -240,7 +258,9 @@ export default function ProductDetail() {
 
   {product.description ? (
   <ul className="space-y-1 text-sm text-gray-700 leading-relaxed">
-    {formatShortDescription(product.description).map((line, i) => (
+    {formatShortDescription(product.description)
+  .slice(0, 5)
+  .map((line, i) => (
       <li key={i} className="flex gap-2">
         <span className="text-orange-500">•</span>
         <span>{line}</span>
@@ -279,6 +299,42 @@ export default function ProductDetail() {
   </div>
 </div>
 
+       {relatedProducts.length > 0 && (
+  <div className="bg-white mt-2 p-4">
+    <h3 className="text-sm font-semibold mb-3">
+      🔗 Sản phẩm liên quan
+    </h3>
+
+    <div className="flex gap-3 overflow-x-auto">
+      {relatedProducts.map((p) => (
+        <div
+          key={p.id}
+          onClick={() => router.push(`/product/${p.id}`)}
+          className="min-w-[140px] bg-gray-50 rounded-lg p-2"
+        >
+          <img
+            src={p.images[0] || "/placeholder.png"}
+            className="w-full h-24 object-cover rounded"
+          />
+
+          <p className="text-xs mt-2 line-clamp-2">
+            {p.name}
+          </p>
+
+          <p className="text-sm font-semibold text-orange-600">
+            π {p.finalPrice}
+          </p>
+
+          {p.isSale && (
+            <p className="text-xs text-gray-400 line-through">
+              π {p.price}
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
       {/* ACTIONS */}
       <div className="fixed bottom-16 left-0 right-0 bg-white p-3 shadow flex gap-2 z-50">
         <button
