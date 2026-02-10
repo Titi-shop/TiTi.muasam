@@ -291,7 +291,7 @@ export default function SellerPostPage() {
           required
         />
 
-      {/* SALE PRICE */}
+   {/* SALE PRICE */}
 <input
   type="number"
   step="any"
@@ -343,6 +343,7 @@ export default function SellerPostPage() {
     </div>
   </div>
 </div>
+
 )}
 
         {/* DESCRIPTION */}
