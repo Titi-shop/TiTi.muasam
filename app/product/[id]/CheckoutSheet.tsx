@@ -41,8 +41,11 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
   const [shipping, setShipping] = useState<ShippingInfo | null>(null);
   const [processing, setProcessing] = useState(false);
   const [qtyDraft, setQtyDraft] = useState<string>("1");
+  const quantity = useMemo(() => {
+  const n = Number(qtyDraft);
+  return Number.isInteger(n) && n >= 1 ? n : 1;
+}, [qtyDraft]);
    
-  const [qtyDraft, setQtyDraft] = useState<string>("");
   const item = useMemo(() => {
   if (!product) return null;
 
