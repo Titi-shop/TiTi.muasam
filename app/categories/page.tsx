@@ -32,10 +32,7 @@ type Product = {
 ========================= */
 export default function CategoriesPage() {
   const i18n = useTranslation();
-const t =
-  typeof i18n === "function"
-    ? i18n
-    : i18n?.t;
+  const t = typeof i18n === "function" ? i18n : i18n?.t;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -49,19 +46,11 @@ const t =
   ========================= */
   useEffect(() => {
     Promise.all([
-      fetch("/api/categories", { cache: "no-store" }).then((r) =>
-        r.json()
-      ),
-      fetch("/api/products", { cache: "no-store" }).then((r) =>
-        r.json()
-      ),
+      fetch("/api/categories", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/products", { cache: "no-store" }).then((r) => r.json()),
     ])
       .then(([cateData, prodData]: [Category[], Product[]]) => {
-        setCategories(
-          [...cateData].sort(
-            (a, b) => Number(a.id) - Number(b.id)
-          )
-        );
+        setCategories([...cateData].sort((a, b) => Number(a.id) - Number(b.id)));
 
         setProducts(
           [...prodData].sort((a, b) => {
@@ -80,14 +69,12 @@ const t =
   const visibleProducts = useMemo(() => {
     if (activeCategoryId === null) return products;
     return products.filter(
-      (p) =>
-        String(p.categoryId) ===
-        String(activeCategoryId)
+      (p) => String(p.categoryId) === String(activeCategoryId)
     );
   }, [products, activeCategoryId]);
 
   return (
-    <main className="bg-white min-h-screen pb-24">
+    <main className="bg-gradient-to-b from-orange-50 to-white min-h-screen pb-24">
       {/* =========================
           BANNER
       ========================= */}
@@ -95,7 +82,7 @@ const t =
         <img
           src="/banners/30FD1BCC-E31C-4702-9E63-8BF08C5E311C.png"
           alt="Banner"
-          className="w-full h-[160px] rounded-2xl object-cover"
+          className="w-full h-[160px] rounded-3xl object-cover shadow-md"
         />
       </div>
 
@@ -106,12 +93,11 @@ const t =
         {/* ===== LEFT: CATEGORIES ===== */}
         <aside className="col-span-2 overflow-y-auto">
           <div className="flex flex-col items-center gap-4 py-2">
-            {/* ALL */}
             <button
               onClick={() => setActiveCategoryId(null)}
-              className={`text-xs ${
+              className={`text-xs px-2 py-1 rounded-full ${
                 activeCategoryId === null
-                  ? "text-red-500 font-semibold"
+                  ? "bg-orange-500 text-white"
                   : "text-gray-500"
               }`}
             >
@@ -119,30 +105,24 @@ const t =
             </button>
 
             {categories.map((c) => {
-              const active =
-                String(activeCategoryId) ===
-                String(c.id);
+              const active = String(activeCategoryId) === String(c.id);
 
               return (
                 <button
                   key={c.id}
-                  onClick={() =>
-                    setActiveCategoryId(c.id)
-                  }
+                  onClick={() => setActiveCategoryId(c.id)}
                   className={`flex flex-col items-center gap-1 ${
-                    active
-                      ? "text-red-500 font-semibold"
-                      : "text-gray-500"
+                    active ? "text-orange-600 font-semibold" : "text-gray-500"
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      active ? "bg-orange-100" : "bg-gray-100"
+                    }`}
+                  >
                     <img
-                      src={
-                        c.icon || "/placeholder.png"
-                      }
-                      alt={t(
-                        `category_${c.id}`
-                      )}
+                      src={c.icon || "/placeholder.png"}
+                      alt={t(`category_${c.id}`)}
                       className="w-6 h-6 object-contain"
                     />
                   </div>
@@ -158,60 +138,55 @@ const t =
         {/* ===== RIGHT: PRODUCTS ===== */}
         <section className="col-span-10 px-2">
           {loading ? (
-            <p className="text-sm text-gray-400">
-              {t("loading_products")}
-            </p>
+            <p className="text-sm text-gray-400">{t("loading_products")}</p>
           ) : visibleProducts.length === 0 ? (
-            <p className="text-sm text-gray-400">
-              {t("no_product")}
-            </p>
+            <p className="text-sm text-gray-400">{t("no_product")}</p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {visibleProducts.map((p) => {
                 const isSale =
-                  typeof p.finalPrice ===
-                    "number" &&
+                  typeof p.finalPrice === "number" &&
                   p.finalPrice < p.price;
+
+                const discount =
+                  isSale && p.finalPrice
+                    ? Math.round(
+                        ((p.price - p.finalPrice) / p.price) * 100
+                      )
+                    : 0;
 
                 return (
                   <Link
                     key={p.id}
                     href={`/product/${p.id}`}
-                    className="cursor-pointer"
+                    className="group"
                   >
-                    <div className="relative">
+                    <div className="relative overflow-hidden rounded-2xl">
+                      {/* SALE BADGE */}
                       {isSale && (
-                        <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] px-1.5 py-[1px] rounded">
-                          SALE
-                        </span>
+                        <div className="absolute top-2 right-2 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow">
+                          -{discount}%
+                        </div>
                       )}
 
                       <img
-                        src={
-                          p.images?.[0] ||
-                          "/placeholder.png"
-                        }
-                        className="w-full aspect-square rounded-lg object-cover"
+                        src={p.images?.[0] || "/placeholder.png"}
+                        className="w-full aspect-square object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
 
-                    <p className="mt-1 text-sm line-clamp-2">
+                    <p className="mt-1 text-sm font-medium line-clamp-2">
                       {p.name}
                     </p>
 
                     <div className="flex items-center gap-1">
-                      <span className="text-red-500 font-semibold">
-                        {(isSale
-                          ? p.finalPrice
-                          : p.price
-                        )?.toLocaleString()}{" "}
-                        π
+                      <span className="text-orange-600 font-semibold">
+                        {(isSale ? p.finalPrice : p.price)?.toLocaleString()} π
                       </span>
 
                       {isSale && (
                         <span className="text-xs text-gray-400 line-through">
-                          {p.price.toLocaleString()}{" "}
-                          π
+                          {p.price.toLocaleString()} π
                         </span>
                       )}
                     </div>
