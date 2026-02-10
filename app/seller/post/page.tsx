@@ -291,49 +291,58 @@ export default function SellerPostPage() {
           required
         />
 
-        {/* SALE */}
-        <input
-          type="number"
-          step="any"
-          placeholder={t.sale_price_optional}
-          value={salePrice}
-          onChange={(e) =>
-            setSalePrice(e.target.value ? Number(e.target.value) : "")
-          }
-          className="w-full border p-2 rounded"
-        />
-         {salePrice && (
-  <div className="space-y-2">
-    <p className="text-sm text-gray-600 font-medium">
-      📅 {t.sale_time || "Thời gian khuyến mãi"}
-    </p>
+      {/* SALE PRICE */}
+<input
+  type="number"
+  step="any"
+  placeholder={t.sale_price_optional}
+  value={salePrice}
+  onChange={(e) =>
+    setSalePrice(e.target.value ? Number(e.target.value) : "")
+  }
+  className="w-full border p-2 rounded"
+/>
 
-    <div className="grid grid-cols-2 gap-3">
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-500">
-          {t.start_date || "Bắt đầu"}
-        </label>
-        <input
-          type="datetime-local"
-          value={saleStart}
-          onChange={(e) => setSaleStart(e.target.value)}
-          className="border p-2 rounded max-w-[220px]"
-        />
-      </div>
+{/* SALE TIME – LUÔN HIỂN THỊ */}
+<div className="space-y-2">
+  <p className="text-sm text-gray-600 font-medium">
+    📅 {t.sale_time || "Thời gian khuyến mãi"}
+  </p>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-500">
-          {t.end_date || "Kết thúc"}
-        </label>
-        <input
-          type="datetime-local"
-          value={saleEnd}
-          onChange={(e) => setSaleEnd(e.target.value)}
-          className="border p-2 rounded max-w-[220px]"
-        />
-      </div>
+  <div className="flex gap-3">
+    {/* START */}
+    <div className="flex flex-col gap-1 flex-1">
+      <label className="text-xs text-gray-500">
+        {t.start_date || "Bắt đầu"}
+      </label>
+      <input
+        type="datetime-local"
+        value={saleStart}
+        onChange={(e) => setSaleStart(e.target.value)}
+        disabled={!salePrice}
+        className={`border p-2 rounded w-full ${
+          !salePrice ? "bg-gray-100 text-gray-400" : ""
+        }`}
+      />
+    </div>
+
+    {/* END */}
+    <div className="flex flex-col gap-1 flex-1">
+      <label className="text-xs text-gray-500">
+        {t.end_date || "Kết thúc"}
+      </label>
+      <input
+        type="datetime-local"
+        value={saleEnd}
+        onChange={(e) => setSaleEnd(e.target.value)}
+        disabled={!salePrice}
+        className={`border p-2 rounded w-full ${
+          !salePrice ? "bg-gray-100 text-gray-400" : ""
+        }`}
+      />
     </div>
   </div>
+</div>
 )}
 
         {/* DESCRIPTION */}
