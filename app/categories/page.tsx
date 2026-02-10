@@ -1,9 +1,6 @@
 "use client";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
-
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
