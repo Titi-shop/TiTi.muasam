@@ -224,7 +224,7 @@ export default function SellerStockPage() {
                 }
                 className="flex gap-3 p-3 bg-white rounded-lg shadow border cursor-pointer hover:bg-gray-50"
               >
-                <div className="w-24 h-24 relative rounded overflow-hidden">
+                <div className="w-24 h-24 min-w-[96px] relative rounded overflow-hidden flex-shrink-0">
                   {isSale && (
                     <span className="absolute top-1 left-1 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded z-10">
                       SALE
@@ -245,8 +245,8 @@ export default function SellerStockPage() {
                   )}
                 </div>
 
-                <div className="flex-1">
-                  <h3 className="font-semibold truncate">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm leading-snug line-clamp-2">
                     {product.name}
                   </h3>
 
