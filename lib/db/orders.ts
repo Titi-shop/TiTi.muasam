@@ -1,6 +1,6 @@
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const PI_BASE = 1_000_000; // hỗ trợ tới 0.000001 Pi
+const PI_BASE = 1_000_000;
 
 function headers() {
   return {
@@ -11,7 +11,7 @@ function headers() {
 }
 
 /* =====================================================
-   TYPES (CHO API /orders/[id])
+   TYPES
 ===================================================== */
 
 export type OrderRecord = {
@@ -19,14 +19,17 @@ export type OrderRecord = {
   status: string;
   total: number;
   created_at: string;
-  buyer: {
+  buyer?: {
     pi_uid: string;
   };
-  items: Array<{
+  order_items?: Array<{
     quantity: number;
     price: number;
     product: {
-      seller: {
+      id: string;
+      name: string;
+      images: string[];
+      seller?: {
         pi_uid: string;
       };
     };
@@ -34,8 +37,9 @@ export type OrderRecord = {
 };
 
 /* =====================================================
-   GET ORDER BY ID (FULL JOIN)
+   GET ORDER BY ID
 ===================================================== */
+
 export async function getOrderById(
   orderId: string
 ): Promise<OrderRecord | null> {
@@ -46,10 +50,13 @@ export async function getOrderById(
       total,
       created_at,
       buyer:buyer_id(pi_uid),
-      items:order_items(
+      order_items(
         quantity,
         price,
         product:product_id(
+          id,
+          name,
+          images,
           seller:seller_id(pi_uid)
         )
       )
@@ -62,9 +69,9 @@ export async function getOrderById(
   const data = await res.json();
   return data[0] ?? null;
 }
+
 /* =====================================================
-   GET ORDERS BY SELLER
-   - Chỉ lấy đơn có sản phẩm của seller
+   GET ORDERS BY BUYER (FULL DATA FOR UI)
 ===================================================== */
 
 export async function getOrdersByBuyerSafe(piUid: string) {
@@ -98,11 +105,10 @@ export async function getOrdersByBuyerSafe(piUid: string) {
   return await res.json();
 }
 
-  
-
 /* =====================================================
    UPDATE ORDER STATUS
 ===================================================== */
+
 export async function updateOrderStatus(
   orderId: string,
   status: string
@@ -118,30 +124,8 @@ export async function updateOrderStatus(
 }
 
 /* =====================================================
-   EXISTING FUNCTIONS (GIỮ NGUYÊN)
+   CREATE ORDER
 ===================================================== */
-
-export async function getOrdersByBuyerSafe(piUid: string) {
-  const userRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?pi_uid=eq.${piUid}&select=pi_uid`,
-    { headers: headers(), cache: "no-store" }
-  );
-
-  if (!userRes.ok) return [];
-
-  const users = await userRes.json();
-  const buyerId = users[0]?.pi_uid;
-  if (!buyerId) return [];
-
-  const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${buyerId}&order=created_at.desc`,
-    { headers: headers(), cache: "no-store" }
-  );
-
-  if (!orderRes.ok) return [];
-
-  return await orderRes.json();
-}
 
 export async function createOrderSafe({
   buyerPiUid,
@@ -150,15 +134,13 @@ export async function createOrderSafe({
 }: {
   buyerPiUid: string;
   items: Array<{
-  product_id: string;
-  quantity: number;
-  price: number;
-  seller_pi_uid: string; // 🔥 THÊM DÒNG NÀY
-}>;
-
+    product_id: string;
+    quantity: number;
+    price: number;
+    seller_pi_uid: string;
+  }>;
   total: number;
 }) {
-  /* 1️⃣ CREATE ORDER */
   const orderRes = await fetch(
     `${SUPABASE_URL}/rest/v1/orders`,
     {
@@ -167,11 +149,11 @@ export async function createOrderSafe({
         ...headers(),
         Prefer: "return=representation",
       },
-       body: JSON.stringify({
-  buyer_id: buyerPiUid,
-  total: Math.round(total * PI_BASE), // ✅ INTEGER
-  status: "pending",
-}),
+      body: JSON.stringify({
+        buyer_id: buyerPiUid,
+        total: Math.round(total * PI_BASE),
+        status: "pending",
+      }),
     }
   );
 
@@ -181,23 +163,19 @@ export async function createOrderSafe({
   }
 
   const orderData = await orderRes.json();
-
-  // ✅ FIX CHÍNH Ở ĐÂY
   if (!Array.isArray(orderData) || !orderData[0]) {
     throw new Error("ORDER_NOT_RETURNED");
   }
 
   const order = orderData[0];
 
-  /* 2️⃣ CREATE ORDER ITEMS */
-  
-const orderItems = items.map((i) => ({
-  order_id: order.id,
-  product_id: i.product_id,
-  quantity: i.quantity,
-  price: Math.round(i.price * PI_BASE),
-  seller_pi_uid: i.seller_pi_uid, // 🔥 DÒNG QUYẾT ĐỊNH
-}));
+  const orderItems = items.map((i) => ({
+    order_id: order.id,
+    product_id: i.product_id,
+    quantity: i.quantity,
+    price: Math.round(i.price * PI_BASE),
+    seller_pi_uid: i.seller_pi_uid,
+  }));
 
   const itemsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items`,
