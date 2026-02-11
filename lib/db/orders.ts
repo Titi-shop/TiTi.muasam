@@ -123,32 +123,29 @@ export async function updateOrderStatus(
    EXISTING FUNCTIONS (GIỮ NGUYÊN)
 ===================================================== */
 export async function getOrdersByBuyerSafe(piUid: string) {
+  // 1️⃣ Lấy UUID user
+  const userRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?pi_uid=eq.${piUid}&select=id`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!userRes.ok) return [];
+
+  const users = await userRes.json();
+  const userId = users[0]?.id;
+
+  if (!userId) return [];
+
+  // 2️⃣ Query orders bằng UUID
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${piUid}&select=
-      id,
-      status,
-      total,
-      created_at,
-      order_items(
-        quantity,
-        price,
-        product:product_id(
-          id,
-          name,
-          images
-        )
-      )
-      &order=created_at.desc`,
+    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${userId}&order=created_at.desc`,
     {
       headers: headers(),
       cache: "no-store",
     }
   );
 
-  if (!res.ok) {
-    console.error("FETCH ORDERS FAILED");
-    return [];
-  }
+  if (!res.ok) return [];
 
   return await res.json();
 }
