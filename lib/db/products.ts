@@ -51,8 +51,8 @@ function supabaseHeaders() {
    GET — ALL PRODUCTS (PUBLIC)
 ========================= */
 export async function getAllProducts(): Promise<ProductRecord[]> {
-  const res = await fetch(
-  `${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerPiUid}&status=eq.active&select=*`,
+ const res = await fetch(
+  `${SUPABASE_URL}/rest/v1/products?status=eq.active&select=*`,
   {
     headers: supabaseHeaders(),
     cache: "no-store",
@@ -76,12 +76,12 @@ export async function getSellerProducts(
   sellerPiUid: string
 ): Promise<ProductRecord[]> {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerPiUid}&status=eq.active&select=*`
-    {
-      headers: supabaseHeaders(),
-      cache: "no-store",
-    }
-  );
+  `${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerPiUid}&status=eq.active&select=*`,
+  {
+    headers: supabaseHeaders(),
+    cache: "no-store",
+  }
+);
 
   if (!res.ok) {
     const text = await res.text();
