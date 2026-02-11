@@ -239,21 +239,26 @@ export async function DELETE(req: Request) {
     const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+    // 🔒 SOFT DELETE
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/products?id=eq.${id}&seller_id=eq.${auth.user.pi_uid}`,
       {
-        method: "DELETE",
+        method: "PATCH",
         headers: {
+          "Content-Type": "application/json",
           apikey: SERVICE_KEY,
           Authorization: `Bearer ${SERVICE_KEY}`,
           Prefer: "return=minimal",
         },
+        body: JSON.stringify({
+          status: "inactive",
+        }),
       }
     );
 
     if (!res.ok) {
       const text = await res.text();
-      console.error("❌ SUPABASE DELETE ERROR:", text);
+      console.error("❌ SUPABASE SOFT DELETE ERROR:", text);
       return NextResponse.json(
         { error: "FAILED_TO_DELETE_PRODUCT" },
         { status: 500 }
