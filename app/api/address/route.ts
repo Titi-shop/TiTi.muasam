@@ -115,3 +115,28 @@ export async function PUT(req: Request) {
 
   return NextResponse.json({ success: true });
 }
+/* =========================
+   DELETE
+========================= */
+export async function DELETE(req: Request) {
+  const pi_uid = await getPiUid();
+  if (!pi_uid)
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+
+  if (!id)
+    return NextResponse.json({ error: "INVALID_ID" }, { status: 400 });
+
+  const { error } = await supabaseAdmin
+    .from("addresses")
+    .delete()
+    .eq("id", id)
+    .eq("pi_uid", pi_uid);
+
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ success: true });
+}
