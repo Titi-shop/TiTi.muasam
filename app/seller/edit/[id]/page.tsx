@@ -211,6 +211,22 @@ export default function EditProductPage() {
         ))}
       </div>
 
+       {/* ADD PRODUCT IMAGES */}
+<label className="block text-sm font-medium text-gray-700">
+  📷 {t.product_images}
+</label>
+
+<input
+  type="file"
+  accept="image/*"
+  multiple
+  onChange={(e) => {
+    const files = Array.from(e.target.files || []);
+    uploadImages(files, setImages);
+    e.target.value = "";
+  }}
+  className="w-full border p-2 rounded"
+/>
       <form onSubmit={handleSave} className="space-y-4">
         <select
           name="categoryId"
@@ -289,6 +305,40 @@ export default function EditProductPage() {
           className="w-full border p-2 rounded min-h-[120px]"
         />
 
+         {/* DETAIL IMAGES */}
+<label className="block text-sm font-medium text-gray-700 mt-2">
+  🖼 {t.product_detail_images}
+</label>
+
+<div className="grid grid-cols-3 gap-3 mt-2">
+  {detailImages.map((url, i) => (
+    <div key={url} className="relative h-28">
+      <Image src={url} alt="" fill className="object-cover rounded" />
+      <button
+        type="button"
+        onClick={() => removeImage(i, setDetailImages)}
+        className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 rounded"
+      >
+        ✕
+      </button>
+    </div>
+  ))}
+
+  <label className="flex items-center justify-center border-2 border-dashed rounded cursor-pointer h-28 text-gray-400">
+    ＋
+    <input
+      type="file"
+      accept="image/*"
+      multiple
+      hidden
+      onChange={(e) => {
+        const files = Array.from(e.target.files || []);
+        uploadImages(files, setDetailImages);
+        e.target.value = "";
+      }}
+    />
+  </label>
+</div>
         <button
           disabled={saving}
           className="w-full bg-[#ff6600] text-white py-3 rounded-lg font-semibold"
