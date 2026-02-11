@@ -76,7 +76,7 @@ export async function getSellerProducts(
   sellerPiUid: string
 ): Promise<ProductRecord[]> {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerPiUid}&select=*`,
+    `${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerPiUid}&status=eq.active&select=*`
     {
       headers: supabaseHeaders(),
       cache: "no-store",
@@ -167,5 +167,42 @@ export async function updateProductBySeller(
   }
 
   // Supabase REST PATCH không trả row → chỉ cần biết thành công
+  return true;
+}
+/* =========================
+   DELETE — SOFT DELETE BY SELLER
+========================= */
+export async function deleteProductBySeller(
+  sellerPiUid: string,
+  productId: string
+): Promise<boolean> {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/products?id=eq.${productId}&seller_id=eq.${sellerPiUid}`,
+    {
+      method: "PATCH",
+      headers: {
+        ...supabaseHeaders(),
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        status: "inactive",
+        updated_at: new Date().toISOString(),
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("❌ SUPABASE DELETE PRODUCT ERROR:", text);
+    throw new Error("FAILED_TO_DELETE_PRODUCT");
+  }
+
+  const data = await res.json();
+
+  // Nếu không có row nào được update → delete fail
+  if (!data || data.length === 0) {
+    return false;
+  }
+
   return true;
 }
