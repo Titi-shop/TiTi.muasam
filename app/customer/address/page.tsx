@@ -252,13 +252,13 @@ export default function CustomerAddressPage() {
         </div>
 
         {/* SAVE */}
-        <div className="absolute bottom-6 left-0 right-0 bg-white border-t p-4">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full py-3 rounded-xl bg-orange-600 text-white font-semibold"
-          >
-            {saving ? t.saving : t.save_address}
+        <div className="sticky bottom-4 left-0 right-0 bg-white border-t p-4">
+  <button
+    onClick={handleSave}
+    disabled={saving}
+    className="w-full py-3 rounded-xl bg-orange-600 text-white font-semibold"
+  >
+    {saving ? t.saving : t.save_address}
           </button>
         </div>
       </div>
