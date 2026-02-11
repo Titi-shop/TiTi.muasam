@@ -15,7 +15,7 @@ export async function GET() {
     { id: 13, key: "category_13", icon: "/banners/thucung.jpg" },
     { id: 14, key: "category_14", icon: "/banners/dienmay.jpg" },
     { id: 15, key: "category_15", icon: "/banners/sach.jpg" },
-    { id: 16, key: "category_16", icon: "/banners/đồng hồ .jpg" },
+    { id: 16, key: "category_16", icon: "/banners/đông hồ .jpg" },
     { id: 18, key: "category_18", icon: "/banners/máy ảnh.jpg" },
     { id: 19, key: "category_19", icon: "/banners/dochoitreem.jpg" },
     { id: 20, key: "category_20", icon: "/banners/noithat.jpg" },
