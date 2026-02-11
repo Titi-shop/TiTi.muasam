@@ -222,22 +222,33 @@ export async function PUT(req: Request) {
    DELETE — DELETE PRODUCT (SELLER ONLY)
 ========================================================= */
 export async function DELETE(req: Request) {
-  const auth = await requireSeller();
-  if (!auth.ok) return auth.response;
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  const sellerId = searchParams.get("sellerId");
 
-  try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
+  if (!id || !sellerId) {
+    return Response.json({ error: "Missing params" }, { status: 400 });
+  }
 
-    if (!id) {
-      return NextResponse.json(
-        { error: "MISSING_PRODUCT_ID" },
-        { status: 400 }
-      );
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/products?id=eq.${id}&seller_id=eq.${sellerId}`,
+    {
+      method: "DELETE",
+      headers: {
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+      },
     }
+  );
 
-    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("DELETE ERROR:", text);
+    return Response.json({ error: text }, { status: 500 });
+  }
+
+  return Response.json({ success: true });
+}
 
     // 🔒 SOFT DELETE
     const res = await fetch(
