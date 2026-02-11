@@ -67,37 +67,35 @@ export async function getOrderById(
    - Chỉ lấy đơn có sản phẩm của seller
 ===================================================== */
 
-export async function getOrdersBySeller(
-  sellerPiUid: string,
-  status?: string
-) {
-  // 1️⃣ Lấy order_id theo seller_pi_uid (ĐÚNG)
-  const itemsRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}`,
-    { headers: headers(), cache: "no-store" }
+export async function getOrdersByBuyerSafe(piUid: string) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${piUid}&select=
+      id,
+      status,
+      total,
+      created_at,
+      order_items(
+        quantity,
+        price,
+        product:product_id(
+          id,
+          name,
+          images
+        )
+      )
+      &order=created_at.desc`,
+    {
+      headers: headers(),
+      cache: "no-store",
+    }
   );
 
-  if (!itemsRes.ok) return [];
+  if (!res.ok) {
+    console.error("FETCH ORDERS FAILED");
+    return [];
+  }
 
-  const items = await itemsRes.json();
-  const orderIds = Array.from(
-    new Set(items.map((i: { order_id: string }) => i.order_id))
-  );
-
-  if (orderIds.length === 0) return [];
-
-  // 2️⃣ Lấy orders theo status
-  const ids = orderIds.map((id) => `"${id}"`).join(",");
-  const statusFilter = status ? `&status=eq.${status}` : "";
-
-  const ordersRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})${statusFilter}&order=created_at.desc`,
-    { headers: headers(), cache: "no-store" }
-  );
-
-  if (!ordersRes.ok) return [];
-
-  return await ordersRes.json();
+  return await res.json();
 }
 
   
