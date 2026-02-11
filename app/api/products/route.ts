@@ -222,57 +222,47 @@ export async function PUT(req: Request) {
    DELETE — DELETE PRODUCT (SELLER ONLY)
 ========================================================= */
 export async function DELETE(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-  const sellerId = searchParams.get("sellerId");
+  const auth = await requireSeller();
+  if (!auth.ok) return auth.response;
 
-  if (!id || !sellerId) {
-    return Response.json({ error: "Missing params" }, { status: 400 });
-  }
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/products?id=eq.${id}&seller_id=eq.${sellerId}`,
-    {
-      method: "DELETE",
-      headers: {
-        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
-      },
+    if (!id) {
+      return NextResponse.json(
+        { error: "MISSING_PRODUCT_ID" },
+        { status: 400 }
+      );
     }
-  );
 
-  if (!res.ok) {
-    const text = await res.text();
-    console.error("DELETE ERROR:", text);
-    return Response.json({ error: text }, { status: 500 });
-  }
-
-  return Response.json({ success: true });
-}
-
-    // 🔒 SOFT DELETE
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/products?id=eq.${id}&seller_id=eq.${auth.user.pi_uid}`,
+      `${process.env.SUPABASE_URL}/rest/v1/products?id=eq.${id}&seller_id=eq.${auth.user.pi_uid}`,
       {
-        method: "PATCH",
+        method: "DELETE",
         headers: {
-          "Content-Type": "application/json",
-          apikey: SERVICE_KEY,
-          Authorization: `Bearer ${SERVICE_KEY}`,
-          Prefer: "return=minimal",
+          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+          Prefer: "return=representation",
         },
-        body: JSON.stringify({
-          status: "inactive",
-        }),
       }
     );
 
     if (!res.ok) {
       const text = await res.text();
-      console.error("❌ SUPABASE SOFT DELETE ERROR:", text);
+      console.error("❌ DELETE ERROR:", text);
       return NextResponse.json(
         { error: "FAILED_TO_DELETE_PRODUCT" },
         { status: 500 }
+      );
+    }
+
+    const deleted = await res.json();
+
+    if (!deleted.length) {
+      return NextResponse.json(
+        { error: "PRODUCT_NOT_FOUND_OR_FORBIDDEN" },
+        { status: 404 }
       );
     }
 
