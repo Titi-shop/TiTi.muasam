@@ -199,4 +199,3 @@ export async function deleteProductBySeller(
   return deleted.length > 0;
 }
 
-}
