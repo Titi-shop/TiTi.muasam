@@ -52,12 +52,12 @@ function supabaseHeaders() {
 ========================= */
 export async function getAllProducts(): Promise<ProductRecord[]> {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/products?select=*`,
-    {
-      headers: supabaseHeaders(),
-      cache: "no-store",
-    }
-  );
+  `${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerPiUid}&status=eq.active&select=*`,
+  {
+    headers: supabaseHeaders(),
+    cache: "no-store",
+  }
+);
 
   if (!res.ok) {
     const text = await res.text();
