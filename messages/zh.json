@@ -312,7 +312,11 @@
   "seller_note": "您可以注册成为卖家以开启自己的店铺。",
   "product_images": "商品图片",
   "order_returned": "已退货",
-  "order_cancelled": "已取消"
+  "order_cancelled": "已取消",
+  
+  "description": "产品描述",
+  "details": "产品详情",
+  "related_products": "相关产品"
 
 
 }
