@@ -268,7 +268,7 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
         {/* FOOTER */}
         <div className="border-t p-4">
           <p className="text-center text-sm text-gray-1000 mb-2">
-            An tâm mua sắm tại TiTi
+            {t.shop_confidence}
           </p>
 
           <button
