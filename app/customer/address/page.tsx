@@ -252,7 +252,7 @@ export default function CustomerAddressPage() {
         </div>
 
         {/* SAVE */}
-        <div className="absolute bottom-6 inset-x-4">
+        <div className="absolute bottom-4 left-0 right-0 bg-white border-t p-4">
           <button
             onClick={handleSave}
             disabled={saving}
