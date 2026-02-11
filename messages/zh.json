@@ -305,8 +305,12 @@
   
   "sale_time": "促销时间",
   "sale_price_optional": "促销价（可选）",
-  "product_detail": "商品详细描述"
+  "product_detail": "商品详细描述",
 
+  
+  "register_seller": "注册成为卖家",
+  "seller_note": "您可以注册成为卖家以开启自己的店铺。",
+  "product_images": "商品图片"
 
 
 }
