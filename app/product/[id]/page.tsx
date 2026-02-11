@@ -291,7 +291,7 @@ const relatedProducts = products.filter(
       {/* DETAIL CONTENT */}
       <div className="bg-white mt-2 px-4 py-5">
   <h3 className="text-base font-semibold mb-3">
-    {t.product?.details ?? "Chi tiết sản phẩm"}
+     {t.product_details ?? "Chi tiết sản phẩm"}
   </h3>
 
   <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
@@ -302,7 +302,7 @@ const relatedProducts = products.filter(
        {relatedProducts.length > 0 && (
   <div className="bg-white mt-2 p-4">
     <h3 className="text-sm font-semibold mb-3">
-      🔗 {t.product?.related_products ?? "Sản phẩm liên quan"}
+      🔗 {t.product_related_products ?? "Sản phẩm liên quan"}
     </h3>
 
     <div className="flex gap-3 overflow-x-auto">
