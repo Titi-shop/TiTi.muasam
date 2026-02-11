@@ -314,9 +314,11 @@
   "order_returned": "已退货",
   "order_cancelled": "已取消",
   
-  "description": "产品描述",
-  "details": "产品详情",
-  "related_products": "相关产品"
+  
+  "product_description": "产品描述",
+  "product_details": "产品详情",
+  "product_related_products": "相关产品"
+
 
 
 }
