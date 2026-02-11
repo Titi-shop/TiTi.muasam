@@ -320,8 +320,13 @@
   "product_related_products": "相关产品",
   
   "shop_confidence": "在 TiTi 购物更安心",
-  
-  "add_address": "添加地址"
+  "add_address": "添加地址",
+
+  "delete": "删除",
+  "set_default": "设为默认",
+  "default": "默认",
+  "shipping_address": "收货地址",
+  "confirm_delete": "确定删除该地址吗？"
 
 
 }
