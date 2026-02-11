@@ -179,25 +179,25 @@ export async function deleteProductBySeller(
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/products?id=eq.${productId}&seller_id=eq.${sellerPiUid}`,
     {
-      method: "PATCH",
+      method: "DELETE",
       headers: {
         ...supabaseHeaders(),
         Prefer: "return=representation",
       },
-      body: JSON.stringify({
-        status: "inactive",
-        updated_at: new Date().toISOString(),
-      }),
     }
   );
 
   if (!res.ok) {
     const text = await res.text();
-    console.error("❌ SUPABASE DELETE PRODUCT ERROR:", text);
+    console.error("❌ DELETE PRODUCT ERROR:", text);
     throw new Error("FAILED_TO_DELETE_PRODUCT");
   }
 
-  const data = await res.json();
+  const deleted = await res.json();
+  console.log("Deleted rows:", deleted);
+
+  return deleted.length > 0;
+}
 
   // Nếu không có row nào được update → delete fail
   if (!data || data.length === 0) {
