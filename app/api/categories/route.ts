@@ -6,7 +6,7 @@ export async function GET() {
     { id: 2, key: "category_2", icon: "/banners/thời trang nam.jpg" },
     { id: 3, key: "category_3", icon: "/banners/thời trang nữ.jpg" },
     { id: 4, key: "category_4", icon: "/banners/giày dép.jpg" },
-    { id: 5, key: "category_5", icon: "/banners/nuoc hoa.jpg" },
+    { id: 5, key: "category_5", icon: "/banners/nước hoa.jpg" },
     { id: 7, key: "category_7", icon: "/banners/mevabe.jpg" },
     { id: 9, key: "category_9", icon: "/banners/giadung.jpg" },
     { id: 10, key: "category_10", icon: "/banners/suckhoe.jpg" },
