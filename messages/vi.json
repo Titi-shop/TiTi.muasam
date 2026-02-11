@@ -293,6 +293,13 @@
 
   "sale_time": "Thời gian khuyến mãi",
   "sale_price_optional": "Giá khuyến mãi (không bắt buộc)",
-  "product_detail": "Mô tả chi tiết sản phẩm"
+  "product_detail": "Mô tả chi tiết sản phẩm",
 
+  
+  "register_seller": "Đăng ký bán hàng",
+  "seller_note": "Bạn có thể đăng ký bán hàng để mở gian hàng của mình.",
+  "product_images": "Hình ảnh sản phẩm"
+
+
+  
 }
