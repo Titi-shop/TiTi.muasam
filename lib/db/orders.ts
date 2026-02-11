@@ -98,11 +98,15 @@ export async function getOrdersByBuyerSafe(piUid: string) {
   );
 
   if (!res.ok) {
-    console.error("FETCH ORDERS FAILED");
+    const err = await res.text();
+    console.error("FETCH ORDERS FAILED:", err);
     return [];
   }
 
-  return await res.json();
+  const data = await res.json();
+  console.log("SUPABASE RAW DATA:", data);
+
+  return data;
 }
 
 /* =====================================================
