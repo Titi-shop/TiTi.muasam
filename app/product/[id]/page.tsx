@@ -213,8 +213,8 @@ const relatedProducts = products.filter(
                   key={i}
                   className={`w-2 h-2 rounded-full ${
                     i === currentIndex
-                      ? "bg-orange-500"
-                      : "bg-gray-300"
+                      ? "bg-orange-700"
+                      : "bg-gray-700"
                   }`}
                 />
               ))}
