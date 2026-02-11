@@ -199,10 +199,4 @@ export async function deleteProductBySeller(
   return deleted.length > 0;
 }
 
-  // Nếu không có row nào được update → delete fail
-  if (!data || data.length === 0) {
-    return false;
-  }
-
-  return true;
 }
