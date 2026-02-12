@@ -134,9 +134,14 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
     setProcessing(true);
 
     try {
+       if (total < 0.0000001) {
+  alert("Số Pi quá nhỏ để thanh toán");
+  setProcessing(false);
+  return;
+}
       await window.Pi.createPayment(
         {
-          amount: Number(total.toFixed(2)),
+          amount: Number(total),
           memo: "Thanh toán đơn hàng TiTi",
           metadata: {
             shipping,
@@ -260,8 +265,9 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
             </div>
 
             <p className="font-semibold text-orange-600">
-              {total.toFixed(2)} π
-            </p>
+  {total.toFixed(6)} π
+</p>
+             
           </div>
         </div>
 
