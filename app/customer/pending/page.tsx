@@ -19,8 +19,10 @@ interface Product {
 interface OrderItem {
   quantity: number;
   price: number;
-  product: Product;
+  product_id: string; // 👈 thêm
+  product?: Product;  // 👈 optional
 }
+
 
 interface Order {
   id: string;
@@ -46,32 +48,71 @@ export default function PendingOrdersPage() {
   }, []);
 
   async function loadOrders(): Promise<void> {
-    try {
-      const token = await getPiAccessToken();
+  try {
+    const token = await getPiAccessToken();
 
-      const res = await fetch("/api/orders", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
-      });
+    /* 1️⃣ Lấy orders + order_items (CHƯA CÓ product) */
+    const res = await fetch("/api/orders", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
 
-      if (!res.ok) throw new Error("UNAUTHORIZED");
+    if (!res.ok) throw new Error("UNAUTHORIZED");
 
-      const data: unknown = await res.json();
-      const list: Order[] = Array.isArray(data)
-        ? (data as Order[])
-        : [];
+    const rawOrders: Order[] = await res.json();
 
-      // ✅ chỉ lấy đơn pending
-      setOrders(list.filter((o) => o.status === "pending"));
-    } catch (err) {
-      console.error("❌ Load pending orders error:", err);
-      setOrders([]);
-    } finally {
-      setLoading(false);
+    const pendingOrders = rawOrders.filter(
+      (o) => o.status === "pending"
+    );
+
+    /* 2️⃣ Gom tất cả product_id */
+    const productIds = Array.from(
+      new Set(
+        pendingOrders.flatMap((o) =>
+          o.order_items.map((i) => i.product_id)
+        )
+      )
+    );
+
+    if (productIds.length === 0) {
+      setOrders(pendingOrders);
+      return;
     }
+
+    /* 3️⃣ Fetch products 1 lần */
+    const productRes = await fetch(
+      `/api/products?ids=${productIds.join(",")}`,
+      { cache: "no-store" }
+    );
+
+    if (!productRes.ok)
+      throw new Error("FETCH_PRODUCTS_FAILED");
+
+    const products: Product[] = await productRes.json();
+
+    const productMap = Object.fromEntries(
+      products.map((p) => [p.id, p])
+    );
+
+    /* 4️⃣ Gắn product vào từng order_item */
+    const enrichedOrders = pendingOrders.map((o) => ({
+      ...o,
+      order_items: o.order_items.map((i) => ({
+        ...i,
+        product: productMap[i.product_id],
+      })),
+    }));
+
+    setOrders(enrichedOrders);
+  } catch (err) {
+    console.error("❌ Load pending orders error:", err);
+    setOrders([]);
+  } finally {
+    setLoading(false);
   }
+}
 
   /* =========================
      SUMMARY
@@ -135,20 +176,22 @@ export default function PendingOrdersPage() {
                     >
                       {/* IMAGE */}
                       <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                        {item.product.images.length > 0 && (
-                          <img
-                            src={item.product.images[0]}
-                            alt={item.product.name}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
+                        {item.product?.images?.length > 0 && (
+  <img
+    src={item.product.images[0]}
+    alt={item.product.name}
+    className="w-full h-full object-cover"
+  />
+)}
+
                       </div>
 
                       {/* INFO */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium line-clamp-1">
-                          {item.product.name}
-                        </p>
+  {item.product?.name ?? "—"}
+</p>
+
                         <p className="text-xs text-gray-500">
                           x{item.quantity} · π{item.price}
                         </p>
