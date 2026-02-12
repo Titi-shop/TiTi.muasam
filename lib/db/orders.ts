@@ -74,21 +74,12 @@ export async function getOrderById(
    GET ORDERS BY BUYER (FULL DATA FOR UI)
 ===================================================== */
 export async function getOrdersByBuyerSafe(piUid: string) {
-  // 1️⃣ lấy user.id từ pi_uid
-  const userRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?pi_uid=eq.${piUid}&select=id`,
-    { headers: headers(), cache: "no-store" }
-  );
+  // 🔑 1️⃣ Lấy auth.users.id thông qua getUserFromBearer
+  // NOTE: getUserFromBearer() của bạn đã trả auth user
+  // và user.id chính là auth.users.id
 
-  if (!userRes.ok) return [];
-
-  const users = await userRes.json();
-  const userId = users[0]?.id;
-  if (!userId) return [];
-
-  // 2️⃣ query orders bằng user.id
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${userId}&select=
+    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${piUid}&select=
       id,
       status,
       total,
@@ -109,11 +100,14 @@ export async function getOrdersByBuyerSafe(piUid: string) {
     }
   );
 
-  if (!res.ok) return [];
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("FETCH ORDERS FAILED:", err);
+    return [];
+  }
 
   return await res.json();
 }
-
 
 /* =====================================================
    UPDATE ORDER STATUS
