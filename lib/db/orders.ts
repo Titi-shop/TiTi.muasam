@@ -1,6 +1,13 @@
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const PI_BASE = 1_000_000; // hỗ trợ tới 0.000001 Pi
+function toMicroPi(value: number): number {
+  return Math.round(value * PI_BASE);
+}
+
+function fromMicroPi(value: number): number {
+  return value / PI_BASE;
+}
 
 function headers() {
   return {
@@ -60,7 +67,23 @@ export async function getOrderById(
   if (!res.ok) return null;
 
   const data = await res.json();
-  return data[0] ?? null;
+  const order = data[0];
+if (!order) return null;
+
+order.total = fromMicroPi(order.total);
+
+order.items = order.items.map((item: {
+  quantity: number;
+  price: number;
+  product: {
+    seller: { pi_uid: string };
+  };
+}) => ({
+  ...item,
+  price: fromMicroPi(item.price),
+}));
+
+return order;
 }
 /* =====================================================
    GET ORDERS BY SELLER
@@ -142,24 +165,25 @@ export async function getOrdersByBuyerSafe(piUid: string) {
 
   if (!orderRes.ok) return [];
 
-  return await orderRes.json();
-}
-
-export async function createOrderSafe({
-  buyerPiUid,
-  items,
-  total,
-}: {
-  buyerPiUid: string;
-  items: Array<{
-  product_id: string;
-  quantity: number;
-  price: number;
-  seller_pi_uid: string; // 🔥 THÊM DÒNG NÀY
-}>;
-
+const orders: Array<{
+  id: string;
   total: number;
-}) {
+  status: string;
+  order_items: Array<{
+    quantity: number;
+    price: number;
+    product_id: string;
+  }>;
+}> = await orderRes.json();
+
+return orders.map((o) => ({
+  ...o,
+  total: fromMicroPi(o.total),
+  order_items: o.order_items.map((i) => ({
+    ...i,
+    price: fromMicroPi(i.price),
+  })),
+}));
   /* 1️⃣ CREATE ORDER */
   const orderRes = await fetch(
     `${SUPABASE_URL}/rest/v1/orders`,
@@ -171,7 +195,7 @@ export async function createOrderSafe({
       },
        body: JSON.stringify({
   buyer_id: buyerPiUid,
-  total: Math.round(total * PI_BASE), // ✅ INTEGER
+  total: toMicroPi(total),
   status: "pending",
 }),
     }
@@ -197,7 +221,7 @@ const orderItems = items.map((i) => ({
   order_id: order.id,
   product_id: i.product_id,
   quantity: i.quantity,
-  price: Math.round(i.price * PI_BASE),
+  price: toMicroPi(i.price),
   seller_pi_uid: i.seller_pi_uid, // 🔥 DÒNG QUYẾT ĐỊNH
 }));
 
