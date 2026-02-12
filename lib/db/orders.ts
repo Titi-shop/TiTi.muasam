@@ -136,9 +136,9 @@ export async function getOrdersByBuyerSafe(piUid: string) {
   if (!buyerId) return [];
 
   const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${buyerId}&order=created_at.desc`,
-    { headers: headers(), cache: "no-store" }
-  );
+  `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${buyerId}&order=created_at.desc&select=id,total,status,order_items(quantity,price,product_id)`,
+  { headers: headers(), cache: "no-store" }
+);
 
   if (!orderRes.ok) return [];
 
