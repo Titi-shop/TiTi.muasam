@@ -73,10 +73,22 @@ export async function getOrderById(
 /* =====================================================
    GET ORDERS BY BUYER (FULL DATA FOR UI)
 ===================================================== */
-
 export async function getOrdersByBuyerSafe(piUid: string) {
+  // 1️⃣ lấy user.id từ pi_uid
+  const userRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?pi_uid=eq.${piUid}&select=id`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!userRes.ok) return [];
+
+  const users = await userRes.json();
+  const userId = users[0]?.id;
+  if (!userId) return [];
+
+  // 2️⃣ query orders bằng user.id
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${piUid}&select=
+    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${userId}&select=
       id,
       status,
       total,
@@ -97,17 +109,11 @@ export async function getOrdersByBuyerSafe(piUid: string) {
     }
   );
 
-  if (!res.ok) {
-    const err = await res.text();
-    console.error("FETCH ORDERS FAILED:", err);
-    return [];
-  }
+  if (!res.ok) return [];
 
-  const data = await res.json();
-  console.log("SUPABASE RAW DATA:", data);
-
-  return data;
+  return await res.json();
 }
+
 
 /* =====================================================
    UPDATE ORDER STATUS
