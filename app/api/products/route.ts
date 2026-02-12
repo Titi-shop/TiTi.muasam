@@ -14,12 +14,62 @@ export const dynamic = "force-dynamic";
 /* =========================================================
    GET — PUBLIC PRODUCTS (NO AUTH)
 ========================================================= */
-export async function GET() {
+
+export async function GET(req: Request) {
   try {
-    const products = await getAllProducts();
+    const { searchParams } = new URL(req.url);
+    const ids = searchParams.get("ids");
+
+    let products;
+
+    /* ===============================
+       CASE 1 — /api/products?ids=...
+    =============================== */
+    if (ids) {
+      const idArray = ids
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
+
+      if (idArray.length === 0) {
+        return NextResponse.json([]);
+      }
+
+      const inFilter = idArray.map((id) => `"${id}"`).join(",");
+
+      const res = await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/products?id=in.(${inFilter})&select=id,name,images,price,sale_price,sale_start,sale_end`,
+        {
+          headers: {
+            apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+          },
+          cache: "no-store",
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.text();
+        console.error("❌ FETCH PRODUCTS BY IDS ERROR:", err);
+        return NextResponse.json([]);
+      }
+
+      products = await res.json();
+    }
+
+    /* ===============================
+       CASE 2 — /api/products (ALL)
+    =============================== */
+    else {
+      products = await getAllProducts();
+    }
+
+    /* ===============================
+       ENRICH (giữ nguyên logic bạn)
+    =============================== */
     const now = new Date();
 
-    const enriched = products.map((p) => {
+    const enriched = products.map((p: any) => {
       const start = p.sale_start ? new Date(p.sale_start) : null;
       const end = p.sale_end ? new Date(p.sale_end) : null;
 
