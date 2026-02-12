@@ -8,16 +8,18 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { getPiAccessToken } from "@/lib/piAuth";
 
 /* =========================
-   TYPES
+   TYPES (NO any)
 ========================= */
+interface Product {
+  id: string;
+  name: string;
+  images: string[];
+}
+
 interface OrderItem {
   quantity: number;
   price: number;
-  product: {
-    id: string;
-    name: string;
-    images: string[];
-  };
+  product: Product;
 }
 
 interface Order {
@@ -34,16 +36,16 @@ export default function PendingOrdersPage() {
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   /* =========================
-     LOAD ORDERS
+     LOAD ORDERS (AUTH-CENTRIC)
   ========================= */
   useEffect(() => {
-    loadOrders();
+    void loadOrders();
   }, []);
 
-  const loadOrders = async () => {
+  async function loadOrders(): Promise<void> {
     try {
       const token = await getPiAccessToken();
 
@@ -57,9 +59,11 @@ export default function PendingOrdersPage() {
       if (!res.ok) throw new Error("UNAUTHORIZED");
 
       const data: unknown = await res.json();
-      const list = Array.isArray(data) ? (data as Order[]) : [];
+      const list: Order[] = Array.isArray(data)
+        ? (data as Order[])
+        : [];
 
-      // chỉ lấy đơn pending
+      // ✅ chỉ lấy đơn pending
       setOrders(list.filter((o) => o.status === "pending"));
     } catch (err) {
       console.error("❌ Load pending orders error:", err);
@@ -67,13 +71,13 @@ export default function PendingOrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   /* =========================
      SUMMARY
   ========================= */
   const totalPi = orders.reduce(
-    (sum, o) => sum + Number(o.total || 0),
+    (sum, o) => sum + Number(o.total),
     0
   );
 
@@ -85,7 +89,9 @@ export default function PendingOrdersPage() {
       {/* ===== HEADER ===== */}
       <header className="bg-orange-500 text-white px-4 py-4">
         <div className="bg-orange-400 rounded-lg p-4">
-          <p className="text-sm opacity-90">{t.order_info}</p>
+          <p className="text-sm opacity-90">
+            {t.order_info}
+          </p>
           <p className="text-xs opacity-80 mt-1">
             {t.orders}: {orders.length} · π{totalPi}
           </p>
@@ -110,7 +116,7 @@ export default function PendingOrdersPage() {
                 key={o.id}
                 className="bg-white rounded-lg p-4 shadow-sm"
               >
-                {/* HEADER */}
+                {/* ===== ORDER HEADER ===== */}
                 <div className="flex justify-between items-center">
                   <span className="font-semibold">
                     #{o.id.slice(0, 8)}
@@ -120,16 +126,16 @@ export default function PendingOrdersPage() {
                   </span>
                 </div>
 
-                {/* ITEMS */}
+                {/* ===== ORDER ITEMS ===== */}
                 <div className="mt-3 space-y-2">
-                  {o.order_items?.map((item, idx) => (
+                  {o.order_items.map((item, idx) => (
                     <div
                       key={idx}
                       className="flex gap-3 items-center"
                     >
                       {/* IMAGE */}
                       <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                        {item.product?.images?.[0] && (
+                        {item.product.images.length > 0 && (
                           <img
                             src={item.product.images[0]}
                             alt={item.product.name}
@@ -141,7 +147,7 @@ export default function PendingOrdersPage() {
                       {/* INFO */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium line-clamp-1">
-                          {item.product?.name}
+                          {item.product.name}
                         </p>
                         <p className="text-xs text-gray-500">
                           x{item.quantity} · π{item.price}
@@ -151,7 +157,7 @@ export default function PendingOrdersPage() {
                   ))}
                 </div>
 
-                {/* TOTAL */}
+                {/* ===== TOTAL ===== */}
                 <p className="mt-3 text-sm text-gray-700 font-medium">
                   {t.total}: π{o.total}
                 </p>
