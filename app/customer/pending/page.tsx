@@ -69,12 +69,13 @@ export default function PendingOrdersPage() {
 
     /* 2️⃣ Gom tất cả product_id */
     const productIds = Array.from(
-      new Set(
-        pendingOrders.flatMap((o) =>
-          o.order_items.map((i) => i.product_id)
-        )
-      )
-    );
+  new Set(
+    pendingOrders.flatMap((o) =>
+      o.order_items?.map((i) => i.product_id) ?? []
+    )
+  )
+);
+
 
     if (productIds.length === 0) {
       setOrders(pendingOrders);
@@ -98,12 +99,13 @@ export default function PendingOrdersPage() {
 
     /* 4️⃣ Gắn product vào từng order_item */
     const enrichedOrders = pendingOrders.map((o) => ({
-      ...o,
-      order_items: o.order_items.map((i) => ({
-        ...i,
-        product: productMap[i.product_id],
-      })),
-    }));
+  ...o,
+  order_items: (o.order_items ?? []).map((i) => ({
+    ...i,
+    product: productMap[i.product_id],
+  })),
+}));
+
 
     setOrders(enrichedOrders);
   } catch (err) {
