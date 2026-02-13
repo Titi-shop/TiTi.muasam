@@ -170,22 +170,23 @@ export default function SellerStockPage() {
      UI
   ========================= */
   return (
+  <main className="p-4 max-w-2xl mx-auto pb-28">
 
-      <h1 className="text-2xl font-bold text-center mb-2 text-[#ff6600]">
-        📦 {t.my_stock}
-      </h1>
+    <h1 className="text-2xl font-bold text-center mb-2 text-[#ff6600]">
+       {t.my_stock}
+    </h1>
 
-      {message.text && (
-        <p
-          className={`text-center mb-3 ${
-            message.type === "success"
-              ? "text-green-600"
-              : "text-red-600 font-medium"
-          }`}
-        >
-          {message.text}
-        </p>
-      )}
+    {message.text && (
+      <p
+        className={`text-center mb-3 ${
+          message.type === "success"
+            ? "text-green-600"
+            : "text-red-600 font-medium"
+        }`}
+      >
+        {message.text}
+      </p>
+    )}
 
       {products.length === 0 ? (
         <p className="text-center text-gray-400">
