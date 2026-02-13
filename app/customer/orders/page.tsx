@@ -189,29 +189,30 @@ function formatPi(value: number | string) {
               </div>
                
               {/* PRODUCTS */}
-{o.items && o.items.length > 0 && (
-  <div className="divide-y">
-    {o.items.map((item) => (
-      <div key={item.id} className="flex gap-3 p-4">
-        <img
-          src={item.image || "/placeholder.png"}
-          alt={item.name}
-          className="w-16 h-16 rounded object-cover"
-        />
+{o.order_items && o.order_items.length > 0 && (
+  <div className="mt-3 space-y-2">
+    {o.order_items.map((item, idx) => (
+      <div key={idx} className="flex gap-3 items-center p-4 border-t">
+        {/* IMAGE */}
+        <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+          {item.product?.images?.length > 0 && (
+            <img
+              src={item.product.images[0]}
+              alt={item.product.name}
+              className="w-full h-full object-cover"
+            />
+          )}
+        </div>
 
-        <div className="flex-1">
-          <p className="text-sm line-clamp-2">
-            {item.name}
+        {/* INFO */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium line-clamp-1">
+            {item.product?.name ?? "—"}
           </p>
 
-          <div className="flex justify-between mt-1 text-sm">
-            <span className="text-orange-500">
-              π{formatPi(item.price)}
-            </span>
-            <span className="text-gray-500">
-              x{item.quantity}
-            </span>
-          </div>
+          <p className="text-xs text-gray-500">
+            x{item.quantity} · π{formatPi(item.price)}
+          </p>
         </div>
       </div>
     ))}
