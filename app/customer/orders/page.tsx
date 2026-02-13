@@ -187,38 +187,36 @@ function formatPi(value: number | string) {
                   {t[`status_${o.status}`] ?? o.status}
                 </span>
               </div>
-
+               
               {/* PRODUCTS */}
-              <div className="divide-y">
-                {(o.order_items ?? []).map((item, idx) => (
-                  <div key={item.id} className="flex gap-3 p-4">
-                    {item.product?.images?.length > 0 && (
-  <img
-    src={item.product.images[0]}
-    className="w-16 h-16 rounded object-cover"
-  />
+{o.items && o.items.length > 0 && (
+  <div className="divide-y">
+    {o.items.map((item) => (
+      <div key={item.id} className="flex gap-3 p-4">
+        <img
+          src={item.image || "/placeholder.png"}
+          alt={item.name}
+          className="w-16 h-16 rounded object-cover"
+        />
+
+        <div className="flex-1">
+          <p className="text-sm line-clamp-2">
+            {item.name}
+          </p>
+
+          <div className="flex justify-between mt-1 text-sm">
+            <span className="text-orange-500">
+              π{formatPi(item.price)}
+            </span>
+            <span className="text-gray-500">
+              x{item.quantity}
+            </span>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
 )}
-                       
-                      className="w-16 h-16 rounded object-cover"
-                    />
-
-                    <div className="flex-1">
-                      <p className="text-sm line-clamp-2">
-                        {item.product?.name ?? "—"}
-                      </p>
-
-                      <div className="flex justify-between mt-1 text-sm">
-                        <span className="text-orange-500">
-                          π{formatPi(item.price)}
-                        </span>
-                        <span className="text-gray-500">
-                          x{item.quantity}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
 
               {/* FOOTER */}
               <div className="flex justify-between items-center px-4 py-3 border-t text-sm">
