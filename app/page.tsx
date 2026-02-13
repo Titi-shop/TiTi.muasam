@@ -218,24 +218,25 @@ export default function HomePage() {
   </div>
 </section>
         {/* 4️⃣ DANH MỤC ICON */}
-<section>
-  <div className="grid grid-cols-4 gap-4 text-center">
-    {categories.slice(0, 8).map((c) => (
+<section className="bg-white p-4 rounded-xl">
+  <div className="grid grid-rows-2 grid-flow-col gap-4 overflow-x-auto scrollbar-hide">
+    {categories.map((c) => (
       <button
         key={c.id}
         onClick={() =>
           setSelectedCategory(c.id)
         }
-        className="flex flex-col items-center"
+        className="flex flex-col items-center w-20"
       >
         <Image
           src={c.icon || "/placeholder.png"}
           alt={c.name}
           width={60}
           height={60}
+          loading="lazy"
           className="rounded-full border"
         />
-        <span className="text-xs mt-1 line-clamp-1">
+        <span className="text-xs mt-1 text-center line-clamp-1">
           {c.name}
         </span>
       </button>
