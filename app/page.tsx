@@ -142,32 +142,31 @@ export default function HomePage() {
 
       <div className="px-3 space-y-6 max-w-6xl mx-auto mt-4">
         {/* 3️⃣ FLASH SALE */}
-        {/* 3️⃣ FLASH SALE */}
-<section className="bg-white p-4 rounded-xl">
-  <h2 className="font-bold mb-3">🔥 Flash Sale</h2>
-
-  <div className="flex gap-3 overflow-x-auto">
-    {products
-      .filter((p) => p.isSale)
-      .slice(0, 6)
-      .map((p) => {
-        const discount =
-          p.price > 0
-            ? Math.round(
-                ((p.price - (p.finalPrice ?? p.price)) /
-                  p.price) *
-                  100
-              )
-            : 0;
-
-        return (
-          <div
-            key={p.id}
-            onClick={() =>
-              router.push(`/product/${p.id}`)
-            }
-            className="min-w-[170px] bg-white border rounded-xl shadow-sm flex flex-col"
-          >
+        <section className="bg-white p-4 rounded-xl">
+  <div className="grid grid-rows-2 grid-flow-col gap-4 overflow-x-auto scrollbar-hide">
+    {categories.map((c) => (
+      <button
+        key={c.id}
+        onClick={() =>
+          setSelectedCategory(c.id)
+        }
+        className="flex flex-col items-center w-20"
+      >
+        <Image
+          src={c.icon || "/placeholder.png"}
+          alt={c.name}
+          width={60}
+          height={60}
+          loading="lazy"
+          className="rounded-full border"
+        />
+        <span className="text-xs mt-1 text-center line-clamp-1">
+          {c.name}
+        </span>
+      </button>
+    ))}
+  </div>
+</section>
             {/* IMAGE */}
             <div className="relative">
               <Image
