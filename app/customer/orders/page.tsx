@@ -50,7 +50,7 @@ export default function CustomerOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<OrderTab>("all");
 function formatPi(value: number | string) {
-  return Number(value).toFixed(6).replace(/\.?0+$/, "");
+  return Number(value).toFixed(6);
 }
    
   /* =========================
