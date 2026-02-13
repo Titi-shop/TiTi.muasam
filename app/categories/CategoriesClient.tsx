@@ -100,7 +100,7 @@ export default function CategoriesClient() {
           : "text-gray-500"
       }`}
     >
-      🛍 Tất cả
+      🛍 {t["all"] ?? "Tất cả"}
     </button>
 
     {categories.map((c) => {
