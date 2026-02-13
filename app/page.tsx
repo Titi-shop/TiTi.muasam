@@ -1,153 +1,193 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ShoppingCart } from "lucide-react";
+import { useRouter } from "next/navigation";
+import BannerCarousel from "./components/BannerCarousel";
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
-type Category = {
-  id: string;
-  name: string;
-  icon?: string;
-};
+/* ================= TYPES ================= */
 
-type Product = {
+interface Product {
   id: string;
   name: string;
   price: number;
-  finalPrice?: number;
   images?: string[];
-  isSale?: boolean;
+  views?: number;
   sold?: number;
-  categoryId?: string;
-  saleEnd?: string; // ISO date
-};
+  finalPrice?: number;
+  isSale?: boolean;
+  categoryId?: string | null;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  icon?: string;
+}
+
+/* ================= PAGE ================= */
 
 export default function HomePage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
-  /* =========================
-     STATE
-  ========================= */
-  const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] =
-    useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState<string>("");
+    useState<string | "all">("all");
+  const [sortType, setSortType] = useState<string>("sale");
+  const [loading, setLoading] = useState(true);
 
-  /* =========================
-     FORMAT PI 6 SỐ
-  ========================= */
-  const formatPi = (value: number): string => {
-    return value.toFixed(6);
-  };
+  /* ===== FORMAT PI ===== */
+  function formatPi(value: number | string) {
+    return Number(value).toFixed(6);
+  }
 
-  /* =========================
-     LOAD DATA
-  ========================= */
+  /* ===== LOAD DATA ===== */
   useEffect(() => {
-    const fetchData = async () => {
-      const resCat = await fetch("/api/categories");
-      const resProd = await fetch("/api/products");
+    Promise.all([
+      fetch("/api/products").then((r) => r.json()),
+      fetch("/api/categories").then((r) => r.json()),
+    ])
+      .then(([productData, categoryData]) => {
+        const normalized: Product[] = productData.map(
+          (p: Product) => ({
+            ...p,
+            views: p.views ?? 0,
+            sold: p.sold ?? 0,
+            finalPrice: p.finalPrice ?? p.price,
+            isSale:
+              typeof p.finalPrice === "number" &&
+              p.finalPrice < p.price,
+          })
+        );
 
-      const catData = await resCat.json();
-      const prodData = await resProd.json();
-
-      setCategories(catData);
-      setProducts(prodData);
-    };
-
-    fetchData();
+        setProducts(normalized);
+        setCategories(categoryData);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  /* =========================
-     FLASH SALE COUNTDOWN
-  ========================= */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const flash = products.find((p) => p.isSale && p.saleEnd);
-      if (!flash?.saleEnd) return;
-
-      const end = new Date(flash.saleEnd).getTime();
-      const now = new Date().getTime();
-      const distance = end - now;
-
-      if (distance <= 0) {
-        setTimeLeft("00:00:00");
-        return;
-      }
-
-      const hours = Math.floor(
-        (distance / (1000 * 60 * 60)) % 24
-      );
-      const minutes = Math.floor(
-        (distance / (1000 * 60)) % 60
-      );
-      const seconds = Math.floor(
-        (distance / 1000) % 60
-      );
-
-      setTimeLeft(
-        `${hours
-          .toString()
-          .padStart(2, "0")}:${minutes
-          .toString()
-          .padStart(2, "0")}:${seconds
-          .toString()
-          .padStart(2, "0")}`
-      );
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [products]);
-
-  /* =========================
-     FILTER PRODUCT
-  ========================= */
+  /* ===== FILTER + SORT ===== */
   const filteredProducts = useMemo(() => {
-    if (!selectedCategory) return products;
-    return products.filter(
-      (p) => p.categoryId === selectedCategory
+    let list = [...products];
+
+    if (selectedCategory !== "all") {
+      list = list.filter(
+        (p) => p.categoryId === selectedCategory
+      );
+    }
+
+    switch (sortType) {
+      case "sale":
+        return list.filter((p) => p.isSale);
+      case "new":
+        return list.reverse();
+      case "high":
+        return list.sort(
+          (a, b) =>
+            (b.finalPrice ?? b.price) -
+            (a.finalPrice ?? a.price)
+        );
+      case "low":
+        return list.sort(
+          (a, b) =>
+            (a.finalPrice ?? a.price) -
+            (b.finalPrice ?? b.price)
+        );
+      case "sold":
+        return list.sort(
+          (a, b) => (b.sold ?? 0) - (a.sold ?? 0)
+        );
+      default:
+        return list;
+    }
+  }, [products, selectedCategory, sortType]);
+
+  if (loading) {
+    return (
+      <p className="text-center mt-10">
+        ⏳ {t.loading_products}
+      </p>
     );
-  }, [products, selectedCategory]);
+  }
 
-  /* =========================
-     UI
-  ========================= */
   return (
-    <main className="p-4 space-y-6 bg-gray-100 min-h-screen">
+    <main className="bg-gray-50 min-h-screen pb-24">
+      {/* 1️⃣ Banner */}
+      <BannerCarousel />
 
-      {/* =========================
-         FLASH SALE
-      ========================= */}
-      <section className="bg-white p-4 rounded-xl shadow-sm">
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="font-bold text-red-600">
+      {/* 2️⃣ MENU NGANG */}
+      <div className="flex gap-3 overflow-x-auto px-3 py-3 bg-white text-sm">
+        {[
+          { key: "sold", label: "Bán chạy" },
+          { key: "sale", label: "Đang giảm giá" },
+          { key: "new", label: "Deal thịnh hành" },
+          { key: "high", label: "Hot nhất" },
+        ].map((item) => (
+          <button
+            key={item.key}
+            onClick={() => setSortType(item.key)}
+            className={`px-4 py-1 rounded-full whitespace-nowrap ${
+              sortType === item.key
+                ? "bg-orange-600 text-white"
+                : "bg-gray-100"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="px-3 space-y-6 max-w-6xl mx-auto mt-4">
+        {/* 3️⃣ FLASH SALE */}
+        <section className="bg-white p-4 rounded-xl">
+          <h2 className="font-bold mb-3">
             🔥 Flash Sale
           </h2>
-          <span className="bg-red-600 text-white text-xs px-3 py-1 rounded-full">
-            {timeLeft}
-          </span>
-        </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-2">
-          {products
-            .filter((p) => p.isSale)
-            .map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                router={router}
-                formatPi={formatPi}
-              />
-            ))}
-        </div>
-      </section>
+          <div className="flex gap-3 overflow-x-auto">
+            {products
+              .filter((p) => p.isSale)
+              .slice(0, 5)
+              .map((p) => (
+                <div
+                  key={p.id}
+                  className="min-w-[150px]"
+                >
+                  <Image
+                    src={
+                      p.images?.[0] ||
+                      "/placeholder.png"
+                    }
+                    alt={p.name}
+                    width={200}
+                    height={200}
+                    className="rounded-lg"
+                  />
 
-      {/* =========================
-         DANH MỤC 2 HÀNG NGANG
-      ========================= */}
-      <section className="bg-white p-4 rounded-xl shadow-sm">
+                  <p className="text-sm line-clamp-1 mt-1">
+                    {p.name}
+                  </p>
+
+                  <p className="text-orange-600 font-bold">
+                    {formatPi(
+                      p.finalPrice ?? p.price
+                    )}{" "}
+                    π
+                  </p>
+
+                  <p className="text-xs text-gray-400 line-through">
+                    {formatPi(p.price)} π
+                  </p>
+                </div>
+              ))}
+          </div>
+        </section>
+
+        {/* 4️⃣ DANH MỤC */}
+         <section className="bg-white p-4 rounded-xl shadow-sm">
         <div className="flex flex-col gap-4">
           {[0, 1].map((row) => (
             <div
@@ -184,105 +224,80 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* =========================
-         PRODUCT GRID
-      ========================= */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {filteredProducts.map((p) => (
-          <ProductCard
-            key={p.id}
-            product={p}
-            router={router}
-            formatPi={formatPi}
-          />
-        ))}
-      </section>
+        {/* 5️⃣ SORT BAR */}
+        <section className="flex justify-between text-sm">
+          <span>
+            {filteredProducts.length} sản phẩm
+          </span>
+
+          <select
+            value={sortType}
+            onChange={(e) =>
+              setSortType(e.target.value)
+            }
+            className="border rounded px-2 py-1"
+          >
+            <option value="sale">
+              Sản phẩm sale
+            </option>
+            <option value="new">
+              Mới nhất
+            </option>
+            <option value="high">
+              Giá cao → thấp
+            </option>
+            <option value="low">
+              Giá thấp → cao
+            </option>
+            <option value="sold">
+              Bán chạy
+            </option>
+          </select>
+        </section>
+
+        {/* 6️⃣ PRODUCT GRID */}
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {filteredProducts.map((p) => (
+            <div
+              key={p.id}
+              onClick={() =>
+                router.push(`/product/${p.id}`)
+              }
+              className="bg-white rounded-xl shadow-sm border cursor-pointer"
+            >
+              <Image
+                src={
+                  p.images?.[0] ||
+                  "/placeholder.png"
+                }
+                alt={p.name}
+                width={300}
+                height={300}
+                className="w-full h-40 object-cover rounded-t-xl"
+              />
+
+              <div className="p-2">
+                <p className="text-sm line-clamp-2">
+                  {p.name}
+                </p>
+
+                <p className="text-orange-600 font-bold mt-1">
+                  {formatPi(
+                    p.finalPrice ?? p.price
+                  )}{" "}
+                  π
+                </p>
+
+                {p.isSale && (
+                  <p className="text-xs text-gray-400 line-through">
+                    {formatPi(p.price)} π
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </section>
+      </div>
     </main>
-  );
-}
-
-/* =========================
-   PRODUCT CARD COMPONENT
-========================= */
-
-function ProductCard({
-  product,
-  router,
-  formatPi,
-}: {
-  product: Product;
-  router: ReturnType<typeof useRouter>;
-  formatPi: (v: number) => string;
-}) {
-  const discount =
-    product.price > 0
-      ? Math.round(
-          ((product.price -
-            (product.finalPrice ??
-              product.price)) /
-            product.price) *
-            100
-        )
-      : 0;
-
-  return (
-    <div
-      onClick={() =>
-        router.push(`/product/${product.id}`)
-      }
-      className="bg-white rounded-xl shadow-sm border overflow-hidden cursor-pointer hover:shadow-md transition"
-    >
-      <div className="relative">
-        <Image
-          src={
-            product.images?.[0] ||
-            "/placeholder.png"
-          }
-          alt={product.name}
-          width={300}
-          height={300}
-          className="w-full h-44 object-cover"
-        />
-
-        {product.isSale && (
-          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
-            {discount}% OFF
-          </div>
-        )}
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          className="absolute top-2 right-2 bg-white p-2 rounded-full shadow"
-        >
-          <ShoppingCart size={16} />
-        </button>
-      </div>
-
-      <div className="p-3">
-        <p className="text-sm line-clamp-2 min-h-[40px]">
-          {product.name}
-        </p>
-
-        <p className="text-red-600 font-bold mt-1">
-          {formatPi(
-            product.finalPrice ??
-              product.price
-          )}{" "}
-          π
-        </p>
-
-        {product.isSale && (
-          <p className="text-xs text-gray-400 line-through">
-            {formatPi(product.price)} π
-          </p>
-        )}
-
-        <div className="mt-2 bg-pink-100 text-pink-600 text-xs text-center rounded-full py-1">
-          Đã bán {product.sold ?? 0}
-        </div>
-      </div>
-    </div>
   );
 }
