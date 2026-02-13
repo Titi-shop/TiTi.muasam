@@ -88,59 +88,53 @@ export default function CategoriesClient() {
         />
       </div>
 
-      <div className="mt-4 grid grid-cols-12 gap-2 px-2">
+      <div className="mt-2 grid grid-cols-[70px_1fr] gap-0">
         {/* ===== LEFT CATEGORY ===== */}
-        <aside className="col-span-3 sm:col-span-2 overflow-y-auto">
-          <div className="flex flex-col items-center gap-4 py-2">
-            <button
-              onClick={() => setActiveCategoryId(null)}
-              className={`text-xs px-2 py-1 rounded-full ${
-                activeCategoryId === null
-                  ? "bg-orange-600 text-white"
-                  : "text-gray-500"
-              }`}
-            >
-              🛍 {t["all"] ?? "Tất cả"}
-            </button>
+        <aside className="bg-white border-r">
+  <div className="flex flex-col items-center py-2 gap-3">
+    <button
+      onClick={() => setActiveCategoryId(null)}
+      className={`text-[10px] px-1 py-1 w-full ${
+        activeCategoryId === null
+          ? "text-orange-600 font-semibold"
+          : "text-gray-500"
+      }`}
+    >
+      🛍 Tất cả
+    </button>
 
-            {categories.map((c) => {
-              const active =
-                String(activeCategoryId) === String(c.id);
+    {categories.map((c) => {
+      const active =
+        String(activeCategoryId) === String(c.id);
 
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setActiveCategoryId(c.id)}
-                  className={`flex flex-col items-center gap-1 ${
-                    active
-                      ? "text-orange-600 font-semibold"
-                      : "text-gray-500"
-                  }`}
-                >
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      active ? "bg-orange-100" : "bg-gray-100"
-                    }`}
-                  >
-                    <Image
-                      src={c.icon || "/placeholder.png"}
-                      alt={c.name}
-                      width={28}
-                      height={28}
-                      className="object-contain"
-                    />
-                  </div>
-                  <span className="text-[10px] text-center line-clamp-2">
-                    {c.name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </aside>
+      return (
+        <button
+          key={c.id}
+          onClick={() => setActiveCategoryId(c.id)}
+          className={`flex flex-col items-center w-full py-2 ${
+            active
+              ? "bg-orange-50 text-orange-600"
+              : "text-gray-500"
+          }`}
+        >
+          <Image
+            src={c.icon || "/placeholder.png"}
+            alt={c.name}
+            width={28}
+            height={28}
+            className="object-contain"
+          />
+          <span className="text-[9px] text-center leading-tight mt-1">
+            {c.name}
+          </span>
+        </button>
+      );
+    })}
+  </div>
+</aside>
 
         {/* ===== RIGHT PRODUCTS ===== */}
-        <section className="col-span-9 sm:col-span-10 px-1">
+        <section className="bg-gray-100 p-1">
           {loading ? (
             <p className="text-sm text-gray-400">
               {t["loading_products"] || "Đang tải..."}
@@ -150,7 +144,7 @@ export default function CategoriesClient() {
               {t["no_products"] ?? "Chưa có sản phẩm"}
             </p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-[6px]">
               {visibleProducts.map((p) => {
                 const isSale =
                   typeof p.finalPrice === "number" &&
@@ -168,7 +162,7 @@ export default function CategoriesClient() {
                     key={p.id}
                     href={`/product/${p.id}`}
                   >
-                    <div className="bg-white rounded-xl border shadow-sm overflow-hidden cursor-pointer active:scale-95 transition">
+                    <div className="bg-white rounded-xl overflow-hidden border">
                       <div className="relative">
                         <Image
                           src={p.images?.[0] || "/placeholder.png"}
