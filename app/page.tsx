@@ -1,17 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import BannerCarousel from "./components/BannerCarousel";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
-/* =======================
-   TYPES
-======================= */
+/* ================= TYPES ================= */
 
 interface Product {
-  id: string; // 🔥 UUID từ DB
+  id: string;
   name: string;
   price: number;
   images?: string[];
@@ -28,60 +26,51 @@ interface Category {
   icon?: string;
 }
 
-/* =======================
-   PAGE
-======================= */
+/* ================= PAGE ================= */
 
 export default function HomePage() {
   const router = useRouter();
   const { t } = useTranslation();
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [visibleCount, setVisibleCount] = useState(20);
   const [selectedCategory, setSelectedCategory] =
     useState<string | "all">("all");
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [sortType, setSortType] = useState<string>("sale");
+  const [loading, setLoading] = useState(true);
 
-  /* =======================
-     LOAD CATEGORIES
-  ======================= */
-  useEffect(() => {
-    fetch("/api/categories")
-      .then((res) => res.json())
-      .then((data: Category[]) => setCategories(data))
-      .finally(() => setLoadingCategories(false));
-  }, []);
+  /* ===== FORMAT PI ===== */
+  function formatPi(value: number | string) {
+    return Number(value).toFixed(6);
+  }
 
-  /* =======================
-     LOAD PRODUCTS
-  ======================= */
+  /* ===== LOAD DATA ===== */
   useEffect(() => {
-    fetch("/api/products")
-      .then((res) => res.json())
-      .then((data: Product[]) => {
-        const normalized: Product[] = data.map((p) => ({
-          ...p,
-          views: p.views ?? 0,
-          sold: p.sold ?? 0,
-          finalPrice: p.finalPrice ?? p.price,
-          isSale:
-            typeof p.finalPrice === "number" &&
-            p.finalPrice < p.price,
-        }));
+    Promise.all([
+      fetch("/api/products").then((r) => r.json()),
+      fetch("/api/categories").then((r) => r.json()),
+    ])
+      .then(([productData, categoryData]) => {
+        const normalized: Product[] = productData.map(
+          (p: Product) => ({
+            ...p,
+            views: p.views ?? 0,
+            sold: p.sold ?? 0,
+            finalPrice: p.finalPrice ?? p.price,
+            isSale:
+              typeof p.finalPrice === "number" &&
+              p.finalPrice < p.price,
+          })
+        );
 
         setProducts(normalized);
-        setFilteredProducts(normalized);
+        setCategories(categoryData);
       })
-      .finally(() => setLoadingProducts(false));
+      .finally(() => setLoading(false));
   }, []);
 
-  /* =======================
-     FILTER BY CATEGORY
-  ======================= */
-  useEffect(() => {
+  /* ===== FILTER + SORT ===== */
+  const filteredProducts = useMemo(() => {
     let list = [...products];
 
     if (selectedCategory !== "all") {
@@ -90,14 +79,33 @@ export default function HomePage() {
       );
     }
 
-    setFilteredProducts(list);
-    setVisibleCount(20);
-  }, [products, selectedCategory]);
+    switch (sortType) {
+      case "sale":
+        return list.filter((p) => p.isSale);
+      case "new":
+        return list.reverse();
+      case "high":
+        return list.sort(
+          (a, b) =>
+            (b.finalPrice ?? b.price) -
+            (a.finalPrice ?? a.price)
+        );
+      case "low":
+        return list.sort(
+          (a, b) =>
+            (a.finalPrice ?? a.price) -
+            (b.finalPrice ?? b.price)
+        );
+      case "sold":
+        return list.sort(
+          (a, b) => (b.sold ?? 0) - (a.sold ?? 0)
+        );
+      default:
+        return list;
+    }
+  }, [products, selectedCategory, sortType]);
 
-  /* =======================
-     LOADING
-  ======================= */
-  if (loadingProducts) {
+  if (loading) {
     return (
       <p className="text-center mt-10">
         ⏳ {t.loading_products}
@@ -105,139 +113,177 @@ export default function HomePage() {
     );
   }
 
-  /* =======================
-     RENDER
-  ======================= */
   return (
     <main className="bg-gray-50 min-h-screen pb-24">
+      {/* 1️⃣ Banner */}
       <BannerCarousel />
 
-      <div className="px-3 space-y-5 max-w-6xl mx-auto">
-        {/* ===================
-            CATEGORIES
-        =================== */}
-        <section>
-          <h2 className="text-base font-semibold mb-2">
-            {t.featured_categories}
+      {/* 2️⃣ MENU NGANG */}
+      <div className="flex gap-3 overflow-x-auto px-3 py-3 bg-white text-sm">
+        {[
+          { key: "sold", label: "Bán chạy" },
+          { key: "sale", label: "Đang giảm giá" },
+          { key: "new", label: "Deal thịnh hành" },
+          { key: "high", label: "Hot nhất" },
+        ].map((item) => (
+          <button
+            key={item.key}
+            onClick={() => setSortType(item.key)}
+            className={`px-4 py-1 rounded-full whitespace-nowrap ${
+              sortType === item.key
+                ? "bg-orange-600 text-white"
+                : "bg-gray-100"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="px-3 space-y-6 max-w-6xl mx-auto mt-4">
+        {/* 3️⃣ FLASH SALE */}
+        <section className="bg-white p-4 rounded-xl">
+          <h2 className="font-bold mb-3">
+            🔥 Flash Sale
           </h2>
 
-          {loadingCategories ? (
-            <p>{t.loading_categories}</p>
-          ) : (
-            <div className="flex overflow-x-auto space-x-4 scrollbar-hide">
-              {/* ALL */}
-              <button
-                onClick={() => setSelectedCategory("all")}
-                className={`min-w-[56px] h-[56px] flex items-center justify-center rounded-full border ${
-                  selectedCategory === "all"
-                    ? "border-orange-600 text-orange-600"
-                    : "border-gray-300 text-gray-500"
-                }`}
-                title={t.all}
-              >
-                🛍
-              </button>
-
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedCategory(c.id)}
-                  className={`min-w-[72px] text-xs text-center ${
-                    selectedCategory === c.id
-                      ? "font-bold text-orange-600"
-                      : "text-gray-600"
-                  }`}
-                >
-                  <Image
-                    src={c.icon || "/placeholder.png"}
-                    alt={c.name}
-                    width={56}
-                    height={56}
-                    className="rounded-full mx-auto mb-1 border"
-                  />
-                  <span className="line-clamp-1">
-                    {t["category_" + c.id] || c.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* ===================
-            PRODUCTS
-        =================== */}
-        <section>
-          <h2 className="text-base font-bold mb-2">
-            {t.all_products}
-          </h2>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {filteredProducts
-              .slice(0, visibleCount)
+          <div className="flex gap-3 overflow-x-auto">
+            {products
+              .filter((p) => p.isSale)
+              .slice(0, 5)
               .map((p) => (
                 <div
                   key={p.id}
-                  onClick={() =>
-                    router.push(`/product/${p.id}`)
-                  }
-                  className="bg-white rounded-xl border shadow-sm cursor-pointer hover:shadow-md transition"
+                  className="min-w-[150px]"
                 >
-                  <div className="relative">
-                    <Image
-                      src={p.images?.[0] || "/placeholder.png"}
-                      alt={p.name}
-                      width={300}
-                      height={300}
-                      className="w-full h-36 object-cover rounded-t-xl"
-                    />
+                  <Image
+                    src={
+                      p.images?.[0] ||
+                      "/placeholder.png"
+                    }
+                    alt={p.name}
+                    width={200}
+                    height={200}
+                    className="rounded-lg"
+                  />
 
-                    {/* 👁 Views */}
-                    <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-2 py-[2px] rounded-full">
-                      👁 {p.views}
-                    </div>
+                  <p className="text-sm line-clamp-1 mt-1">
+                    {p.name}
+                  </p>
 
-                    {/* 🛒 Sold */}
-                    {p.sold && p.sold > 0 && (
-                      <div className="absolute top-1 right-1 bg-orange-600 text-white text-[10px] px-2 py-[2px] rounded-full">
-                        🛒 {p.sold}
-                      </div>
-                    )}
-                  </div>
+                  <p className="text-orange-600 font-bold">
+                    {formatPi(
+                      p.finalPrice ?? p.price
+                    )}{" "}
+                    π
+                  </p>
 
-                  <div className="p-2 space-y-1">
-                    <p className="text-sm font-medium line-clamp-2">
-                      {p.name}
-                    </p>
-
-                    <div className="flex items-center gap-1">
-                      <span className="text-orange-600 font-bold text-sm">
-                        {p.finalPrice} π
-                      </span>
-
-                      {p.isSale && (
-                        <span className="text-xs text-gray-400 line-through">
-                          {p.price} π
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <p className="text-xs text-gray-400 line-through">
+                    {formatPi(p.price)} π
+                  </p>
                 </div>
               ))}
           </div>
+        </section>
 
-          {visibleCount < filteredProducts.length && (
-            <div className="flex justify-center mt-4">
+        {/* 4️⃣ DANH MỤC */}
+        <section>
+          <div className="flex gap-4 overflow-x-auto">
+            <button
+              onClick={() =>
+                setSelectedCategory("all")
+              }
+              className="text-sm font-semibold"
+            >
+              Tất cả
+            </button>
+
+            {categories.map((c) => (
               <button
+                key={c.id}
                 onClick={() =>
-                  setVisibleCount((v) => v + 20)
+                  setSelectedCategory(c.id)
                 }
-                className="px-6 py-2 bg-orange-600 text-white rounded-full text-sm"
+                className="text-sm whitespace-nowrap"
               >
-                {t.load_more}
+                {c.name}
               </button>
+            ))}
+          </div>
+        </section>
+
+        {/* 5️⃣ SORT BAR */}
+        <section className="flex justify-between text-sm">
+          <span>
+            {filteredProducts.length} sản phẩm
+          </span>
+
+          <select
+            value={sortType}
+            onChange={(e) =>
+              setSortType(e.target.value)
+            }
+            className="border rounded px-2 py-1"
+          >
+            <option value="sale">
+              Sản phẩm sale
+            </option>
+            <option value="new">
+              Mới nhất
+            </option>
+            <option value="high">
+              Giá cao → thấp
+            </option>
+            <option value="low">
+              Giá thấp → cao
+            </option>
+            <option value="sold">
+              Bán chạy
+            </option>
+          </select>
+        </section>
+
+        {/* 6️⃣ PRODUCT GRID */}
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {filteredProducts.map((p) => (
+            <div
+              key={p.id}
+              onClick={() =>
+                router.push(`/product/${p.id}`)
+              }
+              className="bg-white rounded-xl shadow-sm border cursor-pointer"
+            >
+              <Image
+                src={
+                  p.images?.[0] ||
+                  "/placeholder.png"
+                }
+                alt={p.name}
+                width={300}
+                height={300}
+                className="w-full h-40 object-cover rounded-t-xl"
+              />
+
+              <div className="p-2">
+                <p className="text-sm line-clamp-2">
+                  {p.name}
+                </p>
+
+                <p className="text-orange-600 font-bold mt-1">
+                  {formatPi(
+                    p.finalPrice ?? p.price
+                  )}{" "}
+                  π
+                </p>
+
+                {p.isSale && (
+                  <p className="text-xs text-gray-400 line-through">
+                    {formatPi(p.price)} π
+                  </p>
+                )}
+              </div>
             </div>
-          )}
+          ))}
         </section>
       </div>
     </main>
