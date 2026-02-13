@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { ShoppingCart } from "lucide-react";
 import BannerCarousel from "./components/BannerCarousel";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
@@ -26,6 +27,81 @@ interface Category {
   icon?: string;
 }
 
+/* ================= FORMAT PI ================= */
+
+function formatPi(value: number | string) {
+  return Number(value).toFixed(6);
+}
+
+/* ================= PRODUCT CARD ================= */
+
+function ProductCard({
+  product,
+  router,
+}: {
+  product: Product;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const discount =
+    product.price > 0
+      ? Math.round(
+          ((product.price - (product.finalPrice ?? product.price)) /
+            product.price) *
+            100
+        )
+      : 0;
+
+  return (
+    <div
+      onClick={() => router.push(`/product/${product.id}`)}
+      className="bg-white rounded-xl border shadow-sm overflow-hidden cursor-pointer active:scale-95 transition"
+    >
+      <div className="relative">
+        <Image
+          src={product.images?.[0] || "/placeholder.png"}
+          alt={product.name}
+          width={300}
+          height={300}
+          className="w-full h-44 object-cover"
+        />
+
+        {product.isSale && (
+          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+            {discount}% OFF
+          </div>
+        )}
+
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-2 right-2 bg-white p-2 rounded-full shadow"
+        >
+          <ShoppingCart size={16} />
+        </button>
+      </div>
+
+      <div className="p-3">
+        <p className="text-sm line-clamp-2 min-h-[40px]">
+          {product.name}
+        </p>
+
+        <p className="text-red-600 font-bold mt-1">
+          {formatPi(product.finalPrice ?? product.price)} π
+        </p>
+
+        {product.isSale && (
+          <p className="text-xs text-gray-400 line-through">
+            {formatPi(product.price)} π
+          </p>
+        )}
+
+        <div className="mt-2 bg-pink-100 text-pink-600 text-xs text-center rounded-full py-1">
+          Đã bán {product.sold ?? 0}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ================= PAGE ================= */
 
 export default function HomePage() {
@@ -36,15 +112,37 @@ export default function HomePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] =
     useState<string | "all">("all");
-  const [sortType, setSortType] = useState<string>("sale");
+  const [sortType, setSortType] = useState("sale");
   const [loading, setLoading] = useState(true);
 
-  /* ===== FORMAT PI ===== */
-  function formatPi(value: number | string) {
-    return Number(value).toFixed(6);
-  }
+  /* ===== FLASH SALE COUNTDOWN ===== */
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    const target = new Date();
+    target.setHours(target.getHours() + 2);
+
+    const interval = setInterval(() => {
+      const diff = target.getTime() - new Date().getTime();
+      if (diff <= 0) return setTimeLeft("00:00:00");
+
+      const h = Math.floor(diff / 1000 / 60 / 60);
+      const m = Math.floor((diff / 1000 / 60) % 60);
+      const s = Math.floor((diff / 1000) % 60);
+
+      setTimeLeft(
+        `${String(h).padStart(2, "0")}:${String(m).padStart(
+          2,
+          "0"
+        )}:${String(s).padStart(2, "0")}`
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   /* ===== LOAD DATA ===== */
+
   useEffect(() => {
     Promise.all([
       fetch("/api/products").then((r) => r.json()),
@@ -69,7 +167,8 @@ export default function HomePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  /* ===== FILTER + SORT ===== */
+  /* ===== FILTER ===== */
+
   const filteredProducts = useMemo(() => {
     let list = [...products];
 
@@ -79,30 +178,13 @@ export default function HomePage() {
       );
     }
 
-    switch (sortType) {
-      case "sale":
-        return list.filter((p) => p.isSale);
-      case "new":
-        return list.reverse();
-      case "high":
-        return list.sort(
-          (a, b) =>
-            (b.finalPrice ?? b.price) -
-            (a.finalPrice ?? a.price)
-        );
-      case "low":
-        return list.sort(
-          (a, b) =>
-            (a.finalPrice ?? a.price) -
-            (b.finalPrice ?? b.price)
-        );
-      case "sold":
-        return list.sort(
-          (a, b) => (b.sold ?? 0) - (a.sold ?? 0)
-        );
-      default:
-        return list;
+    if (sortType === "sold") {
+      return list.sort(
+        (a, b) => (b.sold ?? 0) - (a.sold ?? 0)
+      );
     }
+
+    return list;
   }, [products, selectedCategory, sortType]);
 
   if (loading) {
@@ -115,16 +197,13 @@ export default function HomePage() {
 
   return (
     <main className="bg-gray-50 min-h-screen pb-24">
-      {/* 1️⃣ Banner */}
       <BannerCarousel />
 
-      {/* 2️⃣ MENU NGANG */}
+      {/* SORT MENU */}
       <div className="flex gap-3 overflow-x-auto px-3 py-3 bg-white text-sm">
         {[
           { key: "sold", label: "Bán chạy" },
-          { key: "sale", label: "Đang giảm giá" },
-          { key: "new", label: "Deal thịnh hành" },
-          { key: "high", label: "Hot nhất" },
+          { key: "sale", label: "Flash Sale" },
         ].map((item) => (
           <button
             key={item.key}
@@ -141,91 +220,39 @@ export default function HomePage() {
       </div>
 
       <div className="px-3 space-y-6 max-w-6xl mx-auto mt-4">
-        {/* 3️⃣ FLASH SALE */}
-        {/* 3️⃣ FLASH SALE */}
-<section className="bg-white p-4 rounded-xl">
-  <h2 className="font-bold mb-3">🔥 Flash Sale</h2>
 
-  <div className="flex gap-3 overflow-x-auto">
-    {products
-      .filter((p) => p.isSale)
-      .slice(0, 6)
-      .map((p) => {
-        const discount =
-          p.price > 0
-            ? Math.round(
-                ((p.price - (p.finalPrice ?? p.price)) /
-                  p.price) *
-                  100
-              )
-            : 0;
-
-        return (
-          <div
-            key={p.id}
-            onClick={() =>
-              router.push(`/product/${p.id}`)
-            }
-            className="min-w-[170px] bg-white border rounded-xl shadow-sm flex flex-col"
-          >
-            {/* IMAGE */}
-            <div className="relative">
-              <Image
-                src={
-                  p.images?.[0] ||
-                  "/placeholder.png"
-                }
-                alt={p.name}
-                width={300}
-                height={300}
-                className="w-full h-40 object-cover rounded-t-xl"
-              />
-
-              {p.isSale && (
-                <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
-                  {discount}% OFF
-                </div>
-              )}
-            </div>
-
-            {/* CONTENT */}
-            <div className="p-2 flex flex-col flex-1">
-              <p className="text-sm line-clamp-2 min-h-[40px]">
-                {p.name}
-              </p>
-
-              <div className="mt-auto">
-                <p className="text-red-600 font-bold">
-                  {formatPi(
-                    p.finalPrice ?? p.price
-                  )}{" "}
-                  π
-                </p>
-
-                {p.isSale && (
-                  <p className="text-xs text-gray-400 line-through">
-                    {formatPi(p.price)} π
-                  </p>
-                )}
-
-                <div className="mt-2 bg-pink-100 text-pink-600 text-xs text-center rounded-full py-1">
-                  Đã bán {p.sold ?? 0}
-                </div>
-              </div>
-            </div>
+        {/* FLASH SALE */}
+        <section className="bg-white p-4 rounded-xl">
+          <div className="flex justify-between mb-3">
+            <h2 className="font-bold text-red-600">
+              🔥 Flash Sale
+            </h2>
+            <span className="text-sm font-mono bg-black text-white px-3 py-1 rounded">
+              {timeLeft}
+            </span>
           </div>
-        );
-      })}
-  </div>
-</section>
 
-        {/* 4️⃣ DANH MỤC */}
-         <section className="bg-white p-4 rounded-xl shadow-sm">
-        <div className="flex flex-col gap-4">
+          <div className="flex gap-3 overflow-x-auto">
+            {products
+              .filter((p) => p.isSale)
+              .slice(0, 6)
+              .map((p) => (
+                <div key={p.id} className="min-w-[170px]">
+                  <ProductCard
+                    product={p}
+                    router={router}
+                  />
+                </div>
+              ))}
+          </div>
+        </section>
+
+        {/* CATEGORY 2 ROW SCROLL */}
+        <section className="bg-white p-4 rounded-xl shadow-sm">
           {[0, 1].map((row) => (
             <div
               key={row}
-              className="flex gap-4 overflow-x-auto"
+              className="flex gap-4 overflow-x-auto mb-4"
             >
               {categories
                 .slice(row * 10, row * 10 + 10)
@@ -238,10 +265,7 @@ export default function HomePage() {
                     className="flex flex-col items-center min-w-[70px]"
                   >
                     <Image
-                      src={
-                        c.icon ||
-                        "/placeholder.png"
-                      }
+                      src={c.icon || "/placeholder.png"}
                       alt={c.name}
                       width={60}
                       height={60}
@@ -254,119 +278,19 @@ export default function HomePage() {
                 ))}
             </div>
           ))}
-        </div>
-      </section>
-
-        {/* 5️⃣ SORT BAR */}
-        <section className="flex justify-between text-sm">
-          <span>
-            {filteredProducts.length} sản phẩm
-          </span>
-
-          <select
-            value={sortType}
-            onChange={(e) =>
-              setSortType(e.target.value)
-            }
-            className="border rounded px-2 py-1"
-          >
-            <option value="sale">
-              Sản phẩm sale
-            </option>
-            <option value="new">
-              Mới nhất
-            </option>
-            <option value="high">
-              Giá cao → thấp
-            </option>
-            <option value="low">
-              Giá thấp → cao
-            </option>
-            <option value="sold">
-              Bán chạy
-            </option>
-          </select>
         </section>
 
-        {/* 6️⃣ PRODUCT GRID */}
-        function ProductCard({
-  product,
-  router,
-  formatPi,
-}: {
-  product: Product;
-  router: ReturnType<typeof useRouter>;
-  formatPi: (v: number) => string;
-}) {
-  const discount =
-    product.price > 0
-      ? Math.round(
-          ((product.price -
-            (product.finalPrice ??
-              product.price)) /
-            product.price) *
-            100
-        )
-      : 0;
-
-  return (
-    <div
-      onClick={() =>
-        router.push(`/product/${product.id}`)
-      }
-      className="bg-white rounded-xl shadow-sm border overflow-hidden cursor-pointer hover:shadow-md transition"
-    >
-      <div className="relative">
-        <Image
-          src={
-            product.images?.[0] ||
-            "/placeholder.png"
-          }
-          alt={product.name}
-          width={300}
-          height={300}
-          className="w-full h-44 object-cover"
-        />
-
-        {product.isSale && (
-          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
-            {discount}% OFF
-          </div>
-        )}
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          className="absolute top-2 right-2 bg-white p-2 rounded-full shadow"
-        >
-          <ShoppingCart size={16} />
-        </button>
+        {/* PRODUCT GRID */}
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {filteredProducts.map((p) => (
+            <ProductCard
+              key={p.id}
+              product={p}
+              router={router}
+            />
+          ))}
+        </section>
       </div>
-
-      <div className="p-3">
-        <p className="text-sm line-clamp-2 min-h-[40px]">
-          {product.name}
-        </p>
-
-        <p className="text-red-600 font-bold mt-1">
-          {formatPi(
-            product.finalPrice ??
-              product.price
-          )}{" "}
-          π
-        </p>
-
-        {product.isSale && (
-          <p className="text-xs text-gray-400 line-through">
-            {formatPi(product.price)} π
-          </p>
-        )}
-
-        <div className="mt-2 bg-pink-100 text-pink-600 text-xs text-center rounded-full py-1">
-          Đã bán {product.sold ?? 0}
-        </div>
-      </div>
-    </div>
+    </main>
   );
 }
