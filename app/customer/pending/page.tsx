@@ -40,6 +40,10 @@ export default function PendingOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+   function formatPi(value: number | string) {
+  return Number(value).toFixed(6).replace(/\.?0+$/, "");
+}
+
   /* =========================
      LOAD ORDERS (AUTH-CENTRIC)
   ========================= */
