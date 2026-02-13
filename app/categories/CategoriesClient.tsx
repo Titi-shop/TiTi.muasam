@@ -185,12 +185,12 @@ export default function CategoriesClient() {
 
                     <div className="flex items-center gap-1">
                       <span className="text-orange-600 font-semibold">
-                        {(isSale ? p.finalPrice : p.price)?.toLocaleString()} π
-                      </span>
+  {Number(isSale ? p.finalPrice : p.price).toFixed(6)} π
+</span>
 
                       {isSale && (
                         <span className="text-xs text-gray-400 line-through">
-                          {p.price.toLocaleString()} π
+                          {Number(p.price).toFixed(6)} π
                         </span>
                       )}
                     </div>
