@@ -165,13 +165,13 @@ export default function PendingOrdersPage() {
                     #{o.id.slice(0, 8)}
                   </span>
                   <span className="text-orange-500 text-sm font-medium">
-                    {t[`status_${o.status}`]}
+                    {t[`status_${o.status}`] ?? o.status}
                   </span>
                 </div>
 
                 {/* ===== ORDER ITEMS ===== */}
                 <div className="mt-3 space-y-2">
-                  {o.order_items.map((item, idx) => (
+                  {(o.order_items ?? []).map((item, idx) => (
                     <div
                       key={idx}
                       className="flex gap-3 items-center"
@@ -195,7 +195,7 @@ export default function PendingOrdersPage() {
 </p>
 
                         <p className="text-xs text-gray-500">
-                          x{item.quantity} · π{item.price}
+                          x{item.quantity} · π{formatPi(item.price)}
                         </p>
                       </div>
                     </div>
@@ -204,7 +204,7 @@ export default function PendingOrdersPage() {
 
                 {/* ===== TOTAL ===== */}
                 <p className="mt-3 text-sm text-gray-700 font-medium">
-                  {t.total}: π{o.total}
+                  {t.total}: π{formatPi(o.total)}
                 </p>
               </div>
             ))}
