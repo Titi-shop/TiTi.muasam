@@ -8,12 +8,18 @@ import { getPiAccessToken } from "@/lib/piAuth";
 /* =========================
    TYPES
 ========================= */
+interface Product {
+  id: string;
+  name: string;
+  images: string[];
+}
+
 interface OrderItem {
   id: string | number;
-  name: string;
-  image?: string;
+  product_id: string;
   price: number;
   quantity: number;
+  product?: Product;
 }
 
 interface Order {
@@ -21,7 +27,7 @@ interface Order {
   total: number;
   createdAt: string;
   status: string;
-  items?: OrderItem[]; // 👈 THÊM DÒNG NÀY
+  order_items?: OrderItem[];
 }
 
 type OrderTab =
@@ -43,7 +49,10 @@ export default function CustomerOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<OrderTab>("all");
-
+function formatPi(value: number | string) {
+  return Number(value).toFixed(6).replace(/\.?0+$/, "");
+}
+   
   /* =========================
      LOAD ORDERS (1 LẦN)
   ========================= */
@@ -52,24 +61,64 @@ export default function CustomerOrdersPage() {
   }, []);
 
   const loadOrders = async () => {
-    try {
-      const token = await getPiAccessToken();
-      const res = await fetch("/api/orders", {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      });
+  try {
+    const token = await getPiAccessToken();
 
-      if (!res.ok) throw new Error("UNAUTHORIZED");
+    const res = await fetch("/api/orders", {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
 
-      const data = await res.json();
-      setOrders(Array.isArray(data) ? data : []);
-    } catch (e) {
-      console.error("❌ Load orders error:", e);
-      setOrders([]);
-    } finally {
-      setLoading(false);
+    if (!res.ok) throw new Error("UNAUTHORIZED");
+
+    const rawOrders: Order[] = await res.json();
+    const safeOrders = Array.isArray(rawOrders) ? rawOrders : [];
+
+    /* 1️⃣ Gom tất cả product_id */
+    const productIds = Array.from(
+      new Set(
+        safeOrders.flatMap((o) =>
+          o.order_items?.map((i) => i.product_id) ?? []
+        )
+      )
+    );
+
+    if (productIds.length === 0) {
+      setOrders(safeOrders);
+      return;
     }
-  };
+
+    /* 2️⃣ Fetch products 1 lần */
+    const productRes = await fetch(
+      `/api/products?ids=${productIds.join(",")}`,
+      { cache: "no-store" }
+    );
+
+    if (!productRes.ok) throw new Error("FETCH_PRODUCTS_FAILED");
+
+    const products: Product[] = await productRes.json();
+
+    const productMap = Object.fromEntries(
+      products.map((p) => [p.id, p])
+    );
+
+    /* 3️⃣ Gắn product vào order_items */
+    const enrichedOrders = safeOrders.map((o) => ({
+      ...o,
+      order_items: (o.order_items ?? []).map((i) => ({
+        ...i,
+        product: productMap[i.product_id],
+      })),
+    }));
+
+    setOrders(enrichedOrders);
+  } catch (e) {
+    console.error("❌ Load orders error:", e);
+    setOrders([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   /* =========================
      FILTER THEO TAB
@@ -141,21 +190,26 @@ export default function CustomerOrdersPage() {
 
               {/* PRODUCTS */}
               <div className="divide-y">
-                {o.items?.map((item) => (
+                {(o.order_items ?? []).map((item, idx) => (
                   <div key={item.id} className="flex gap-3 p-4">
-                    <img
-                      src={item.image || "/placeholder.png"}
+                    {item.product?.images?.length > 0 && (
+  <img
+    src={item.product.images[0]}
+    className="w-16 h-16 rounded object-cover"
+  />
+)}
+                       
                       className="w-16 h-16 rounded object-cover"
                     />
 
                     <div className="flex-1">
                       <p className="text-sm line-clamp-2">
-                        {item.name}
+                        {item.product?.name ?? "—"}
                       </p>
 
                       <div className="flex justify-between mt-1 text-sm">
                         <span className="text-orange-500">
-                          π{item.price}
+                          π{formatPi(item.price)}
                         </span>
                         <span className="text-gray-500">
                           x{item.quantity}
@@ -169,7 +223,7 @@ export default function CustomerOrdersPage() {
               {/* FOOTER */}
               <div className="flex justify-between items-center px-4 py-3 border-t text-sm">
                 <span>
-                  {t.total}: <b>π{o.total}</b>
+                  {t.total}: <b>π{formatPi(o.total)}</b>
                 </span>
 
                 <button className="px-4 py-1 border border-orange-500 text-orange-500 rounded">
