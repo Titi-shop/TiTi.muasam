@@ -23,7 +23,11 @@ function formatShortDescription(text?: string) {
     .map(line => line.trim())
     .filter(Boolean);
 }
-
+function formatPi(value: number | string) {
+  const n = Number(value);
+  if (Number.isNaN(n)) return "0.000000";
+  return n.toFixed(6);
+}
 function calcSalePercent(price: number, finalPrice: number) {
   if (finalPrice >= price) return 0;
   return Math.round(((price - finalPrice) / price) * 100);
@@ -231,13 +235,13 @@ const relatedProducts = products.filter(
 
         <div className="text-right">
           <p className="text-xl font-bold text-orange-600">
-            π {product.finalPrice}
-          </p>
+  π {formatPi(product.finalPrice)}
+</p>
 
           {product.isSale && (
             <p className="text-sm text-gray-400 line-through">
-              π {product.price}
-            </p>
+  π {formatPi(product.price)}
+</p>
           )}
         </div>
       </div>
@@ -322,13 +326,13 @@ const relatedProducts = products.filter(
           </p>
 
           <p className="text-sm font-semibold text-orange-600">
-            π {p.finalPrice}
-          </p>
+  π {formatPi(p.finalPrice)}
+</p>
 
           {p.isSale && (
             <p className="text-xs text-gray-400 line-through">
-              π {p.price}
-            </p>
+  π {formatPi(p.price)}
+</p>
           )}
         </div>
       ))}
