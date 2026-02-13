@@ -170,13 +170,6 @@ export default function SellerStockPage() {
      UI
   ========================= */
   return (
-    <main className="p-4 max-w-2xl mx-auto pb-28">
-      <button
-        className="mb-4 text-blue-600 underline"
-        onClick={() => router.push("/seller")}
-      >
-        ← {t.back}
-      </button>
 
       <h1 className="text-2xl font-bold text-center mb-2 text-[#ff6600]">
         📦 {t.my_stock}
@@ -254,16 +247,16 @@ export default function SellerStockPage() {
                     {isSale ? (
                       <>
                         <p className="text-sm text-gray-400 line-through">
-                          {product.price} π
-                        </p>
-                        <p className="text-[#ff6600] font-bold">
-                          {product.salePrice} π
-                        </p>
+  {formatPi(product.price)} π
+</p>
+<p className="text-[#ff6600] font-bold">
+  {formatPi(product.salePrice)} π
+</p>
                       </>
                     ) : (
                       <p className="text-[#ff6600] font-bold">
-                        {product.price} π
-                      </p>
+  {formatPi(product.price)} π
+</p>
                     )}
                   </div>
 
