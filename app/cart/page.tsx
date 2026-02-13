@@ -104,10 +104,15 @@ export default function CartPage() {
     try {
       const token = await getPiAccessToken();
       if (!token) throw new Error("NO_TOKEN");
-
+   
+       if (total < 0.0000001) {
+  alert("Số Pi quá nhỏ để thanh toán");
+  setProcessing(false);
+  return;
+}
       await window.Pi.createPayment(
         {
-          amount: Number(total.toFixed(2)),
+          amount: Number(total),
           memo: `${t.paying_order} (${selectedItems.length})`,
           metadata: { items: selectedItems },
         },
@@ -166,7 +171,7 @@ export default function CartPage() {
      UI
   ========================= */
   return (
-    <main className="min-h-screen bg-gray-50 pb-28">
+    <main className="min-h-screen bg-gray-50 pb-36">
       {/* EMPTY */}
       {cart.length === 0 ? (
         <div className="p-8 text-center text-gray-500">
@@ -262,9 +267,10 @@ export default function CartPage() {
                   <div className="text-right">
                     <p className="text-orange-600 font-semibold">
                  {(
-              unit *
-            Number(qtyDraft[item.id] ?? item.quantity)
-              ).toFixed(2)} π
+              {(
+               unit *
+              Number(qtyDraft[item.id] ?? item.quantity)
+              ).toFixed(6)} π
                  </p>
 
                     <button
@@ -280,11 +286,11 @@ export default function CartPage() {
           </div>
 
           {/* FOOTER */}
-          <div className="fixed bottom-9 left-0 right-0 bg-white border-t p-4">
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-5 pb-8">
             <div className="flex justify-between mb-2">
               <span className="text-sm">{t.total}</span>
               <span className="font-bold text-orange-600">
-                {total.toFixed(2)} π
+                {total.toFixed(6)} π
               </span>
             </div>
 
