@@ -266,13 +266,11 @@ export default function CartPage() {
 
                   <div className="text-right">
                     <p className="text-orange-600 font-semibold">
-                 {(
-              {(
-               unit *
-              Number(qtyDraft[item.id] ?? item.quantity)
-              ).toFixed(6)} π
-                 </p>
-
+  {(
+    unit *
+    Number(qtyDraft[item.id] ?? item.quantity)
+  ).toFixed(6)} π
+</p>
                     <button
                       onClick={() => removeFromCart(item.id)}
                       className="text-xs text-red-500 mt-1"
