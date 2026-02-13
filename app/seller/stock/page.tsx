@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
 /* =========================
-   TYPES (NO any)
+   TYPES
 ========================= */
 interface Product {
   id: string;
@@ -36,6 +36,16 @@ interface Message {
 }
 
 /* =========================
+   SAFE PI FORMATTER
+========================= */
+function formatPi(value: number | null | undefined): string {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "0.000000";
+  }
+  return value.toFixed(6);
+}
+
+/* =========================
    PAGE
 ========================= */
 export default function SellerStockPage() {
@@ -44,30 +54,44 @@ export default function SellerStockPage() {
   const { loading: authLoading } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [pageLoading, setPageLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState<boolean>(true);
   const [message, setMessage] = useState<Message>({
     text: "",
     type: "",
   });
 
   /* =========================
-     📦 LOAD PRODUCTS (AUTH-CENTRIC)
+     LOAD PRODUCTS
   ========================= */
-  async function loadProducts() {
+  const loadProducts = useCallback(async () => {
     try {
       const res = await apiAuthFetch("/api/seller/products", {
         cache: "no-store",
       });
 
       if (!res.ok) {
-        const err: unknown = await res.json();
+        let errorText = t.load_products_error;
+
+        try {
+          const err: unknown = await res.json();
+          if (
+            typeof err === "object" &&
+            err !== null &&
+            "error" in err
+          ) {
+            errorText = String(
+              (err as { error?: unknown }).error
+            );
+          }
+        } catch {
+          // ignore JSON parse error
+        }
+
         setMessage({
-          text:
-            typeof err === "object" && err && "error" in err
-              ? String((err as { error?: unknown }).error)
-              : t.load_products_error,
+          text: errorText,
           type: "error",
         });
+
         return;
       }
 
@@ -78,25 +102,35 @@ export default function SellerStockPage() {
         return;
       }
 
-      const mapped: Product[] = raw.map((item): Product => {
+      const mapped: Product[] = raw.map((item) => {
         const p = item as RawProduct;
 
         return {
-          id: String(p.id),
-          name: String(p.name),
-          price: Number(p.price),
-
-          // 🔑 MAP SALE (snake_case → camelCase)
+          id: typeof p.id === "string" ? p.id : String(p.id ?? ""),
+          name:
+            typeof p.name === "string" ? p.name : "Unnamed",
+          price:
+            typeof p.price === "number" &&
+            !Number.isNaN(p.price)
+              ? p.price
+              : 0,
           salePrice:
-            typeof p.sale_price === "number" ? p.sale_price : null,
+            typeof p.sale_price === "number" &&
+            !Number.isNaN(p.sale_price)
+              ? p.sale_price
+              : null,
           saleStart:
-            typeof p.sale_start === "string" ? p.sale_start : null,
+            typeof p.sale_start === "string"
+              ? p.sale_start
+              : null,
           saleEnd:
-            typeof p.sale_end === "string" ? p.sale_end : null,
-
+            typeof p.sale_end === "string"
+              ? p.sale_end
+              : null,
           images: Array.isArray(p.images)
             ? p.images.filter(
-                (i): i is string => typeof i === "string"
+                (i): i is string =>
+                  typeof i === "string"
               )
             : [],
         };
@@ -111,39 +145,62 @@ export default function SellerStockPage() {
     } finally {
       setPageLoading(false);
     }
-  }
+  }, [t]);
 
   useEffect(() => {
     if (!authLoading) {
       loadProducts();
     }
-  }, [authLoading]);
+  }, [authLoading, loadProducts]);
 
   /* =========================
-     ❌ DELETE PRODUCT
+     DELETE PRODUCT
   ========================= */
   const handleDelete = async (id: string) => {
     const product = products.find((p) => p.id === id);
     if (!product) return;
 
-    if (!confirm(`${t.confirm_delete} "${product.name}"?`)) return;
+    const confirmed = confirm(
+      `${t.confirm_delete} "${product.name}"?`
+    );
+    if (!confirmed) return;
 
     try {
-      const res = await apiAuthFetch(`/api/products?id=${id}`, {
-        method: "DELETE",
-      });
+      const res = await apiAuthFetch(
+        `/api/products?id=${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+        }
+      );
 
-      const data: unknown = await res.json();
+      let errorText = t.delete_failed;
+
+      try {
+        const data: unknown = await res.json();
+        if (
+          typeof data === "object" &&
+          data !== null &&
+          "error" in data
+        ) {
+          errorText = String(
+            (data as { error?: unknown }).error
+          );
+        }
+      } catch {
+        // ignore parse error
+      }
 
       if (res.ok) {
-        setProducts((prev) => prev.filter((p) => p.id !== id));
-        setMessage({ text: t.delete_success, type: "success" });
+        setProducts((prev) =>
+          prev.filter((p) => p.id !== id)
+        );
+        setMessage({
+          text: t.delete_success,
+          type: "success",
+        });
       } else {
         setMessage({
-          text:
-            typeof data === "object" && data && "error" in data
-              ? String((data as { error?: unknown }).error)
-              : t.delete_failed,
+          text: errorText,
           type: "error",
         });
       }
@@ -156,7 +213,7 @@ export default function SellerStockPage() {
   };
 
   /* =========================
-     LOADING
+     LOADING STATE
   ========================= */
   if (pageLoading || authLoading) {
     return (
@@ -170,23 +227,22 @@ export default function SellerStockPage() {
      UI
   ========================= */
   return (
-  <main className="p-4 max-w-2xl mx-auto pb-28">
+    <main className="p-4 max-w-2xl mx-auto pb-28">
+      <h1 className="text-2xl font-bold text-center mb-4 text-[#ff6600]">
+        {t.my_stock}
+      </h1>
 
-    <h1 className="text-2xl font-bold text-center mb-2 text-[#ff6600]">
-       {t.my_stock}
-    </h1>
-
-    {message.text && (
-      <p
-        className={`text-center mb-3 ${
-          message.type === "success"
-            ? "text-green-600"
-            : "text-red-600 font-medium"
-        }`}
-      >
-        {message.text}
-      </p>
-    )}
+      {message.text && (
+        <p
+          className={`text-center mb-4 ${
+            message.type === "success"
+              ? "text-green-600"
+              : "text-red-600 font-medium"
+          }`}
+        >
+          {message.text}
+        </p>
+      )}
 
       {products.length === 0 ? (
         <p className="text-center text-gray-400">
@@ -196,17 +252,19 @@ export default function SellerStockPage() {
         <div className="space-y-4">
           {products.map((product) => {
             const now = new Date();
+
             const start = product.saleStart
               ? new Date(product.saleStart)
               : null;
+
             const end = product.saleEnd
               ? new Date(product.saleEnd)
               : null;
 
             const isSale =
-              !!product.salePrice &&
-              !!start &&
-              !!end &&
+              product.salePrice !== null &&
+              start !== null &&
+              end !== null &&
               now >= start &&
               now <= end;
 
@@ -225,11 +283,12 @@ export default function SellerStockPage() {
                     </span>
                   )}
 
-                  {product.images[0] ? (
+                  {product.images.length > 0 ? (
                     <Image
                       src={product.images[0]}
                       alt={product.name}
                       fill
+                      sizes="96px"
                       className="object-cover"
                     />
                   ) : (
@@ -248,16 +307,16 @@ export default function SellerStockPage() {
                     {isSale ? (
                       <>
                         <p className="text-sm text-gray-400 line-through">
-  {formatPi(product.price)} π
-</p>
-<p className="text-[#ff6600] font-bold">
-  {formatPi(product.salePrice)} π
-</p>
+                          {formatPi(product.price)} π
+                        </p>
+                        <p className="text-[#ff6600] font-bold">
+                          {formatPi(product.salePrice)} π
+                        </p>
                       </>
                     ) : (
                       <p className="text-[#ff6600] font-bold">
-  {formatPi(product.price)} π
-</p>
+                        {formatPi(product.price)} π
+                      </p>
                     )}
                   </div>
 
