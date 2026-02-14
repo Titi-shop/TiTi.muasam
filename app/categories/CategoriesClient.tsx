@@ -91,12 +91,12 @@ export default function CategoriesClient() {
 
       <div className="mt-2 grid grid-cols-[70px_1fr] gap-0">
         {/* ===== LEFT CATEGORY ===== */}
-        <aside className="col-span-2 overflow-y-auto bg-white border-r">
+        <aside className="bg-white border-r">
   <div className="flex flex-col">
     {/* ALL */}
     <button
       onClick={() => setActiveCategoryId(null)}
-      className={`flex items-center gap-3 px-3 py-3 text-sm ${
+      className={`flex items-center gap-2 px-2 py-3 text-sm ${
         activeCategoryId === null
           ? "bg-orange-50 text-orange-600 font-semibold"
           : "text-gray-600"
