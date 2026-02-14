@@ -204,23 +204,85 @@ export default function HomePage() {
     <main className="bg-gray-50 min-h-screen pb-24">
       <BannerCarousel />
 
-      {/* PI PRICE */}
-      {/* PI PRICE */}
-<div className="my-4 flex flex-col items-center gap-3 px-3">
-  <PiPriceWidget />
+      {/* PI PRICE + FLASH SALE */}
+<div className="my-4 px-3 space-y-3">
+  <div className="flex justify-center">
+    <PiPriceWidget />
+  </div>
 
   {/* FLASH SALE BOX */}
-  <div className="w-full bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-xl px-4 py-3 shadow-md flex items-center justify-between">
-    
-    <div>
-      <p className="font-bold text-sm">🔥 Flash Sale</p>
-      <p className="text-xs opacity-90">
-        Kết thúc sau
-      </p>
+  <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-xl p-3 text-white">
+    <div className="flex justify-between items-center mb-3">
+      <div>
+        <p className="font-bold text-sm">🔥 Flash Sale</p>
+        <p className="text-xs opacity-90">Kết thúc sau</p>
+      </div>
+
+      <div className="bg-white text-red-600 font-bold px-3 py-1 rounded-lg text-sm tracking-wider">
+        {timeLeft || "00:00:00"}
+      </div>
     </div>
 
-    <div className="bg-white text-red-600 font-bold px-3 py-1 rounded-lg text-sm tracking-wider">
-      {timeLeft || "00:00:00"}
+    {/* SALE PRODUCTS */}
+    <div className="flex gap-3 overflow-x-auto">
+      {products
+        .filter((p) => p.isSale)
+        .slice(0, 10)
+        .map((p) => (
+          <div
+            key={p.id}
+            className="min-w-[140px] bg-white rounded-lg overflow-hidden text-black"
+            onClick={() => {}}
+          >
+            <div className="relative">
+              <Image
+                src={p.images?.[0] || "/placeholder.png"}
+                alt={p.name}
+                width={200}
+                height={200}
+                className="w-full h-28 object-cover"
+              />
+
+              <div className="absolute top-1 left-1 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded">
+                SALE
+              </div>
+
+              {/* ADD TO CART */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addToCart({
+                    id: p.id,
+                    name: p.name,
+                    price: p.price,
+                    sale_price: p.finalPrice,
+                    quantity: 1,
+                    image: p.images?.[0],
+                    images: p.images,
+                  });
+                }}
+                className="absolute top-1 right-1 bg-white p-1.5 rounded-full shadow active:scale-95"
+                aria-label="Add to cart"
+              >
+                <ShoppingCart size={14} />
+              </button>
+            </div>
+
+            <div className="p-2">
+              <p className="text-xs line-clamp-2 min-h-[32px]">
+                {p.name}
+              </p>
+
+              <p className="text-orange-500 font-bold text-sm mt-1">
+                {formatPi(p.finalPrice ?? p.price)} π
+              </p>
+
+              <p className="text-[10px] text-gray-400 line-through">
+                {formatPi(p.price)} π
+              </p>
+            </div>
+          </div>
+        ))}
     </div>
   </div>
 </div>
