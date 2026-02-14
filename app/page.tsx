@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ShoppingCart } from "lucide-react";
 import BannerCarousel from "./components/BannerCarousel";
-import PiPriceWidget from "./components/PiPriceWidget";
 import { useCart } from "@/app/context/CartContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
@@ -16,6 +15,7 @@ interface Product {
   name: string;
   price: number;
   images?: string[];
+  views?: number;
   sold?: number;
   finalPrice?: number;
   isSale?: boolean;
@@ -28,7 +28,7 @@ interface Category {
   icon?: string;
 }
 
-/* ================= FORMAT ================= */
+/* ================= FORMAT PI ================= */
 
 function formatPi(value: number | string) {
   return Number(value).toFixed(6);
@@ -38,14 +38,13 @@ function formatPi(value: number | string) {
 
 function ProductCard({
   product,
-  onAddToCart,
+  router,
+  addToCart,
 }: {
   product: Product;
-  onAddToCart: (product: Product) => void;
+  router: ReturnType<typeof useRouter>;
+  addToCart: ReturnType<typeof useCart>["addToCart"];
 }) {
-  const router = useRouter();
-  const [added, setAdded] = useState(false); // ✅ ĐẶT ĐÚNG CHỖ
-
   const discount =
     product.price > 0
       ? Math.round(
@@ -71,20 +70,26 @@ function ProductCard({
 
         {product.isSale && (
           <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
-            -{discount}%
+            {discount}% OFF
           </div>
         )}
 
+        {/* GIỎ HÀNG */}
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onAddToCart(product);
-            setAdded(true);
-            setTimeout(() => setAdded(false), 700);
+            addToCart({
+              id: product.id,
+              name: product.name,
+              price: product.price,
+              sale_price: product.finalPrice,
+              quantity: 1,
+              image: product.images?.[0],
+              images: product.images,
+            });
           }}
-          className={`absolute top-2 right-2 p-2 rounded-full shadow transition-all
-            ${added ? "bg-green-500 text-white scale-110" : "bg-white"}
-          `}
+          className="absolute top-2 right-2 bg-white p-2 rounded-full shadow active:scale-95"
+          aria-label="Add to cart"
         >
           <ShoppingCart size={16} />
         </button>
@@ -95,7 +100,8 @@ function ProductCard({
           {product.name}
         </p>
 
-        <p className="text-orange-500 font-bold mt-1 text-[15px]">
+        {/* GIÁ PI MÀU CAM */}
+        <p className="text-orange-500 font-bold mt-1">
           {formatPi(product.finalPrice ?? product.price)} π
         </p>
 
@@ -116,6 +122,7 @@ function ProductCard({
 /* ================= PAGE ================= */
 
 export default function HomePage() {
+  const router = useRouter();
   const { addToCart } = useCart();
   const { t } = useTranslation();
 
@@ -125,9 +132,10 @@ export default function HomePage() {
     useState<string | "all">("all");
   const [sortType, setSortType] = useState("sale");
   const [loading, setLoading] = useState(true);
+
+  /* ===== FLASH SALE COUNTDOWN ===== */
   const [timeLeft, setTimeLeft] = useState("");
 
-  /* ===== COUNTDOWN ===== */
   useEffect(() => {
     const target = new Date();
     target.setHours(target.getHours() + 2);
@@ -152,28 +160,33 @@ export default function HomePage() {
   }, []);
 
   /* ===== LOAD DATA ===== */
+
   useEffect(() => {
     Promise.all([
-      fetch("/api/products", { cache: "no-store" }).then((r) => r.json()),
-      fetch("/api/categories", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/products").then((r) => r.json()),
+      fetch("/api/categories").then((r) => r.json()),
     ])
       .then(([productData, categoryData]) => {
-        setProducts(
-          productData.map((p: Product) => ({
+        const normalized: Product[] = productData.map(
+          (p: Product) => ({
             ...p,
+            views: p.views ?? 0,
             sold: p.sold ?? 0,
             finalPrice: p.finalPrice ?? p.price,
             isSale:
               typeof p.finalPrice === "number" &&
               p.finalPrice < p.price,
-          }))
+          })
         );
+
+        setProducts(normalized);
         setCategories(categoryData);
       })
       .finally(() => setLoading(false));
   }, []);
 
   /* ===== FILTER ===== */
+
   const filteredProducts = useMemo(() => {
     let list = [...products];
 
@@ -204,11 +217,6 @@ export default function HomePage() {
     <main className="bg-gray-50 min-h-screen pb-24">
       <BannerCarousel />
 
-      {/* PI PRICE */}
-      <div className="my-4 flex justify-center">
-        <PiPriceWidget />
-      </div>
-
       {/* SORT MENU */}
       <div className="flex gap-3 overflow-x-auto px-3 py-3 bg-white text-sm">
         {[
@@ -229,25 +237,57 @@ export default function HomePage() {
         ))}
       </div>
 
-      <div className="px-3 space-y-6 mt-4 w-full">
-        {/* CATEGORY SCROLL */}
-        <section className="bg-white py-4 shadow-sm -mx-3 px-3">
-          <div className="flex gap-4 overflow-x-auto snap-x">
+      <div className="px-3 space-y-6 max-w-6xl mx-auto mt-4">
+
+        {/* FLASH SALE */}
+        <section className="bg-white p-4 rounded-xl">
+          <div className="flex justify-between mb-3">
+            <h2 className="font-bold text-red-600">
+              🔥 Flash Sale
+            </h2>
+            <span className="text-sm font-mono bg-black text-white px-3 py-1 rounded">
+              {timeLeft}
+            </span>
+          </div>
+
+          <div className="flex gap-3 overflow-x-auto">
+            {products
+              .filter((p) => p.isSale)
+              .slice(0, 6)
+              .map((p) => (
+                <div key={p.id} className="min-w-[170px]">
+                  <ProductCard
+                    product={p}
+                    router={router}
+                    addToCart={addToCart}
+                  />
+                </div>
+              ))}
+          </div>
+        </section>
+
+        {/* CATEGORY SECTION */}
+        <section className="bg-white p-4 rounded-xl shadow-sm">
+          <div className="flex gap-4 overflow-x-auto mb-4">
+
+            {/* ALL */}
             <button
               onClick={() => setSelectedCategory("all")}
-              className="flex flex-col items-center min-w-[72px]"
+              className="flex flex-col items-center min-w-[70px]"
             >
               <div className="w-[60px] h-[60px] rounded-full bg-orange-100 flex items-center justify-center">
                 🛍
               </div>
-              <span className="text-xs mt-1">{t.all ?? "All"}</span>
+              <span className="text-xs mt-1">
+                {t.all ?? "All"}
+              </span>
             </button>
 
             {categories.map((c) => (
               <button
                 key={c.id}
                 onClick={() => setSelectedCategory(c.id)}
-                className="flex flex-col items-center min-w-[72px]"
+                className="flex flex-col items-center min-w-[70px]"
               >
                 <Image
                   src={c.icon || "/placeholder.png"}
@@ -256,29 +296,22 @@ export default function HomePage() {
                   height={60}
                   className="rounded-full border"
                 />
-                <span className="text-xs mt-1">{c.name}</span>
+                <span className="text-xs mt-1">
+                  {c.name}
+                </span>
               </button>
             ))}
           </div>
         </section>
 
         {/* PRODUCT GRID */}
-        <section className="grid grid-cols-2 gap-3">
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {filteredProducts.map((p) => (
             <ProductCard
               key={p.id}
               product={p}
-              onAddToCart={(product) =>
-                addToCart({
-                  id: product.id,
-                  name: product.name,
-                  price: product.price,
-                  sale_price: product.finalPrice,
-                  quantity: 1,
-                  image: product.images?.[0],
-                  images: product.images,
-                })
-              }
+              router={router}
+              addToCart={addToCart}
             />
           ))}
         </section>
