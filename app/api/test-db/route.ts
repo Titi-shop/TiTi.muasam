@@ -6,10 +6,13 @@ export async function GET() {
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!url || !key) {
-      return NextResponse.json({
-        ok: false,
-        error: "Missing Supabase env variables"
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Missing Supabase env variables",
+        },
+        { status: 500 }
+      );
     }
 
     const res = await fetch(
@@ -17,22 +20,37 @@ export async function GET() {
       {
         headers: {
           apikey: key,
-          Authorization: `Bearer ${key}`,
         },
-        cache: "no-store"
+        cache: "no-store",
       }
     );
 
-    const data = await res.json();
+    if (!res.ok) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Supabase request failed (${res.status})`,
+        },
+        { status: 500 }
+      );
+    }
+
+    const data: unknown = await res.json();
 
     return NextResponse.json({
       ok: true,
-      data
+      data,
     });
-  } catch (err: any) {
-    return NextResponse.json({
-      ok: false,
-      error: err.message
-    }, { status: 500 });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        ok: false,
+        error: message,
+      },
+      { status: 500 }
+    );
   }
 }
