@@ -91,54 +91,52 @@ export default function CategoriesClient() {
 
       <div className="mt-2 grid grid-cols-[70px_1fr] gap-0">
         {/* ===== LEFT CATEGORY ===== */}
-        <aside className="bg-white border-r">
-  <div className="flex flex-col">
-    {/* ALL */}
-    <button
-      onClick={() => setActiveCategoryId(null)}
-      className={`flex items-center gap-2 px-2 py-3 text-sm ${
-        activeCategoryId === null
-          ? "bg-orange-50 text-orange-600 font-semibold"
-          : "text-gray-600"
-      }`}
-    >
-      <span className="text-lg">🛍</span>
-      <span className="truncate">
-        {t["all"] ?? "Tất cả"}
-      </span>
-    </button>
+        <aside className="col-span-2 overflow-y-auto">
+          <div className="flex flex-col items-center gap-4 py-2">
+            <button
+              onClick={() => setActiveCategoryId(null)}
+              className={`text-xs px-2 py-1 rounded-full ${
+                activeCategoryId === null
+                  ? "bg-orange-500 text-white"
+                  : "text-gray-500"
+              }`}
+            >
+            🛍 {t["all"] ?? "Tất cả"}
+            </button>
 
-    {categories.map((c) => {
-      const active =
-        String(activeCategoryId) === String(c.id);
+            {categories.map((c) => {
+              const active =
+                String(activeCategoryId) === String(c.id);
 
-      return (
-        <button
-          key={c.id}
-          onClick={() => setActiveCategoryId(c.id)}
-          className={`flex items-center gap-2 px-2 py-3 text-sm ${
-            active
-              ? "bg-orange-50 text-orange-600 font-semibold"
-              : "text-gray-600"
-          }`}
-        >
-          <Image
-            src={c.icon || "/placeholder.png"}
-            alt={c.name}
-            width={28}
-            height={28}
-            className="rounded-full object-cover"
-          />
-
-          {/* ✅ TÊN DANH MỤC hiển thị rõ ràng */}
-          <span className="truncate">
-            {c.name}
-          </span>
-        </button>
-      );
-    })}
-  </div>
-</aside>
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setActiveCategoryId(c.id)}
+                  className={`flex flex-col items-center gap-1 ${
+                    active
+                      ? "text-orange-600 font-semibold"
+                      : "text-gray-500"
+                  }`}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      active ? "bg-orange-100" : "bg-gray-100"
+                    }`}
+                  >
+                    <img
+                      src={c.icon || "/placeholder.png"}
+                      alt={t[`category_${c.id}`] || c.name}
+                      className="w-6 h-6 object-contain"
+                    />
+                  </div>
+                  <span className="text-[10px] text-center line-clamp-2">
+                    {t[`category_${c.id}`] || c.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
 
         {/* ===== RIGHT PRODUCTS ===== */}
         <section className="bg-gray-100 p-1">
