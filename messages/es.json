@@ -323,5 +323,13 @@
   "set_default": "Establecer como predeterminado",
   "default": "Predeterminado",
   "shipping_address": "Dirección de envío",
-  "confirm_delete": "¿Estás seguro de que deseas eliminar esta dirección?"
+  "confirm_delete": "¿Estás seguro de que deseas eliminar esta dirección?",
+
+
+  "flash_sale": "Oferta relámpago",
+  "ends_in": "Termina en",
+  "best_seller": "Más vendidos",
+  "sold": "Vendido",
+  "loading_products": "Cargando productos...",
+  "all": "Todos"
 }
