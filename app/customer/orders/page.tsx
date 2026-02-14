@@ -63,11 +63,7 @@ function formatPi(value: number | string) {
   const loadOrders = async () => {
   try {
     const token = await getPiAccessToken();
-
-    const res = await fetch("/api/orders", {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    });
+if (!token) return;
 
     if (!res.ok) throw new Error("UNAUTHORIZED");
 
