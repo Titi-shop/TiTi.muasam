@@ -89,7 +89,7 @@ export default function CategoriesClient() {
         />
       </div>
 
-      <div className="mt-2 grid grid-cols-[70px_1fr] gap-0">
+      <div className="mt-2 grid grid-cols-[120px_1fr] gap-0">
         {/* ===== LEFT CATEGORY ===== */}
         <aside className="bg-white border-r">
   <div className="flex flex-col">
