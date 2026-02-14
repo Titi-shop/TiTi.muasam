@@ -89,24 +89,30 @@ export default function CategoriesClient() {
         />
       </div>
 
-      <div className="mt-2 grid grid-cols-[120px_1fr] gap-0">
+      <div className="mt-2 grid grid-cols-[70px_1fr] gap-0">
         {/* ===== LEFT CATEGORY ===== */}
         <aside className="bg-white border-r">
-  <div className="flex flex-col">
+  <div className="flex flex-col items-center py-2 gap-4">
     {/* ALL */}
     <button
       onClick={() => setActiveCategoryId(null)}
-      className={`flex items-center gap-2 px-2 py-3 text-sm ${
+      className={`flex flex-col items-center gap-1 w-full ${
         activeCategoryId === null
-          ? "bg-orange-50 text-orange-600 font-semibold"
-          : "text-gray-600"
+          ? "text-orange-600 font-semibold"
+          : "text-gray-500"
       }`}
     >
-      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+      <div
+        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+          activeCategoryId === null
+            ? "bg-orange-100"
+            : "bg-gray-100"
+        }`}
+      >
         <span className="text-lg">🛍</span>
       </div>
-      <span className="truncate">
-        {t["all"] ?? "Tất cả"}
+      <span className="text-[10px] leading-tight text-center px-1">
+        {t["all"] ?? "All"}
       </span>
     </button>
 
@@ -118,26 +124,26 @@ export default function CategoriesClient() {
         <button
           key={c.id}
           onClick={() => setActiveCategoryId(c.id)}
-          className={`flex items-center gap-3 px-3 py-3 text-sm ${
+          className={`flex flex-col items-center gap-1 w-full ${
             active
-              ? "bg-orange-50 text-orange-600 font-semibold"
-              : "text-gray-600"
+              ? "text-orange-600 font-semibold"
+              : "text-gray-500"
           }`}
         >
           <div
-            className={`w-9 h-9 rounded-full flex items-center justify-center ${
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${
               active ? "bg-orange-100" : "bg-gray-100"
             }`}
           >
             <img
               src={c.icon || "/placeholder.png"}
-              alt={t[`category_${c.id}`] || c.name}
-              className="w-5 h-5 object-contain"
+              alt={c.name}
+              className="w-6 h-6 object-contain"
             />
           </div>
 
-          {/* ✅ TÊN DANH MỤC – hiển thị đúng, không ép nhỏ */}
-          <span className="truncate">
+          {/* ✅ CHỮ BÊN DƯỚI – RÕ – KHÔNG BỊ MẤT */}
+          <span className="text-[10px] leading-tight text-center px-1 line-clamp-2">
             {t[`category_${c.id}`] || c.name}
           </span>
         </button>
