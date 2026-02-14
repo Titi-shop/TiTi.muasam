@@ -1,20 +1,63 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { availableLanguages } from "@/app/lib/i18n";
 
+type CartItem = {
+  id: string;
+  quantity: number;
+};
+
 export default function Navbar() {
   const { t, lang, setLang } = useTranslation();
+  const [cartCount, setCartCount] = useState<number>(0);
+
+  useEffect(() => {
+    const updateCartCount = () => {
+      const storedCart = localStorage.getItem("cart");
+      if (!storedCart) {
+        setCartCount(0);
+        return;
+      }
+
+      try {
+        const parsed: CartItem[] = JSON.parse(storedCart);
+        const total = parsed.reduce((sum, item) => sum + item.quantity, 0);
+        setCartCount(total);
+      } catch {
+        setCartCount(0);
+      }
+    };
+
+    updateCartCount();
+
+    window.addEventListener("storage", updateCartCount);
+
+    return () => {
+      window.removeEventListener("storage", updateCartCount);
+    };
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-orange-500 p-3 text-white flex justify-between items-center shadow-md z-50">
-
+      
       {/* 🛒 Icon giỏ hàng */}
-      <Link href="/cart" aria-label="Giỏ hàng" className="flex items-center gap-1">
+      <Link
+        href="/cart"
+        aria-label="Giỏ hàng"
+        className="flex items-center gap-1 relative"
+      >
         <ShoppingCart size={20} />
         <span>{t.cart || "Cart"}</span>
+
+        {cartCount > 0 && (
+          <span className="absolute -top-2 -right-3 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[16px] text-center">
+            {cartCount}
+          </span>
+        )}
       </Link>
 
       {/* 🌐 Chọn ngôn ngữ */}
