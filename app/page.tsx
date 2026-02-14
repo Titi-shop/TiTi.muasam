@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
@@ -43,7 +44,7 @@ function ProductCard({
 }: {
   product: Product;
   onAddToCart: (product: Product) => void;
-  t: (key: string) => string;
+  t: Record<string, string>;
 }) {
   const router = useRouter();
   const [added, setAdded] = useState(false);
@@ -82,11 +83,12 @@ function ProductCard({
             e.stopPropagation();
             onAddToCart(product);
             setAdded(true);
-            setTimeout(() => setAdded(false), 700);
+            setTimeout(() => setAdded(false), 600);
           }}
           className={`absolute top-2 right-2 p-2 rounded-full shadow transition-all
             ${added ? "bg-green-500 text-white scale-110" : "bg-white"}
           `}
+          aria-label="Add to cart"
         >
           <ShoppingCart size={16} />
         </button>
@@ -108,7 +110,7 @@ function ProductCard({
         )}
 
         <div className="mt-2 bg-pink-100 text-pink-600 text-xs text-center rounded-full py-1">
-          {t("sold")} {product.sold ?? 0}
+          {(t.sold || "Sold")} {product.sold ?? 0}
         </div>
       </div>
     </div>
@@ -195,7 +197,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <p className="text-center mt-10">
-        ⏳ {t("loading_products")}
+         {t.loading_products || "Loading products..."}
       </p>
     );
   }
@@ -210,20 +212,19 @@ export default function HomePage() {
           <PiPriceWidget />
         </div>
 
-        {/* FLASH SALE BOX */}
         <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-xl p-3 text-white">
           <div className="flex justify-between items-center mb-3">
             <div>
               <p className="font-bold text-sm">
-                🔥 {t("flash_sale")}
+                🔥 {t.flash_sale || "Flash Sale"}
               </p>
               <p className="text-xs opacity-90">
-                {t("ends_in")}
+                {t.ends_in || "Ends in"}
               </p>
             </div>
 
             <div className="bg-white text-red-600 font-bold px-3 py-1 rounded-lg text-sm tracking-wider">
-              {timeLeft || "00:00:00"}
+              {timeLeft}
             </div>
           </div>
 
@@ -246,7 +247,7 @@ export default function HomePage() {
                     />
 
                     <div className="absolute top-1 left-1 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded">
-                      {t("flash_sale")}
+                      {t.flash_sale || "Sale"}
                     </div>
 
                     <button
@@ -290,8 +291,8 @@ export default function HomePage() {
       {/* SORT MENU */}
       <div className="flex gap-3 overflow-x-auto px-3 py-3 bg-white text-sm">
         {[
-          { key: "sold", label: t("best_seller") },
-          { key: "sale", label: t("flash_sale") },
+          { key: "sold", label: t.best_seller || "Best Seller" },
+          { key: "sale", label: t.flash_sale || "Flash Sale" },
         ].map((item) => (
           <button
             key={item.key}
