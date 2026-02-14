@@ -223,3 +223,66 @@ export async function updateOrderStatus(
     }
   );
 }
+/* =====================================================
+   GET ORDERS BY SELLER (SELLER / ADMIN)
+   - Lấy các order có order_items thuộc seller
+===================================================== */
+export async function getOrdersBySeller(
+  sellerPiUid: string,
+  status?: string
+): Promise<OrderRecord[]> {
+  /* 1️⃣ Lấy order_id theo seller_pi_uid */
+  const itemsRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!itemsRes.ok) return [];
+
+  const items: Array<{ order_id: string }> = await itemsRes.json();
+
+  const orderIds = Array.from(
+    new Set(items.map((i) => i.order_id))
+  );
+
+  if (orderIds.length === 0) return [];
+
+  /* 2️⃣ Build filter */
+  const ids = orderIds.map((id) => `"${id}"`).join(",");
+  const statusFilter = status
+    ? `&status=eq.${status}`
+    : "";
+
+  /* 3️⃣ Fetch orders + order_items */
+  const orderRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})${statusFilter}&order=created_at.desc&select=id,status,total,created_at,order_items(quantity,price,product_id)`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!orderRes.ok) return [];
+
+  const rawOrders: Array<{
+    id: string;
+    status: string;
+    total: number;
+    created_at: string;
+    order_items: Array<{
+      quantity: number;
+      price: number;
+      product_id: string;
+    }>;
+  }> = await orderRes.json();
+
+  /* 4️⃣ Convert microPi → Pi */
+  return rawOrders.map((o) => ({
+    id: o.id,
+    status: o.status,
+    created_at: o.created_at,
+    total: fromMicroPi(o.total),
+    order_items: o.order_items.map((i) => ({
+      product_id: i.product_id,
+      quantity: i.quantity,
+      price: fromMicroPi(i.price),
+    })),
+  }));
+}
