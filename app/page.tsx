@@ -205,9 +205,25 @@ export default function HomePage() {
       <BannerCarousel />
 
       {/* PI PRICE */}
-      <div className="my-4 flex justify-center">
-        <PiPriceWidget />
-      </div>
+      {/* PI PRICE */}
+<div className="my-4 flex flex-col items-center gap-3 px-3">
+  <PiPriceWidget />
+
+  {/* FLASH SALE BOX */}
+  <div className="w-full bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-xl px-4 py-3 shadow-md flex items-center justify-between">
+    
+    <div>
+      <p className="font-bold text-sm">🔥 Flash Sale</p>
+      <p className="text-xs opacity-90">
+        Kết thúc sau
+      </p>
+    </div>
+
+    <div className="bg-white text-red-600 font-bold px-3 py-1 rounded-lg text-sm tracking-wider">
+      {timeLeft || "00:00:00"}
+    </div>
+  </div>
+</div>
 
       {/* SORT MENU */}
       <div className="flex gap-3 overflow-x-auto px-3 py-3 bg-white text-sm">
