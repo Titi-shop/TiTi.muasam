@@ -323,5 +323,13 @@
   "set_default": "デフォルトに設定",
   "default": "デフォルト",
   "shipping_address": "配送先住所",
-  "confirm_delete": "この住所を削除しますか？"
+  "confirm_delete": "この住所を削除しますか？",
+
+
+  "flash_sale": "期間限定セール",
+  "ends_in": "終了まであと",
+  "best_seller": "ベストセラー商品",
+  "sold": "販売済み",
+  "loading_products": "商品を読み込み中...",
+  "all": "すべて"
 }
