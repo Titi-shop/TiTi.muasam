@@ -92,27 +92,34 @@ export default function CategoriesClient() {
       <div className="mt-2 grid grid-cols-[70px_1fr] gap-0">
         {/* ===== LEFT CATEGORY ===== */}
         <aside className="bg-white border-r">
-  <div className="flex flex-col items-center py-2 gap-3">
+  <div className="flex flex-col">
+    {/* ALL */}
     <button
       onClick={() => setActiveCategoryId(null)}
-      className={`text-[10px] px-1 py-1 w-full text-center ${
+      className={`flex items-center gap-2 px-2 py-3 text-sm ${
         activeCategoryId === null
-          ? "text-orange-600 font-semibold"
-          : "text-gray-500"
+          ? "bg-orange-50 text-orange-600 font-semibold"
+          : "text-gray-600"
       }`}
     >
-      🛍 {t["all"] ?? "Tất cả"}
+      <span className="text-lg">🛍</span>
+      <span className="truncate">
+        {t["all"] ?? "Tất cả"}
+      </span>
     </button>
 
     {categories.map((c) => {
-      const active = String(activeCategoryId) === String(c.id);
+      const active =
+        String(activeCategoryId) === String(c.id);
 
       return (
         <button
           key={c.id}
           onClick={() => setActiveCategoryId(c.id)}
-          className={`flex flex-col items-center w-full py-2 ${
-            active ? "bg-orange-50 text-orange-600" : "text-gray-600"
+          className={`flex items-center gap-2 px-2 py-3 text-sm ${
+            active
+              ? "bg-orange-50 text-orange-600 font-semibold"
+              : "text-gray-600"
           }`}
         >
           <Image
@@ -120,11 +127,11 @@ export default function CategoriesClient() {
             alt={c.name}
             width={28}
             height={28}
-            className="object-contain"
+            className="rounded-full object-cover"
           />
 
-          {/* ✅ TÊN DANH MỤC – luôn hiển thị */}
-          <span className="mt-1 text-[9px] leading-tight text-center px-1">
+          {/* ✅ TÊN DANH MỤC hiển thị rõ ràng */}
+          <span className="truncate">
             {c.name}
           </span>
         </button>
