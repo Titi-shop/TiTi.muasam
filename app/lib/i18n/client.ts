@@ -4,33 +4,32 @@ import { useState, useEffect } from "react";
 import { languageFiles } from "../i18n";
 
 export function useTranslationClient() {
- const [lang, setLang] = useState("en");
-  const [t, setT] = useState<Record<string, string>>({});
+  const [lang, setLang] = useState("en");
+  const [messages, setMessages] = useState<Record<string, string>>({});
 
-  // Lấy ngôn ngữ đã lưu
   useEffect(() => {
     const saved = localStorage.getItem("lang") || "en";
     setLang(saved);
   }, []);
 
-  // Load JSON tương ứng
   useEffect(() => {
-    languageFiles[lang]?.().then((mod) => setT(mod.default));
+    if (!languageFiles[lang]) return;
+
+    languageFiles[lang]().then((mod) => {
+      setMessages(mod.default || {});
+    });
   }, [lang]);
 
-  // Lắng nghe sự kiện đổi ngôn ngữ
-  useEffect(() => {
-    const handler = (e: CustomEvent) => setLang(e.detail);
-    window.addEventListener("language-change", handler);
-    return () => window.removeEventListener("language-change", handler);
-  }, []);
-
-  // Hàm đổi ngôn ngữ
   const setLanguage = (newLang: string) => {
     localStorage.setItem("lang", newLang);
     setLang(newLang);
-    window.dispatchEvent(new CustomEvent("language-change", { detail: newLang }));
   };
+
+  // ⚠️ KHÔNG dùng useCallback
+  function t(key: string) {
+    if (!messages) return key;
+    return messages[key] || key;
+  }
 
   return {
     t,
