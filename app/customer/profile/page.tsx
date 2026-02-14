@@ -4,14 +4,13 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Upload, Edit3 } from "lucide-react";
+import { Upload, Edit3, Save, X } from "lucide-react";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { useAuth } from "@/context/AuthContext";
 import { getPiAccessToken } from "@/lib/piAuth";
 
-/* =========================
-   TYPES 
-========================= */
+/* ================= TYPES ================= */
+
 interface ProfileData {
   display_name: string | null;
   email: string | null;
@@ -28,34 +27,34 @@ export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [form, setForm] = useState<ProfileData | null>(null);
+
+  const [editMode, setEditMode] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  /* =======================
-     LOAD PROFILE (PI BEARER)
-  ======================= */
+  /* ================= LOAD PROFILE ================= */
+
   useEffect(() => {
     if (authLoading) return;
-
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+    if (!user) return;
 
     const loadProfile = async () => {
       try {
         const token = await getPiAccessToken();
 
         const res = await fetch("/api/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         });
 
-        if (!res.ok) throw new Error("UNAUTHORIZED");
+        if (!res.ok) throw new Error("LOAD_FAILED");
 
         const raw: unknown = await res.json();
         const data =
@@ -63,7 +62,7 @@ export default function ProfilePage() {
             ? (raw as { profile: ProfileData }).profile
             : (raw as ProfileData);
 
-        setProfile({
+        const normalized: ProfileData = {
           display_name: data.display_name ?? null,
           email: data.email ?? null,
           phone: data.phone ?? null,
@@ -71,9 +70,11 @@ export default function ProfilePage() {
           province: data.province ?? null,
           country: data.country ?? null,
           avatar: data.avatar ?? null,
-        });
-      } catch (err) {
-        console.error("LOAD PROFILE ERROR", err);
+        };
+
+        setProfile(normalized);
+        setForm(normalized);
+      } catch {
         setError(t.profile_error_loading);
       } finally {
         setLoading(false);
@@ -83,30 +84,29 @@ export default function ProfilePage() {
     loadProfile();
   }, [authLoading, user, t]);
 
-  /* =======================
-     UPLOAD AVATAR (PI BEARER)
-  ======================= */
-  const handleFileChange = async (
+  /* ================= AVATAR UPLOAD ================= */
+
+  const handleAvatarChange = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    setPreview(URL.createObjectURL(file));
+    const objectUrl = URL.createObjectURL(file);
+    setPreview(objectUrl);
     setUploading(true);
+    setSuccess(null);
+    setError(null);
 
     try {
       const token = await getPiAccessToken();
-
-      const form = new FormData();
-      form.append("file", file);
+      const formData = new FormData();
+      formData.append("file", file);
 
       const res = await fetch("/api/uploadAvatar", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: form,
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
 
       const data: unknown = await res.json();
@@ -118,50 +118,73 @@ export default function ProfilePage() {
         "avatar" in data &&
         typeof (data as { avatar: unknown }).avatar === "string"
       ) {
-        setProfile((prev) =>
-          prev
-            ? { ...prev, avatar: (data as { avatar: string }).avatar }
-            : prev
-        );
-      }
+        const newAvatar = (data as { avatar: string }).avatar;
 
-      alert(t.profile_avatar_updated);
-    } catch (err) {
-      console.error("UPLOAD AVATAR ERROR", err);
-      alert(t.upload_failed);
+        setProfile((prev) =>
+          prev ? { ...prev, avatar: newAvatar } : prev
+        );
+
+        setForm((prev) =>
+          prev ? { ...prev, avatar: newAvatar } : prev
+        );
+
+        setPreview(null);
+        setSuccess(t.profile_avatar_updated);
+        setTimeout(() => setSuccess(null), 2000);
+      }
+    } catch {
+      setError(t.upload_failed);
     } finally {
+      URL.revokeObjectURL(objectUrl);
       setUploading(false);
     }
   };
 
-  /* =======================
-     UI STATES
-  ======================= */
+  /* ================= SAVE PROFILE ================= */
+
+  const handleSave = async () => {
+    if (!form) return;
+
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const token = await getPiAccessToken();
+
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(form),
+      });
+
+      if (!res.ok) throw new Error("SAVE_FAILED");
+
+      setProfile(form);
+      setEditMode(false);
+      setSuccess(t.saved_successfully);
+      setTimeout(() => setSuccess(null), 2000);
+    } catch {
+      setError(t.save_failed);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* ================= UI ================= */
+
   if (loading || authLoading) {
     return <p className="p-4 text-center">{t.loading_profile}</p>;
   }
 
-  if (error) {
-    return (
-      <main className="p-6 text-center text-red-500">
-        {error}
-      </main>
-    );
-  }
-
-  /* =======================
-     UI
-  ======================= */
   return (
-    <main className="min-h-screen bg-gray-100 pb-24">
-      <button
-        onClick={() => router.back()}
-        className="absolute top-4 left-4 text-orange-500 text-3xl"
-      >
-        ←
-      </button>
+    <main className="min-h-screen bg-gray-100 pb-28">
+      <div className="max-w-md mx-auto mt-10 bg-white rounded-xl shadow p-6">
 
-      <div className="max-w-md mx-auto bg-white rounded-xl shadow mt-12 p-6">
+        {/* ===== AVATAR ===== */}
         <div className="relative w-28 h-28 mx-auto mb-4">
           {preview ? (
             <Image
@@ -184,54 +207,107 @@ export default function ProfilePage() {
           )}
 
           <label className="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full cursor-pointer">
-            <Upload size={18} className="text-white" />
+            <Upload size={16} className="text-white" />
             <input
               type="file"
               accept="image/*"
               hidden
-              onChange={handleFileChange}
+              onChange={handleAvatarChange}
             />
           </label>
         </div>
 
-        <h2 className="text-center font-semibold">
+        <h2 className="text-center font-semibold mb-4">
           @{user?.username}
         </h2>
 
         {uploading && (
-          <p className="text-center text-sm">{t.uploading}</p>
+          <p className="text-center text-sm text-gray-500">
+            {t.uploading}
+          </p>
         )}
-      </div>
+        {success && (
+          <p className="text-center text-sm text-green-600">
+            ✓ {success}
+          </p>
+        )}
+        {error && (
+          <p className="text-center text-sm text-red-500">
+            {error}
+          </p>
+        )}
 
-      <div className="bg-white mt-6 mx-4 p-4 rounded-xl shadow space-y-3">
-        {(
-          [
-            ["display_name", t.app_name],
-            ["email", t.email],
-            ["phone", t.phone],
-            ["address", t.address],
-            ["province", t.province],
-            ["country", t.country],
-          ] as const
-        ).map(([key, label]) => (
-          <div key={key} className="flex justify-between border-b pb-2">
-            <span>{label}</span>
-            <span>
-              {profile?.[key] && profile[key] !== ""
-                ? profile[key]
-                : t.not_set}
-            </span>
-          </div>
-        ))}
-      </div>
+        {/* ===== INFO ===== */}
+        <div className="space-y-3 mt-4">
 
-      <div className="flex justify-center mt-8">
-        <button
-          onClick={() => router.push("/customer/profile/edit")}
-          className="btn-orange flex items-center gap-2"
-        >
-          <Edit3 size={18} /> {t.edit}
-        </button>
+          {(
+            [
+              ["display_name", t.app_name],
+              ["email", t.email],
+              ["phone", t.phone],
+              ["address", t.address],
+              ["province", t.province],
+              ["country", t.country],
+            ] as const
+          ).map(([key, label]) => (
+            <div key={key} className="flex justify-between border-b pb-2">
+              <span className="text-gray-500">{label}</span>
+
+              {editMode ? (
+                <input
+                  className="text-right outline-none"
+                  value={form?.[key] ?? ""}
+                  onChange={(e) =>
+                    setForm((prev) =>
+                      prev
+                        ? { ...prev, [key]: e.target.value }
+                        : prev
+                    )
+                  }
+                />
+              ) : (
+                <span>
+                  {profile?.[key] && profile[key] !== ""
+                    ? profile[key]
+                    : t.not_set}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* ===== ACTION BUTTONS ===== */}
+        <div className="flex justify-center mt-6 gap-3">
+          {editMode ? (
+            <>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="btn-orange flex items-center gap-2"
+              >
+                <Save size={16} />
+                {saving ? t.saving : t.save}
+              </button>
+
+              <button
+                onClick={() => {
+                  setForm(profile);
+                  setEditMode(false);
+                }}
+                className="bg-gray-300 px-4 py-2 rounded flex items-center gap-2"
+              >
+                <X size={16} /> {t.cancel}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setEditMode(true)}
+              className="btn-orange flex items-center gap-2"
+            >
+              <Edit3 size={16} /> {t.edit}
+            </button>
+          )}
+        </div>
       </div>
     </main>
   );
