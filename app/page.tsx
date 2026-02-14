@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ShoppingCart } from "lucide-react";
 import BannerCarousel from "./components/BannerCarousel";
+import { useCart } from "@/app/context/CartContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 /* ================= TYPES ================= */
@@ -72,11 +73,23 @@ function ProductCard({
         )}
 
         <button
-          onClick={(e) => e.stopPropagation()}
-          className="absolute top-2 right-2 bg-white p-2 rounded-full shadow"
-        >
-          <ShoppingCart size={16} />
-        </button>
+  onClick={(e) => {
+    e.stopPropagation();
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      sale_price: product.finalPrice,
+      quantity: 1,
+      image: product.images?.[0],
+      images: product.images,
+    });
+  }}
+  className="absolute top-2 right-2 bg-white p-2 rounded-full shadow active:scale-95"
+  aria-label="Add to cart"
+>
+  <ShoppingCart size={16} />
+</button>
       </div>
 
       <div className="p-3">
@@ -107,7 +120,7 @@ function ProductCard({
 export default function HomePage() {
   const router = useRouter();
   const { t } = useTranslation();
-
+const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] =
@@ -248,6 +261,17 @@ export default function HomePage() {
         </section>
 
         {/* CATEGORY 2 ROW SCROLL */}
+        <button
+  onClick={() => setSelectedCategory("all")}
+  className="flex flex-col items-center min-w-[70px]"
+>
+  <div className="w-[60px] h-[60px] rounded-full bg-orange-100 flex items-center justify-center">
+    <span className="text-2xl">🛍</span>
+  </div>
+  <span className="text-xs mt-1 text-center">
+    {t.all ?? "All"}
+  </span>
+</button>
         <section className="bg-white p-4 rounded-xl shadow-sm">
           {[0, 1].map((row) => (
             <div
