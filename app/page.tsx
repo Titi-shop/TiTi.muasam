@@ -75,15 +75,21 @@ function ProductCard({
           </div>
         )}
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddToCart(product);
-          }}
-          className="absolute top-2 right-2 bg-white p-2 rounded-full shadow active:scale-95"
-        >
-          <ShoppingCart size={16} />
-        </button>
+        const [added, setAdded] = useState(false);
+
+<button
+  onClick={(e) => {
+    e.stopPropagation();
+    onAddToCart(product);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 800);
+  }}
+  className={`absolute top-2 right-2 p-2 rounded-full shadow transition-all duration-200
+    ${added ? "bg-green-500 text-white scale-110" : "bg-white"}
+  `}
+>
+  <ShoppingCart size={16} />
+</button>
       </div>
 
       <div className="p-3">
@@ -91,7 +97,7 @@ function ProductCard({
           {product.name}
         </p>
 
-        <p className="text-red-600 font-bold mt-1">
+        <p className="text-orange-500 font-bold mt-1 text-[15px]">
           {formatPi(product.finalPrice ?? product.price)} π
         </p>
 
@@ -230,7 +236,7 @@ export default function HomePage() {
         ))}
       </div>
 
-      <div className="px-3 space-y-6 max-w-6xl mx-auto mt-4">
+      <div className="px-3 space-y-6 mt-4 w-full">
 
         {/* FLASH SALE */}
         <section className="bg-white p-4 rounded-xl">
@@ -268,8 +274,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* CATEGORY SCROLL (ALL nằm trong đây) */}
-        <section className="bg-white p-4 rounded-xl shadow-sm">
+        {/* CATEGORY SCROLL *}
+        <section className="bg-white py-4 shadow-sm -mx-3 px-3">
           <div className="flex gap-4 overflow-x-auto snap-x">
 
             {/* ALL */}
