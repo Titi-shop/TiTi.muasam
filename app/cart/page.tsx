@@ -284,7 +284,7 @@ export default function CartPage() {
           </div>
 
           {/* FOOTER */}
-          <div className="fixed bottom-12 left-0 right-0 bg-white border-t p-5 pb-8">
+          <div className="fixed bottom-9 left-0 right-0 bg-white border-t p-5 pb-8">
             <div className="flex justify-between mb-2">
               <span className="text-sm">{t.total}</span>
               <span className="font-bold text-orange-600">
