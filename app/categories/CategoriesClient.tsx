@@ -91,52 +91,60 @@ export default function CategoriesClient() {
 
       <div className="mt-2 grid grid-cols-[70px_1fr] gap-0">
         {/* ===== LEFT CATEGORY ===== */}
-        <aside className="col-span-2 overflow-y-auto">
-          <div className="flex flex-col items-center gap-4 py-2">
-            <button
-              onClick={() => setActiveCategoryId(null)}
-              className={`text-xs px-2 py-1 rounded-full ${
-                activeCategoryId === null
-                  ? "bg-orange-500 text-white"
-                  : "text-gray-500"
-              }`}
-            >
-            🛍 {t["all"] ?? "Tất cả"}
-            </button>
+        <aside className="col-span-2 overflow-y-auto bg-white border-r">
+  <div className="flex flex-col">
+    {/* ALL */}
+    <button
+      onClick={() => setActiveCategoryId(null)}
+      className={`flex items-center gap-3 px-3 py-3 text-sm ${
+        activeCategoryId === null
+          ? "bg-orange-50 text-orange-600 font-semibold"
+          : "text-gray-600"
+      }`}
+    >
+      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+        <span className="text-lg">🛍</span>
+      </div>
+      <span className="truncate">
+        {t["all"] ?? "Tất cả"}
+      </span>
+    </button>
 
-            {categories.map((c) => {
-              const active =
-                String(activeCategoryId) === String(c.id);
+    {categories.map((c) => {
+      const active =
+        String(activeCategoryId) === String(c.id);
 
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setActiveCategoryId(c.id)}
-                  className={`flex flex-col items-center gap-1 ${
-                    active
-                      ? "text-orange-600 font-semibold"
-                      : "text-gray-500"
-                  }`}
-                >
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      active ? "bg-orange-100" : "bg-gray-100"
-                    }`}
-                  >
-                    <img
-                      src={c.icon || "/placeholder.png"}
-                      alt={t[`category_${c.id}`] || c.name}
-                      className="w-6 h-6 object-contain"
-                    />
-                  </div>
-                  <span className="text-[10px] text-center line-clamp-2">
-                    {t[`category_${c.id}`] || c.name}
-                  </span>
-                </button>
-              );
-            })}
+      return (
+        <button
+          key={c.id}
+          onClick={() => setActiveCategoryId(c.id)}
+          className={`flex items-center gap-3 px-3 py-3 text-sm ${
+            active
+              ? "bg-orange-50 text-orange-600 font-semibold"
+              : "text-gray-600"
+          }`}
+        >
+          <div
+            className={`w-9 h-9 rounded-full flex items-center justify-center ${
+              active ? "bg-orange-100" : "bg-gray-100"
+            }`}
+          >
+            <img
+              src={c.icon || "/placeholder.png"}
+              alt={t[`category_${c.id}`] || c.name}
+              className="w-5 h-5 object-contain"
+            />
           </div>
-        </aside>
+
+          {/* ✅ TÊN DANH MỤC – hiển thị đúng, không ép nhỏ */}
+          <span className="truncate">
+            {t[`category_${c.id}`] || c.name}
+          </span>
+        </button>
+      );
+    })}
+  </div>
+</aside>
 
         {/* ===== RIGHT PRODUCTS ===== */}
         <section className="bg-gray-100 p-1">
