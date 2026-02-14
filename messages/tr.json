@@ -323,5 +323,13 @@
   "set_default": "Varsayılan yap",
   "default": "Varsayılan",
   "shipping_address": "Teslimat adresi",
-  "confirm_delete": "Bu adresi silmek istediğinize emin misiniz?"
+  "confirm_delete": "Bu adresi silmek istediğinize emin misiniz?",
+
+  
+  "flash_sale": "Sınırlı Süreli İndirim",
+  "ends_in": "Bitişine Kalan Süre",
+  "best_seller": "Çok Satan Ürün",
+  "sold": "Satıldı",
+  "loading_products": "Ürünler yükleniyor...",
+  "all": "Tümü"
 }
