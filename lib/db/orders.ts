@@ -232,8 +232,14 @@ export async function getOrdersBySeller(
   status?: string
 ): Promise<OrderRecord[]> {
   /* 1️⃣ Lấy order_id theo seller_pi_uid */
-  const itemsRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}`,
+  const statusItemFilter = status
+  ? `&status=eq.${status}`
+  : "";
+
+const itemsRes = await fetch(
+  `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}${statusItemFilter}`,
+  { headers: headers(), cache: "no-store" }
+);
     { headers: headers(), cache: "no-store" }
   );
 
@@ -249,9 +255,7 @@ export async function getOrdersBySeller(
 
   /* 2️⃣ Build filter */
   const ids = orderIds.map((id) => `"${id}"`).join(",");
-  const statusFilter = status
-    ? `&status=eq.${status}`
-    : "";
+  const statusFilter = "";
 
   /* 3️⃣ Fetch orders + order_items */
   const orderRes = await fetch(
