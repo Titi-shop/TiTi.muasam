@@ -154,8 +154,9 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
         },
         {
           onReadyForServerApproval: async (paymentId) => {
-            const token = await getPiAccessToken();
-            await fetch("/api/pi/approve", {
+            
+             const token = await getPiAccessToken();
+if (!token) return;
               method: "POST",
               headers: {
                 Authorization: `Bearer ${token}`,
