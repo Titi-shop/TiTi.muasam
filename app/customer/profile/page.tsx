@@ -153,7 +153,7 @@ export default function ProfilePage() {
       const token = await getPiAccessToken();
 
       const res = await fetch("/api/profile", {
-        method: "PUT",
+  method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
