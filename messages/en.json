@@ -323,5 +323,13 @@
   "set_default": "Set as Default",
   "default": "Default",
   "shipping_address": "Shipping Address",
-  "confirm_delete": "Are you sure you want to delete this address?"
+  "confirm_delete": "Are you sure you want to delete this address?",
+
+
+  "flash_sale": "Flash Sale",
+  "ends_in": "Ends in",
+  "best_seller": "Best Sellers",
+  "sold": "Sold",
+  "loading_products": "Loading products...",
+  "all": "All"
 }
