@@ -323,5 +323,15 @@
   "set_default": "Definir como padrão",
   "default": "Padrão",
   "shipping_address": "Endereço de entrega",
-  "confirm_delete": "Tem certeza de que deseja excluir este endereço?"
+  "confirm_delete": "Tem certeza de que deseja excluir este endereço?",
+
+
+
+  
+  "flash_sale": "Oferta Relâmpago",
+  "ends_in": "Termina em",
+  "best_seller": "Mais Vendidos",
+  "sold": "Vendido",
+  "loading_products": "Carregando produtos...",
+  "all": "Todos"
 }
