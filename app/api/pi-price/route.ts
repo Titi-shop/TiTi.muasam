@@ -1,17 +1,53 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
   try {
-    // Gọi API từ OKX (PI/USDT)
-    const res = await fetch("https://www.okx.com/api/v5/market/ticker?instId=PI-USDT", {
-      cache: "no-store", // Không cache để luôn lấy dữ liệu mới
-    });
+    const res = await fetch(
+      "https://www.okx.com/api/v5/market/ticker?instId=PI-USDT",
+      {
+        cache: "no-store",
+        signal: controller.signal,
+      }
+    );
 
-    if (!res.ok) throw new Error("Không thể kết nối OKX");
+    clearTimeout(timeout);
 
-    const data = await res.json();
-    const priceStr = data?.data?.[0]?.last;
-    const price = priceStr ? parseFloat(priceStr) : null;
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: `OKX response error (${res.status})` },
+        { status: 500 }
+      );
+    }
+
+    const json: unknown = await res.json();
+
+    if (
+      typeof json !== "object" ||
+      json === null ||
+      !("data" in json)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid response structure from OKX" },
+        { status: 500 }
+      );
+    }
+
+    const data = (json as {
+      data?: { last?: string }[];
+    }).data;
+
+    const priceStr = data?.[0]?.last;
+    const price = priceStr ? Number(priceStr) : null;
+
+    if (!price || Number.isNaN(price)) {
+      return NextResponse.json(
+        { error: "Invalid price received from OKX" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       symbol: "PI/USDT",
@@ -20,7 +56,12 @@ export async function GET() {
       updated_at: new Date().toISOString(),
     });
   } catch (err) {
-    console.error("❌ Lỗi lấy giá Pi từ OKX:", err);
-    return NextResponse.json({ error: "Không thể lấy giá Pi từ OKX" }, { status: 500 });
+    const message =
+      err instanceof Error ? err.message : "Unknown error";
+
+    return NextResponse.json(
+      { error: `Failed to fetch PI price: ${message}` },
+      { status: 500 }
+    );
   }
 }
