@@ -42,6 +42,7 @@ export default function CustomerAddressPage() {
   ========================= */
   const loadAddresses = async () => {
     const token = await getPiAccessToken();
+if (!token) return;
     const res = await fetch("/api/address", {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -75,6 +76,7 @@ export default function CustomerAddressPage() {
     setSaving(true);
     try {
       const token = await getPiAccessToken();
+if (!token) return;
       await fetch("/api/address", {
         method: "POST",
         headers: {
@@ -95,6 +97,7 @@ export default function CustomerAddressPage() {
 
   const setDefault = async (id: string) => {
     const token = await getPiAccessToken();
+if (!token) return;
     await fetch("/api/address", {
       method: "PUT",
       headers: {
@@ -110,6 +113,7 @@ export default function CustomerAddressPage() {
     if (!confirm(t.confirm_delete || "Xoá địa chỉ này?")) return;
 
     const token = await getPiAccessToken();
+if (!token) return;
     await fetch(`/api/address?id=${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
