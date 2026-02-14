@@ -106,8 +106,8 @@ function ProductCard({
         )}
 
         <div className="mt-2 bg-pink-100 text-pink-600 text-xs text-center rounded-full py-1">
-          Đã bán {product.sold ?? 0}
-        </div>
+  {t.sold} {product.sold ?? 0}
+</div>
       </div>
     </div>
   );
@@ -214,8 +214,12 @@ export default function HomePage() {
   <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-xl p-3 text-white">
     <div className="flex justify-between items-center mb-3">
       <div>
-        <p className="font-bold text-sm">🔥 Flash Sale</p>
-        <p className="text-xs opacity-90">Kết thúc sau</p>
+        <p className="font-bold text-sm">
+  🔥 {t.flash_sale}
+</p>
+<p className="text-xs opacity-90">
+  {t.ends_in}
+</p>
       </div>
 
       <div className="bg-white text-red-600 font-bold px-3 py-1 rounded-lg text-sm tracking-wider">
@@ -244,7 +248,7 @@ export default function HomePage() {
               />
 
               <div className="absolute top-1 left-1 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded">
-                SALE
+                {t.flash_sale}
               </div>
 
               {/* ADD TO CART */}
@@ -290,8 +294,8 @@ export default function HomePage() {
       {/* SORT MENU */}
       <div className="flex gap-3 overflow-x-auto px-3 py-3 bg-white text-sm">
         {[
-          { key: "sold", label: "Bán chạy" },
-          { key: "sale", label: "Flash Sale" },
+           { key: "sold", label: t.best_seller },
+{ key: "sale", label: t.flash_sale },
         ].map((item) => (
           <button
             key={item.key}
