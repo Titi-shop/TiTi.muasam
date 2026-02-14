@@ -329,9 +329,13 @@
   "confirm_delete": "确定删除该地址吗？",
 
 
+  
   "flash_sale": "限时抢购",
-  "ends_in": "结束于",
-  "best_seller": "热销",
-  "sold": "已售"
+  "ends_in": "结束倒计时",
+  "best_seller": "热卖商品",
+  "sold": "已售",
+  "loading_products": "正在加载商品...",
+  "all": "全部"
+
 
 }
