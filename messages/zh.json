@@ -326,7 +326,12 @@
   "set_default": "设为默认",
   "default": "默认",
   "shipping_address": "收货地址",
-  "confirm_delete": "确定删除该地址吗？"
+  "confirm_delete": "确定删除该地址吗？",
 
+
+  "flash_sale": "限时抢购",
+  "ends_in": "结束于",
+  "best_seller": "热销",
+  "sold": "已售"
 
 }
