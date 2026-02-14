@@ -7,9 +7,8 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { useAuth } from "@/context/AuthContext";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
-/* =========================
-   TYPES
-========================= */
+/* ================= TYPES ================= */
+
 interface ProductData {
   id: string | number;
   name: string;
@@ -34,9 +33,8 @@ interface MessageState {
   type: "success" | "error" | "";
 }
 
-/* =========================
-   PAGE
-========================= */
+/* ================= PAGE ================= */
+
 export default function EditProductPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -59,9 +57,8 @@ export default function EditProductPage() {
     type: "",
   });
 
-  /* =========================
-     AUTH GUARD
-  ========================= */
+  /* ================= AUTH GUARD ================= */
+
   useEffect(() => {
     if (authLoading) return;
     if (!user || (user.role !== "seller" && user.role !== "admin")) {
@@ -69,44 +66,46 @@ export default function EditProductPage() {
     }
   }, [authLoading, user, router]);
 
-  /* =========================
-     LOAD CATEGORIES
-  ========================= */
+  /* ================= LOAD CATEGORIES ================= */
+
   useEffect(() => {
     apiAuthFetch("/api/categories")
       .then((r) => r.json())
-      .then((d) => setCategories(Array.isArray(d) ? d : []))
+      .then((d: unknown) =>
+        setCategories(Array.isArray(d) ? (d as Category[]) : [])
+      )
       .catch(() => setCategories([]));
   }, []);
 
-  /* =========================
-     LOAD PRODUCT
-  ========================= */
+  /* ================= LOAD PRODUCT ================= */
+
   useEffect(() => {
     if (!id) return;
 
     apiAuthFetch("/api/products")
       .then((r) => r.json())
       .then((list: ProductData[]) => {
-        const p = list.find((x) => String(x.id) === String(id));
-        if (!p) {
-          setMessage({ text: t.product_not_found, type: "error" });
+        const found = list.find((p) => String(p.id) === String(id));
+        if (!found) {
+          setMessage({
+            text: t.product_not_found || "Product not found",
+            type: "error",
+          });
           return;
         }
 
-        setProduct(p);
-        setImages(p.images || []);
-        setDetailImages(p.detailImages || []);
-        setDetail(p.detail || "");
-        setSalePrice(p.salePrice ?? "");
-        setSaleStart(p.saleStart || "");
-        setSaleEnd(p.saleEnd || "");
+        setProduct(found);
+        setImages(found.images || []);
+        setDetailImages(found.detailImages || []);
+        setDetail(found.detail || "");
+        setSalePrice(found.salePrice ?? "");
+        setSaleStart(found.saleStart || "");
+        setSaleEnd(found.saleEnd || "");
       });
   }, [id, t]);
 
-  /* =========================
-     IMAGE UPLOAD
-  ========================= */
+  /* ================= IMAGE UPLOAD ================= */
+
   async function uploadImages(
     files: File[],
     setter: React.Dispatch<React.SetStateAction<string[]>>
@@ -120,8 +119,10 @@ export default function EditProductPage() {
         body: form,
       });
 
-      const data = await res.json();
-      if (data?.url) setter((prev) => [...prev, data.url]);
+      const data = (await res.json()) as { url?: string };
+      if (data?.url) {
+        setter((prev) => [...prev, data.url as string]);
+      }
     }
   }
 
@@ -132,16 +133,15 @@ export default function EditProductPage() {
     setter((prev) => prev.filter((_, i) => i !== index));
   }
 
-  /* =========================
-     SAVE
-  ========================= */
+  /* ================= SAVE ================= */
+
   async function handleSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!product) return;
 
     if (salePrice && (!saleStart || !saleEnd)) {
       setMessage({
-        text: t.need_sale_date,
+        text: t.need_sale_date || "Need sale start & end date",
         type: "error",
       });
       return;
@@ -170,6 +170,7 @@ export default function EditProductPage() {
     };
 
     setSaving(true);
+
     await apiAuthFetch("/api/products", {
       method: "PUT",
       body: JSON.stringify(payload),
@@ -179,61 +180,40 @@ export default function EditProductPage() {
   }
 
   if (!product) {
-    return <p className="text-center mt-10">⏳ {t.loading}</p>;
+    return (
+      <main className="p-8 text-center">
+        ⏳ {t.loading || "Loading..."}
+      </main>
+    );
   }
 
-  /* =========================
-     UI
-  ========================= */
+  /* ================= UI ================= */
+
   return (
-    <main className="max-w-2xl mx-auto p-4 pb-32">
+    <main className="max-w-2xl mx-auto p-4 pb-28">
       <h1 className="text-xl font-bold text-center mb-4 text-[#ff6600]">
-        ✏️ {t.edit_product}
+        ✏️ {t.edit_product || "Edit Product"}
       </h1>
 
       {message.text && (
-        <p className="text-center text-red-600 mb-3">{message.text}</p>
+        <p className="text-center text-red-600 mb-3">
+          {message.text}
+        </p>
       )}
 
-      {/* IMAGES */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        {images.map((url, i) => (
-          <div key={url} className="relative h-28">
-            <Image src={url} alt="" fill className="object-cover rounded" />
-            <button
-              type="button"
-              onClick={() => removeImage(i, setImages)}
-              className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 rounded"
-            >
-              ✕
-            </button>
-          </div>
-        ))}
-      </div>
-
-       {/* ADD PRODUCT IMAGES */}
-<label className="block text-sm font-medium text-gray-700">
-  📷 {t.product_images}
-</label>
-
-<input
-  type="file"
-  accept="image/*"
-  multiple
-  onChange={(e) => {
-    const files = Array.from(e.target.files || []);
-    uploadImages(files, setImages);
-    e.target.value = "";
-  }}
-  className="w-full border p-2 rounded"
-/>
       <form onSubmit={handleSave} className="space-y-4">
+
+        {/* CATEGORY */}
         <select
           name="categoryId"
           defaultValue={product.categoryId || ""}
           className="w-full border p-2 rounded"
+          required
         >
-          <option value="">{t.select_category}</option>
+          <option value="">
+            {t.select_category || "Select category"}
+          </option>
+
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
               {t[c.key] ?? c.key}
@@ -241,26 +221,71 @@ export default function EditProductPage() {
           ))}
         </select>
 
+        {/* NAME */}
         <input
           name="name"
           defaultValue={product.name}
+          placeholder={t.product_name || "Product name"}
           className="w-full border p-2 rounded"
+          required
         />
 
+        {/* IMAGES GRID */}
+        <div className="grid grid-cols-3 gap-3">
+          {images.map((url, i) => (
+            <div key={url} className="relative h-28">
+              <Image
+                src={url}
+                alt=""
+                fill
+                className="object-cover rounded"
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(i, setImages)}
+                className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 rounded"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+
+          {images.length < 6 && (
+            <label className="flex items-center justify-center border-2 border-dashed rounded cursor-pointer h-28 text-gray-400">
+              ＋
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  uploadImages(files, setImages);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          )}
+        </div>
+
+        {/* PRICE */}
         <input
           name="price"
           type="number"
           step="any"
           defaultValue={product.price}
-          placeholder={t.price_pi}
+          placeholder={t.price_pi || "Price (Pi)"}
           className="w-full border p-2 rounded"
+          required
         />
 
         {/* SALE PRICE */}
         <input
           type="number"
           step="any"
-          placeholder={t.sale_price_optional}
+          placeholder={
+            t.sale_price_optional || "Sale price (optional)"
+          }
           value={salePrice}
           onChange={(e) =>
             setSalePrice(e.target.value ? Number(e.target.value) : "")
@@ -268,82 +293,91 @@ export default function EditProductPage() {
           className="w-full border p-2 rounded"
         />
 
-        {/* SALE TIME (NGANG – NGẮN) */}
         {salePrice && (
-          <div className="space-y-1">
+          <div className="space-y-2">
             <p className="text-sm text-gray-600 font-medium">
-              📅 {t.sale_time}
+              📅 {t.sale_time || "Sale time"}
             </p>
-            <div className="flex gap-3">
+
+            <div className="grid grid-cols-2 gap-3">
               <input
                 type="datetime-local"
                 value={saleStart}
                 onChange={(e) => setSaleStart(e.target.value)}
-                className="border p-2 rounded w-auto max-w-[220px]"
+                className="border p-2 rounded"
               />
               <input
                 type="datetime-local"
                 value={saleEnd}
                 onChange={(e) => setSaleEnd(e.target.value)}
-                className="border p-2 rounded w-auto max-w-[220px]"
+                className="border p-2 rounded"
               />
             </div>
           </div>
         )}
 
+        {/* DESCRIPTION */}
         <textarea
           name="description"
           defaultValue={product.description}
-          placeholder={t.description}
+          placeholder={t.description || "Description"}
           className="w-full border p-2 rounded min-h-[80px]"
         />
 
+        {/* DETAIL */}
         <textarea
-          placeholder={t.product_detail}
           value={detail}
           onChange={(e) => setDetail(e.target.value)}
+          placeholder={t.product_detail || "Product detail"}
           className="w-full border p-2 rounded min-h-[120px]"
         />
 
-         {/* DETAIL IMAGES */}
-<label className="block text-sm font-medium text-gray-700 mt-2">
-  🖼 {t.product_detail_images}
-</label>
+        {/* DETAIL IMAGES */}
+        <div className="grid grid-cols-3 gap-3">
+          {detailImages.map((url, i) => (
+            <div key={url} className="relative h-28">
+              <Image
+                src={url}
+                alt=""
+                fill
+                className="object-cover rounded"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  removeImage(i, setDetailImages)
+                }
+                className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 rounded"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
 
-<div className="grid grid-cols-3 gap-3 mt-2">
-  {detailImages.map((url, i) => (
-    <div key={url} className="relative h-28">
-      <Image src={url} alt="" fill className="object-cover rounded" />
-      <button
-        type="button"
-        onClick={() => removeImage(i, setDetailImages)}
-        className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 rounded"
-      >
-        ✕
-      </button>
-    </div>
-  ))}
+          <label className="flex items-center justify-center border-2 border-dashed rounded cursor-pointer h-28 text-gray-400">
+            ＋
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                uploadImages(files, setDetailImages);
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </div>
 
-  <label className="flex items-center justify-center border-2 border-dashed rounded cursor-pointer h-28 text-gray-400">
-    ＋
-    <input
-      type="file"
-      accept="image/*"
-      multiple
-      hidden
-      onChange={(e) => {
-        const files = Array.from(e.target.files || []);
-        uploadImages(files, setDetailImages);
-        e.target.value = "";
-      }}
-    />
-  </label>
-</div>
+        {/* SAVE BUTTON */}
         <button
           disabled={saving}
           className="w-full bg-[#ff6600] text-white py-3 rounded-lg font-semibold"
         >
-          {saving ? t.saving : t.save_changes}
+          {saving
+            ? t.saving || "Saving..."
+            : t.save_changes || "Save changes"}
         </button>
       </form>
     </main>
