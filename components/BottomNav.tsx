@@ -30,7 +30,7 @@ export default function BottomNav() {
           >
             <Icon
               className={`w-6 h-6 transition-all ${
-                active ? "text-black" : "text-gray-400"
+                active ? "text-black -translate-y-1" : "text-gray-400"
               }`}
             />
 
