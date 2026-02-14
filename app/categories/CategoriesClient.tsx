@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
+import { useCart } from "@/app/context/CartContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 /* ================= TYPES ================= */
@@ -35,7 +36,7 @@ function formatPi(value: number | string) {
 
 export default function CategoriesClient() {
   const { t } = useTranslation();
-
+  const { addToCart } = useCart();
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [activeCategoryId, setActiveCategoryId] =
@@ -94,7 +95,7 @@ export default function CategoriesClient() {
   <div className="flex flex-col items-center py-2 gap-3">
     <button
       onClick={() => setActiveCategoryId(null)}
-      className={`text-[10px] px-1 py-1 w-full ${
+      className={`text-[10px] px-1 py-1 w-full text-center ${
         activeCategoryId === null
           ? "text-orange-600 font-semibold"
           : "text-gray-500"
@@ -104,17 +105,14 @@ export default function CategoriesClient() {
     </button>
 
     {categories.map((c) => {
-      const active =
-        String(activeCategoryId) === String(c.id);
+      const active = String(activeCategoryId) === String(c.id);
 
       return (
         <button
           key={c.id}
           onClick={() => setActiveCategoryId(c.id)}
           className={`flex flex-col items-center w-full py-2 ${
-            active
-              ? "bg-orange-50 text-orange-600"
-              : "text-gray-500"
+            active ? "bg-orange-50 text-orange-600" : "text-gray-600"
           }`}
         >
           <Image
@@ -124,7 +122,9 @@ export default function CategoriesClient() {
             height={28}
             className="object-contain"
           />
-          <span className="text-[9px] text-center leading-tight mt-1">
+
+          {/* ✅ TÊN DANH MỤC – luôn hiển thị */}
+          <span className="mt-1 text-[9px] leading-tight text-center px-1">
             {c.name}
           </span>
         </button>
@@ -178,9 +178,27 @@ export default function CategoriesClient() {
                           </div>
                         )}
 
-                        <div className="absolute top-2 right-2 bg-white p-2 rounded-full shadow">
-                          <ShoppingCart size={16} />
-                        </div>
+                        <button
+  type="button"
+  onClick={(e) => {
+    e.preventDefault(); // không nhảy Link
+    e.stopPropagation();
+
+    addToCart({
+      id: String(p.id),
+      name: p.name,
+      price: p.price,
+      sale_price: p.finalPrice,
+      quantity: 1,
+      image: p.images?.[0],
+      images: p.images,
+    });
+  }}
+  className="absolute top-2 right-2 bg-white p-2 rounded-full shadow active:scale-95"
+  aria-label="Add to cart"
+>
+  <ShoppingCart size={16} />
+</button>
                       </div>
 
                       <div className="p-3">
