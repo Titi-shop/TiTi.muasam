@@ -44,6 +44,16 @@ function ProductCard({
   onAddToCart: (product: Product) => void;
 }) {
   const router = useRouter();
+  const [added, setAdded] = useState(false); // ✅ ĐẶT ĐÚNG CHỖ
+
+  const discount =
+    product.price > 0
+      ? Math.round(
+          ((product.price - (product.finalPrice ?? product.price)) /
+            product.price) *
+            100
+        )
+      : 0;
 
   return (
     <div
@@ -59,15 +69,22 @@ function ProductCard({
           className="w-full h-44 object-cover"
         />
 
-        {/* ICON GIỎ HÀNG – BẤM LÀ THÊM */}
+        {product.isSale && (
+          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+            -{discount}%
+          </div>
+        )}
+
         <button
-          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onAddToCart(product);
+            setAdded(true);
+            setTimeout(() => setAdded(false), 700);
           }}
-          className="absolute top-2 right-2 bg-white p-2 rounded-full shadow active:scale-95"
-          aria-label="Add to cart"
+          className={`absolute top-2 right-2 p-2 rounded-full shadow transition-all
+            ${added ? "bg-green-500 text-white scale-110" : "bg-white"}
+          `}
         >
           <ShoppingCart size={16} />
         </button>
@@ -78,8 +95,7 @@ function ProductCard({
           {product.name}
         </p>
 
-        {/* GIÁ PI */}
-        <p className="text-orange-500 font-bold mt-1">
+        <p className="text-orange-500 font-bold mt-1 text-[15px]">
           {formatPi(product.finalPrice ?? product.price)} π
         </p>
 
@@ -88,6 +104,10 @@ function ProductCard({
             {formatPi(product.price)} π
           </p>
         )}
+
+        <div className="mt-2 bg-pink-100 text-pink-600 text-xs text-center rounded-full py-1">
+          Đã bán {product.sold ?? 0}
+        </div>
       </div>
     </div>
   );
@@ -103,10 +123,35 @@ export default function HomePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] =
     useState<string | "all">("all");
+  const [sortType, setSortType] = useState("sale");
   const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState("");
+
+  /* ===== COUNTDOWN ===== */
+  useEffect(() => {
+    const target = new Date();
+    target.setHours(target.getHours() + 2);
+
+    const interval = setInterval(() => {
+      const diff = target.getTime() - Date.now();
+      if (diff <= 0) return setTimeLeft("00:00:00");
+
+      const h = Math.floor(diff / 1000 / 60 / 60);
+      const m = Math.floor((diff / 1000 / 60) % 60);
+      const s = Math.floor((diff / 1000) % 60);
+
+      setTimeLeft(
+        `${String(h).padStart(2, "0")}:${String(m).padStart(
+          2,
+          "0"
+        )}:${String(s).padStart(2, "0")}`
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   /* ===== LOAD DATA ===== */
-
   useEffect(() => {
     Promise.all([
       fetch("/api/products", { cache: "no-store" }).then((r) => r.json()),
@@ -129,13 +174,23 @@ export default function HomePage() {
   }, []);
 
   /* ===== FILTER ===== */
-
   const filteredProducts = useMemo(() => {
-    if (selectedCategory === "all") return products;
-    return products.filter(
-      (p) => p.categoryId === selectedCategory
-    );
-  }, [products, selectedCategory]);
+    let list = [...products];
+
+    if (selectedCategory !== "all") {
+      list = list.filter(
+        (p) => p.categoryId === selectedCategory
+      );
+    }
+
+    if (sortType === "sold") {
+      return list.sort(
+        (a, b) => (b.sold ?? 0) - (a.sold ?? 0)
+      );
+    }
+
+    return list;
+  }, [products, selectedCategory, sortType]);
 
   if (loading) {
     return (
@@ -149,35 +204,50 @@ export default function HomePage() {
     <main className="bg-gray-50 min-h-screen pb-24">
       <BannerCarousel />
 
-      {/* GIÁ PI – HIỂN THỊ CHÍNH GIỮA */}
+      {/* PI PRICE */}
       <div className="my-4 flex justify-center">
         <PiPriceWidget />
       </div>
 
-      <div className="px-3 space-y-6 mt-4">
+      {/* SORT MENU */}
+      <div className="flex gap-3 overflow-x-auto px-3 py-3 bg-white text-sm">
+        {[
+          { key: "sold", label: "Bán chạy" },
+          { key: "sale", label: "Flash Sale" },
+        ].map((item) => (
+          <button
+            key={item.key}
+            onClick={() => setSortType(item.key)}
+            className={`px-4 py-1 rounded-full whitespace-nowrap ${
+              sortType === item.key
+                ? "bg-orange-600 text-white"
+                : "bg-gray-100"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
 
-        {/* CATEGORY */}
-        <section className="bg-white p-4 rounded-xl shadow-sm">
-          <div className="flex gap-4 overflow-x-auto">
-
-            {/* ALL */}
+      <div className="px-3 space-y-6 mt-4 w-full">
+        {/* CATEGORY SCROLL */}
+        <section className="bg-white py-4 shadow-sm -mx-3 px-3">
+          <div className="flex gap-4 overflow-x-auto snap-x">
             <button
               onClick={() => setSelectedCategory("all")}
-              className="flex flex-col items-center min-w-[70px]"
+              className="flex flex-col items-center min-w-[72px]"
             >
               <div className="w-[60px] h-[60px] rounded-full bg-orange-100 flex items-center justify-center">
                 🛍
               </div>
-              <span className="text-xs mt-1">
-                {t.all ?? "All"}
-              </span>
+              <span className="text-xs mt-1">{t.all ?? "All"}</span>
             </button>
 
             {categories.map((c) => (
               <button
                 key={c.id}
                 onClick={() => setSelectedCategory(c.id)}
-                className="flex flex-col items-center min-w-[70px]"
+                className="flex flex-col items-center min-w-[72px]"
               >
                 <Image
                   src={c.icon || "/placeholder.png"}
@@ -186,9 +256,7 @@ export default function HomePage() {
                   height={60}
                   className="rounded-full border"
                 />
-                <span className="text-xs mt-1">
-                  {c.name}
-                </span>
+                <span className="text-xs mt-1">{c.name}</span>
               </button>
             ))}
           </div>
