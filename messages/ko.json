@@ -323,5 +323,13 @@
   "set_default": "기본으로 설정",
   "default": "기본",
   "shipping_address": "배송지 주소",
-  "confirm_delete": "이 주소를 삭제하시겠습니까?"
+  "confirm_delete": "이 주소를 삭제하시겠습니까?",
+
+  
+  "flash_sale": "한정 특가",
+  "ends_in": "종료까지 남은 시간",
+  "best_seller": "베스트셀러",
+  "sold": "판매 완료",
+  "loading_products": "상품을 불러오는 중...",
+  "all": "전체"
 }
