@@ -154,17 +154,21 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
         },
         {
           onReadyForServerApproval: async (paymentId) => {
-            
-             const token = await getPiAccessToken();
-if (!token) return;
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ paymentId }),
-            });
-          },
+  const token = await getPiAccessToken();
+  if (!token) {
+    setProcessing(false);
+    return;
+  }
+
+  await fetch("/api/pi/approve", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ paymentId }),
+  });
+},
 
           onReadyForServerCompletion: async (paymentId, txid) => {
             await fetch("/api/pi/complete", {
