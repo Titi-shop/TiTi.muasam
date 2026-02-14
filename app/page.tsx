@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ShoppingCart } from "lucide-react";
 import BannerCarousel from "./components/BannerCarousel";
+import PiPriceWidget from "./components/PiPriceWidget";
 import { useCart } from "@/app/context/CartContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
@@ -15,7 +16,6 @@ interface Product {
   name: string;
   price: number;
   images?: string[];
-  views?: number;
   sold?: number;
   finalPrice?: number;
   isSale?: boolean;
@@ -28,7 +28,7 @@ interface Category {
   icon?: string;
 }
 
-/* ================= FORMAT PI ================= */
+/* ================= FORMAT ================= */
 
 function formatPi(value: number | string) {
   return Number(value).toFixed(6);
@@ -38,21 +38,12 @@ function formatPi(value: number | string) {
 
 function ProductCard({
   product,
-  router,
-  addToCart,
+  onAddToCart,
 }: {
   product: Product;
-  router: ReturnType<typeof useRouter>;
-  addToCart: ReturnType<typeof useCart>["addToCart"];
+  onAddToCart: (product: Product) => void;
 }) {
-  const discount =
-    product.price > 0
-      ? Math.round(
-          ((product.price - (product.finalPrice ?? product.price)) /
-            product.price) *
-            100
-        )
-      : 0;
+  const router = useRouter();
 
   return (
     <div
@@ -68,25 +59,12 @@ function ProductCard({
           className="w-full h-44 object-cover"
         />
 
-        {product.isSale && (
-          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
-            {discount}% OFF
-          </div>
-        )}
-
-        {/* GIỎ HÀNG */}
+        {/* ICON GIỎ HÀNG – BẤM LÀ THÊM */}
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
-            addToCart({
-              id: product.id,
-              name: product.name,
-              price: product.price,
-              sale_price: product.finalPrice,
-              quantity: 1,
-              image: product.images?.[0],
-              images: product.images,
-            });
+            onAddToCart(product);
           }}
           className="absolute top-2 right-2 bg-white p-2 rounded-full shadow active:scale-95"
           aria-label="Add to cart"
@@ -100,7 +78,7 @@ function ProductCard({
           {product.name}
         </p>
 
-        {/* GIÁ PI MÀU CAM */}
+        {/* GIÁ PI */}
         <p className="text-orange-500 font-bold mt-1">
           {formatPi(product.finalPrice ?? product.price)} π
         </p>
@@ -110,10 +88,6 @@ function ProductCard({
             {formatPi(product.price)} π
           </p>
         )}
-
-        <div className="mt-2 bg-pink-100 text-pink-600 text-xs text-center rounded-full py-1">
-          Đã bán {product.sold ?? 0}
-        </div>
       </div>
     </div>
   );
@@ -122,7 +96,6 @@ function ProductCard({
 /* ================= PAGE ================= */
 
 export default function HomePage() {
-  const router = useRouter();
   const { addToCart } = useCart();
   const { t } = useTranslation();
 
@@ -130,56 +103,26 @@ export default function HomePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] =
     useState<string | "all">("all");
-  const [sortType, setSortType] = useState("sale");
   const [loading, setLoading] = useState(true);
-
-  /* ===== FLASH SALE COUNTDOWN ===== */
-  const [timeLeft, setTimeLeft] = useState("");
-
-  useEffect(() => {
-    const target = new Date();
-    target.setHours(target.getHours() + 2);
-
-    const interval = setInterval(() => {
-      const diff = target.getTime() - Date.now();
-      if (diff <= 0) return setTimeLeft("00:00:00");
-
-      const h = Math.floor(diff / 1000 / 60 / 60);
-      const m = Math.floor((diff / 1000 / 60) % 60);
-      const s = Math.floor((diff / 1000) % 60);
-
-      setTimeLeft(
-        `${String(h).padStart(2, "0")}:${String(m).padStart(
-          2,
-          "0"
-        )}:${String(s).padStart(2, "0")}`
-      );
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   /* ===== LOAD DATA ===== */
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/products").then((r) => r.json()),
-      fetch("/api/categories").then((r) => r.json()),
+      fetch("/api/products", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/categories", { cache: "no-store" }).then((r) => r.json()),
     ])
       .then(([productData, categoryData]) => {
-        const normalized: Product[] = productData.map(
-          (p: Product) => ({
+        setProducts(
+          productData.map((p: Product) => ({
             ...p,
-            views: p.views ?? 0,
             sold: p.sold ?? 0,
             finalPrice: p.finalPrice ?? p.price,
             isSale:
               typeof p.finalPrice === "number" &&
               p.finalPrice < p.price,
-          })
+          }))
         );
-
-        setProducts(normalized);
         setCategories(categoryData);
       })
       .finally(() => setLoading(false));
@@ -188,22 +131,11 @@ export default function HomePage() {
   /* ===== FILTER ===== */
 
   const filteredProducts = useMemo(() => {
-    let list = [...products];
-
-    if (selectedCategory !== "all") {
-      list = list.filter(
-        (p) => p.categoryId === selectedCategory
-      );
-    }
-
-    if (sortType === "sold") {
-      return list.sort(
-        (a, b) => (b.sold ?? 0) - (a.sold ?? 0)
-      );
-    }
-
-    return list;
-  }, [products, selectedCategory, sortType]);
+    if (selectedCategory === "all") return products;
+    return products.filter(
+      (p) => p.categoryId === selectedCategory
+    );
+  }, [products, selectedCategory]);
 
   if (loading) {
     return (
@@ -217,58 +149,16 @@ export default function HomePage() {
     <main className="bg-gray-50 min-h-screen pb-24">
       <BannerCarousel />
 
-      {/* SORT MENU */}
-      <div className="flex gap-3 overflow-x-auto px-3 py-3 bg-white text-sm">
-        {[
-          { key: "sold", label: "Bán chạy" },
-          { key: "sale", label: "Flash Sale" },
-        ].map((item) => (
-          <button
-            key={item.key}
-            onClick={() => setSortType(item.key)}
-            className={`px-4 py-1 rounded-full whitespace-nowrap ${
-              sortType === item.key
-                ? "bg-orange-600 text-white"
-                : "bg-gray-100"
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
+      {/* GIÁ PI – HIỂN THỊ CHÍNH GIỮA */}
+      <div className="my-4 flex justify-center">
+        <PiPriceWidget />
       </div>
 
-      <div className="px-3 space-y-6 max-w-6xl mx-auto mt-4">
+      <div className="px-3 space-y-6 mt-4">
 
-        {/* FLASH SALE */}
-        <section className="bg-white p-4 rounded-xl">
-          <div className="flex justify-between mb-3">
-            <h2 className="font-bold text-red-600">
-              🔥 Flash Sale
-            </h2>
-            <span className="text-sm font-mono bg-black text-white px-3 py-1 rounded">
-              {timeLeft}
-            </span>
-          </div>
-
-          <div className="flex gap-3 overflow-x-auto">
-            {products
-              .filter((p) => p.isSale)
-              .slice(0, 6)
-              .map((p) => (
-                <div key={p.id} className="min-w-[170px]">
-                  <ProductCard
-                    product={p}
-                    router={router}
-                    addToCart={addToCart}
-                  />
-                </div>
-              ))}
-          </div>
-        </section>
-
-        {/* CATEGORY SECTION */}
+        {/* CATEGORY */}
         <section className="bg-white p-4 rounded-xl shadow-sm">
-          <div className="flex gap-4 overflow-x-auto mb-4">
+          <div className="flex gap-4 overflow-x-auto">
 
             {/* ALL */}
             <button
@@ -305,13 +195,22 @@ export default function HomePage() {
         </section>
 
         {/* PRODUCT GRID */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <section className="grid grid-cols-2 gap-3">
           {filteredProducts.map((p) => (
             <ProductCard
               key={p.id}
               product={p}
-              router={router}
-              addToCart={addToCart}
+              onAddToCart={(product) =>
+                addToCart({
+                  id: product.id,
+                  name: product.name,
+                  price: product.price,
+                  sale_price: product.finalPrice,
+                  quantity: 1,
+                  image: product.images?.[0],
+                  images: product.images,
+                })
+              }
             />
           ))}
         </section>
