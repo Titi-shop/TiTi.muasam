@@ -9,6 +9,7 @@ export default function PiPriceWidget() {
       try {
         const res = await fetch("/api/pi-price", { cache: "no-store" });
         const data = await res.json();
+
         if (data.price_usd) {
           setPrice(Number(data.price_usd));
         }
@@ -24,9 +25,14 @@ export default function PiPriceWidget() {
 
   return (
     <div className="w-full flex justify-center">
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg text-sm font-semibold">
-        💰 1 PI ={" "}
-        {price !== null ? `${price.toFixed(2)} USD` : "Đang tải..."}
+      <div className="text-xs text-gray-600">
+        1 PI ={" "}
+        <span className="text-orange-500 font-semibold">
+          {price !== null
+            ? price.toFixed(6)   // hiển thị 6 số thập phân
+            : "..."}
+        </span>{" "}
+        USD
       </div>
     </div>
   );
