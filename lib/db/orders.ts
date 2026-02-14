@@ -239,8 +239,6 @@ export async function getOrdersBySeller(
 const itemsRes = await fetch(
   `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}${statusItemFilter}`,
   { headers: headers(), cache: "no-store" }
-);
-    { headers: headers(), cache: "no-store" }
   );
 
   if (!itemsRes.ok) return [];
