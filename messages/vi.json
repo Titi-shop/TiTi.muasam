@@ -323,5 +323,14 @@
   "set_default": "Đặt làm mặc định",
   "default": "Mặc định",
   "shipping_address": "Địa chỉ giao hàng",
-  "confirm_delete": "Bạn có chắc chắn muốn xoá địa chỉ này?"
+  "confirm_delete": "Bạn có chắc chắn muốn xoá địa chỉ này?",
+
+  
+  "flash_sale": "Khuyến mãi có thời hạn",
+  "ends_in": "Kết thúc sau",
+  "best_seller": "Sản phẩm bán chạy",
+  "sold": "Đã bán",
+  "loading_products": "Đang tải sản phẩm...",
+  "all": "Tất cả"
+
 }
