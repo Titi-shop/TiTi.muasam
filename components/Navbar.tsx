@@ -15,36 +15,44 @@ export default function Navbar() {
   const { t, lang, setLang } = useTranslation();
   const [cartCount, setCartCount] = useState<number>(0);
 
+  const updateCartCount = () => {
+    const storedCart = localStorage.getItem("cart");
+
+    if (!storedCart) {
+      setCartCount(0);
+      return;
+    }
+
+    try {
+      const parsed: CartItem[] = JSON.parse(storedCart);
+      const total = parsed.reduce(
+        (sum: number, item: CartItem) => sum + item.quantity,
+        0
+      );
+      setCartCount(total);
+    } catch {
+      setCartCount(0);
+    }
+  };
+
   useEffect(() => {
-    const updateCartCount = () => {
-      const storedCart = localStorage.getItem("cart");
-      if (!storedCart) {
-        setCartCount(0);
-        return;
-      }
-
-      try {
-        const parsed: CartItem[] = JSON.parse(storedCart);
-        const total = parsed.reduce((sum, item) => sum + item.quantity, 0);
-        setCartCount(total);
-      } catch {
-        setCartCount(0);
-      }
-    };
-
     updateCartCount();
 
+    // Lắng nghe thay đổi giữa các tab
     window.addEventListener("storage", updateCartCount);
+
+    // Lắng nghe thay đổi trong cùng tab
+    window.addEventListener("cart-updated", updateCartCount);
 
     return () => {
       window.removeEventListener("storage", updateCartCount);
+      window.removeEventListener("cart-updated", updateCartCount);
     };
   }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-orange-500 p-3 text-white flex justify-between items-center shadow-md z-50">
       
-      {/* 🛒 Icon giỏ hàng */}
       <Link
         href="/cart"
         aria-label="Giỏ hàng"
@@ -60,7 +68,6 @@ export default function Navbar() {
         )}
       </Link>
 
-      {/* 🌐 Chọn ngôn ngữ */}
       <select
         value={lang}
         onChange={(e) => setLang(e.target.value)}
