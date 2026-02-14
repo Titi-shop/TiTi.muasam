@@ -55,7 +55,7 @@ function ProductCard({
   return (
     <div
       onClick={() => router.push(`/product/${product.id}`)}
-      className="bg-white rounded-xl border shadow-sm overflow-hidden cursor-pointer active:scale-95 transition"
+      className="bg-white rounded-xl border shadow-sm overflow-hidden cursor-pointer active:scale-[0.97] transition-transform"
     >
       <div className="relative">
         <Image
@@ -245,7 +245,7 @@ const { addToCart } = useCart();
             </span>
           </div>
 
-          <div className="flex gap-3 overflow-x-auto">
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory">
             {products
               .filter((p) => p.isSale)
               .slice(0, 6)
@@ -263,7 +263,7 @@ const { addToCart } = useCart();
         {/* CATEGORY 2 ROW SCROLL */}
         <button
   onClick={() => setSelectedCategory("all")}
-  className="flex flex-col items-center min-w-[70px]"
+  className="flex flex-col items-center min-w-[72px] active:scale-95 transition"
 >
   <div className="w-[60px] h-[60px] rounded-full bg-orange-100 flex items-center justify-center">
     <span className="text-2xl">🛍</span>
