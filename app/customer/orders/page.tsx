@@ -63,14 +63,20 @@ function formatPi(value: number | string) {
   const loadOrders = async () => {
   try {
     const token = await getPiAccessToken();
-if (!token) return;
+    if (!token) return;
+
+    const res = await fetch("/api/orders", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
 
     if (!res.ok) throw new Error("UNAUTHORIZED");
 
     const rawOrders: Order[] = await res.json();
     const safeOrders = Array.isArray(rawOrders) ? rawOrders : [];
 
-    /* 1️⃣ Gom tất cả product_id */
     const productIds = Array.from(
       new Set(
         safeOrders.flatMap((o) =>
@@ -84,21 +90,19 @@ if (!token) return;
       return;
     }
 
-    /* 2️⃣ Fetch products 1 lần */
     const productRes = await fetch(
       `/api/products?ids=${productIds.join(",")}`,
       { cache: "no-store" }
     );
 
-    if (!productRes.ok) throw new Error("FETCH_PRODUCTS_FAILED");
+    if (!productRes.ok)
+      throw new Error("FETCH_PRODUCTS_FAILED");
 
     const products: Product[] = await productRes.json();
-
     const productMap = Object.fromEntries(
       products.map((p) => [p.id, p])
     );
 
-    /* 3️⃣ Gắn product vào order_items */
     const enrichedOrders = safeOrders.map((o) => ({
       ...o,
       order_items: (o.order_items ?? []).map((i) => ({
