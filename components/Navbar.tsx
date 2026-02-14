@@ -1,58 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
+import { useMemo } from "react";
+
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { availableLanguages } from "@/app/lib/i18n";
-
-type CartItem = {
-  id: string;
-  quantity: number;
-};
+import { useCart } from "@/app/context/CartContext";
 
 export default function Navbar() {
   const { t, lang, setLang } = useTranslation();
-  const [cartCount, setCartCount] = useState<number>(0);
+  const { cart } = useCart();
 
-  const updateCartCount = () => {
-    const storedCart = localStorage.getItem("cart");
-
-    if (!storedCart) {
-      setCartCount(0);
-      return;
-    }
-
-    try {
-      const parsed: CartItem[] = JSON.parse(storedCart);
-      const total = parsed.reduce(
-        (sum: number, item: CartItem) => sum + item.quantity,
-        0
-      );
-      setCartCount(total);
-    } catch {
-      setCartCount(0);
-    }
-  };
-
-  useEffect(() => {
-    updateCartCount();
-
-    // Lắng nghe thay đổi giữa các tab
-    window.addEventListener("storage", updateCartCount);
-
-    // Lắng nghe thay đổi trong cùng tab
-    window.addEventListener("cart-updated", updateCartCount);
-
-    return () => {
-      window.removeEventListener("storage", updateCartCount);
-      window.removeEventListener("cart-updated", updateCartCount);
-    };
-  }, []);
+  // Tổng số lượng sản phẩm
+  const cartCount = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.quantity, 0);
+  }, [cart]);
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-orange-500 p-3 text-white flex justify-between items-center shadow-md z-50">
       
+      {/* 🛒 Icon giỏ hàng */}
       <Link
         href="/cart"
         aria-label="Giỏ hàng"
@@ -68,6 +36,7 @@ export default function Navbar() {
         )}
       </Link>
 
+      {/* 🌐 Language */}
       <select
         value={lang}
         onChange={(e) => setLang(e.target.value)}
