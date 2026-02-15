@@ -1,35 +1,41 @@
+app/product/[id]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { useCart } from "@/app/context/CartContext";
+import { ArrowLeft, ShoppingCart } from "lucide-react";
 import CheckoutSheet from "./CheckoutSheet";
 
 function formatDetail(text: string) {
-  return text.replace(/\\n/g, "\n").replace(/\r\n/g, "\n").trim();
+  return text
+    .replace(/\\n/g, "\n")      // FIX dữ liệu lưu dạng \n
+    .replace(/\r\n/g, "\n")     // FIX Windows newline
+    .trim();
 }
-
 function formatShortDescription(text?: string) {
   if (!text || typeof text !== "string") return [];
+
   return text
     .replace(/\\n/g, "\n")
     .replace(/\r\n/g, "\n")
     .split("\n")
-    .map((line) => line.trim())
+    .map(line => line.trim())
     .filter(Boolean);
 }
-
 function formatPi(value: number | string) {
   const n = Number(value);
   if (Number.isNaN(n)) return "0.000000";
   return n.toFixed(6);
 }
-
 function calcSalePercent(price: number, finalPrice: number) {
   if (finalPrice >= price) return 0;
   return Math.round(((price - finalPrice) / price) * 100);
 }
+/* =======================
+   TYPES
+======================= */
 
 interface ApiProduct {
   id: string;
@@ -48,8 +54,8 @@ interface ApiProduct {
 interface Product {
   id: string;
   name: string;
-  price: number;
-  finalPrice: number;
+  price: number;        // giá gốc
+  finalPrice: number;   // giá sale / giá thanh toán
   isSale: boolean;
   description: string;
   detail: string;
@@ -59,6 +65,10 @@ interface Product {
   detailImages: string[];
   categoryId: string | null;
 }
+
+/* =======================
+   PAGE
+======================= */
 
 export default function ProductDetail() {
   const { t } = useTranslation();
@@ -74,44 +84,46 @@ export default function ProductDetail() {
 
   const quantity = 1;
 
-  /* ================= LOAD PRODUCT ================= */
+  /* =======================
+     LOAD PRODUCT
+  ======================= */
   useEffect(() => {
-    if (!id) return;
-
     async function loadProduct() {
       try {
-        const res = await fetch(`/api/products?id=${id}`, {
-          cache: "no-store",
-        });
+        const res = await fetch("/api/products");
         const data: unknown = await res.json();
 
-        if (!Array.isArray(data) || !data[0]) return;
+        if (!Array.isArray(data)) return;
 
-        const api = data[0] as ApiProduct;
-        const finalPrice =
-          typeof api.finalPrice === "number"
-            ? api.finalPrice
-            : api.price;
+        const normalized: Product[] = data.map((p) => {
+          const api = p as ApiProduct;
+          const finalPrice =
+            typeof api.finalPrice === "number"
+              ? api.finalPrice
+              : api.price;
 
-        const normalized: Product = {
-          id: api.id,
-          name: api.name,
-          price: api.price,
-          finalPrice,
-          isSale: finalPrice < api.price,
-          description: api.description ?? "",
-          detail: api.detail ?? "",
-          views: api.views ?? 0,
-          sold: api.sold ?? 0,
-          images: Array.isArray(api.images) ? api.images : [],
-          detailImages: Array.isArray(api.detailImages)
-            ? api.detailImages
-            : [],
-          categoryId: api.categoryId ?? null,
-        };
+          return {
+            id: api.id,
+            name: api.name,
+            price: api.price,
+            finalPrice,
+            isSale: finalPrice < api.price,
+            description: api.description ?? "",
+            detail: api.detail ?? "",
+            views: api.views ?? 0,
+            sold: api.sold ?? 0,
+            images: Array.isArray(api.images) ? api.images : [],
+            detailImages: Array.isArray(api.detailImages)
+              ? api.detailImages
+              : [],
+            categoryId: api.categoryId ?? null,
+          };
+        });
 
-        setProduct(normalized);
-        setProducts([normalized]);
+        setProducts(normalized);
+
+const found = normalized.find((p) => p.id === id);
+if (found) setProduct(found);
       } finally {
         setLoading(false);
       }
@@ -120,38 +132,17 @@ export default function ProductDetail() {
     loadProduct();
   }, [id]);
 
-  /* ================= INCREASE VIEW ================= */
-  useEffect(() => {
-    if (!id || !product) return;
-
-    const key = `viewed-${id}`;
-    if (sessionStorage.getItem(key)) return;
-
-    sessionStorage.setItem(key, "1");
-
-    // tăng ngay trên UI (mượt, không chờ server)
-    setProduct((prev) =>
-      prev ? { ...prev, views: prev.views + 1 } : prev
-    );
-
-    // gọi backend async
-    fetch("/api/products/view", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    }).catch(() => {});
-  }, [id, product]);
-
+  /* =======================
+     STATES
+  ======================= */
   if (loading) return <p className="p-4">{t.loading}</p>;
   if (!product) return <p className="p-4">{t.no_products}</p>;
-
-  const relatedProducts = products.filter(
-    (p) =>
-      p.id !== product.id &&
-      p.categoryId &&
-      p.categoryId === product.categoryId
-  );
-
+const relatedProducts = products.filter(
+  (p) =>
+    p.id !== product.id &&
+    p.categoryId &&
+    p.categoryId === product.categoryId
+);
   const images =
     product.images.length > 0
       ? product.images
@@ -165,10 +156,14 @@ export default function ProductDetail() {
       i === 0 ? images.length - 1 : i - 1
     );
 
+  /* =======================
+     ACTIONS (FIXED)
+  ======================= */
+
   const add = () => {
     addToCart({
       ...product,
-      price: product.finalPrice,
+      price: product.finalPrice, // ✅ DÙNG GIÁ SALE
       quantity,
     });
     router.push("/cart");
@@ -177,39 +172,77 @@ export default function ProductDetail() {
   const buy = () => {
     addToCart({
       ...product,
-      price: product.finalPrice,
+      price: product.finalPrice, // ✅ DÙNG GIÁ SALE
       quantity,
     });
     setOpenCheckout(true);
   };
 
+  /* =======================
+     RENDER
+  ======================= */
   return (
-    <div className="pb-32 bg-gray-50 min-h-screen">
-      {/* IMAGE */}
+     <div className="pb-32 bg-gray-50 min-h-screen">
+      {/* MAIN IMAGES */}
       <div className="mt-14 relative w-full h-80 bg-white">
-        <img
-          src={images[currentIndex]}
-          alt={product.name}
-          className="w-full h-full object-cover"
-        />
-        {product.isSale && (
-          <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-            -{calcSalePercent(product.price, product.finalPrice)}%
-          </div>
+  <img
+    src={images[currentIndex]}
+    alt={product.name}
+    className="w-full h-full object-cover"
+  />
+
+  {product.isSale && (
+    <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+      -{calcSalePercent(product.price, product.finalPrice)}%
+    </div>
+  )}
+
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white px-2 rounded"
+            >
+              ‹
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white px-2 rounded"
+            >
+              ›
+            </button>
+
+            <div className="absolute bottom-3 flex gap-2 w-full justify-center">
+              {images.map((_, i) => (
+                <span
+                  key={i}
+                  className={`w-2 h-2 rounded-full ${
+                    i === currentIndex
+                      ? "bg-orange-700"
+                      : "bg-gray-700"
+                  }`}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
 
       {/* INFO */}
       <div className="bg-white p-4 flex justify-between">
-        <h2 className="text-lg font-medium">{product.name}</h2>
+        <h2 className="text-lg font-medium">
+          {product.name}
+        </h2>
+
         <div className="text-right">
           <p className="text-xl font-bold text-orange-600">
-            π {formatPi(product.finalPrice)}
-          </p>
+  π {formatPi(product.finalPrice)}
+</p>
+
           {product.isSale && (
             <p className="text-sm text-gray-400 line-through">
-              π {formatPi(product.price)}
-            </p>
+  π {formatPi(product.price)}
+</p>
           )}
         </div>
       </div>
@@ -217,9 +250,10 @@ export default function ProductDetail() {
       {/* META */}
       <div className="bg-white px-4 pb-4 flex gap-4 text-gray-600 text-sm">
         <span>👁 {product.views}</span>
-        <span>🛒 {product.sold} {t.orders}</span>
+        <span>
+          🛒 {product.sold} {t.orders}
+        </span>
       </div>
-
 
       {/* SHORT DESCRIPTION (Shopee style) */}
 <div className="bg-white p-4">
