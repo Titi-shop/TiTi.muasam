@@ -165,9 +165,7 @@ export default function CategoriesClient() {
           ) : (
             <div className="grid grid-cols-2 gap-[6px]">
               {visibleProducts.map((p) => {
-                const isSale =
-                  typeof p.finalPrice === "number" &&
-                  p.finalPrice < p.price;
+                const isSale = p.isSale === true;
 
                 const discount =
                   isSale && p.finalPrice
