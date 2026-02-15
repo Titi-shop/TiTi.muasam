@@ -118,6 +118,12 @@ export default function SellerPostPage() {
     setImages((prev) => prev.filter((_, i) => i !== index));
   }
 
+
+   function localToUTC(local: string): string {
+  const date = new Date(local);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString();
+}
+
   /* =========================
      SUBMIT
   ========================= */
@@ -161,8 +167,8 @@ export default function SellerPostPage() {
         (form.elements.namedItem("price") as HTMLInputElement).value
       ),
       salePrice: salePrice || null,
-      saleStart: salePrice ? saleStart : null,
-      saleEnd: salePrice ? saleEnd : null,
+      saleStart: salePrice && saleStart ? localToUTC(saleStart) : null,
+saleEnd: salePrice && saleEnd ? localToUTC(saleEnd) : null,
       description: (
         form.elements.namedItem("description") as HTMLTextAreaElement
       ).value,
