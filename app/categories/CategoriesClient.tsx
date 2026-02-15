@@ -20,13 +20,13 @@ type Product = {
   name: string;
   price: number;
 
-  salePrice?: number | null;
-  saleStart?: string | null;
-  saleEnd?: string | null;
+  salePrice: number | null;
+  isSale: boolean;
+  finalPrice: number;
 
-  images?: string[];
+  images: string[];
   categoryId: number | string;
-  sold?: number;
+  sold: number;
 };
 
 /* ================= FORMAT PI ================= */
@@ -58,13 +58,7 @@ export default function CategoriesClient() {
           [...cateData].sort((a, b) => Number(a.id) - Number(b.id))
         );
 
-        setProducts(
-          [...prodData].sort((a, b) => {
-            const at = a.createdAt ?? "";
-            const bt = b.createdAt ?? "";
-            return bt.localeCompare(at);
-          })
-        );
+        setProducts(prodData);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -169,12 +163,12 @@ export default function CategoriesClient() {
             <div className="grid grid-cols-2 gap-[6px]">
               {visibleProducts.map((p) => {
 
-                const isSale = p.isSale === true;
+                const isSale = p.isSale;
 
-const finalPrice = p.finalPrice ?? p.price;
+const finalPrice = p.finalPrice;
 
 const discount =
-  isSale && p.salePrice
+  isSale && p.salePrice !== null
     ? Math.round(((p.price - p.salePrice) / p.price) * 100)
     : 0;
                 return (
