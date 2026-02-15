@@ -102,25 +102,6 @@ const enriched = products.map((p: any) => {
     sold: p.sold ?? 0,
   };
 });
-  
-      return {
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        detail: p.detail ?? "",
-        images: p.images ?? [],
-        detailImages: p.detail_images ?? [],
-
-        categoryId: p.category_id,
-        price: p.price,
-        salePrice: p.sale_price,
-        isSale,
-        finalPrice: isSale ? p.sale_price : p.price,
-
-        views: p.views ?? 0,
-        sold: p.sold ?? 0,
-      };
-    });
 
     return NextResponse.json(enriched);
   } catch (err) {
