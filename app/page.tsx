@@ -167,9 +167,7 @@ export default function HomePage() {
             ...p,
             sold: p.sold ?? 0,
             finalPrice: p.finalPrice ?? p.price,
-            isSale:
-              typeof p.finalPrice === "number" &&
-              p.finalPrice < p.price,
+            isSale: p.isSale === true,
           }))
         );
         setCategories(categoryData);
