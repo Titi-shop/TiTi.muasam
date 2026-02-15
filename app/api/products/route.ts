@@ -287,17 +287,15 @@ export async function DELETE(req: Request) {
     }
 
     const res = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/products?id=eq.${id}&seller_id=eq.${auth.user.pi_uid}`,
-      {
-        method: "DELETE",
-        headers: {
-          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
-          Prefer: "return=representation",
-        },
-      }
-    );
-
+  `${process.env.SUPABASE_URL}/rest/v1/products?id=in.(${inFilter})&select=id,name,description,detail,images,detail_images,category_id,price,sale_price,sale_start,sale_end,views,sold`,
+  {
+    headers: {
+      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+    },
+    cache: "no-store",
+  }
+);
     if (!res.ok) {
       const text = await res.text();
       console.error("❌ DELETE ERROR:", text);
