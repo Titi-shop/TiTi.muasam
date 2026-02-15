@@ -131,6 +131,22 @@ if (found) setProduct(found);
     loadProduct();
   }, [id]);
 
+
+  /* =======================
+   INCREMENT VIEW
+======================= */
+useEffect(() => {
+  if (!id) return;
+
+  fetch("/api/products/view", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  }).catch((err) =>
+    console.error("View update failed:", err)
+  );
+}, [id]);
+
   /* =======================
      STATES
   ======================= */
