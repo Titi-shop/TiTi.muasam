@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { getOrdersByBuyerSafe, createOrderSafe } from "@/lib/db/orders";
 
+/* ⬇️ THÊM NGAY ĐÂY */
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -58,6 +62,28 @@ export async function POST(req: Request) {
     items,
     total,
   });
+
+
+   /* =========================
+   INCREMENT SOLD
+========================= */
+for (const item of items) {
+  await fetch(
+    `${SUPABASE_URL}/rest/v1/rpc/increment_product_sold`,
+    {
+      method: "POST",
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        pid: item.product_id,
+        qty: item.quantity ?? 1,
+      }),
+    }
+  );
+}
 
   return NextResponse.json(order, { status: 201 });
 }
