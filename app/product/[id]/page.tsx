@@ -89,7 +89,7 @@ export default function ProductDetail() {
   useEffect(() => {
     async function loadProduct() {
       try {
-        const res = await fetch("/api/products");
+        const res = await fetch(`/api/products?id=${id}`);
         const data: unknown = await res.json();
 
         if (!Array.isArray(data)) return;
@@ -121,7 +121,6 @@ export default function ProductDetail() {
 
         setProducts(normalized);
 
-const found = normalized.find((p) => p.id === id);
 if (found) setProduct(found);
       } finally {
         setLoading(false);
@@ -137,13 +136,27 @@ if (found) setProduct(found);
   const key = `viewed-${id}`;
   if (sessionStorage.getItem(key)) return;
 
-  fetch("/api/products/view", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id }),
-  }).catch(() => {});
+  async function increaseView() {
+    await fetch("/api/products/view", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
 
-  sessionStorage.setItem(key, "1");
+    sessionStorage.setItem(key, "1");
+
+    // 🔁 reload product để lấy views mới
+    const res = await fetch(`/api/products?id=${id}`);
+    const data = await res.json();
+    if (Array.isArray(data) && data[0]) {
+      setProduct({
+        ...data[0],
+        isSale: data[0].finalPrice < data[0].price,
+      });
+    }
+  }
+
+  increaseView();
 }, [id]);
 
   /* =======================
