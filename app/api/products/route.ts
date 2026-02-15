@@ -61,23 +61,48 @@ export async function GET(req: Request) {
     else {
       products = await getAllProducts();
     }
+/* ===============================
+   ENRICH (FIX TIMEZONE SAFE)
+=============================== */
+const now = Date.now(); // ✅ UTC timestamp
 
-    /* ===============================
-       ENRICH (giữ nguyên logic bạn)
-    =============================== */
-    const now = new Date();
+const enriched = products.map((p: any) => {
+  const start =
+    typeof p.sale_start === "string"
+      ? new Date(p.sale_start).getTime()
+      : null;
 
-    const enriched = products.map((p: any) => {
-      const start = p.sale_start ? new Date(p.sale_start) : null;
-      const end = p.sale_end ? new Date(p.sale_end) : null;
+  const end =
+    typeof p.sale_end === "string"
+      ? new Date(p.sale_end).getTime()
+      : null;
 
-      const isSale =
-        !!p.sale_price &&
-        !!start &&
-        !!end &&
-        now >= start &&
-        now <= end;
+  const isSale =
+    typeof p.sale_price === "number" &&
+    start !== null &&
+    end !== null &&
+    now >= start &&
+    now <= end;
 
+  return {
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    detail: p.detail ?? "",
+    images: p.images ?? [],
+    detailImages: p.detail_images ?? [],
+
+    categoryId: p.category_id,
+    price: p.price,
+    salePrice: p.sale_price,
+    isSale,
+    finalPrice: isSale ? p.sale_price : p.price,
+
+    views: p.views ?? 0,
+    sold: p.sold ?? 0,
+  };
+});
+  
       return {
         id: p.id,
         name: p.name,
