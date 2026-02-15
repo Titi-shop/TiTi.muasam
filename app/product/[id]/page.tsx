@@ -131,6 +131,21 @@ if (found) setProduct(found);
     loadProduct();
   }, [id]);
 
+  useEffect(() => {
+  if (!id) return;
+
+  const key = `viewed-${id}`;
+  if (sessionStorage.getItem(key)) return;
+
+  fetch("/api/products/view", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  }).catch(() => {});
+
+  sessionStorage.setItem(key, "1");
+}, [id]);
+
   /* =======================
      STATES
   ======================= */
