@@ -1,5 +1,3 @@
-/* app/api/products/route.ts */
-
 import { NextResponse } from "next/server";
 import { requireSeller } from "@/lib/auth/guard";
 import {
@@ -38,11 +36,11 @@ export async function GET(req: Request) {
       const inFilter = idArray.map((id) => `"${id}"`).join(",");
 
       const res = await fetch(
-        `${process.env.SUPABASE_URL}/rest/v1/products?id=in.(${inFilter})`,
+        `${process.env.SUPABASE_URL}/rest/v1/products?id=in.(${inFilter})&select=id,name,images,price,sale_price,sale_start,sale_end`,
         {
           headers: {
             apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}&select=id,name,description,detail,images,detail_images,category_id,price,sale_price,sale_start,sale_end,views,sold`,
+            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
           },
           cache: "no-store",
         }
@@ -287,15 +285,17 @@ export async function DELETE(req: Request) {
     }
 
     const res = await fetch(
-  `${process.env.SUPABASE_URL}/rest/v1/products?id=in.(${inFilter})&select=id,name,description,detail,images,detail_images,category_id,price,sale_price,sale_start,sale_end,views,sold`,
-  {
-    headers: {
-      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
-    },
-    cache: "no-store",
-  }
-);
+      `${process.env.SUPABASE_URL}/rest/v1/products?id=eq.${id}&seller_id=eq.${auth.user.pi_uid}`,
+      {
+        method: "DELETE",
+        headers: {
+          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+          Prefer: "return=representation",
+        },
+      }
+    );
+
     if (!res.ok) {
       const text = await res.text();
       console.error("❌ DELETE ERROR:", text);
