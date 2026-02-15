@@ -168,12 +168,18 @@ export default function CategoriesClient() {
           ) : (
             <div className="grid grid-cols-2 gap-[6px]">
               {visibleProducts.map((p) => {
-                const isSale = p.isSale === true;
 
                 const now = new Date();
 
-const start = p.saleStart ? new Date(p.saleStart) : null;
-const end = p.saleEnd ? new Date(p.saleEnd) : null;
+const start =
+  typeof p.saleStart === "string"
+    ? new Date(p.saleStart)
+    : null;
+
+const end =
+  typeof p.saleEnd === "string"
+    ? new Date(p.saleEnd)
+    : null;
 
 const isSale =
   typeof p.salePrice === "number" &&
@@ -182,13 +188,12 @@ const isSale =
   now >= start &&
   now <= end;
 
-const finalPrice = isSale ? p.salePrice : p.price;
+const finalPrice = isSale ? p.salePrice! : p.price;
 
 const discount =
-  isSale && p.salePrice
-    ? Math.round(((p.price - p.salePrice) / p.price) * 100)
+  isSale
+    ? Math.round(((p.price - finalPrice) / p.price) * 100)
     : 0;
-
                 return (
                   <Link
                     key={p.id}
