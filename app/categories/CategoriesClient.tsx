@@ -19,10 +19,13 @@ type Product = {
   id: number | string;
   name: string;
   price: number;
-  finalPrice?: number;
+
+  salePrice?: number | null;
+  saleStart?: string | null;
+  saleEnd?: string | null;
+
   images?: string[];
   categoryId: number | string;
-  createdAt?: string;
   sold?: number;
 };
 
@@ -167,12 +170,24 @@ export default function CategoriesClient() {
               {visibleProducts.map((p) => {
                 const isSale = p.isSale === true;
 
-                const discount =
-                  isSale && p.finalPrice
-                    ? Math.round(
-                        ((p.price - p.finalPrice) / p.price) * 100
-                      )
-                    : 0;
+                const now = new Date();
+
+const start = p.saleStart ? new Date(p.saleStart) : null;
+const end = p.saleEnd ? new Date(p.saleEnd) : null;
+
+const isSale =
+  typeof p.salePrice === "number" &&
+  start !== null &&
+  end !== null &&
+  now >= start &&
+  now <= end;
+
+const finalPrice = isSale ? p.salePrice : p.price;
+
+const discount =
+  isSale && p.salePrice
+    ? Math.round(((p.price - p.salePrice) / p.price) * 100)
+    : 0;
 
                 return (
                   <Link
