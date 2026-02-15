@@ -59,8 +59,25 @@ export async function GET(req: Request) {
        CASE 2 — /api/products (ALL)
     =============================== */
     else {
-      products = await getAllProducts();
+  const res = await fetch(
+    `${process.env.SUPABASE_URL}/rest/v1/products?select=*`,
+    {
+      headers: {
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+      },
+      cache: "no-store",
     }
+  );
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("❌ FETCH ALL PRODUCTS ERROR:", err);
+    return NextResponse.json([]);
+  }
+
+  products = await res.json();
+}
 /* ===============================
    ENRICH (FIX TIMEZONE SAFE)
 =============================== */
