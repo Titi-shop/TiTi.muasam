@@ -16,11 +16,14 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  images?: string[];
-  sold?: number;
-  finalPrice?: number;
-  isSale?: boolean;
-  categoryId?: string | null;
+
+  salePrice: number | null;
+  isSale: boolean;
+  finalPrice: number;
+
+  images: string[];
+  categoryId: number | null;
+  sold: number;
 }
 
 interface Category {
@@ -162,14 +165,7 @@ export default function HomePage() {
       fetch("/api/categories", { cache: "no-store" }).then((r) => r.json()),
     ])
       .then(([productData, categoryData]) => {
-        setProducts(
-          productData.map((p: Product) => ({
-            ...p,
-            sold: p.sold ?? 0,
-            finalPrice: p.finalPrice ?? p.price,
-            isSale: p.isSale === true,
-          }))
-        );
+        setProducts(productData);
         setCategories(categoryData);
       })
       .finally(() => setLoading(false));
