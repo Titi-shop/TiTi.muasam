@@ -99,8 +99,8 @@ export default function EditProductPage() {
         setDetailImages(found.detailImages || []);
         setDetail(found.detail || "");
         setSalePrice(found.salePrice ?? "");
-        setSaleStart(found.saleStart || "");
-        setSaleEnd(found.saleEnd || "");
+        setSaleStart(found.saleStart ? utcToLocalInput(found.saleStart) : "");
+setSaleEnd(found.saleEnd ? utcToLocalInput(found.saleEnd) : "");
       });
   }, [id, t]);
 
@@ -135,6 +135,17 @@ export default function EditProductPage() {
 
   /* ================= SAVE ================= */
 
+  function localToUTC(local: string): string {
+  const date = new Date(local);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString();
+}
+
+function utcToLocalInput(utc: string): string {
+  const date = new Date(utc);
+  const local = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+  
   async function handleSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!product) return;
@@ -156,8 +167,8 @@ export default function EditProductPage() {
         (form.elements.namedItem("price") as HTMLInputElement).value
       ),
       salePrice: salePrice || null,
-      saleStart: salePrice ? saleStart : null,
-      saleEnd: salePrice ? saleEnd : null,
+      saleStart: salePrice && saleStart ? localToUTC(saleStart) : null,
+saleEnd: salePrice && saleEnd ? localToUTC(saleEnd) : null,
       description: (
         form.elements.namedItem("description") as HTMLTextAreaElement
       ).value,
@@ -182,7 +193,7 @@ export default function EditProductPage() {
   if (!product) {
     return (
       <main className="p-8 text-center">
-        ⏳ {t.loading || "Loading..."}
+        {t.loading || "Loading..."}
       </main>
     );
   }
