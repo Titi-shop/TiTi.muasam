@@ -59,7 +59,7 @@ export default function NotificationsPage() {
       </h1>
 
       {loading ? (
-        <p>⏳ {t.loading || "Đang tải..."}</p>
+        <p> {t.loading || "Đang tải..."}</p>
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : notifications.length === 0 ? (
