@@ -169,30 +169,13 @@ export default function CategoriesClient() {
             <div className="grid grid-cols-2 gap-[6px]">
               {visibleProducts.map((p) => {
 
-                const now = new Date();
+                const isSale = p.isSale === true;
 
-const start =
-  typeof p.saleStart === "string"
-    ? new Date(p.saleStart)
-    : null;
-
-const end =
-  typeof p.saleEnd === "string"
-    ? new Date(p.saleEnd)
-    : null;
-
-const isSale =
-  typeof p.salePrice === "number" &&
-  start !== null &&
-  end !== null &&
-  now >= start &&
-  now <= end;
-
-const finalPrice = isSale ? p.salePrice! : p.price;
+const finalPrice = p.finalPrice ?? p.price;
 
 const discount =
-  isSale
-    ? Math.round(((p.price - finalPrice) / p.price) * 100)
+  isSale && p.salePrice
+    ? Math.round(((p.price - p.salePrice) / p.price) * 100)
     : 0;
                 return (
                   <Link
@@ -225,7 +208,7 @@ const discount =
       id: String(p.id),
       name: p.name,
       price: p.price,
-      sale_price: p.finalPrice,
+      sale_price: finalPrice,
       quantity: 1,
       image: p.images?.[0],
       images: p.images,
@@ -244,8 +227,7 @@ const discount =
                         </p>
 
                         <p className="text-red-600 font-bold mt-1">
-                          {formatPi(
-                            isSale ? p.finalPrice! : p.price
+                          {formatPi(finalPrice
                           )}{" "}
                           π
                         </p>
