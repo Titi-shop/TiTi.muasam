@@ -36,7 +36,6 @@ function calcSalePercent(price: number, finalPrice: number) {
    TYPES
 ======================= */
 
-
 interface ApiProduct {
   id: string;
   name: string;
@@ -49,14 +48,13 @@ interface ApiProduct {
   images?: string[];
   detailImages?: string[];
   categoryId?: string | null;
-  seller_id: string; // 👈 THÊM
 }
 
 interface Product {
   id: string;
   name: string;
-  price: number;
-  finalPrice: number;
+  price: number;        // giá gốc
+  finalPrice: number;   // giá sale / giá thanh toán
   isSale: boolean;
   description: string;
   detail: string;
@@ -65,7 +63,6 @@ interface Product {
   images: string[];
   detailImages: string[];
   categoryId: string | null;
-  seller_id: string; // 👈 THÊM
 }
 
 /* =======================
@@ -105,22 +102,21 @@ export default function ProductDetail() {
               : api.price;
 
           return {
-  id: api.id,
-  name: api.name,
-  price: api.price,
-  finalPrice,
-  isSale: finalPrice < api.price,
-  description: api.description ?? "",
-  detail: api.detail ?? "",
-  views: api.views ?? 0,
-  sold: api.sold ?? 0,
-  images: Array.isArray(api.images) ? api.images : [],
-  detailImages: Array.isArray(api.detailImages)
-    ? api.detailImages
-    : [],
-  categoryId: api.categoryId ?? null,
-  seller_id: api.seller_id, // 👈 GIỮ LẠI
-};
+            id: api.id,
+            name: api.name,
+            price: api.price,
+            finalPrice,
+            isSale: finalPrice < api.price,
+            description: api.description ?? "",
+            detail: api.detail ?? "",
+            views: api.views ?? 0,
+            sold: api.sold ?? 0,
+            images: Array.isArray(api.images) ? api.images : [],
+            detailImages: Array.isArray(api.detailImages)
+              ? api.detailImages
+              : [],
+            categoryId: api.categoryId ?? null,
+          };
         });
 
         setProducts(normalized);
@@ -386,7 +382,6 @@ const relatedProducts = products.filter(
     price: product.price,
     finalPrice: product.finalPrice,
     images: product.images,
-    seller_id: product.seller_id, // 👈 THÊM
   }}
 />
     </div>
