@@ -22,13 +22,14 @@ interface Props {
   open: boolean;
   onClose: () => void;
   product: {
-    id: number;
-    name: string;
-    price: number;
-    finalPrice?: number;
-    image?: string;
-    images?: string[];
-  };
+  id: number;
+  name: string;
+  price: number;
+  finalPrice?: number;
+  image?: string;
+  images?: string[];
+  seller_id: string; // 👈 THÊM DÒNG NÀY
+};
 }
 /* =========================
    COMPONENT
@@ -178,18 +179,19 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
             });
 
             await apiAuthFetch("/api/orders", {
-              method: "POST",
-              body: JSON.stringify({
-                items: [
-                  {
-                    product_id: item.id,
-                    quantity,
-                    price: unitPrice,
-                  },
-                ],
-                total,
-              }),
-            });
+  method: "POST",
+  body: JSON.stringify({
+    items: [
+      {
+        product_id: item.id,
+        seller_pi_uid: product.seller_id, // 👈 THÊM DÒNG NÀY
+        quantity,
+        price: unitPrice,
+      },
+    ],
+    total,
+  }),
+});
             onClose();
             router.push("/customer/pending");
           },
