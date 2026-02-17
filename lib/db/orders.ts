@@ -288,3 +288,56 @@ const itemsRes = await fetch(
     })),
   }));
 }
+/* =====================================================
+   CONFIRM ORDER BY SELLER
+   - Update order_items của seller đó
+===================================================== */
+export async function confirmOrderBySeller(
+  sellerPiUid: string,
+  orderId: string
+): Promise<void> {
+  // 1️⃣ Check order_items tồn tại
+  const checkRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&seller_pi_uid=eq.${sellerPiUid}&select=id,status`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!checkRes.ok) {
+    const err = await checkRes.text();
+    throw new Error("CHECK_FAILED: " + err);
+  }
+
+  const items: Array<{ id: string; status: string }> =
+    await checkRes.json();
+
+  if (items.length === 0) {
+    throw new Error("NO_ITEMS_FOR_SELLER");
+  }
+
+  // 2️⃣ Chỉ update những item đang pending
+  const pendingIds = items
+    .filter((i) => i.status === "pending")
+    .map((i) => i.id);
+
+  if (pendingIds.length === 0) {
+    throw new Error("NO_PENDING_ITEMS");
+  }
+
+  const ids = pendingIds.map((id) => `"${id}"`).join(",");
+
+  const updateRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?id=in.(${ids})`,
+    {
+      method: "PATCH",
+      headers: headers(),
+      body: JSON.stringify({
+        status: "confirmed",
+      }),
+    }
+  );
+
+  if (!updateRes.ok) {
+    const err = await updateRes.text();
+    throw new Error("UPDATE_FAILED: " + err);
+  }
+}
