@@ -4,7 +4,6 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
@@ -43,12 +42,11 @@ function formatPi(value: number): string {
    PAGE
 ========================= */
 export default function SellerPendingOrdersPage() {
-  const router = useRouter();
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   /* =========================
      LOAD SELLER ORDERS
@@ -59,7 +57,6 @@ export default function SellerPendingOrdersPage() {
 
   async function loadOrders(): Promise<void> {
     try {
-      /* 1️⃣ Fetch orders + order_items (seller scoped) */
       const res = await apiAuthFetch(
         "/api/seller/orders?status=pending",
         { cache: "no-store" }
@@ -67,15 +64,15 @@ export default function SellerPendingOrdersPage() {
 
       if (!res.ok) throw new Error("FAILED_TO_LOAD_ORDERS");
 
-      const rawOrders: unknown = await res.json();
-      if (!Array.isArray(rawOrders)) {
+      const raw: unknown = await res.json();
+      if (!Array.isArray(raw)) {
         setOrders([]);
         return;
       }
 
-      const pendingOrders = rawOrders as Order[];
+      const pendingOrders = raw as Order[];
 
-      /* 2️⃣ Gom product_id */
+      /* Gom product_id */
       const productIds = Array.from(
         new Set(
           pendingOrders.flatMap((o) =>
@@ -88,33 +85,8 @@ export default function SellerPendingOrdersPage() {
         setOrders(pendingOrders);
         return;
       }
-       async function confirmOrder(orderId: string): Promise<void> {
-  try {
-    setConfirmingId(orderId);
 
-    const res = await apiAuthFetch(
-      `/api/seller/orders/${orderId}/confirm`,
-      {
-        method: "PATCH",
-      }
-    );
-
-    if (!res.ok) {
-      throw new Error("CONFIRM_FAILED");
-    }
-
-    // Reload lại danh sách pending
-    await loadOrders();
-
-  } catch (err) {
-    console.error("❌ Confirm error:", err);
-    alert(t.confirm_failed || "Xác nhận thất bại");
-  } finally {
-    setConfirmingId(null);
-  }
-}
-
-      /* 3️⃣ Fetch products */
+      /* Fetch products */
       const productRes = await fetch(
         `/api/products?ids=${productIds.join(",")}`,
         { cache: "no-store" }
@@ -130,7 +102,7 @@ export default function SellerPendingOrdersPage() {
         products.map((p) => [p.id, p])
       );
 
-      /* 4️⃣ Gắn product vào order_items */
+      /* Gắn product vào order_items */
       const enriched = pendingOrders.map((o) => ({
         ...o,
         order_items: o.order_items.map((i) => ({
@@ -145,6 +117,31 @@ export default function SellerPendingOrdersPage() {
       setOrders([]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  /* =========================
+     CONFIRM ORDER (SELLER)
+  ========================= */
+  async function confirmOrder(orderId: string): Promise<void> {
+    try {
+      setConfirmingId(orderId);
+
+      const res = await apiAuthFetch(
+        `/api/seller/orders/${orderId}/confirm`,
+        { method: "PATCH" }
+      );
+
+      if (!res.ok) {
+        throw new Error("CONFIRM_FAILED");
+      }
+
+      await loadOrders();
+    } catch (err) {
+      console.error("❌ Confirm error:", err);
+      alert(t.confirm_failed || "Xác nhận thất bại");
+    } finally {
+      setConfirmingId(null);
     }
   }
 
@@ -181,8 +178,7 @@ export default function SellerPendingOrdersPage() {
             {t.pending_orders || "Đơn hàng chờ xác nhận"}
           </p>
           <p className="text-xs opacity-80 mt-1">
-            {t.orders}: {orders.length} · π
-            {formatPi(totalPi)}
+            {t.orders}: {orders.length} · π{formatPi(totalPi)}
           </p>
         </div>
       </header>
@@ -252,16 +248,15 @@ export default function SellerPendingOrdersPage() {
               </p>
 
               {/* ACTION */}
-              
-                <button
-  disabled={confirmingId === o.id}
-  onClick={() => void confirmOrder(o.id)}
-  className="mt-3 w-full bg-orange-500 text-white py-2 rounded-lg font-semibold disabled:opacity-50"
->
-  {confirmingId === o.id
-    ? "⏳ Đang xử lý..."
-    : t.confirm_order || "✅ Xác nhận đơn"}
-</button>
+              <button
+                disabled={confirmingId === o.id}
+                onClick={() => void confirmOrder(o.id)}
+                className="mt-3 w-full bg-orange-500 text-white py-2 rounded-lg font-semibold disabled:opacity-50"
+              >
+                {confirmingId === o.id
+                  ? " Đang xử lý..."
+                  : t.confirm_order || "✅ Xác nhận đơn"}
+              </button>
             </div>
           ))
         )}
