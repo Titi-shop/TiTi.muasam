@@ -74,17 +74,24 @@ export async function getOrdersByBuyerSafe(
 
   if (!orderRes.ok) return [];
 
-  const rawOrders: Array<{
-    id: string;
-    total: number;
-    status: string;
-    created_at: string;
-    order_items: Array<{
-      quantity: number;
-      price: number;
-      product_id: string;
-    }>;
-  }> = await orderRes.json();
+  
+   const rawOrders: Array<{
+  id: string;
+  status: string;
+  total: number;
+  created_at: string;
+  order_items: Array<{
+    quantity: number;
+    price: number;
+    product_id: string;
+    seller_pi_uid: string;
+    products?: {
+      id: string;
+      name: string;
+      images?: string[] | null;
+    } | null;
+  }>;
+}>;
 
   // 3️⃣ Convert microPi → Pi
   return rawOrders.map((o) => ({
@@ -264,16 +271,22 @@ const itemsRes = await fetch(
   if (!orderRes.ok) return [];
 
   const rawOrders: Array<{
-    id: string;
-    status: string;
-    total: number;
-    created_at: string;
-    order_items: Array<{
-      quantity: number;
-      price: number;
-      product_id: string;
-    }>;
-  }> = await orderRes.json();
+  id: string;
+  status: string;
+  total: number;
+  created_at: string;
+  order_items: Array<{
+    quantity: number;
+    price: number;
+    product_id: string;
+    seller_pi_uid: string;
+    products?: {
+      id: string;
+      name: string;
+      images?: string[] | null;
+    } | null;
+  }>;
+}>;
 
   /* 4️⃣ Convert microPi → Pi */
   return rawOrders.map((o) => ({
