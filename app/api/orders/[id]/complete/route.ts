@@ -1,74 +1,49 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabaseServer";
-import { verifyPiToken } from "@/lib/piAuth";
+import { NextResponse } from "next/server";
+import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 
-export async function POST(
-  req: NextRequest,
+const SUPABASE_URL = process.env.SUPABASE_URL!;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+function headers() {
+  return {
+    apikey: SERVICE_KEY,
+    Authorization: `Bearer ${SERVICE_KEY}`,
+    "Content-Type": "application/json",
+  };
+}
+
+export async function PATCH(
+  req: Request,
   { params }: { params: { id: string } }
 ) {
+  const user = await getUserFromBearer();
+  if (!user) {
+    return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401 });
+  }
+
+  const orderId = params.id;
+
   try {
-    const auth = req.headers.get("authorization");
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`,
+      {
+        method: "PATCH",
+        headers: headers(),
+        body: JSON.stringify({
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        }),
+      }
+    );
 
-    if (!auth?.startsWith("Bearer "))
-      return NextResponse.json(
-        { error: "UNAUTHORIZED" },
-        { status: 401 }
-      );
-
-    const token = auth.split(" ")[1];
-
-    const user = await verifyPiToken(token);
-    if (!user)
-      return NextResponse.json(
-        { error: "INVALID_TOKEN" },
-        { status: 401 }
-      );
-
-    if (user.role !== "seller")
-      return NextResponse.json(
-        { error: "FORBIDDEN" },
-        { status: 403 }
-      );
-
-    const supabase = createServerClient();
-
-    const { data: order } = await supabase
-      .from("orders")
-      .select("id, status, seller_id")
-      .eq("id", params.id)
-      .single();
-
-    if (!order)
-      return NextResponse.json(
-        { error: "NOT_FOUND" },
-        { status: 404 }
-      );
-
-    if (order.seller_id !== user.pi_uid)
-      return NextResponse.json(
-        { error: "NOT_YOUR_ORDER" },
-        { status: 403 }
-      );
-
-    if (order.status !== "shipping")
-      return NextResponse.json(
-        { error: "INVALID_STATUS" },
-        { status: 400 }
-      );
-
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: "completed" })
-      .eq("id", params.id);
-
-    if (error) throw error;
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err);
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("Complete order error:", err);
-    return NextResponse.json(
-      { error: "SERVER_ERROR" },
-      { status: 500 }
-    );
+    console.error("❌ COMPLETE ERROR:", err);
+    return NextResponse.json({ error: "FAILED" }, { status: 500 });
   }
 }
