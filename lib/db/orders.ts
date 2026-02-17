@@ -237,12 +237,13 @@ export async function updateOrderStatus(
 }
 
 /* =====================================================
-   GET ORDERS BY SELLER
+   GET ORDERS BY SELLER (FIXED)
 ===================================================== */
 export async function getOrdersBySeller(
   sellerPiUid: string,
   status?: string
 ): Promise<OrderRecord[]> {
+  /* 1️⃣ Lấy order_id theo seller + status */
   const statusFilter = status ? `&status=eq.${status}` : "";
 
   const itemsRes = await fetch(
@@ -253,13 +254,18 @@ export async function getOrdersBySeller(
   if (!itemsRes.ok) return [];
 
   const items = (await itemsRes.json()) as Array<{ order_id: string }>;
-  const orderIds = Array.from(new Set(items.map((i) => i.order_id)));
+
+  const orderIds = Array.from(
+    new Set(items.map((i) => i.order_id))
+  );
+
   if (orderIds.length === 0) return [];
 
+  /* 2️⃣ Fetch orders + ALL order_items */
   const ids = orderIds.map((id) => `"${id}"`).join(",");
 
   const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=id,status,total,created_at,order_items(quantity,price,product_id,seller_pi_uid,products(id,name,images))`,
+    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=id,status,total,created_at,order_items(id,quantity,price,product_id,status,seller_pi_uid,products(id,name,images))`,
     { headers: headers(), cache: "no-store" }
   );
 
@@ -271,9 +277,11 @@ export async function getOrdersBySeller(
     total: number;
     created_at: string;
     order_items: Array<{
+      id: string;
       quantity: number;
       price: number;
       product_id: string;
+      status: string;
       seller_pi_uid: string;
       products?: {
         id: string;
@@ -283,26 +291,37 @@ export async function getOrdersBySeller(
     }>;
   }>;
 
-  return rawOrders.map((o) => ({
-    id: o.id,
-    status: o.status,
-    created_at: o.created_at,
-    total: fromMicroPi(o.total),
-    order_items: o.order_items
-      .filter((i) => i.seller_pi_uid === sellerPiUid)
-      .map((i) => ({
-        product_id: i.product_id,
-        quantity: i.quantity,
-        price: fromMicroPi(i.price),
-        product: i.products
-          ? {
-              id: i.products.id,
-              name: i.products.name,
-              images: i.products.images ?? [],
-            }
-          : undefined,
-      })),
-  }));
+  /* 3️⃣ Filter lại order_items theo seller + status */
+  return rawOrders
+    .map((order) => {
+      const sellerItems = order.order_items.filter(
+        (item) =>
+          item.seller_pi_uid === sellerPiUid &&
+          (!status || item.status === status)
+      );
+
+      if (sellerItems.length === 0) return null;
+
+      return {
+        id: order.id,
+        status: order.status,
+        created_at: order.created_at,
+        total: fromMicroPi(order.total),
+        order_items: sellerItems.map((item) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price: fromMicroPi(item.price),
+          product: item.products
+            ? {
+                id: item.products.id,
+                name: item.products.name,
+                images: item.products.images ?? [],
+              }
+            : undefined,
+        })),
+      };
+    })
+    .filter((o): o is OrderRecord => o !== null);
 }
 
 /* =====================================================
