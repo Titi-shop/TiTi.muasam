@@ -48,6 +48,7 @@ export default function SellerPendingOrdersPage() {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   /* =========================
      LOAD SELLER ORDERS
@@ -87,6 +88,31 @@ export default function SellerPendingOrdersPage() {
         setOrders(pendingOrders);
         return;
       }
+       async function confirmOrder(orderId: string): Promise<void> {
+  try {
+    setConfirmingId(orderId);
+
+    const res = await apiAuthFetch(
+      `/api/seller/orders/${orderId}/confirm`,
+      {
+        method: "PATCH",
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("CONFIRM_FAILED");
+    }
+
+    // Reload lại danh sách pending
+    await loadOrders();
+
+  } catch (err) {
+    console.error("❌ Confirm error:", err);
+    alert(t.confirm_failed || "Xác nhận thất bại");
+  } finally {
+    setConfirmingId(null);
+  }
+}
 
       /* 3️⃣ Fetch products */
       const productRes = await fetch(
@@ -226,16 +252,16 @@ export default function SellerPendingOrdersPage() {
               </p>
 
               {/* ACTION */}
-              <button
-                onClick={() =>
-                  alert(
-                    `${t.confirm_order || "Xác nhận đơn"} #${o.id}`
-                  )
-                }
-                className="mt-3 w-full bg-orange-500 text-white py-2 rounded-lg font-semibold"
-              >
-                {t.confirm_order || "✅ Xác nhận đơn"}
-              </button>
+              
+                <button
+  disabled={confirmingId === o.id}
+  onClick={() => void confirmOrder(o.id)}
+  className="mt-3 w-full bg-orange-500 text-white py-2 rounded-lg font-semibold disabled:opacity-50"
+>
+  {confirmingId === o.id
+    ? "⏳ Đang xử lý..."
+    : t.confirm_order || "✅ Xác nhận đơn"}
+</button>
             </div>
           ))
         )}
