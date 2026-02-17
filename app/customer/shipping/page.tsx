@@ -105,7 +105,7 @@ export default function CustomerShippingPage() {
       <section className="mt-6 px-4">
         {loading ? (
           <p className="text-center text-gray-400">
-             {t.loading_orders}
+            ⏳ {t.loading_orders}
           </p>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
