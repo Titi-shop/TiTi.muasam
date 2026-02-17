@@ -10,17 +10,15 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 /* =========================
    TYPES
 ========================= */
-interface Product {
-  id: string;
-  name: string;
-  images: string[];
-}
-
 interface OrderItem {
   product_id: string;
   quantity: number;
   price: number;
-  product?: Product;
+  product?: {
+    id: string;
+    name: string;
+    images: string[];
+  };
 }
 
 interface Order {
@@ -51,7 +49,7 @@ export default function SellerPendingOrdersPage() {
      LOAD ORDERS
   ========================= */
   useEffect(() => {
-    void loadOrders();
+    loadOrders();
   }, []);
 
   async function loadOrders(): Promise<void> {
@@ -63,51 +61,8 @@ export default function SellerPendingOrdersPage() {
 
       if (!res.ok) throw new Error("LOAD_FAILED");
 
-      const raw: unknown = await res.json();
-      if (!Array.isArray(raw)) {
-        setOrders([]);
-        return;
-      }
-
-      const list = raw as Order[];
-
-      const productIds = Array.from(
-        new Set(
-          list.flatMap(o =>
-            o.order_items.map(i => i.product_id)
-          )
-        )
-      );
-
-      if (productIds.length === 0) {
-        setOrders(list);
-        return;
-      }
-
-      const productRes = await fetch(
-        `/api/products?ids=${productIds.join(",")}`,
-        { cache: "no-store" }
-      );
-
-      if (!productRes.ok) {
-        setOrders(list);
-        return;
-      }
-
-      const products: Product[] = await productRes.json();
-      const map = Object.fromEntries(
-        products.map(p => [p.id, p])
-      );
-
-      setOrders(
-        list.map(o => ({
-          ...o,
-          order_items: o.order_items.map(i => ({
-            ...i,
-            product: map[i.product_id],
-          })),
-        }))
-      );
+      const data = await res.json();
+      setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("❌ LOAD PENDING ERROR:", err);
       setOrders([]);
@@ -139,7 +94,7 @@ export default function SellerPendingOrdersPage() {
   }
 
   async function cancelOrder(orderId: string) {
-    if (!confirm("Huỷ đơn hàng này?")) return;
+    if (!confirm("Bạn chắc chắn muốn huỷ đơn này?")) return;
 
     try {
       setProcessingId(orderId);
@@ -189,44 +144,51 @@ export default function SellerPendingOrdersPage() {
             Không có đơn chờ xác nhận
           </p>
         ) : (
-          orders.map(o => (
-            <div key={o.id} className="bg-white p-4 rounded-lg shadow">
+          orders.map(order => (
+            <div
+              key={order.id}
+              className="bg-white p-4 rounded-lg shadow"
+            >
               <div className="flex justify-between mb-2">
-                <b>#{o.id.slice(0, 8)}</b>
-                <span className="text-orange-500">Chờ xác nhận</span>
+                <b>#{order.id.slice(0, 8)}</b>
+                <span className="text-orange-500">
+                  Chờ xác nhận
+                </span>
               </div>
 
-              {o.order_items.map((i, idx) => (
+              {order.order_items.map((item, idx) => (
                 <div key={idx} className="flex gap-3 mt-2">
                   <img
-                    src={i.product?.images?.[0] || "/placeholder.png"}
+                    src={item.product?.images?.[0] || "/placeholder.png"}
                     className="w-12 h-12 rounded object-cover"
                   />
                   <div className="flex-1">
-                    <p className="text-sm">{i.product?.name}</p>
+                    <p className="text-sm">
+                      {item.product?.name || "Sản phẩm"}
+                    </p>
                     <p className="text-xs text-gray-500">
-                      x{i.quantity} · π{formatPi(i.price)}
+                      x{item.quantity} · π{formatPi(item.price)}
                     </p>
                   </div>
                 </div>
               ))}
 
               <p className="mt-3 font-semibold">
-                Tổng: π{formatPi(o.total)}
+                Tổng: π{formatPi(order.total)}
               </p>
 
               <div className="flex gap-2 mt-3">
                 <button
-                  disabled={processingId === o.id}
-                  onClick={() => confirmOrder(o.id)}
+                  disabled={processingId === order.id}
+                  onClick={() => confirmOrder(order.id)}
                   className="flex-1 bg-orange-500 text-white py-2 rounded disabled:opacity-50"
                 >
                   ✅ Xác nhận
                 </button>
 
                 <button
-                  disabled={processingId === o.id}
-                  onClick={() => cancelOrder(o.id)}
+                  disabled={processingId === order.id}
+                  onClick={() => cancelOrder(order.id)}
                   className="flex-1 bg-gray-300 py-2 rounded"
                 >
                   ❌ Huỷ
