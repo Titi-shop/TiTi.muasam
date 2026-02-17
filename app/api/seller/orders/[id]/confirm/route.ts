@@ -3,25 +3,6 @@ import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { resolveRole } from "@/lib/auth/resolveRole";
 import { confirmOrderBySeller } from "@/lib/db/orders";
 
-
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-/* =========================
-   HELPERS
-========================= */
-function headers() {
-  return {
-    apikey: SERVICE_KEY,
-    Authorization: `Bearer ${SERVICE_KEY}`,
-    "Content-Type": "application/json",
-  };
-}
-
-/* =========================================================
-   PATCH /api/seller/orders/[id]/confirm
-   - Seller xác nhận đơn (pending → confirmed)
-========================================================= */
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
@@ -44,27 +25,11 @@ export async function PATCH(
     );
   }
 
-  const orderId = params.id;
-
+  /* 3️⃣ CONFIRM SELLER ITEMS */
   try {
-    /* 3️⃣ UPDATE STATUS: pending → confirmed */
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&status=eq.pending`,
-      {
-        method: "PATCH",
-        headers: headers(),
-        body: JSON.stringify({ status: "confirmed" }),
-      }
-    );
+    await confirmOrderBySeller(user.pi_uid, params.id);
 
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(err);
-    }
-
-    await confirmOrderBySeller(user.pi_uid, orderId);
-
-return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error("❌ CONFIRM ORDER ERROR:", err);
     return NextResponse.json(
