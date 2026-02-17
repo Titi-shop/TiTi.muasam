@@ -144,7 +144,7 @@ export default function SellerOrdersHomePage() {
 
         <OrderButton
           label={t.cancelled_orders || "❌ Đã hủy"}
-          onClick={() => router.push("/seller/orders/cancelled")}
+          onClick={() => router.push("/seller/orders/canceled")}
           stats={calcStats("cancelled")}
         />
       </div>
