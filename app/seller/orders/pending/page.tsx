@@ -124,26 +124,26 @@ export default function SellerPendingOrdersPage() {
      CONFIRM ORDER (SELLER)
   ========================= */
   async function confirmOrder(orderId: string): Promise<void> {
-    try {
-      setConfirmingId(orderId);
+  try {
+    setConfirmingId(orderId);
 
-      await apiAuthFetch(
-  `/api/seller/orders/${orderId}/confirm-items`,
-  { method: "PATCH" }
-);
+    const res = await apiAuthFetch(
+      `/api/seller/orders/${orderId}/confirm-items`,
+      { method: "PATCH" }
+    );
 
-      if (!res.ok) {
-        throw new Error("CONFIRM_FAILED");
-      }
-
-      await loadOrders();
-    } catch (err) {
-      console.error("❌ Confirm error:", err);
-      alert(t.confirm_failed || "Xác nhận thất bại");
-    } finally {
-      setConfirmingId(null);
+    if (!res.ok) {
+      throw new Error("CONFIRM_FAILED");
     }
+
+    await loadOrders();
+  } catch (err) {
+    console.error("❌ Confirm error:", err);
+    alert(t.confirm_failed || "Xác nhận thất bại");
+  } finally {
+    setConfirmingId(null);
   }
+}
 
   /* =========================
      STATS
