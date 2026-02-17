@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { resolveRole } from "@/lib/auth/resolveRole";
-import { confirmOrderBySeller } from "@/lib/db/orders"; // dùng lại pattern
+import { startShippingBySeller } from "@/lib/db/orders";
 
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  /* AUTH */
   const user = await getUserFromBearer();
   if (!user) {
     return NextResponse.json(
@@ -16,7 +15,6 @@ export async function PATCH(
     );
   }
 
-  /* RBAC */
   const role = await resolveRole(user);
   if (role !== "seller" && role !== "admin") {
     return NextResponse.json(
@@ -26,12 +24,7 @@ export async function PATCH(
   }
 
   try {
-    // update order_items của seller sang shipping
-    await updateSellerOrderItemsToShipping(
-      user.pi_uid,
-      params.id
-    );
-
+    await startShippingBySeller(user.pi_uid, params.id);
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("❌ SHIPPING ERROR:", err);
