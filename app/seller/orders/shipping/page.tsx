@@ -1,44 +1,62 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-import { useAuth } from "@/context/AuthContext";
 
 /* =========================
-   TYPES (NO any)
+   TYPES
 ========================= */
+
+interface Product {
+  id: string;
+  name: string;
+  images: string[];
+}
+
+interface OrderItem {
+  product_id: string;
+  quantity: number;
+  price: number;
+  product?: Product;
+}
+
 interface Order {
   id: string;
-  total: number;
   status: string;
-  created_at: string;
+  total: number;
+  order_items: OrderItem[];
 }
 
 /* =========================
    HELPERS
 ========================= */
-function formatPi(value: number): string {
-  return Number(value).toFixed(6);
+
+function formatPi(v: number): string {
+  return Number.isFinite(v) ? v.toFixed(6) : "0.000000";
 }
 
 /* =========================
    PAGE
 ========================= */
+
 export default function SellerShippingOrdersPage() {
-  const router = useRouter();
   const { t } = useTranslation();
-  const { loading: authLoading } = useAuth();
 
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  /* =========================
+     LOAD SHIPPING ORDERS
+  ========================= */
+
   useEffect(() => {
-    if (authLoading) return;
     void loadOrders();
-  }, [authLoading]);
+  }, []);
 
   async function loadOrders(): Promise<void> {
     try {
@@ -47,17 +65,25 @@ export default function SellerShippingOrdersPage() {
         { cache: "no-store" }
       );
 
-      if (!res.ok) throw new Error("FAILED_TO_LOAD");
+      if (!res.ok) throw new Error("LOAD_FAILED");
 
       const data: unknown = await res.json();
-      setOrders(Array.isArray(data) ? (data as Order[]) : []);
+      if (Array.isArray(data)) {
+        setOrders(data as Order[]);
+      } else {
+        setOrders([]);
+      }
     } catch (err) {
-      console.error("❌ Load seller shipping orders error:", err);
+      console.error("❌ LOAD SHIPPING ERROR:", err);
       setOrders([]);
     } finally {
       setLoading(false);
     }
   }
+
+  /* =========================
+     COMPLETE ORDER
+  ========================= */
 
   async function completeOrder(orderId: string): Promise<void> {
     try {
@@ -71,73 +97,96 @@ export default function SellerShippingOrdersPage() {
       if (!res.ok) throw new Error("COMPLETE_FAILED");
 
       await loadOrders();
-    } catch (err) {
-      console.error("❌ Complete order error:", err);
-      alert(t.complete_failed || "Hoàn tất đơn thất bại");
+    } catch {
+      alert("Không thể hoàn tất đơn hàng");
     } finally {
       setProcessingId(null);
     }
   }
 
-  if (loading || authLoading) {
+  /* =========================
+     UI
+  ========================= */
+
+  if (loading) {
     return (
       <p className="text-center mt-10 text-gray-500">
-        ⏳ {t.loading || "Đang tải..."}
+        {t.loading || "Đang tải..."}
       </p>
     );
   }
 
   return (
-    <main className="min-h-screen max-w-4xl mx-auto p-4 pb-24 bg-gray-50">
-      {/* HEADER */}
-      <div className="flex items-center mb-4">
-        <button
-          onClick={() => router.back()}
-          className="text-orange-500 font-semibold text-lg mr-2"
-        >
-          ←
-        </button>
-        <h1 className="text-xl font-semibold text-gray-800">
-          🚚 {t.shipping_orders || "Đơn đang giao"}
-        </h1>
-      </div>
+    <main className="min-h-screen bg-gray-100 pb-24">
+      <header className="bg-blue-600 text-white px-4 py-4">
+        <div className="bg-blue-500 rounded-lg p-4">
+          <p className="text-sm">
+            {t.shipping_orders || "Đơn hàng đang giao"}
+          </p>
+          <p className="text-xs mt-1">
+            {orders.length} đơn
+          </p>
+        </div>
+      </header>
 
-      {orders.length === 0 ? (
-        <p className="text-center text-gray-500">
-          {t.no_shipping_orders || "Không có đơn đang giao"}
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {orders.map((o) => (
+      <section className="mt-6 px-4 space-y-3">
+        {orders.length === 0 ? (
+          <p className="text-center text-gray-400">
+            Không có đơn đang giao
+          </p>
+        ) : (
+          orders.map((order) => (
             <div
-              key={o.id}
-              className="bg-white border rounded-lg p-4 shadow-sm"
+              key={order.id}
+              className="bg-white p-4 rounded-lg shadow"
             >
-              <p>
-                🧾 <b>{t.order_id}:</b> #{o.id.slice(0, 8)}
-              </p>
+              <div className="flex justify-between mb-2">
+                <b>#{order.id.slice(0, 8)}</b>
+                <span className="text-blue-600">
+                  Đang giao hàng
+                </span>
+              </div>
 
-              <p>
-                💰 <b>{t.total}:</b> π{formatPi(o.total)}
-              </p>
+              {order.order_items.map((item) => (
+                <div
+                  key={`${order.id}-${item.product_id}`}
+                  className="flex gap-3 mt-2"
+                >
+                  <img
+                    src={
+                      item.product?.images?.[0] ??
+                      "/placeholder.png"
+                    }
+                    alt={item.product?.name ?? "product"}
+                    className="w-12 h-12 rounded object-cover"
+                  />
 
-              <p className="text-sm text-gray-500">
-                📅 {new Date(o.created_at).toLocaleString()}
+                  <div className="flex-1">
+                    <p className="text-sm">
+                      {item.product?.name ?? "Sản phẩm"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      x{item.quantity} · π{formatPi(item.price)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+
+              <p className="mt-3 font-semibold">
+                Tổng: π{formatPi(order.total)}
               </p>
 
               <button
-                disabled={processingId === o.id}
-                onClick={() => void completeOrder(o.id)}
-                className="mt-3 w-full bg-green-600 text-white py-2 rounded-lg font-semibold disabled:opacity-50"
+                disabled={processingId === order.id}
+                onClick={() => completeOrder(order.id)}
+                className="mt-3 w-full bg-green-600 text-white py-2 rounded disabled:opacity-50"
               >
-                {processingId === o.id
-                  ? " Đang xử lý..."
-                  : t.complete_order || "✅ Hoàn tất đơn"}
+                ✅ Hoàn tất đơn hàng
               </button>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </section>
     </main>
   );
 }
