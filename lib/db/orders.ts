@@ -257,7 +257,7 @@ const itemsRes = await fetch(
 
   /* 3️⃣ Fetch orders + order_items */
   const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})${statusFilter}&order=created_at.desc&select=id,status,total,created_at,order_items(quantity,price,product_id)`,
+  `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=id,status,total,created_at,order_items(quantity,price,product_id,seller_pi_uid,products(id,name,images))`,
     { headers: headers(), cache: "no-store" }
   );
 
@@ -281,11 +281,20 @@ const itemsRes = await fetch(
     status: o.status,
     created_at: o.created_at,
     total: fromMicroPi(o.total),
-    order_items: o.order_items.map((i) => ({
-      product_id: i.product_id,
-      quantity: i.quantity,
-      price: fromMicroPi(i.price),
-    })),
+    order_items: o.order_items
+  .filter((i) => i.seller_pi_uid === sellerPiUid)
+  .map((i) => ({
+    product_id: i.product_id,
+    quantity: i.quantity,
+    price: fromMicroPi(i.price),
+    product: i.products
+      ? {
+          id: i.products.id,
+          name: i.products.name,
+          images: i.products.images ?? [],
+        }
+      : undefined,
+  })),
   }));
 }
 /* =====================================================
