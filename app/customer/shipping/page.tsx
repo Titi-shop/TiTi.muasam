@@ -8,22 +8,19 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { getPiAccessToken } from "@/lib/piAuth";
 
 /* =========================
-   ORDER STATUS
-========================= */
-type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "shipping"
-  | "completed"
-  | "cancelled";
-
-/* =========================
-   TYPES
+   TYPES (NO any)
 ========================= */
 interface Order {
   id: string;
   total: number;
-  status: OrderStatus;
+  status: string;
+}
+
+/* =========================
+   HELPERS
+========================= */
+function formatPi(value: number): string {
+  return Number(value).toFixed(6);
 }
 
 /* =========================
@@ -33,15 +30,8 @@ export default function CustomerShippingPage() {
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
 
-  function formatPi(value: number | string): string {
-    return Number(value).toFixed(6);
-  }
-
-  /* =========================
-     LOAD SHIPPING ORDERS
-  ========================= */
   useEffect(() => {
     void loadOrders();
   }, []);
@@ -59,14 +49,11 @@ export default function CustomerShippingPage() {
 
       if (!res.ok) throw new Error("UNAUTHORIZED");
 
-      const rawOrders: Order[] = await res.json();
+      const data: unknown = await res.json();
+      const list = Array.isArray(data) ? (data as Order[]) : [];
 
-      /* 🚚 CHỈ LẤY ĐƠN ĐANG VẬN CHUYỂN */
-      const shippingOrders = rawOrders.filter(
-        (o) => o.status === "shipping"
-      );
-
-      setOrders(shippingOrders);
+      // ✅ chỉ lấy đơn đang giao
+      setOrders(list.filter((o) => o.status === "shipping"));
     } catch (err) {
       console.error("❌ Load shipping orders error:", err);
       setOrders([]);
@@ -75,45 +62,35 @@ export default function CustomerShippingPage() {
     }
   }
 
-  /* =========================
-     SUMMARY
-  ========================= */
   const totalPi = orders.reduce(
-    (sum, o) => sum + Number(o.total),
+    (sum, o) => sum + Number(o.total || 0),
     0
   );
 
-  /* =========================
-     UI
-  ========================= */
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
-      {/* ===== HEADER ===== */}
+      {/* HEADER */}
       <header className="bg-orange-500 text-white px-4 py-4">
         <div className="bg-orange-400 rounded-lg p-4">
           <p className="text-sm opacity-90">
-            {t.shipping_orders || "Đơn hàng đang vận chuyển"}
+            {t.shipping_orders || "Đơn đang vận chuyển"}
           </p>
           <p className="text-xs opacity-80 mt-1">
-            {t.orders}: {orders.length} · π
-            {formatPi(totalPi)}
+            {t.orders}: {orders.length} · π{formatPi(totalPi)}
           </p>
         </div>
       </header>
 
-      {/* ===== CONTENT ===== */}
+      {/* CONTENT */}
       <section className="mt-6 px-4">
         {loading ? (
           <p className="text-center text-gray-400">
-            ⏳ {t.loading_orders}
+             {t.loading_orders}
           </p>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
             <div className="w-32 h-32 bg-gray-200 rounded-full mb-4 opacity-40" />
-            <p>
-              {t.no_shipping_orders ||
-                "Không có đơn hàng đang vận chuyển"}
-            </p>
+            <p>{t.no_shipping_orders || "Không có đơn đang giao"}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -127,7 +104,7 @@ export default function CustomerShippingPage() {
                     #{o.id.slice(0, 8)}
                   </span>
                   <span className="text-orange-500 text-sm font-medium">
-                    {t.status_shipping || "Đang vận chuyển"}
+                    {t.status_shipping || "Đang giao"}
                   </span>
                 </div>
 
