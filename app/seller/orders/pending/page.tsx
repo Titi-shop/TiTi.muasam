@@ -127,10 +127,10 @@ export default function SellerPendingOrdersPage() {
     try {
       setConfirmingId(orderId);
 
-      const res = await apiAuthFetch(
-        `/api/seller/orders/${orderId}/confirm`,
-        { method: "PATCH" }
-      );
+      await apiAuthFetch(
+  `/api/seller/orders/${orderId}/confirm-items`,
+  { method: "PATCH" }
+);
 
       if (!res.ok) {
         throw new Error("CONFIRM_FAILED");
@@ -164,7 +164,7 @@ export default function SellerPendingOrdersPage() {
   if (loading) {
     return (
       <p className="text-center mt-10 text-gray-500">
-        ⏳ {t.loading || "Đang tải..."}
+         {t.loading || "Đang tải..."}
       </p>
     );
   }
