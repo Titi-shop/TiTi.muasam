@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { resolveRole } from "@/lib/auth/resolveRole";
+import { confirmOrderBySeller } from "@/lib/db/orders";
+
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -60,7 +62,9 @@ export async function PATCH(
       throw new Error(err);
     }
 
-    return NextResponse.json({ success: true });
+    await confirmOrderBySeller(user.pi_uid, orderId);
+
+return NextResponse.json({ success: true });
   } catch (err) {
     console.error("❌ CONFIRM ORDER ERROR:", err);
     return NextResponse.json(
