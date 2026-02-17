@@ -334,6 +334,65 @@ export async function cancelOrderBySeller(
 }
 
 /* =====================================================
+   START SHIPPING BY SELLER
+   - confirmed → shipping
+===================================================== */
+export async function startShippingBySeller(
+  sellerPiUid: string,
+  orderId: string
+): Promise<void> {
+  await updateSellerOrderItemsToShipping(
+    sellerPiUid,
+    orderId
+  );
+}
+
+/* =====================================================
+   INTERNAL SHIPPING LOGIC
+===================================================== */
+async function updateSellerOrderItemsToShipping(
+  sellerPiUid: string,
+  orderId: string
+): Promise<void> {
+  const checkRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&seller_pi_uid=eq.${sellerPiUid}&select=id,status`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!checkRes.ok) {
+    throw new Error(await checkRes.text());
+  }
+
+  const items = (await checkRes.json()) as Array<{
+    id: string;
+    status: string;
+  }>;
+
+  const confirmedIds = items
+    .filter((i) => i.status === "confirmed")
+    .map((i) => i.id);
+
+  if (confirmedIds.length === 0) {
+    throw new Error("NO_CONFIRMED_ITEMS");
+  }
+
+  const ids = confirmedIds.map((id) => `"${id}"`).join(",");
+
+  const updateRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?id=in.(${ids})`,
+    {
+      method: "PATCH",
+      headers: headers(),
+      body: JSON.stringify({ status: "shipping" }),
+    }
+  );
+
+  if (!updateRes.ok) {
+    throw new Error(await updateRes.text());
+  }
+}
+
+/* =====================================================
    INTERNAL SHARED LOGIC
 ===================================================== */
 async function updateSellerOrderItemsStatus(
