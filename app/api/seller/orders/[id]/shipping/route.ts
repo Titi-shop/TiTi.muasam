@@ -1,22 +1,8 @@
 import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { resolveRole } from "@/lib/auth/resolveRole";
+import { confirmOrderBySeller } from "@/lib/db/orders"; // dùng lại pattern
 
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-function headers() {
-  return {
-    apikey: SERVICE_KEY,
-    Authorization: `Bearer ${SERVICE_KEY}`,
-    "Content-Type": "application/json",
-  };
-}
-
-/* =========================================================
-   PATCH /api/seller/orders/[id]/shipping
-   - confirmed → shipping
-========================================================= */
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
@@ -40,19 +26,11 @@ export async function PATCH(
   }
 
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/orders?id=eq.${params.id}&status=eq.confirmed`,
-      {
-        method: "PATCH",
-        headers: headers(),
-        body: JSON.stringify({ status: "shipping" }),
-      }
+    // update order_items của seller sang shipping
+    await updateSellerOrderItemsToShipping(
+      user.pi_uid,
+      params.id
     );
-
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(err);
-    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
