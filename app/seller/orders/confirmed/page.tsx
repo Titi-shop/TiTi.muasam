@@ -10,6 +10,7 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 /* =========================
    TYPES
 ========================= */
+
 interface Product {
   id: string;
   name: string;
@@ -25,7 +26,7 @@ interface OrderItem {
 
 interface Order {
   id: string;
-  status: "confirmed";
+  status: string; // không hard-code literal
   total: number;
   order_items: OrderItem[];
 }
@@ -33,28 +34,31 @@ interface Order {
 /* =========================
    HELPERS
 ========================= */
+
 function formatPi(v: number): string {
-  return v.toFixed(6);
+  return Number.isFinite(v) ? v.toFixed(6) : "0.000000";
 }
 
 /* =========================
    PAGE
 ========================= */
+
 export default function SellerConfirmedOrdersPage() {
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   /* =========================
      LOAD CONFIRMED ORDERS
   ========================= */
+
   useEffect(() => {
-    loadOrders();
+    void loadOrders();
   }, []);
 
-  async function loadOrders() {
+  async function loadOrders(): Promise<void> {
     try {
       const res = await apiAuthFetch(
         "/api/seller/orders?status=confirmed",
@@ -63,8 +67,13 @@ export default function SellerConfirmedOrdersPage() {
 
       if (!res.ok) throw new Error("LOAD_FAILED");
 
-      const list = await res.json();
-      setOrders(Array.isArray(list) ? list : []);
+      const data: unknown = await res.json();
+
+      if (Array.isArray(data)) {
+        setOrders(data as Order[]);
+      } else {
+        setOrders([]);
+      }
     } catch (err) {
       console.error("❌ LOAD CONFIRMED ERROR:", err);
       setOrders([]);
@@ -76,7 +85,8 @@ export default function SellerConfirmedOrdersPage() {
   /* =========================
      START SHIPPING
   ========================= */
-  async function startShipping(orderId: string) {
+
+  async function startShipping(orderId: string): Promise<void> {
     try {
       setProcessingId(orderId);
 
@@ -98,10 +108,11 @@ export default function SellerConfirmedOrdersPage() {
   /* =========================
      UI
   ========================= */
+
   if (loading) {
     return (
       <p className="text-center mt-10 text-gray-500">
-         {t.loading || "Đang tải..."}
+        {t.loading || "Đang tải..."}
       </p>
     );
   }
@@ -110,12 +121,8 @@ export default function SellerConfirmedOrdersPage() {
     <main className="min-h-screen bg-gray-100 pb-24">
       <header className="bg-orange-500 text-white px-4 py-4">
         <div className="bg-orange-400 rounded-lg p-4">
-          <p className="text-sm">
-            Đơn hàng đã xác nhận
-          </p>
-          <p className="text-xs mt-1">
-            {orders.length} đơn
-          </p>
+          <p className="text-sm">Đơn hàng đã xác nhận</p>
+          <p className="text-xs mt-1">{orders.length} đơn</p>
         </div>
       </header>
 
@@ -125,7 +132,7 @@ export default function SellerConfirmedOrdersPage() {
             Không có đơn chờ giao
           </p>
         ) : (
-          orders.map(order => (
+          orders.map((order) => (
             <div
               key={order.id}
               className="bg-white p-4 rounded-lg shadow"
@@ -137,18 +144,26 @@ export default function SellerConfirmedOrdersPage() {
                 </span>
               </div>
 
-              {order.order_items.map((i, idx) => (
-                <div key={idx} className="flex gap-3 mt-2">
+              {order.order_items.map((item) => (
+                <div
+                  key={`${order.id}-${item.product_id}`}
+                  className="flex gap-3 mt-2"
+                >
                   <img
-                    src={i.product?.images?.[0] || "/placeholder.png"}
+                    src={
+                      item.product?.images?.[0] ??
+                      "/placeholder.png"
+                    }
+                    alt={item.product?.name ?? "product"}
                     className="w-12 h-12 rounded object-cover"
                   />
+
                   <div className="flex-1">
                     <p className="text-sm">
-                      {i.product?.name}
+                      {item.product?.name ?? "Sản phẩm"}
                     </p>
                     <p className="text-xs text-gray-500">
-                      x{i.quantity} · π{formatPi(i.price)}
+                      x{item.quantity} · π{formatPi(item.price)}
                     </p>
                   </div>
                 </div>
