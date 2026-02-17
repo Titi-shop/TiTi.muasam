@@ -348,6 +348,52 @@ export async function startShippingBySeller(
 }
 
 /* =====================================================
+   COMPLETE ORDER BY SELLER
+   - shipping → completed
+===================================================== */
+export async function completeOrderBySeller(
+  sellerPiUid: string,
+  orderId: string
+): Promise<void> {
+  const checkRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&seller_pi_uid=eq.${sellerPiUid}&select=id,status`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!checkRes.ok) {
+    throw new Error(await checkRes.text());
+  }
+
+  const items = (await checkRes.json()) as Array<{
+    id: string;
+    status: string;
+  }>;
+
+  const shippingIds = items
+    .filter((i) => i.status === "shipping")
+    .map((i) => i.id);
+
+  if (shippingIds.length === 0) {
+    throw new Error("NO_SHIPPING_ITEMS");
+  }
+
+  const ids = shippingIds.map((id) => `"${id}"`).join(",");
+
+  const updateRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?id=in.(${ids})`,
+    {
+      method: "PATCH",
+      headers: headers(),
+      body: JSON.stringify({ status: "completed" }),
+    }
+  );
+
+  if (!updateRes.ok) {
+    throw new Error(await updateRes.text());
+  }
+}
+
+/* =====================================================
    INTERNAL SHIPPING LOGIC
 ===================================================== */
 async function updateSellerOrderItemsToShipping(
