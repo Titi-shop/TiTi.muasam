@@ -1,21 +1,11 @@
 import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { resolveRole } from "@/lib/auth/resolveRole";
-
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-function headers() {
-  return {
-    apikey: SERVICE_KEY,
-    Authorization: `Bearer ${SERVICE_KEY}`,
-    "Content-Type": "application/json",
-  };
-}
+import { completeOrderBySeller } from "@/lib/db/orders";
 
 /* =========================================================
    PATCH /api/seller/orders/[id]/complete
-   - Seller hoàn tất giao hàng
+   - shipping → completed (seller scope)
 ========================================================= */
 export async function PATCH(
   req: Request,
@@ -39,58 +29,15 @@ export async function PATCH(
     );
   }
 
-  const orderId = params.id;
-
+  /* 3️⃣ COMPLETE ORDER ITEMS */
   try {
-    /* 3️⃣ Lấy order hiện tại */
-    const orderRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=id,status`,
-      { headers: headers(), cache: "no-store" }
-    );
-
-    if (!orderRes.ok) {
-      throw new Error("FETCH_ORDER_FAILED");
-    }
-
-    const orders: Array<{ id: string; status: string }> =
-      await orderRes.json();
-
-    if (orders.length === 0) {
-      return NextResponse.json(
-        { error: "ORDER_NOT_FOUND" },
-        { status: 404 }
-      );
-    }
-
-    const order = orders[0];
-
-    /* 4️⃣ Chỉ cho phép shipping → completed */
-    if (order.status !== "shipping") {
-      return NextResponse.json(
-        { error: "INVALID_STATUS_TRANSITION" },
-        { status: 400 }
-      );
-    }
-
-    /* 5️⃣ Update status */
-    const updateRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`,
-      {
-        method: "PATCH",
-        headers: headers(),
-        body: JSON.stringify({ status: "completed" }),
-      }
-    );
-
-    if (!updateRes.ok) {
-      throw new Error("UPDATE_FAILED");
-    }
+    await completeOrderBySeller(user.pi_uid, params.id);
 
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("❌ COMPLETE ORDER ERROR:", err);
     return NextResponse.json(
-      { error: "SERVER_ERROR" },
+      { error: "FAILED" },
       { status: 500 }
     );
   }
