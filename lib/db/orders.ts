@@ -350,3 +350,47 @@ export async function confirmOrderBySeller(
     throw new Error("UPDATE_FAILED: " + err);
   }
 }
+export async function cancelOrderBySeller(
+  sellerPiUid: string,
+  orderId: string
+): Promise<void> {
+
+  const checkRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&seller_pi_uid=eq.${sellerPiUid}&select=id,status`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!checkRes.ok) {
+    const err = await checkRes.text();
+    throw new Error("CHECK_FAILED: " + err);
+  }
+
+  const items: Array<{ id: string; status: string }> =
+    await checkRes.json();
+
+  const pendingIds = items
+    .filter((i) => i.status === "pending")
+    .map((i) => i.id);
+
+  if (pendingIds.length === 0) {
+    throw new Error("NO_PENDING_ITEMS");
+  }
+
+  const ids = pendingIds.map((id) => `"${id}"`).join(",");
+
+  const updateRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?id=in.(${ids})`,
+    {
+      method: "PATCH",
+      headers: headers(),
+      body: JSON.stringify({
+        status: "cancelled",
+      }),
+    }
+  );
+
+  if (!updateRes.ok) {
+    const err = await updateRes.text();
+    throw new Error("UPDATE_FAILED: " + err);
+  }
+}
