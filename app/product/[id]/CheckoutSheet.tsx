@@ -22,7 +22,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   product: {
-    id: number;
+  id: string;
     name: string;
     price: number;
     finalPrice?: number;
