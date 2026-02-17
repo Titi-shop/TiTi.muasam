@@ -1,17 +1,11 @@
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-/**
- * Quy ước:
- * 1 Pi = 1_000_000 microPi
- * DB lưu INTEGER (microPi)
- * App hiển thị NUMBER (Pi)
- */
+/* =========================
+   PI CONSTANTS
+========================= */
 const PI_BASE = 1_000_000;
 
-/* =========================
-   PI CONVERTERS
-========================= */
 function toMicroPi(value: number): number {
   return Math.round(value * PI_BASE);
 }
@@ -34,97 +28,53 @@ function headers() {
 /* =========================
    TYPES
 ========================= */
-export type OrderItemRecord = {
-  quantity: number;
-  price: number; // Pi (đã convert)
-  product_id: string;
-};
-
-export type OrderRecord = {
+type ProductRow = {
   id: string;
-  status: string;
-  total: number; // Pi (đã convert)
-  created_at: string;
-  order_items: OrderItemRecord[];
+  name: string;
+  images: string[] | null;
 };
 
-/* =====================================================
-   GET ORDERS BY BUYER (CUSTOMER)
-===================================================== */
-export async function getOrdersByBuyerSafe(
-  piUid: string
-): Promise<OrderRecord[]> {
-  // 1️⃣ Xác định buyer_id = pi_uid
-  const userRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?pi_uid=eq.${piUid}&select=pi_uid`,
-    { headers: headers(), cache: "no-store" }
-  );
+type OrderItemRow = {
+  product_id: string;
+  quantity: number;
+  price: number;
+  seller_pi_uid: string;
+  products: ProductRow | null;
+};
 
-  if (!userRes.ok) return [];
-
-  const users: Array<{ pi_uid: string }> = await userRes.json();
-  const buyerId = users[0]?.pi_uid;
-  if (!buyerId) return [];
-
-  // 2️⃣ Lấy orders + order_items
-  const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${buyerId}&order=created_at.desc&select=id,total,status,created_at,order_items(quantity,price,product_id)`,
-    { headers: headers(), cache: "no-store" }
-  );
-
-  if (!orderRes.ok) return [];
-
-  
-   const rawOrders: Array<{
+type OrderRow = {
   id: string;
   status: string;
   total: number;
   created_at: string;
-  order_items: Array<{
-    quantity: number;
-    price: number;
-    product_id: string;
-    seller_pi_uid: string;
-    products?: {
-      id: string;
-      name: string;
-      images?: string[] | null;
-    } | null;
-  }>;
-}>;
-
-  // 3️⃣ Convert microPi → Pi
-  return rawOrders.map((o) => ({
-    id: o.id,
-    status: o.status,
-    created_at: o.created_at,
-    total: fromMicroPi(o.total),
-    order_items: o.order_items.map((i) => ({
-      product_id: i.product_id,
-      quantity: i.quantity,
-      price: fromMicroPi(i.price),
-    })),
-  }));
-}
+  order_items: OrderItemRow[];
+};
 
 /* =====================================================
-   GET ORDER BY ID (DETAIL)
+   GET ORDERS BY BUYER
 ===================================================== */
-export async function getOrderById(
-  orderId: string
-): Promise<OrderRecord | null> {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=id,status,total,created_at,order_items(quantity,price,product_id)`,
+export async function getOrdersByBuyerSafe(
+  piUid: string
+): Promise<OrderRecord[]> {
+  const userRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?pi_uid=eq.${piUid}&select=pi_uid`,
     { headers: headers(), cache: "no-store" }
   );
+  if (!userRes.ok) return [];
 
-  if (!res.ok) return null;
+  const users = await userRes.json();
+  const buyerId = users[0]?.pi_uid;
+  if (!buyerId) return [];
 
-  const data = await res.json();
-  const o = data[0];
-  if (!o) return null;
+  const orderRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${buyerId}&order=created_at.desc&select=id,status,total,created_at,order_items(quantity,price,product_id)`,
+    { headers: headers(), cache: "no-store" }
+  );
+  if (!orderRes.ok) return [];
 
-  return {
+  const rawOrders = await orderRes.json();
+
+  return rawOrders.map((o: any) => ({
     id: o.id,
     status: o.status,
     created_at: o.created_at,
@@ -134,11 +84,11 @@ export async function getOrderById(
       quantity: i.quantity,
       price: fromMicroPi(i.price),
     })),
-  };
+  }));
 }
 
 /* =====================================================
-   CREATE ORDER (CUSTOMER CHECKOUT)
+   CREATE ORDER
 ===================================================== */
 export async function createOrderSafe({
   buyerPiUid,
@@ -149,41 +99,27 @@ export async function createOrderSafe({
   items: Array<{
     product_id: string;
     quantity: number;
-    price: number; // Pi
+    price: number;
     seller_pi_uid: string;
   }>;
-  total: number; // Pi
+  total: number;
 }) {
-  /* 1️⃣ CREATE ORDER */
-  const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders`,
-    {
-      method: "POST",
-      headers: {
-        ...headers(),
-        Prefer: "return=representation",
-      },
-      body: JSON.stringify({
-        buyer_id: buyerPiUid,
-        total: toMicroPi(total),
-        status: "pending",
-      }),
-    }
-  );
+  const orderRes = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
+    method: "POST",
+    headers: { ...headers(), Prefer: "return=representation" },
+    body: JSON.stringify({
+      buyer_id: buyerPiUid,
+      total: toMicroPi(total),
+      status: "pending",
+    }),
+  });
 
   if (!orderRes.ok) {
-    const err = await orderRes.text();
-    throw new Error("CREATE_ORDER_FAILED: " + err);
+    throw new Error(await orderRes.text());
   }
 
-  const orderData = await orderRes.json();
-  if (!Array.isArray(orderData) || !orderData[0]) {
-    throw new Error("ORDER_NOT_RETURNED");
-  }
+  const [order] = await orderRes.json();
 
-  const order = orderData[0];
-
-  /* 2️⃣ CREATE ORDER ITEMS */
   const orderItems = items.map((i) => ({
     order_id: order.id,
     product_id: i.product_id,
@@ -193,217 +129,107 @@ export async function createOrderSafe({
     status: "pending",
   }));
 
-  const itemsRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items`,
-    {
-      method: "POST",
-      headers: headers(),
-      body: JSON.stringify(orderItems),
-    }
-  );
+  await fetch(`${SUPABASE_URL}/rest/v1/order_items`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(orderItems),
+  });
 
-  if (!itemsRes.ok) {
-    const err = await itemsRes.text();
-    throw new Error("CREATE_ORDER_ITEMS_FAILED: " + err);
-  }
-
-  return {
-    id: order.id,
-    status: order.status,
-    total,
-  };
+  return { id: order.id, status: order.status, total };
 }
 
 /* =====================================================
-   UPDATE ORDER STATUS
+   GET ORDERS BY SELLER
 ===================================================== */
-export async function updateOrderStatus(
-  orderId: string,
-  status: string
-) {
-  await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`,
-    {
-      method: "PATCH",
-      headers: headers(),
-      body: JSON.stringify({ status }),
-    }
-  );
-}
-/* =====================================================
-   GET ORDERS BY SELLER (SELLER / ADMIN)
-   - Lấy các order có order_items thuộc seller
-===================================================== */
+
 export async function getOrdersBySeller(
   sellerPiUid: string,
   status?: string
 ): Promise<OrderRecord[]> {
-  /* 1️⃣ Lấy order_id theo seller_pi_uid */
-  const statusItemFilter = status
-  ? `&status=eq.${status}`
-  : "";
+  const statusFilter = status ? `&status=eq.${status}` : "";
 
-const itemsRes = await fetch(
-  `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}${statusItemFilter}`,
-  { headers: headers(), cache: "no-store" }
+  const itemsRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}${statusFilter}`,
+    { headers: headers(), cache: "no-store" }
   );
 
   if (!itemsRes.ok) return [];
 
   const items: Array<{ order_id: string }> = await itemsRes.json();
-
-  const orderIds = Array.from(
-    new Set(items.map((i) => i.order_id))
-  );
-
+  const orderIds = Array.from(new Set(items.map(i => i.order_id)));
   if (orderIds.length === 0) return [];
 
-  /* 2️⃣ Build filter */
-  const ids = orderIds.map((id) => `"${id}"`).join(",");
-  const statusFilter = "";
+  const ids = orderIds.map(id => `"${id}"`).join(",");
 
-  /* 3️⃣ Fetch orders + order_items */
   const orderRes = await fetch(
-  `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=id,status,total,created_at,order_items(quantity,price,product_id,seller_pi_uid,products(id,name,images))`,
+    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=id,status,total,created_at,order_items(quantity,price,product_id,seller_pi_uid,products(id,name,images))`,
     { headers: headers(), cache: "no-store" }
   );
 
   if (!orderRes.ok) return [];
 
-  const rawOrders: Array<{
-  id: string;
-  status: string;
-  total: number;
-  created_at: string;
-  order_items: Array<{
-    quantity: number;
-    price: number;
-    product_id: string;
-    seller_pi_uid: string;
-    products?: {
-      id: string;
-      name: string;
-      images?: string[] | null;
-    } | null;
-  }>;
-}>;
+  const rawOrders: OrderRow[] = await orderRes.json();
 
-  /* 4️⃣ Convert microPi → Pi */
   return rawOrders.map((o) => ({
     id: o.id,
     status: o.status,
     created_at: o.created_at,
     total: fromMicroPi(o.total),
     order_items: o.order_items
-  .filter((i) => i.seller_pi_uid === sellerPiUid)
-  .map((i) => ({
-    product_id: i.product_id,
-    quantity: i.quantity,
-    price: fromMicroPi(i.price),
-    product: i.products
-      ? {
-          id: i.products.id,
-          name: i.products.name,
-          images: i.products.images ?? [],
-        }
-      : undefined,
-  })),
+      .filter(i => i.seller_pi_uid === sellerPiUid)
+      .map(i => ({
+        product_id: i.product_id,
+        quantity: i.quantity,
+        price: fromMicroPi(i.price),
+        product: i.products
+          ? {
+              id: i.products.id,
+              name: i.products.name,
+              images: i.products.images ?? [],
+            }
+          : undefined,
+      })),
   }));
 }
 /* =====================================================
-   CONFIRM ORDER BY SELLER
-   - Update order_items của seller đó
+   CONFIRM / CANCEL BY SELLER
 ===================================================== */
 export async function confirmOrderBySeller(
   sellerPiUid: string,
   orderId: string
-): Promise<void> {
-  // 1️⃣ Check order_items tồn tại
-  const checkRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&seller_pi_uid=eq.${sellerPiUid}&select=id,status`,
-    { headers: headers(), cache: "no-store" }
-  );
-
-  if (!checkRes.ok) {
-    const err = await checkRes.text();
-    throw new Error("CHECK_FAILED: " + err);
-  }
-
-  const items: Array<{ id: string; status: string }> =
-    await checkRes.json();
-
-  if (items.length === 0) {
-    throw new Error("NO_ITEMS_FOR_SELLER");
-  }
-
-  // 2️⃣ Chỉ update những item đang pending
-  const pendingIds = items
-    .filter((i) => i.status === "pending")
-    .map((i) => i.id);
-
-  if (pendingIds.length === 0) {
-    throw new Error("NO_PENDING_ITEMS");
-  }
-
-  const ids = pendingIds.map((id) => `"${id}"`).join(",");
-
-  const updateRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items?id=in.(${ids})`,
-    {
-      method: "PATCH",
-      headers: headers(),
-      body: JSON.stringify({
-        status: "confirmed",
-      }),
-    }
-  );
-
-  if (!updateRes.ok) {
-    const err = await updateRes.text();
-    throw new Error("UPDATE_FAILED: " + err);
-  }
+) {
+  await updateSellerItemsStatus(sellerPiUid, orderId, "confirmed");
 }
+
 export async function cancelOrderBySeller(
   sellerPiUid: string,
   orderId: string
-): Promise<void> {
+) {
+  await updateSellerItemsStatus(sellerPiUid, orderId, "cancelled");
+}
 
-  const checkRes = await fetch(
+async function updateSellerItemsStatus(
+  sellerPiUid: string,
+  orderId: string,
+  status: "confirmed" | "cancelled"
+) {
+  const res = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&seller_pi_uid=eq.${sellerPiUid}&select=id,status`,
     { headers: headers(), cache: "no-store" }
   );
+  if (!res.ok) throw new Error(await res.text());
 
-  if (!checkRes.ok) {
-    const err = await checkRes.text();
-    throw new Error("CHECK_FAILED: " + err);
-  }
+  const items = await res.json();
+  const ids = items
+    .filter((i: any) => i.status === "pending")
+    .map((i: any) => `"${i.id}"`)
+    .join(",");
 
-  const items: Array<{ id: string; status: string }> =
-    await checkRes.json();
+  if (!ids) return;
 
-  const pendingIds = items
-    .filter((i) => i.status === "pending")
-    .map((i) => i.id);
-
-  if (pendingIds.length === 0) {
-    throw new Error("NO_PENDING_ITEMS");
-  }
-
-  const ids = pendingIds.map((id) => `"${id}"`).join(",");
-
-  const updateRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items?id=in.(${ids})`,
-    {
-      method: "PATCH",
-      headers: headers(),
-      body: JSON.stringify({
-        status: "cancelled",
-      }),
-    }
-  );
-
-  if (!updateRes.ok) {
-    const err = await updateRes.text();
-    throw new Error("UPDATE_FAILED: " + err);
-  }
+  await fetch(`${SUPABASE_URL}/rest/v1/order_items?id=in.(${ids})`, {
+    method: "PATCH",
+    headers: headers(),
+    body: JSON.stringify({ status }),
+  });
 }
