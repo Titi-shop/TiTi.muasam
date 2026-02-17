@@ -1,12 +1,16 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
 import { useEffect, useState } from "react";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
-/* =====================================================
+/* =========================
    TYPES
-===================================================== */
+========================= */
+
 interface Product {
   id: string;
   name: string;
@@ -22,141 +26,160 @@ interface OrderItem {
 
 interface Order {
   id: string;
-  status: string;
+  status: string; // không hard-code literal
   total: number;
-  created_at: string;
   order_items: OrderItem[];
 }
 
-interface Props {
-  status: string;
-  title: string;
-}
-
-/* =====================================================
+/* =========================
    HELPERS
-===================================================== */
-function formatPi(value: number): string {
-  return Number(value).toFixed(6);
+========================= */
+
+function formatPi(v: number): string {
+  return Number.isFinite(v) ? v.toFixed(6) : "0.000000";
 }
 
-function formatDate(date: string): string {
-  return new Date(date).toLocaleString("vi-VN");
-}
+/* =========================
+   PAGE
+========================= */
 
-/* =====================================================
-   COMPONENT
-===================================================== */
-export default function SellerOrdersList({
-  status,
-  title,
-}: Props) {
+export default function SellerConfirmedOrdersPage() {
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  /* =========================
+     LOAD CONFIRMED ORDERS
+  ========================= */
 
   useEffect(() => {
-    loadOrders();
-  }, [status]);
+    void loadOrders();
+  }, []);
 
-  async function loadOrders() {
+  async function loadOrders(): Promise<void> {
     try {
       const res = await apiAuthFetch(
-        `/api/seller/orders?status=${status}`,
+        "/api/seller/orders?status=confirmed",
         { cache: "no-store" }
       );
 
       if (!res.ok) throw new Error("LOAD_FAILED");
 
-      const data = await res.json();
-      setOrders(Array.isArray(data) ? data : []);
+      const data: unknown = await res.json();
+
+      if (Array.isArray(data)) {
+        setOrders(data as Order[]);
+      } else {
+        setOrders([]);
+      }
     } catch (err) {
-      console.error("LOAD ERROR:", err);
+      console.error("❌ LOAD CONFIRMED ERROR:", err);
       setOrders([]);
     } finally {
       setLoading(false);
     }
   }
 
+  /* =========================
+     START SHIPPING
+  ========================= */
+
+  async function startShipping(orderId: string): Promise<void> {
+    try {
+      setProcessingId(orderId);
+
+      const res = await apiAuthFetch(
+        `/api/seller/orders/${orderId}/shipping`,
+        { method: "PATCH" }
+      );
+
+      if (!res.ok) throw new Error("SHIP_FAILED");
+
+      await loadOrders();
+    } catch {
+      alert("Không thể bắt đầu giao hàng");
+    } finally {
+      setProcessingId(null);
+    }
+  }
+
+  /* =========================
+     UI
+  ========================= */
+
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <p className="text-gray-500">
-          ⏳ {t.loading || "Đang tải..."}
-        </p>
-      </main>
+      <p className="text-center mt-10 text-gray-500">
+        {t.loading || "Đang tải..."}
+      </p>
     );
   }
 
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
-      {/* HEADER */}
-      <header className="bg-gray-800 text-white px-4 py-6">
-        <p className="text-sm opacity-80">{title}</p>
-        <p className="text-xl font-semibold mt-1">
-          {orders.length} đơn
-        </p>
+      <header className="bg-orange-500 text-white px-4 py-4">
+        <div className="bg-orange-400 rounded-lg p-4">
+          <p className="text-sm">Đơn hàng đã xác nhận</p>
+          <p className="text-xs mt-1">{orders.length} đơn</p>
+        </div>
       </header>
 
-      <section className="px-4 mt-5 space-y-4">
+      <section className="mt-6 px-4 space-y-3">
         {orders.length === 0 ? (
           <p className="text-center text-gray-400">
-            Không có đơn
+            Không có đơn chờ giao
           </p>
         ) : (
           orders.map((order) => (
             <div
               key={order.id}
-              className="bg-white rounded-lg shadow-sm border"
+              className="bg-white p-4 rounded-lg shadow"
             >
-              {/* HEADER */}
-              <div className="flex justify-between px-4 py-3 border-b text-sm">
-                <div>
-                  <p className="font-semibold">
-                    #{order.id.slice(0, 8)}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {formatDate(order.created_at)}
-                  </p>
-                </div>
-
-                <span className="text-orange-500 font-medium">
-                  {t[`status_${status}`] ?? status}
+              <div className="flex justify-between mb-2">
+                <b>#{order.id.slice(0, 8)}</b>
+                <span className="text-green-600">
+                  Đã xác nhận
                 </span>
               </div>
 
-              {/* PRODUCTS */}
-              <div className="divide-y">
-                {order.order_items.map((item, index) => (
-                  <div key={index} className="flex gap-3 p-4">
-                    <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                      <img
-                        src={
-                          item.product?.images?.[0] ||
-                          "/placeholder.png"
-                        }
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+              {order.order_items.map((item) => (
+                <div
+                  key={`${order.id}-${item.product_id}`}
+                  className="flex gap-3 mt-2"
+                >
+                  <img
+                    src={
+                      item.product?.images?.[0] ??
+                      "/placeholder.png"
+                    }
+                    alt={item.product?.name ?? "product"}
+                    className="w-12 h-12 rounded object-cover"
+                  />
 
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium line-clamp-1">
-                        {item.product?.name || "Sản phẩm"}
-                      </p>
-
-                      <p className="text-xs text-gray-500 mt-1">
-                        x{item.quantity} · π{formatPi(item.price)}
-                      </p>
-                    </div>
+                  <div className="flex-1">
+                    <p className="text-sm">
+                      {item.product?.name ?? "Sản phẩm"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      x{item.quantity} · π{formatPi(item.price)}
+                    </p>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
 
-              {/* FOOTER */}
-              <div className="px-4 py-3 border-t text-sm font-semibold">
+              <p className="mt-3 font-semibold">
                 Tổng: π{formatPi(order.total)}
-              </div>
+              </p>
+
+              <button
+                disabled={processingId === order.id}
+                onClick={() => startShipping(order.id)}
+                className="mt-3 w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
+              >
+                🚚 Bắt đầu giao hàng
+              </button>
             </div>
           ))
         )}
