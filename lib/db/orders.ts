@@ -47,8 +47,13 @@ export type OrderItemRecord = {
 export type OrderRecord = {
   id: string;
   status: string;
-  total: number; // Pi
+  total: number;
   created_at: string;
+  buyer?: {
+    name: string;
+    phone: string;
+    address: string;
+  };
   order_items: OrderItemRecord[];
 };
 
@@ -165,12 +170,18 @@ export async function createOrderSafe({
       ...headers(),
       Prefer: "return=representation",
     },
-    body: JSON.stringify({
-      buyer_id: buyerPiUid,
-      total: toMicroPi(total),
-      status: "pending",
-    }),
-  });
+
+
+     body: JSON.stringify({
+  buyer_id: buyerPiUid,
+  total: toMicroPi(total),
+  status: "pending",
+
+  // 👇 SNAPSHOT BUYER (AN TOÀN)
+  buyer_name: shipping.name,
+  buyer_phone: shipping.phone,
+  buyer_address: shipping.address,
+}),
 
   if (!orderRes.ok) {
     throw new Error(await orderRes.text());
