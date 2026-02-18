@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
@@ -47,6 +48,7 @@ function formatDate(date: string): string {
 ========================= */
 export default function SellerPendingOrdersPage() {
   const { t } = useTranslation();
+  const router = useRouter();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,7 +117,7 @@ export default function SellerPendingOrdersPage() {
 
   return (
     <main className="min-h-screen bg-[#f4efe6] pb-24">
-      {/* HEADER – MỆNH THỔ */}
+      {/* HEADER */}
       <header className="bg-[#7a553a] text-white px-4 py-5">
         <p className="text-sm opacity-90">
           {t.pending_orders || "Đơn hàng chờ xác nhận"}
@@ -134,7 +136,10 @@ export default function SellerPendingOrdersPage() {
           orders.map((order) => (
             <div
               key={order.id}
-              className="bg-white rounded-lg shadow border"
+              onClick={() =>
+                router.push(`/seller/orders/${order.id}`)
+              }
+              className="bg-white rounded-lg shadow border cursor-pointer hover:shadow-md transition"
             >
               {/* ORDER HEADER */}
               <div className="flex justify-between px-4 py-3 border-b">
@@ -180,7 +185,10 @@ export default function SellerPendingOrdersPage() {
               </div>
 
               {/* FOOTER */}
-              <div className="flex justify-between items-center px-4 py-3 border-t text-sm">
+              <div
+                className="flex justify-between items-center px-4 py-3 border-t text-sm"
+                onClick={(e) => e.stopPropagation()} // 👈 chặn click card
+              >
                 <b>π{formatPi(order.total)}</b>
 
                 <div className="flex gap-2">
