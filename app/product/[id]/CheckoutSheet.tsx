@@ -180,15 +180,16 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
             await apiAuthFetch("/api/orders", {
               method: "POST",
               body: JSON.stringify({
-                items: [
-                  {
-                    product_id: item.id,
-                    quantity,
-                    price: unitPrice,
-                  },
-                ],
-                total,
-              }),
+  items: [
+    {
+      product_id: item.id,
+      quantity,
+      price: unitPrice,
+    },
+  ],
+  total,
+  shipping, // ✅ THÊM DÒNG NÀY
+}),
             });
             onClose();
             router.push("/customer/pending");
