@@ -23,14 +23,10 @@ export async function GET(req: Request) {
   }
 
   /* QUERY */
-  const { searchParams } = new URL(req.url);
-  const status = searchParams.get("status") ?? undefined;
 
-  try {
-    const orders = await getOrdersBySeller(
-      user.pi_uid,
-      status
-    );
+  const orders = await getOrdersBySeller(
+  user.pi_uid
+);
     return NextResponse.json(orders);
   } catch (err) {
     console.warn("SELLER ORDERS WARN:", err);
