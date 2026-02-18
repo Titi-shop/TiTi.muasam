@@ -541,11 +541,12 @@ export async function getOrderDetailBySeller(
   const order = data[0];
   if (!order) return null;
 
-  // 🔐 Chỉ lấy item của seller hiện tại
   const sellerItems = order.order_items.filter(
-    (item: any) => item.seller_pi_uid === sellerPiUid
-  );
-
+  (item) =>
+    typeof item.seller_pi_uid === "string" &&
+    item.seller_pi_uid.trim().toLowerCase() ===
+      sellerPiUid.trim().toLowerCase()
+);
   if (sellerItems.length === 0) return null;
 
   return {
