@@ -51,15 +51,15 @@ export async function GET() {
     /* =========================
        MAP SELLER STATUS
     ========================= */
-    const normalized = orders.map((o) => ({
-      ...o,
-      seller_status: resolveSellerStatus(
-        o.order_items.map((i) => ({
-          status: (i as { status?: string }).status,
-        }))
-      ),
-    }));
-
+    
+const normalized = orders.map((o) => ({
+  ...o,
+  status: resolveSellerStatus(
+    o.order_items.map((i) => ({
+      status: i.status,
+    }))
+  ),
+}));
     return NextResponse.json(normalized);
   } catch (err) {
     console.warn("SELLER ORDERS WARN:", err);
