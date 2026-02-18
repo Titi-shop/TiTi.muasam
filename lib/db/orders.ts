@@ -62,41 +62,107 @@ export type OrderRecord = {
 };
 
 /* =====================================================
-   GET ORDERS BY BUYER
+   GET ORDERS BY SELLER (MARKETPLACE SAFE)
+   - KHÔNG FILTER STATUS Ở DB
+   - SELLER FILTER Ở UI
 ===================================================== */
-export async function getOrdersByBuyerSafe(
-  piUid: string
+export async function getOrdersBySeller(
+  sellerPiUid: string
 ): Promise<OrderRecord[]> {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${piUid}&order=created_at.desc&select=id,status,total,created_at,order_items(quantity,price,product_id)`,
+  /* 1️⃣ LẤY TẤT CẢ order_id CỦA SELLER */
+  const itemsRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}`,
     { headers: headers(), cache: "no-store" }
   );
 
-  if (!res.ok) return [];
+  if (!itemsRes.ok) return [];
 
-  const rawOrders = (await res.json()) as Array<{
+  const items = (await itemsRes.json()) as Array<{
+    order_id: string;
+  }>;
+
+  const orderIds = Array.from(
+    new Set(items.map((i) => i.order_id))
+  );
+
+  if (orderIds.length === 0) return [];
+
+  /* 2️⃣ FETCH ORDERS + ORDER_ITEMS + PRODUCT */
+  const ids = orderIds.map((id) => `"${id}"`).join(",");
+
+  const ordersRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
+      id,
+      status,
+      total,
+      created_at,
+      order_items(
+        id,
+        quantity,
+        price,
+        product_id,
+        status,
+        seller_pi_uid,
+        products(id,name,images)
+      )
+    `,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!ordersRes.ok) return [];
+
+  const rawOrders = (await ordersRes.json()) as Array<{
     id: string;
     status: string;
     total: number;
     created_at: string;
     order_items: Array<{
+      id: string;
       quantity: number;
       price: number;
       product_id: string;
+      status: string;
+      seller_pi_uid: string;
+      products?: {
+        id: string;
+        name: string;
+        images?: string[] | null;
+      } | null;
     }>;
   }>;
 
-  return rawOrders.map((o) => ({
-    id: o.id,
-    status: o.status,
-    created_at: o.created_at,
-    total: fromMicroPi(o.total),
-    order_items: o.order_items.map((i) => ({
-      product_id: i.product_id,
-      quantity: i.quantity,
-      price: fromMicroPi(i.price),
-    })),
-  }));
+  /* 3️⃣ CHỈ GIỮ ITEM CỦA SELLER HIỆN TẠI */
+  return rawOrders
+    .map((order) => {
+      const sellerItems = order.order_items.filter(
+        (item) =>
+          typeof item.seller_pi_uid === "string" &&
+          item.seller_pi_uid.trim().toLowerCase() ===
+            sellerPiUid.trim().toLowerCase()
+      );
+
+      if (sellerItems.length === 0) return null;
+
+      return {
+        id: order.id,
+        status: order.status, // status buyer (UI seller KHÔNG dùng)
+        created_at: order.created_at,
+        total: fromMicroPi(order.total),
+        order_items: sellerItems.map((item) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price: fromMicroPi(item.price),
+          product: item.products
+            ? {
+                id: item.products.id,
+                name: item.products.name,
+                images: item.products.images ?? [],
+              }
+            : undefined,
+        })),
+      };
+    })
+    .filter((o): o is OrderRecord => o !== null);
 }
 
 /* =====================================================
