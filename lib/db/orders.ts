@@ -281,9 +281,28 @@ export async function getOrdersBySeller(
   const ids = orderIds.map((id) => `"${id}"`).join(",");
 
   const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=id,status,total,created_at,order_items(id,quantity,price,product_id,status,seller_pi_uid,products(id,name,images))`,
-    { headers: headers(), cache: "no-store" }
-  );
+  `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
+    id,
+    status,
+    total,
+    created_at,
+
+    buyer_name,
+    buyer_phone,
+    buyer_address,
+
+    order_items(
+      id,
+      quantity,
+      price,
+      product_id,
+      status,
+      seller_pi_uid,
+      products(id,name,images)
+    )
+  `,
+  { headers: headers(), cache: "no-store" }
+);
 
   if (!orderRes.ok) return [];
 
