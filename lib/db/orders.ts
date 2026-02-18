@@ -337,7 +337,30 @@ export async function getOrdersBySeller(
 
       if (sellerItems.length === 0) return null;
 
-      
+      return {
+  id: order.id,
+  status: order.status,
+  created_at: order.created_at,
+  total: fromMicroPi(order.total),
+
+  // ✅ BỔ SUNG THÔNG TIN NGƯỜI MUA (QUAN TRỌNG)
+  buyer_name: order.buyer_name ?? null,
+  buyer_phone: order.buyer_phone ?? null,
+  buyer_address: order.buyer_address ?? null,
+
+  order_items: sellerItems.map((item) => ({
+    product_id: item.product_id,
+    quantity: item.quantity,
+    price: fromMicroPi(item.price),
+    product: item.products
+      ? {
+          id: item.products.id,
+          name: item.products.name,
+          images: item.products.images ?? [],
+        }
+      : undefined,
+  })),
+};
 /* =====================================================
    CONFIRM ORDER BY SELLER
 ===================================================== */
