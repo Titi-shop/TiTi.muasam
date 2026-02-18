@@ -154,6 +154,7 @@ export async function createOrderSafe({
   buyerPiUid,
   items,
   total,
+  shipping,
 }: {
   buyerPiUid: string;
   items: Array<{
@@ -163,6 +164,11 @@ export async function createOrderSafe({
     seller_pi_uid: string;
   }>;
   total: number; // Pi
+  shipping: {
+    name: string;
+    phone: string;
+    address: string;
+  };
 }): Promise<{ id: string; status: string; total: number }> {
   const orderRes = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
     method: "POST",
@@ -170,18 +176,17 @@ export async function createOrderSafe({
       ...headers(),
       Prefer: "return=representation",
     },
+    body: JSON.stringify({
+      buyer_id: buyerPiUid,
+      total: toMicroPi(total),
+      status: "pending",
 
-
-     body: JSON.stringify({
-  buyer_id: buyerPiUid,
-  total: toMicroPi(total),
-  status: "pending",
-
-  // 👇 SNAPSHOT BUYER (AN TOÀN)
-  buyer_name: shipping.name,
-  buyer_phone: shipping.phone,
-  buyer_address: shipping.address,
-}),
+      // ✅ SNAPSHOT BUYER (AN TOÀN – KHÔNG JOIN USERS)
+      buyer_name: shipping.name,
+      buyer_phone: shipping.phone,
+      buyer_address: shipping.address,
+    }),
+  });
 
   if (!orderRes.ok) {
     throw new Error(await orderRes.text());
@@ -567,7 +572,17 @@ export async function getOrderDetailBySeller(
     created_at: order.created_at,
     total: fromMicroPi(order.total),
     buyer: order.buyer, // 👈 QUAN TRỌNG
-    order_items: sellerItems.map((item: any) => ({
+
+     order_items: sellerItems.map((item: {
+  product_id: string;
+  quantity: number;
+  price: number;
+  products?: {
+    id: string;
+    name: string;
+    images?: string[] | null;
+  } | null;
+}) => ({
       product_id: item.product_id,
       quantity: item.quantity,
       price: fromMicroPi(item.price),
