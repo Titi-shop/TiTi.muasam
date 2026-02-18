@@ -6,7 +6,7 @@ import { getOrdersBySeller } from "@/lib/db/orders";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
+export async function GET() {
   /* AUTH */
   const user = await getUserFromBearer();
   if (!user) {
@@ -22,11 +22,8 @@ export async function GET(req: Request) {
     return NextResponse.json([], { status: 200 });
   }
 
-  /* QUERY */
-
-  const orders = await getOrdersBySeller(
-  user.pi_uid
-);
+  try {
+    const orders = await getOrdersBySeller(user.pi_uid);
     return NextResponse.json(orders);
   } catch (err) {
     console.warn("SELLER ORDERS WARN:", err);
