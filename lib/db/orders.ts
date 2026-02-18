@@ -62,6 +62,44 @@ export type OrderRecord = {
 };
 
 /* =====================================================
+   GET ORDERS BY BUYER
+===================================================== */
+export async function getOrdersByBuyerSafe(
+  piUid: string
+): Promise<OrderRecord[]> {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${piUid}&order=created_at.desc&select=id,status,total,created_at,order_items(quantity,price,product_id)`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!res.ok) return [];
+
+  const rawOrders = (await res.json()) as Array<{
+    id: string;
+    status: string;
+    total: number;
+    created_at: string;
+    order_items: Array<{
+      quantity: number;
+      price: number;
+      product_id: string;
+    }>;
+  }>;
+
+  return rawOrders.map((o) => ({
+    id: o.id,
+    status: o.status,
+    created_at: o.created_at,
+    total: fromMicroPi(o.total),
+    order_items: o.order_items.map((i) => ({
+      product_id: i.product_id,
+      quantity: i.quantity,
+      price: fromMicroPi(i.price),
+    })),
+  }));
+}
+
+/* =====================================================
    CREATE ORDER (WITH SHIPPING SNAPSHOT)
 ===================================================== */
 export async function createOrderSafe({
