@@ -502,16 +502,36 @@ async function updateSellerOrderItemsStatus(
     throw new Error(await updateRes.text());
   }
 }
-
 /* =====================================================
-   GET ORDER DETAIL BY SELLER (SAFE)
+   GET ORDER DETAIL BY SELLER (SAFE + FULL)
 ===================================================== */
 export async function getOrderDetailBySeller(
   sellerPiUid: string,
   orderId: string
-): Promise<OrderRecord | null> {
+) {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=id,status,total,created_at,order_items(id,quantity,price,product_id,status,seller_pi_uid,products(id,name,images))`,
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=
+      id,
+      status,
+      total,
+      created_at,
+      buyer:users!orders_buyer_id_fkey(
+        username,
+        phone,
+        address,
+        province,
+        country
+      ),
+      order_items(
+        id,
+        quantity,
+        price,
+        product_id,
+        status,
+        seller_pi_uid,
+        products(id,name,images)
+      )
+    `,
     { headers: headers(), cache: "no-store" }
   );
 
@@ -521,7 +541,7 @@ export async function getOrderDetailBySeller(
   const order = data[0];
   if (!order) return null;
 
-  // 🔐 Filter order_items theo seller
+  // 🔐 Chỉ lấy item của seller hiện tại
   const sellerItems = order.order_items.filter(
     (item: any) => item.seller_pi_uid === sellerPiUid
   );
@@ -533,6 +553,7 @@ export async function getOrderDetailBySeller(
     status: order.status,
     created_at: order.created_at,
     total: fromMicroPi(order.total),
+    buyer: order.buyer, // 👈 QUAN TRỌNG
     order_items: sellerItems.map((item: any) => ({
       product_id: item.product_id,
       quantity: item.quantity,
