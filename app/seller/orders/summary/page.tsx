@@ -84,17 +84,23 @@ export default function SellerOrdersSummaryPage() {
      FILTER TAB
   ========================= */
   const filteredOrders = useMemo(() => {
-    if (activeTab === "all") return orders;
-    return orders.filter((o) => o.status === activeTab);
-  }, [orders, activeTab]);
+  if (activeTab === "all") return orders;
+
+  return orders.filter(
+    (o) => getSellerOrderStatus(o) === activeTab
+  );
+}, [orders, activeTab]);
 
   /* =========================
      COUNT PER STATUS
   ========================= */
   const countByStatus = (status: OrderTab) => {
-    if (status === "all") return orders.length;
-    return orders.filter((o) => o.status === status).length;
-  };
+  if (status === "all") return orders.length;
+
+  return orders.filter(
+    (o) => getSellerOrderStatus(o) === status
+  ).length;
+};
 
   /* =========================
      UI
