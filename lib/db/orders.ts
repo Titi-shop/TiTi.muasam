@@ -263,7 +263,10 @@ export async function getOrdersBySeller(
 
   const itemsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}${statusFilter}`,
-    { headers: headers(), cache: "no-store" }
+    {
+      headers: headers(),
+      cache: "no-store",
+    }
   );
 
   if (!itemsRes.ok) return [];
@@ -295,7 +298,10 @@ export async function getOrdersBySeller(
         products(id,name,images)
       )
     `,
-    { headers: headers(), cache: "no-store" }
+    {
+      headers: headers(),
+      cache: "no-store",
+    }
   );
 
   if (!orderRes.ok) return [];
@@ -303,44 +309,45 @@ export async function getOrdersBySeller(
   const rawOrders = await orderRes.json();
 
   /* 3️⃣ Filter lại order_items theo seller + status */
-  return rawOrders
-    .map((order: any) => {
-      const sellerItems = order.order_items.filter(
-        (item: any) =>
-          item.seller_pi_uid === sellerPiUid &&
-          (!status || item.status === status)
-      );
+  const result: OrderRecord[] = [];
 
-      if (sellerItems.length === 0) return null;
+  for (const order of rawOrders) {
+    const sellerItems = order.order_items.filter(
+      (item: any) =>
+        item.seller_pi_uid === sellerPiUid &&
+        (!status || item.status === status)
+    );
 
-      return {
-        id: order.id,
-        status: order.status,
-        created_at: order.created_at,
-        total: fromMicroPi(order.total),
+    if (sellerItems.length === 0) continue;
 
-        // ✅ SNAPSHOT BUYER
-        buyer: {
-          name: order.buyer_name ?? "",
-          phone: order.buyer_phone ?? "",
-          address: order.buyer_address ?? "",
-        },
+    result.push({
+      id: order.id,
+      status: order.status,
+      created_at: order.created_at,
+      total: fromMicroPi(order.total),
 
-        order_items: sellerItems.map((item: any) => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          price: fromMicroPi(item.price),
-          product: item.products
-            ? {
-                id: item.products.id,
-                name: item.products.name,
-                images: item.products.images ?? [],
-              }
-            : undefined,
-        })),
-      };
-    })
-    .filter((o: OrderRecord | null): o is OrderRecord => o !== null);
+      buyer: {
+        name: order.buyer_name ?? "",
+        phone: order.buyer_phone ?? "",
+        address: order.buyer_address ?? "",
+      },
+
+      order_items: sellerItems.map((item: any) => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: fromMicroPi(item.price),
+        product: item.products
+          ? {
+              id: item.products.id,
+              name: item.products.name,
+              images: item.products.images ?? [],
+            }
+          : undefined,
+      })),
+    });
+  }
+
+  return result;
 }
 /* =====================================================
    CONFIRM ORDER BY SELLER
