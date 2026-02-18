@@ -1,195 +1,239 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
-import { useAuth } from "@/context/AuthContext";
-import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 /* =========================
-   TYPES (NO any)
+   TYPES
 ========================= */
+
+interface Product {
+  name: string;
+}
+
+interface OrderItem {
+  quantity: number;
+  product?: Product;
+}
+
+interface Buyer {
+  name: string;
+  phone?: string;
+  address?: string;
+  province?: string;
+  country?: string;
+}
+
 interface Order {
   id: string;
-  status: string;
-  total: number | null;
   created_at: string;
-  buyer: {
-    username: string;
-    email?: string;
-    phone?: string;
-    address?: string;
-    country?: string;
-    province?: string;
-  };
+  buyer: Buyer;
+  order_items: OrderItem[];
+}
+
+/* =========================
+   HELPERS
+========================= */
+
+function formatDate(date: string): string {
+  return new Date(date).toLocaleString("vi-VN");
+}
+
+function downloadText(filename: string, content: string): void {
+  const blob = new Blob([content], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 /* =========================
    PAGE
 ========================= */
+
 export default function SellerOrderDetailPage({
   params,
 }: {
   params: { id: string };
 }) {
   const router = useRouter();
-  const { t } = useTranslation();
-  const { loading: authLoading } = useAuth();
-  const { id } = params;
-
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
-  /* =========================
-     LOAD ORDER (AUTH–CENTRIC)
-  ========================= */
-  const loadOrder = async () => {
+  /* LOAD ORDER */
+  useEffect(() => {
+    loadOrder();
+  }, []);
+
+  async function loadOrder(): Promise<void> {
     try {
       const res = await apiAuthFetch(
-        `/api/seller/orders/${id}`,
+        `/api/seller/orders/${params.id}`,
         { cache: "no-store" }
       );
-
-      if (!res.ok) {
-        throw new Error("NOT_FOUND");
-      }
-
-      const data: unknown = await res.json();
+      if (!res.ok) throw new Error();
+      const data = await res.json();
       setOrder(data as Order);
-    } catch (err) {
-      console.error("❌ Load order failed:", err);
+    } catch {
       setOrder(null);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  /* =========================
-     EFFECT
-  ========================= */
-  useEffect(() => {
-    if (authLoading) return;
-    loadOrder();
-  }, [authLoading]);
-
-  /* =========================
-     LOADING
-  ========================= */
-  if (loading || authLoading) {
+  if (loading) {
     return (
       <p className="text-center mt-10 text-gray-500">
-        ⏳ {t.loading || "Đang tải..."}
+        ⏳ Đang tải đơn hàng...
       </p>
     );
   }
 
-  /* =========================
-     NOT FOUND
-  ========================= */
   if (!order) {
     return (
       <p className="text-center mt-10 text-red-500">
-        ❌ {t.order_not_found || "Không tìm thấy đơn hàng"}
+        ❌ Không tìm thấy đơn hàng
       </p>
     );
   }
 
-  /* =========================
-     UI
-  ========================= */
+  /* PREPARE DOWNLOAD CONTENT */
+  const downloadContent = `
+ĐƠN HÀNG: ${order.id}
+Ngày tạo: ${formatDate(order.created_at)}
+
+NGƯỜI NHẬN:
+Tên: ${order.buyer.name}
+SĐT: ${order.buyer.phone ?? ""}
+Địa chỉ: ${order.buyer.address ?? ""}
+Tỉnh/TP: ${order.buyer.province ?? ""}
+Quốc gia: ${order.buyer.country ?? ""}
+
+SẢN PHẨM:
+${order.order_items
+  .map(
+    (item, idx) =>
+      `${idx + 1}. ${item.product?.name ?? "Sản phẩm"} x${
+        item.quantity
+      }`
+  )
+  .join("\n")}
+`;
+
   return (
-    <main className="min-h-screen p-5 max-w-2xl mx-auto bg-white">
-      {/* BACK */}
-      <button
-        onClick={() => router.back()}
-        className="text-orange-500 text-lg mb-4"
-      >
-        ← {t.back}
-      </button>
-
-      {/* TITLE */}
-      <h1 className="text-2xl font-bold text-gray-800 mb-3">
-        🧾 {t.order_details || "Chi tiết đơn"} #{order.id}
-      </h1>
-
-      {/* ORDER INFO */}
-      <div className="border p-4 rounded-lg shadow-sm space-y-2">
-        <p>
-          <b>👤 {t.buyer || "Người mua"}:</b>{" "}
-          {order.buyer.username}
-        </p>
-
-        {order.buyer.email && (
-          <p>
-            <b>📧 {t.email}:</b> {order.buyer.email}
-          </p>
-        )}
-
-        {order.buyer.phone && (
-          <p>
-            <b>📞 {t.phone_number}:</b>{" "}
-            {order.buyer.phone}
-          </p>
-        )}
-
-        {order.buyer.address && (
-          <p>
-            <b>🏠 {t.address}:</b>{" "}
-            {order.buyer.address}
-          </p>
-        )}
-
-        {order.buyer.country && (
-          <p>
-            <b>🌍 {t.country}:</b>{" "}
-            {order.buyer.country}
-          </p>
-        )}
-
-        {order.buyer.province && (
-          <p>
-            <b>🏙 {t.province}:</b>{" "}
-            {order.buyer.province}
-          </p>
-        )}
-
-        <hr className="my-3" />
-
-        <p>
-          <b>💰 {t.total_pi || "Tổng"}:</b>{" "}
-          {Number(order.total || 0).toFixed(2)} Pi
-        </p>
-
-        <p>
-          <b>📦 {t.status || "Trạng thái"}:</b>{" "}
-          {order.status}
-        </p>
-
-        <p className="text-sm text-gray-500">
-          📅 {new Date(order.created_at).toLocaleString()}
-        </p>
-      </div>
-
-      {/* ACTIONS */}
-      <div className="mt-6 flex gap-3">
+    <main className="min-h-screen bg-[#f4efe6] p-6 print:bg-white">
+      {/* ACTION BAR (NOT PRINTED) */}
+      <div className="flex justify-between items-center mb-6 print:hidden">
         <button
-          onClick={() =>
-            navigator.clipboard.writeText(
-              JSON.stringify(order, null, 2)
-            )
-          }
-          className="px-4 py-2 bg-blue-600 text-white rounded"
+          onClick={() => router.back()}
+          className="text-[#7a553a]"
         >
-          ⬇ {t.download || "Tải JSON"}
+          ← Quay lại
         </button>
 
-        <button
-          onClick={() => window.print()}
-          className="px-4 py-2 bg-green-600 text-white rounded"
-        >
-          🖨 {t.print || "In"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() =>
+              downloadText(
+                `order-${order.id}.txt`,
+                downloadContent
+              )
+            }
+            className="px-4 py-2 border border-[#7a553a] text-[#7a553a] rounded"
+          >
+            💾 Lưu về máy
+          </button>
+
+          <button
+            onClick={() => window.print()}
+            className="px-4 py-2 bg-[#7a553a] text-white rounded"
+          >
+            🖨 In đơn
+          </button>
+        </div>
       </div>
+
+      {/* ORDER PAPER */}
+      <section className="max-w-2xl mx-auto bg-white p-6 border shadow print:shadow-none">
+        <h1 className="text-xl font-semibold text-center mb-6">
+          PHIẾU GIAO HÀNG
+        </h1>
+
+        {/* BUYER INFO */}
+        <div className="space-y-1 text-sm mb-6">
+          <p>
+            <b>Người nhận:</b> {order.buyer.name}
+          </p>
+          <p>
+            <b>SĐT:</b> {order.buyer.phone ?? ""}
+          </p>
+          <p>
+            <b>Địa chỉ:</b> {order.buyer.address ?? ""}
+          </p>
+          <p>
+            <b>Tỉnh/TP:</b> {order.buyer.province ?? ""}
+          </p>
+          <p>
+            <b>Quốc gia:</b> {order.buyer.country ?? ""}
+          </p>
+          <p>
+            <b>Ngày tạo:</b>{" "}
+            {formatDate(order.created_at)}
+          </p>
+        </div>
+
+        {/* ITEMS */}
+        <table className="w-full border text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border px-2 py-1 text-left">
+                #
+              </th>
+              <th className="border px-2 py-1 text-left">
+                Sản phẩm
+              </th>
+              <th className="border px-2 py-1 text-center">
+                SL
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {order.order_items.map((item, i) => (
+              <tr key={i}>
+                <td className="border px-2 py-1">
+                  {i + 1}
+                </td>
+                <td className="border px-2 py-1">
+                  {item.product?.name ??
+                    "Sản phẩm"}
+                </td>
+                <td className="border px-2 py-1 text-center">
+                  {item.quantity}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* FOOTER */}
+        <div className="mt-10 text-sm flex justify-between">
+          <div>
+            <p>Người giao</p>
+            <p className="mt-8">_____________</p>
+          </div>
+
+          <div>
+            <p>Người nhận</p>
+            <p className="mt-8">_____________</p>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
