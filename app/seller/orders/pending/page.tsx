@@ -5,17 +5,11 @@ export const fetchCache = "force-no-store";
 
 import { useEffect, useState } from "react";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
-/* =====================================================
+/* =========================
    TYPES
-===================================================== */
-
-interface Buyer {
-  name: string;
-  phone: string;
-  address: string;
-}
-
+========================= */
 interface Product {
   id: string;
   name: string;
@@ -34,34 +28,29 @@ interface Order {
   status: string;
   total: number;
   created_at: string;
-  buyer: Buyer;
   order_items: OrderItem[];
 }
 
-/* =====================================================
+/* =========================
    HELPERS
-===================================================== */
-
-function formatPi(value: number): string {
-  return Number(value).toFixed(6);
+========================= */
+function formatPi(v: number): string {
+  return Number.isFinite(v) ? v.toFixed(6) : "0.000000";
 }
 
 function formatDate(date: string): string {
-  return new Date(date).toLocaleString("vi-VN");
+  return new Date(date).toLocaleDateString("vi-VN");
 }
 
-/* =====================================================
+/* =========================
    PAGE
-===================================================== */
-
+========================= */
 export default function SellerPendingOrdersPage() {
+  const { t } = useTranslation();
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-
-  /* =====================================================
-     LOAD ORDERS
-  ===================================================== */
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   useEffect(() => {
     void loadOrders();
@@ -79,85 +68,64 @@ export default function SellerPendingOrdersPage() {
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("LOAD ERROR:", err);
+      console.error("LOAD PENDING ERROR:", err);
       setOrders([]);
     } finally {
       setLoading(false);
     }
   }
 
-  /* =====================================================
-     PRINT
-  ===================================================== */
-
-  function handlePrint(): void {
-    window.print();
+  async function confirmOrder(orderId: string): Promise<void> {
+    try {
+      setProcessingId(orderId);
+      const res = await apiAuthFetch(
+        `/api/seller/orders/${orderId}/confirm`,
+        { method: "PATCH" }
+      );
+      if (!res.ok) throw new Error();
+      await loadOrders();
+    } finally {
+      setProcessingId(null);
+    }
   }
 
-  /* =====================================================
-     DOWNLOAD TXT
-  ===================================================== */
+  async function cancelOrder(orderId: string): Promise<void> {
+    if (!confirm("Bạn chắc chắn muốn huỷ đơn này?")) return;
 
-  function handleDownload(order: Order): void {
-    const content = `
-MÃ ĐƠN: ${order.id}
-Ngày: ${formatDate(order.created_at)}
-
-KHÁCH HÀNG:
-Tên: ${order.buyer.name}
-SĐT: ${order.buyer.phone}
-Địa chỉ: ${order.buyer.address}
-
-SẢN PHẨM:
-${order.order_items
-  .map(
-    (item) =>
-      `- ${item.product?.name ?? "Sản phẩm"} x${
-        item.quantity
-      } - π${formatPi(item.price)}`
-  )
-  .join("\n")}
-
-TỔNG: π${formatPi(order.total)}
-`;
-
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `order-${order.id}.txt`;
-    a.click();
-
-    URL.revokeObjectURL(url);
+    try {
+      setProcessingId(orderId);
+      const res = await apiAuthFetch(
+        `/api/seller/orders/${orderId}/cancel`,
+        { method: "PATCH" }
+      );
+      if (!res.ok) throw new Error();
+      await loadOrders();
+    } finally {
+      setProcessingId(null);
+    }
   }
-
-  /* =====================================================
-     UI
-  ===================================================== */
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#f4efe6]">
-        <p className="text-gray-600">Đang tải...</p>
-      </main>
+      <p className="text-center mt-10 text-gray-500">
+        ⏳ {t.loading || "Đang tải..."}
+      </p>
     );
   }
 
   return (
     <main className="min-h-screen bg-[#f4efe6] pb-24">
-      {/* ===== HEADER (MỆNH THỔ) ===== */}
-      <header className="bg-[#8B5E3C] text-white px-6 py-6 shadow-md">
+      {/* HEADER – MỆNH THỔ */}
+      <header className="bg-[#7a553a] text-white px-4 py-5">
         <p className="text-sm opacity-90">
-          Đơn hàng chờ xác nhận
+          {t.pending_orders || "Đơn hàng chờ xác nhận"}
         </p>
-        <p className="text-xl font-semibold mt-1">
+        <p className="text-lg font-semibold mt-1">
           {orders.length} đơn
         </p>
       </header>
 
-      {/* ===== LIST ===== */}
-      <section className="px-4 mt-6 space-y-4">
+      <section className="mt-6 px-4 space-y-4">
         {orders.length === 0 ? (
           <p className="text-center text-gray-500">
             Không có đơn chờ xác nhận
@@ -166,9 +134,9 @@ TỔNG: π${formatPi(order.total)}
           orders.map((order) => (
             <div
               key={order.id}
-              onClick={() => setSelectedOrder(order)}
-              className="bg-white rounded-lg shadow border cursor-pointer hover:shadow-md transition"
+              className="bg-white rounded-lg shadow border"
             >
+              {/* ORDER HEADER */}
               <div className="flex justify-between px-4 py-3 border-b">
                 <div>
                   <p className="font-semibold">
@@ -178,73 +146,64 @@ TỔNG: π${formatPi(order.total)}
                     {formatDate(order.created_at)}
                   </p>
                 </div>
-
-                <span className="text-[#8B5E3C] font-medium">
+                <span className="text-[#7a553a] font-medium">
                   Chờ xác nhận
                 </span>
               </div>
 
-              <div className="px-4 py-3 text-sm">
-                Tổng:{" "}
+              {/* PRODUCTS */}
+              <div className="divide-y">
+                {order.order_items.map((item) => (
+                  <div
+                    key={`${order.id}-${item.product_id}`}
+                    className="flex gap-3 p-4"
+                  >
+                    <img
+                      src={
+                        item.product?.images?.[0] ??
+                        "/placeholder.png"
+                      }
+                      alt={item.product?.name ?? "product"}
+                      className="w-14 h-14 rounded object-cover bg-gray-100"
+                    />
+
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">
+                        {item.product?.name ?? "Sản phẩm"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        x{item.quantity} · π{formatPi(item.price)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* FOOTER */}
+              <div className="flex justify-between items-center px-4 py-3 border-t text-sm">
                 <b>π{formatPi(order.total)}</b>
+
+                <div className="flex gap-2">
+                  <button
+                    disabled={processingId === order.id}
+                    onClick={() => confirmOrder(order.id)}
+                    className="px-3 py-1.5 bg-[#7a553a] text-white rounded disabled:opacity-50"
+                  >
+                    Xác nhận
+                  </button>
+                  <button
+                    disabled={processingId === order.id}
+                    onClick={() => cancelOrder(order.id)}
+                    className="px-3 py-1.5 border border-gray-400 rounded"
+                  >
+                    Huỷ
+                  </button>
+                </div>
               </div>
             </div>
           ))
         )}
       </section>
-
-      {/* ===== DETAIL MODAL ===== */}
-      {selectedOrder && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white w-full max-w-lg rounded-lg shadow-lg p-6">
-            <h2 className="text-lg font-semibold mb-4">
-              Chi tiết đơn #{selectedOrder.id.slice(0, 8)}
-            </h2>
-
-            <div className="text-sm space-y-1 mb-4">
-              <p><b>Khách:</b> {selectedOrder.buyer.name}</p>
-              <p><b>SĐT:</b> {selectedOrder.buyer.phone}</p>
-              <p><b>Địa chỉ:</b> {selectedOrder.buyer.address}</p>
-            </div>
-
-            <div className="border-t pt-3 space-y-2 text-sm">
-              {selectedOrder.order_items.map((item) => (
-                <div key={item.product_id}>
-                  {item.product?.name ?? "Sản phẩm"} x
-                  {item.quantity}
-                </div>
-              ))}
-            </div>
-
-            <p className="mt-4 font-semibold">
-              Tổng: π{formatPi(selectedOrder.total)}
-            </p>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={handlePrint}
-                className="px-4 py-2 bg-[#8B5E3C] text-white rounded"
-              >
-                In đơn
-              </button>
-
-              <button
-                onClick={() => handleDownload(selectedOrder)}
-                className="px-4 py-2 border border-[#8B5E3C] text-[#8B5E3C] rounded"
-              >
-                Lưu về máy
-              </button>
-
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="ml-auto text-gray-500"
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
