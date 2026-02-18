@@ -37,13 +37,13 @@ export type OrderItemRecord = {
   product_id: string;
   quantity: number;
   price: number;
+  status: string; // ✅ thêm dòng này
   product?: {
     id: string;
     name: string;
     images: string[];
   };
 };
-
 export type OrderRecord = {
   id: string;
   status: string;
@@ -343,17 +343,18 @@ export async function getOrdersBySeller(
         address: order.buyer_address ?? "",
       },
       order_items: sellerItems.map((item) => ({
-        product_id: item.product_id,
-        quantity: item.quantity,
-        price: fromMicroPi(item.price),
-        product: item.products
-          ? {
-              id: item.products.id,
-              name: item.products.name,
-              images: item.products.images ?? [],
-            }
-          : undefined,
-      })),
+  product_id: item.product_id,
+  quantity: item.quantity,
+  price: fromMicroPi(item.price),
+  status: item.status, // ✅ QUAN TRỌNG
+  product: item.products
+    ? {
+        id: item.products.id,
+        name: item.products.name,
+        images: item.products.images ?? [],
+      }
+    : undefined,
+})),
     });
   }
 
