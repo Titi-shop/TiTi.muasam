@@ -515,13 +515,14 @@ export async function getOrderDetailBySeller(
       status,
       total,
       created_at,
-      buyer:users!orders_buyer_id_fkey(
-        username,
-        phone,
-        address,
-        province,
-        country
-      ),
+      buyer:users(
+  pi_uid,
+  username,
+  phone,
+  address,
+  province,
+  country
+),
       order_items(
         id,
         quantity,
