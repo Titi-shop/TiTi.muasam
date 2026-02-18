@@ -29,6 +29,12 @@ interface Order {
   status: string;
   total: number;
   created_at: string;
+
+  // ✅ Thêm thông tin người mua (optional để tránh lỗi nếu API chưa trả)
+  buyer_name?: string;
+  buyer_phone?: string;
+  buyer_address?: string;
+
   order_items: OrderItem[];
 }
 
@@ -84,8 +90,10 @@ export default function SellerPendingOrdersPage() {
         `/api/seller/orders/${orderId}/confirm`,
         { method: "PATCH" }
       );
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error("CONFIRM_FAILED");
       await loadOrders();
+    } catch (err) {
+      console.error("CONFIRM ERROR:", err);
     } finally {
       setProcessingId(null);
     }
@@ -100,8 +108,10 @@ export default function SellerPendingOrdersPage() {
         `/api/seller/orders/${orderId}/cancel`,
         { method: "PATCH" }
       );
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error("CANCEL_FAILED");
       await loadOrders();
+    } catch (err) {
+      console.error("CANCEL ERROR:", err);
     } finally {
       setProcessingId(null);
     }
@@ -156,6 +166,19 @@ export default function SellerPendingOrdersPage() {
                 </span>
               </div>
 
+              {/* BUYER INFO */}
+              <div className="px-4 py-3 border-b bg-gray-50 text-sm">
+                <p>
+                  <b>Khách:</b> {order.buyer_name || "Không có tên"}
+                </p>
+                <p>
+                  <b>SĐT:</b> {order.buyer_phone || "Không có SĐT"}
+                </p>
+                <p>
+                  <b>Địa chỉ:</b> {order.buyer_address || "Không có địa chỉ"}
+                </p>
+              </div>
+
               {/* PRODUCTS */}
               <div className="divide-y">
                 {order.order_items.map((item) => (
@@ -187,7 +210,7 @@ export default function SellerPendingOrdersPage() {
               {/* FOOTER */}
               <div
                 className="flex justify-between items-center px-4 py-3 border-t text-sm"
-                onClick={(e) => e.stopPropagation()} // 👈 chặn click card
+                onClick={(e) => e.stopPropagation()}
               >
                 <b>π{formatPi(order.total)}</b>
 
@@ -214,4 +237,4 @@ export default function SellerPendingOrdersPage() {
       </section>
     </main>
   );
-}
+         }
