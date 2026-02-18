@@ -4,16 +4,11 @@
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-/**
- * 1 Pi = 1_000_000 microPi
- * DB lưu INTEGER (microPi)
- * App hiển thị NUMBER (Pi)
- */
+/* =====================================================
+   PI CONFIG
+===================================================== */
 const PI_BASE = 1_000_000;
 
-/* =========================
-   PI CONVERTERS
-========================= */
 function toMicroPi(value: number): number {
   return Math.round(value * PI_BASE);
 }
@@ -22,9 +17,9 @@ function fromMicroPi(value: number): number {
   return value / PI_BASE;
 }
 
-/* =========================
-   HEADERS
-========================= */
+/* =====================================================
+   HEADERS (SERVER ONLY)
+===================================================== */
 function headers(): HeadersInit {
   return {
     apikey: SERVICE_KEY,
@@ -33,13 +28,14 @@ function headers(): HeadersInit {
   };
 }
 
-/* =========================
+/* =====================================================
    TYPES
-========================= */
+===================================================== */
 export type OrderItemRecord = {
   product_id: string;
   quantity: number;
   price: number;
+  status?: string;
   product?: {
     id: string;
     name: string;
@@ -62,14 +58,75 @@ export type OrderRecord = {
 };
 
 /* =====================================================
-   GET ORDERS BY SELLER (MARKETPLACE SAFE)
-   - KHÔNG FILTER STATUS Ở DB
-   - SELLER FILTER Ở UI
+   GET ORDERS BY BUYER
+===================================================== */
+export async function getOrdersByBuyerSafe(
+  buyerPiUid: string
+): Promise<OrderRecord[]> {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${buyerPiUid}&order=created_at.desc&select=
+      id,
+      status,
+      total,
+      created_at,
+      order_items(
+        quantity,
+        price,
+        product_id,
+        status,
+        products(id,name,images)
+      )
+    `,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!res.ok) return [];
+
+  const raw = (await res.json()) as Array<{
+    id: string;
+    status: string;
+    total: number;
+    created_at: string;
+    order_items: Array<{
+      product_id: string;
+      quantity: number;
+      price: number;
+      status: string;
+      products: {
+        id: string;
+        name: string;
+        images: string[] | null;
+      } | null;
+    }>;
+  }>;
+
+  return raw.map((order) => ({
+    id: order.id,
+    status: order.status,
+    created_at: order.created_at,
+    total: fromMicroPi(order.total),
+    order_items: order.order_items.map((item) => ({
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: fromMicroPi(item.price),
+      status: item.status,
+      product: item.products
+        ? {
+            id: item.products.id,
+            name: item.products.name,
+            images: item.products.images ?? [],
+          }
+        : undefined,
+    })),
+  }));
+}
+
+/* =====================================================
+   GET ORDERS BY SELLER (NO STATUS FILTER IN DB)
 ===================================================== */
 export async function getOrdersBySeller(
   sellerPiUid: string
 ): Promise<OrderRecord[]> {
-  /* 1️⃣ LẤY TẤT CẢ order_id CỦA SELLER */
   const itemsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}`,
     { headers: headers(), cache: "no-store" }
@@ -81,13 +138,10 @@ export async function getOrdersBySeller(
     order_id: string;
   }>;
 
-  const orderIds = Array.from(
-    new Set(items.map((i) => i.order_id))
-  );
+  const orderIds = Array.from(new Set(items.map((i) => i.order_id)));
 
   if (orderIds.length === 0) return [];
 
-  /* 2️⃣ FETCH ORDERS + ORDER_ITEMS + PRODUCT */
   const ids = orderIds.map((id) => `"${id}"`).join(",");
 
   const ordersRes = await fetch(
@@ -97,7 +151,6 @@ export async function getOrdersBySeller(
       total,
       created_at,
       order_items(
-        id,
         quantity,
         price,
         product_id,
@@ -117,41 +170,39 @@ export async function getOrdersBySeller(
     total: number;
     created_at: string;
     order_items: Array<{
-      id: string;
+      product_id: string;
       quantity: number;
       price: number;
-      product_id: string;
       status: string;
       seller_pi_uid: string;
-      products?: {
+      products: {
         id: string;
         name: string;
-        images?: string[] | null;
+        images: string[] | null;
       } | null;
     }>;
   }>;
 
-  /* 3️⃣ CHỈ GIỮ ITEM CỦA SELLER HIỆN TẠI */
   return rawOrders
     .map((order) => {
       const sellerItems = order.order_items.filter(
         (item) =>
-          typeof item.seller_pi_uid === "string" &&
           item.seller_pi_uid.trim().toLowerCase() ===
-            sellerPiUid.trim().toLowerCase()
+          sellerPiUid.trim().toLowerCase()
       );
 
       if (sellerItems.length === 0) return null;
 
       return {
         id: order.id,
-        status: order.status, // status buyer (UI seller KHÔNG dùng)
+        status: order.status,
         created_at: order.created_at,
         total: fromMicroPi(order.total),
         order_items: sellerItems.map((item) => ({
           product_id: item.product_id,
           quantity: item.quantity,
           price: fromMicroPi(item.price),
+          status: item.status,
           product: item.products
             ? {
                 id: item.products.id,
@@ -168,12 +219,7 @@ export async function getOrdersBySeller(
 /* =====================================================
    CREATE ORDER (WITH SHIPPING SNAPSHOT)
 ===================================================== */
-export async function createOrderSafe({
-  buyerPiUid,
-  items,
-  total,
-  shipping,
-}: {
+export async function createOrderSafe(params: {
   buyerPiUid: string;
   items: Array<{
     product_id: string;
@@ -189,7 +235,8 @@ export async function createOrderSafe({
     country?: string;
   };
 }): Promise<{ id: string; status: string; total: number }> {
-  /* 1️⃣ CREATE ORDER */
+  const { buyerPiUid, items, total, shipping } = params;
+
   const orderRes = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
     method: "POST",
     headers: {
@@ -200,8 +247,6 @@ export async function createOrderSafe({
       buyer_id: buyerPiUid,
       total: toMicroPi(total),
       status: "pending",
-
-      // 🔥 SHIPPING SNAPSHOT
       buyer_name: shipping.name,
       buyer_phone: shipping.phone,
       buyer_address: shipping.address,
@@ -223,7 +268,6 @@ export async function createOrderSafe({
     throw new Error("ORDER_NOT_RETURNED");
   }
 
-  /* 2️⃣ INSERT ORDER ITEMS */
   const payload = items.map((i) => ({
     order_id: order.id,
     product_id: i.product_id,
@@ -251,147 +295,4 @@ export async function createOrderSafe({
     status: order.status,
     total,
   };
-}
-
-/* =====================================================
-   GET ORDER DETAIL BY SELLER (NO USERS JOIN)
-===================================================== */
-export async function getOrderDetailBySeller(
-  sellerPiUid: string,
-  orderId: string
-): Promise<OrderRecord | null> {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=
-      id,
-      status,
-      total,
-      created_at,
-      buyer_name,
-      buyer_phone,
-      buyer_address,
-      buyer_country,
-      order_items(
-        id,
-        quantity,
-        price,
-        product_id,
-        status,
-        seller_pi_uid,
-        products(id,name,images)
-      )
-    `,
-    { headers: headers(), cache: "no-store" }
-  );
-
-  if (!res.ok) return null;
-
-  const data = (await res.json()) as Array<{
-    id: string;
-    status: string;
-    total: number;
-    created_at: string;
-    buyer_name: string;
-    buyer_phone: string;
-    buyer_address: string;
-    buyer_country: string | null;
-    order_items: Array<{
-      id: string;
-      quantity: number;
-      price: number;
-      product_id: string;
-      status: string;
-      seller_pi_uid: string;
-      products: {
-        id: string;
-        name: string;
-        images: string[] | null;
-      } | null;
-    }>;
-  }>;
-
-  const order = data[0];
-  if (!order) return null;
-
-  const sellerItems = order.order_items.filter(
-    (item) =>
-      item.seller_pi_uid.trim().toLowerCase() ===
-      sellerPiUid.trim().toLowerCase()
-  );
-
-  if (sellerItems.length === 0) return null;
-
-  return {
-    id: order.id,
-    status: order.status,
-    created_at: order.created_at,
-    total: fromMicroPi(order.total),
-    buyer: {
-      name: order.buyer_name,
-      phone: order.buyer_phone,
-      address: order.buyer_address,
-      country: order.buyer_country,
-    },
-    order_items: sellerItems.map((item) => ({
-      product_id: item.product_id,
-      quantity: item.quantity,
-      price: fromMicroPi(item.price),
-      product: item.products
-        ? {
-            id: item.products.id,
-            name: item.products.name,
-            images: item.products.images ?? [],
-          }
-        : undefined,
-    })),
-  };
-}
-
-/* =====================================================
-   GET ORDERS BY BUYER
-===================================================== */
-export async function getOrdersByBuyerSafe(
-  buyerPiUid: string
-): Promise<OrderRecord[]> {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?buyer_pi_uid=eq.${buyerPiUid}&order=created_at.desc&select=
-      id,
-      status,
-      total,
-      created_at,
-      order_items(
-        id,
-        quantity,
-        price,
-        product_id,
-        status,
-        seller_pi_uid,
-        products(id,name,images)
-      )
-    `,
-    { headers: headers(), cache: "no-store" }
-  );
-
-  if (!res.ok) return [];
-
-  const raw = await res.json();
-
-  return raw.map((order: any) => ({
-    id: order.id,
-    status: order.status,
-    created_at: order.created_at,
-    total: fromMicroPi(order.total),
-    order_items: order.order_items.map((item: any) => ({
-      product_id: item.product_id,
-      quantity: item.quantity,
-      price: fromMicroPi(item.price),
-      status: item.status,
-      product: item.products
-        ? {
-            id: item.products.id,
-            name: item.products.name,
-            images: item.products.images ?? [],
-          }
-        : undefined,
-    })),
-  }));
 }
