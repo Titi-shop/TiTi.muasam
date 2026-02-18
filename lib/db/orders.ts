@@ -251,8 +251,7 @@ export async function updateOrderStatus(
     throw new Error(await res.text());
   }
 }
-
-/* =====================================================
+ /* =====================================================
    GET ORDERS BY SELLER (FIXED)
 ===================================================== */
 export async function getOrdersBySeller(
@@ -271,66 +270,43 @@ export async function getOrdersBySeller(
 
   const items = (await itemsRes.json()) as Array<{ order_id: string }>;
 
-  const orderIds = Array.from(
-    new Set(items.map((i) => i.order_id))
-  );
-
+  const orderIds = Array.from(new Set(items.map((i) => i.order_id)));
   if (orderIds.length === 0) return [];
 
   /* 2️⃣ Fetch orders + ALL order_items */
   const ids = orderIds.map((id) => `"${id}"`).join(",");
 
   const orderRes = await fetch(
-  `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
-    id,
-    status,
-    total,
-    created_at,
-
-    buyer_name,
-    buyer_phone,
-    buyer_address,
-
-    order_items(
+    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
       id,
-      quantity,
-      price,
-      product_id,
       status,
-      seller_pi_uid,
-      products(id,name,images)
-    )
-  `,
-  { headers: headers(), cache: "no-store" }
-);
+      total,
+      created_at,
+      buyer_name,
+      buyer_phone,
+      buyer_address,
+      order_items(
+        id,
+        quantity,
+        price,
+        product_id,
+        status,
+        seller_pi_uid,
+        products(id,name,images)
+      )
+    `,
+    { headers: headers(), cache: "no-store" }
+  );
 
   if (!orderRes.ok) return [];
 
-  const rawOrders = (await orderRes.json()) as Array<{
-    id: string;
-    status: string;
-    total: number;
-    created_at: string;
-    order_items: Array<{
-      id: string;
-      quantity: number;
-      price: number;
-      product_id: string;
-      status: string;
-      seller_pi_uid: string;
-      products?: {
-        id: string;
-        name: string;
-        images?: string[] | null;
-      } | null;
-    }>;
-  }>;
+  const rawOrders = await orderRes.json();
 
   /* 3️⃣ Filter lại order_items theo seller + status */
   return rawOrders
-    .map((order) => {
+    .map((order: any) => {
       const sellerItems = order.order_items.filter(
-        (item) =>
+        (item: any) =>
           item.seller_pi_uid === sellerPiUid &&
           (!status || item.status === status)
       );
@@ -338,29 +314,34 @@ export async function getOrdersBySeller(
       if (sellerItems.length === 0) return null;
 
       return {
-  id: order.id,
-  status: order.status,
-  created_at: order.created_at,
-  total: fromMicroPi(order.total),
+        id: order.id,
+        status: order.status,
+        created_at: order.created_at,
+        total: fromMicroPi(order.total),
 
-  // ✅ BỔ SUNG THÔNG TIN NGƯỜI MUA (QUAN TRỌNG)
-  buyer_name: order.buyer_name ?? null,
-  buyer_phone: order.buyer_phone ?? null,
-  buyer_address: order.buyer_address ?? null,
+        // ✅ SNAPSHOT BUYER
+        buyer: {
+          name: order.buyer_name ?? "",
+          phone: order.buyer_phone ?? "",
+          address: order.buyer_address ?? "",
+        },
 
-  order_items: sellerItems.map((item) => ({
-    product_id: item.product_id,
-    quantity: item.quantity,
-    price: fromMicroPi(item.price),
-    product: item.products
-      ? {
-          id: item.products.id,
-          name: item.products.name,
-          images: item.products.images ?? [],
-        }
-      : undefined,
-  })),
-};
+        order_items: sellerItems.map((item: any) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price: fromMicroPi(item.price),
+          product: item.products
+            ? {
+                id: item.products.id,
+                name: item.products.name,
+                images: item.products.images ?? [],
+              }
+            : undefined,
+        })),
+      };
+    })
+    .filter((o: OrderRecord | null): o is OrderRecord => o !== null);
+}
 /* =====================================================
    CONFIRM ORDER BY SELLER
 ===================================================== */
