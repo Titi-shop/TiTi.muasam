@@ -37,6 +37,29 @@ type OrderTab =
   | "cancelled"
   | "returned";
 
+
+function getSellerOrderStatus(order: Order): OrderTab {
+  if (!order.order_items || order.order_items.length === 0)
+    return "all";
+
+  if (order.order_items.some((i) => i.status === "pending"))
+    return "pending";
+
+  if (order.order_items.some((i) => i.status === "confirmed"))
+    return "confirmed";
+
+  if (order.order_items.some((i) => i.status === "shipping"))
+    return "shipping";
+
+  if (order.order_items.every((i) => i.status === "completed"))
+    return "completed";
+
+  if (order.order_items.every((i) => i.status === "cancelled"))
+    return "cancelled";
+
+  return "all";
+}
+
 /* =========================
    PAGE
 ========================= */
