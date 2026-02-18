@@ -5,11 +5,17 @@ export const fetchCache = "force-no-store";
 
 import { useEffect, useState } from "react";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
-import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 /* =====================================================
    TYPES
 ===================================================== */
+
+interface Buyer {
+  name: string;
+  phone: string;
+  address: string;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -25,15 +31,17 @@ interface OrderItem {
 
 interface Order {
   id: string;
-  status: "pending";
+  status: string;
   total: number;
-  created_at: string; // 👈 ngày thanh toán thành công
+  created_at: string;
+  buyer: Buyer;
   order_items: OrderItem[];
 }
 
 /* =====================================================
    HELPERS
 ===================================================== */
+
 function formatPi(value: number): string {
   return Number(value).toFixed(6);
 }
@@ -45,18 +53,18 @@ function formatDate(date: string): string {
 /* =====================================================
    PAGE
 ===================================================== */
-export default function SellerPendingOrdersPage() {
-  const { t } = useTranslation();
 
+export default function SellerPendingOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   /* =====================================================
      LOAD ORDERS
   ===================================================== */
+
   useEffect(() => {
-    loadOrders();
+    void loadOrders();
   }, []);
 
   async function loadOrders(): Promise<void> {
@@ -70,8 +78,8 @@ export default function SellerPendingOrdersPage() {
 
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("❌ LOAD PENDING ERROR:", error);
+    } catch (err) {
+      console.error("LOAD ERROR:", err);
       setOrders([]);
     } finally {
       setLoading(false);
@@ -79,92 +87,89 @@ export default function SellerPendingOrdersPage() {
   }
 
   /* =====================================================
-     ACTIONS
+     PRINT
   ===================================================== */
-  async function confirmOrder(orderId: string) {
-    try {
-      setProcessingId(orderId);
 
-      const res = await apiAuthFetch(
-        `/api/seller/orders/${orderId}/confirm`,
-        { method: "PATCH" }
-      );
-
-      if (!res.ok) throw new Error("CONFIRM_FAILED");
-
-      await loadOrders();
-    } catch {
-      alert(t.confirm_failed || "Xác nhận thất bại");
-    } finally {
-      setProcessingId(null);
-    }
-  }
-
-  async function cancelOrder(orderId: string) {
-    if (!confirm("Bạn chắc chắn muốn huỷ đơn này?")) return;
-
-    try {
-      setProcessingId(orderId);
-
-      const res = await apiAuthFetch(
-        `/api/seller/orders/${orderId}/cancel`,
-        { method: "PATCH" }
-      );
-
-      if (!res.ok) throw new Error("CANCEL_FAILED");
-
-      await loadOrders();
-    } catch {
-      alert("Huỷ đơn thất bại");
-    } finally {
-      setProcessingId(null);
-    }
+  function handlePrint(): void {
+    window.print();
   }
 
   /* =====================================================
-     LOADING
+     DOWNLOAD TXT
   ===================================================== */
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <p className="text-gray-500">
-          ⏳ {t.loading || "Đang tải..."}
-        </p>
-      </main>
-    );
+
+  function handleDownload(order: Order): void {
+    const content = `
+MÃ ĐƠN: ${order.id}
+Ngày: ${formatDate(order.created_at)}
+
+KHÁCH HÀNG:
+Tên: ${order.buyer.name}
+SĐT: ${order.buyer.phone}
+Địa chỉ: ${order.buyer.address}
+
+SẢN PHẨM:
+${order.order_items
+  .map(
+    (item) =>
+      `- ${item.product?.name ?? "Sản phẩm"} x${
+        item.quantity
+      } - π${formatPi(item.price)}`
+  )
+  .join("\n")}
+
+TỔNG: π${formatPi(order.total)}
+`;
+
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `order-${order.id}.txt`;
+    a.click();
+
+    URL.revokeObjectURL(url);
   }
 
   /* =====================================================
      UI
   ===================================================== */
+
+  if (loading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[#f4efe6]">
+        <p className="text-gray-600">Đang tải...</p>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-gray-100 pb-24">
-      {/* ===== HEADER ===== */}
-      <header className="bg-gray-800 text-white px-4 py-6">
-        <div>
-          <p className="text-sm opacity-80">
-            {t.pending_orders || "Đơn hàng chờ xác nhận"}
-          </p>
-          <p className="text-xl font-semibold mt-1">
-            {orders.length} đơn
-          </p>
-        </div>
+    <main className="min-h-screen bg-[#f4efe6] pb-24">
+      {/* ===== HEADER (MỆNH THỔ) ===== */}
+      <header className="bg-[#8B5E3C] text-white px-6 py-6 shadow-md">
+        <p className="text-sm opacity-90">
+          Đơn hàng chờ xác nhận
+        </p>
+        <p className="text-xl font-semibold mt-1">
+          {orders.length} đơn
+        </p>
       </header>
 
-      {/* ===== CONTENT ===== */}
-      <section className="px-4 mt-5 space-y-4">
+      {/* ===== LIST ===== */}
+      <section className="px-4 mt-6 space-y-4">
         {orders.length === 0 ? (
-          <p className="text-center text-gray-400">
+          <p className="text-center text-gray-500">
             Không có đơn chờ xác nhận
           </p>
         ) : (
           orders.map((order) => (
             <div
               key={order.id}
-              className="bg-white rounded-lg shadow-sm border"
+              onClick={() => setSelectedOrder(order)}
+              className="bg-white rounded-lg shadow border cursor-pointer hover:shadow-md transition"
             >
-              {/* ===== ORDER HEADER ===== */}
-              <div className="flex justify-between px-4 py-3 border-b text-sm">
+              <div className="flex justify-between px-4 py-3 border-b">
                 <div>
                   <p className="font-semibold">
                     #{order.id.slice(0, 8)}
@@ -174,75 +179,72 @@ export default function SellerPendingOrdersPage() {
                   </p>
                 </div>
 
-                <span className="text-orange-500 font-medium">
-                  {t.order_pending || "Chờ xác nhận"}
+                <span className="text-[#8B5E3C] font-medium">
+                  Chờ xác nhận
                 </span>
               </div>
 
-              {/* ===== PRODUCTS ===== */}
-              <div className="divide-y">
-                {order.order_items.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex gap-3 p-4"
-                  >
-                    <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                      <img
-                        src={
-                          item.product?.images?.[0] ||
-                          "/placeholder.png"
-                        }
-                        alt={item.product?.name || "product"}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium line-clamp-1">
-                        {item.product?.name || "Sản phẩm"}
-                      </p>
-
-                      <p className="text-xs text-gray-500 mt-1">
-                        x{item.quantity} · π{formatPi(item.price)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* ===== FOOTER ===== */}
-              <div className="flex justify-between items-center px-4 py-3 border-t text-sm">
-                <span>
-                  Tổng:{" "}
-                  <b>π{formatPi(order.total)}</b>
-                </span>
-
-                <div className="flex gap-2">
-                  <button
-                    disabled={processingId === order.id}
-                    onClick={() =>
-                      confirmOrder(order.id)
-                    }
-                    className="px-4 py-1.5 bg-orange-500 text-white rounded disabled:opacity-50"
-                  >
-                    Xác nhận
-                  </button>
-
-                  <button
-                    disabled={processingId === order.id}
-                    onClick={() =>
-                      cancelOrder(order.id)
-                    }
-                    className="px-4 py-1.5 border border-gray-400 rounded"
-                  >
-                    Huỷ
-                  </button>
-                </div>
+              <div className="px-4 py-3 text-sm">
+                Tổng:{" "}
+                <b>π{formatPi(order.total)}</b>
               </div>
             </div>
           ))
         )}
       </section>
+
+      {/* ===== DETAIL MODAL ===== */}
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white w-full max-w-lg rounded-lg shadow-lg p-6">
+            <h2 className="text-lg font-semibold mb-4">
+              Chi tiết đơn #{selectedOrder.id.slice(0, 8)}
+            </h2>
+
+            <div className="text-sm space-y-1 mb-4">
+              <p><b>Khách:</b> {selectedOrder.buyer.name}</p>
+              <p><b>SĐT:</b> {selectedOrder.buyer.phone}</p>
+              <p><b>Địa chỉ:</b> {selectedOrder.buyer.address}</p>
+            </div>
+
+            <div className="border-t pt-3 space-y-2 text-sm">
+              {selectedOrder.order_items.map((item) => (
+                <div key={item.product_id}>
+                  {item.product?.name ?? "Sản phẩm"} x
+                  {item.quantity}
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-4 font-semibold">
+              Tổng: π{formatPi(selectedOrder.total)}
+            </p>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handlePrint}
+                className="px-4 py-2 bg-[#8B5E3C] text-white rounded"
+              >
+                In đơn
+              </button>
+
+              <button
+                onClick={() => handleDownload(selectedOrder)}
+                className="px-4 py-2 border border-[#8B5E3C] text-[#8B5E3C] rounded"
+              >
+                Lưu về máy
+              </button>
+
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="ml-auto text-gray-500"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
