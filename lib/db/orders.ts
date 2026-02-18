@@ -345,3 +345,53 @@ export async function getOrderDetailBySeller(
     })),
   };
 }
+
+/* =====================================================
+   GET ORDERS BY BUYER
+===================================================== */
+export async function getOrdersByBuyerSafe(
+  buyerPiUid: string
+): Promise<OrderRecord[]> {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?buyer_pi_uid=eq.${buyerPiUid}&order=created_at.desc&select=
+      id,
+      status,
+      total,
+      created_at,
+      order_items(
+        id,
+        quantity,
+        price,
+        product_id,
+        status,
+        seller_pi_uid,
+        products(id,name,images)
+      )
+    `,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!res.ok) return [];
+
+  const raw = await res.json();
+
+  return raw.map((order: any) => ({
+    id: order.id,
+    status: order.status,
+    created_at: order.created_at,
+    total: fromMicroPi(order.total),
+    order_items: order.order_items.map((item: any) => ({
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: fromMicroPi(item.price),
+      status: item.status,
+      product: item.products
+        ? {
+            id: item.products.id,
+            name: item.products.name,
+            images: item.products.images ?? [],
+          }
+        : undefined,
+    })),
+  }));
+}
