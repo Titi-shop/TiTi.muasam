@@ -171,10 +171,11 @@ export async function createOrderSafe({
 }: {
   buyerPiUid: string;
   items: Array<{
-  product_id: string;
-  quantity: number;
-  price: number;
-}>
+    product_id: string;
+    quantity: number;
+    price: number;
+    seller_pi_uid: string;
+  }>;
   total: number;
   shipping: {
     name: string;
@@ -208,28 +209,14 @@ export async function createOrderSafe({
   const order = orderData[0];
   if (!order) throw new Error("ORDER_NOT_RETURNED");
 
-  const orderItemsPayload = [];
-
-for (const i of items) {
-  const productRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/products?id=eq.${i.product_id}&select=seller_pi_uid`,
-    { headers: headers() }
-  );
-
-  if (!productRes.ok) throw new Error("PRODUCT_NOT_FOUND");
-
-  const product = (await productRes.json())[0];
-  if (!product?.seller_pi_uid) throw new Error("SELLER_NOT_FOUND");
-
-  orderItemsPayload.push({
+  const orderItemsPayload = items.map((i) => ({
     order_id: order.id,
     product_id: i.product_id,
     quantity: i.quantity,
     price: toMicroPi(i.price),
-    seller_pi_uid: product.seller_pi_uid, // ✅ LẤY TỪ DB
+    seller_pi_uid: i.seller_pi_uid,
     status: "pending",
-  });
-}
+  }));
 
   const itemsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items`,
@@ -278,11 +265,9 @@ export async function getOrdersBySeller(
   const statusFilter = status ? `&status=eq.${status}` : "";
 
   const itemsRes = await fetch(
-  `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${encodeURIComponent(
-    sellerPiUid
-  )}`,
-  { headers: headers(), cache: "no-store" }
-);
+    `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}${statusFilter}`,
+    { headers: headers(), cache: "no-store" }
+  );
 
   if (!itemsRes.ok) return [];
 
