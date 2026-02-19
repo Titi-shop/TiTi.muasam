@@ -96,6 +96,8 @@ export default function SellerPendingOrdersPage() {
       if (!res.ok) throw new Error("CONFIRM_FAILED");
 
       await loadOrders();
+    } catch {
+      // silent fail for Pi Browser
     } finally {
       setProcessingId(null);
     }
@@ -115,6 +117,8 @@ export default function SellerPendingOrdersPage() {
       if (!res.ok) throw new Error("CANCEL_FAILED");
 
       await loadOrders();
+    } catch {
+      // silent fail
     } finally {
       setProcessingId(null);
     }
@@ -124,32 +128,32 @@ export default function SellerPendingOrdersPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <p className="text-gray-400 text-sm animate-pulse">
-          ⏳ Đang tải đơn hàng...
-        </p>
-      </main>
+      <p className="text-center mt-10 text-gray-500">
+        ⏳ Đang tải...
+      </p>
     );
   }
 
   /* ================= UI ================= */
 
   return (
-    <main className="min-h-screen bg-gray-100 pb-28">
-      {/* ===== HEADER ===== */}
-      <header className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-4 py-6 shadow-md">
-        <div className="flex items-center justify-between">
+    <main className="min-h-screen bg-gray-100 pb-24">
+      {/* ===== HEADER (XÁM MỜ HIỆN ĐẠI) ===== */}
+      <header className="bg-gray-500/90 backdrop-blur text-white px-4 py-6 shadow-sm">
+        <p className="text-sm opacity-90">
+          Đơn hàng chờ xác nhận
+        </p>
+
+        <div className="mt-2 flex justify-between items-end">
           <div>
-            <p className="text-sm opacity-90">
-              ⏳ Đơn chờ xác nhận
+            <p className="text-2xl font-semibold">
+              {orders.length}
             </p>
-            <p className="text-2xl font-semibold mt-1">
-              {orders.length} đơn
-            </p>
+            <p className="text-xs opacity-80">đơn</p>
           </div>
 
           <div className="text-right">
-            <p className="text-xs opacity-90">Tổng PI</p>
+            <p className="text-xs opacity-80">Tổng PI</p>
             <p className="text-lg font-semibold">
               π{formatPi(totalPi)}
             </p>
@@ -160,20 +164,20 @@ export default function SellerPendingOrdersPage() {
       {/* ===== CONTENT ===== */}
       <section className="px-4 mt-5 space-y-4">
         {orders.length === 0 ? (
-          <div className="bg-white rounded-xl p-6 text-center shadow-sm">
-            <p className="text-gray-400 text-sm">
-              Không có đơn chờ xác nhận
-            </p>
-          </div>
+          <p className="text-center text-gray-400">
+            Không có đơn chờ xác nhận
+          </p>
         ) : (
           orders.map((order) => (
             <div
               key={order.id}
-              onClick={() => router.push(`/seller/orders/${order.id}`)}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden active:scale-[0.99] transition"
+              onClick={() =>
+                router.push(`/seller/orders/${order.id}`)
+              }
+              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer active:scale-[0.99] transition"
             >
-              {/* HEADER CARD */}
-              <div className="flex justify-between items-center px-4 py-3 border-b bg-gray-50">
+              {/* ORDER HEADER */}
+              <div className="flex justify-between px-4 py-3 border-b bg-gray-50">
                 <div>
                   <p className="font-semibold text-sm">
                     #{order.id.slice(0, 8)}
@@ -184,11 +188,11 @@ export default function SellerPendingOrdersPage() {
                 </div>
 
                 <span className="text-xs font-medium px-3 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                  ⏳ Chờ xác nhận
+                  Chờ xác nhận
                 </span>
               </div>
 
-              {/* BUYER */}
+              {/* BUYER INFO */}
               <div className="px-4 py-3 text-sm space-y-1">
                 <p>
                   <span className="text-gray-500">Khách:</span>{" "}
@@ -198,7 +202,7 @@ export default function SellerPendingOrdersPage() {
                   <span className="text-gray-500">SĐT:</span>{" "}
                   {order.buyer_phone || "—"}
                 </p>
-                <p className="text-gray-500 text-xs">
+                <p className="text-gray-600 text-xs">
                   {order.buyer_address || "Không có địa chỉ"}
                 </p>
               </div>
@@ -211,7 +215,10 @@ export default function SellerPendingOrdersPage() {
                     className="flex gap-3 p-4"
                   >
                     <img
-                      src={item.product?.images?.[0] ?? "/placeholder.png"}
+                      src={
+                        item.product?.images?.[0] ??
+                        "/placeholder.png"
+                      }
                       alt={item.product?.name ?? "product"}
                       className="w-14 h-14 rounded-lg object-cover bg-gray-100"
                     />
@@ -233,7 +240,7 @@ export default function SellerPendingOrdersPage() {
                 className="flex justify-between items-center px-4 py-3 border-t bg-gray-50 text-sm"
                 onClick={(e) => e.stopPropagation()}
               >
-                <span className="font-semibold text-gray-800">
+                <span className="font-semibold">
                   π{formatPi(order.total)}
                 </span>
 
@@ -241,17 +248,15 @@ export default function SellerPendingOrdersPage() {
                   <button
                     disabled={processingId === order.id}
                     onClick={() => confirmOrder(order.id)}
-                    className="px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg disabled:opacity-50"
+                    className="px-3 py-1.5 text-xs bg-gray-700 text-white rounded-lg disabled:opacity-50"
                   >
-                    {processingId === order.id
-                      ? "Đang xử lý..."
-                      : "Xác nhận"}
+                    Xác nhận
                   </button>
 
                   <button
                     disabled={processingId === order.id}
                     onClick={() => cancelOrder(order.id)}
-                    className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg"
+                    className="px-3 py-1.5 text-xs border border-gray-400 rounded-lg"
                   >
                     Huỷ
                   </button>
