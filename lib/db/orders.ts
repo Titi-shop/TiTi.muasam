@@ -209,14 +209,28 @@ export async function createOrderSafe({
   const order = orderData[0];
   if (!order) throw new Error("ORDER_NOT_RETURNED");
 
-  const orderItemsPayload = items.map((i) => ({
+  const orderItemsPayload = [];
+
+for (const i of items) {
+  const productRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/products?id=eq.${i.product_id}&select=seller_pi_uid`,
+    { headers: headers() }
+  );
+
+  if (!productRes.ok) throw new Error("PRODUCT_NOT_FOUND");
+
+  const product = (await productRes.json())[0];
+  if (!product?.seller_pi_uid) throw new Error("SELLER_NOT_FOUND");
+
+  orderItemsPayload.push({
     order_id: order.id,
     product_id: i.product_id,
     quantity: i.quantity,
     price: toMicroPi(i.price),
-    seller_pi_uid: i.seller_pi_uid,
+    seller_pi_uid: product.seller_pi_uid, // ✅ LẤY TỪ DB
     status: "pending",
-  }));
+  });
+}
 
   const itemsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items`,
