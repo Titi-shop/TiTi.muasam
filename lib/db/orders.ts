@@ -502,3 +502,12 @@ async function updateSellerOrderItemsStatus(
 
   if (!updateRes.ok) throw new Error(await updateRes.text());
 }
+
+
+export async function getOrderDetailBySeller(
+  sellerPiUid: string,
+  orderId: string
+) {
+  const orders = await getOrdersBySeller(sellerPiUid);
+  return orders.find((o) => o.id === orderId) ?? null;
+}
