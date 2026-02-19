@@ -279,7 +279,9 @@ export async function getOrdersBySeller(
 ): Promise<OrderRecord[]> {
   
    const itemsRes = await fetch(
-  `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}`,
+  `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}${
+    status ? `&status=eq.${status}` : ""
+  }`,
   { headers: headers(), cache: "no-store" }
 );
 
