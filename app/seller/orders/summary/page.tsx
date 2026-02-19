@@ -37,29 +37,6 @@ type OrderTab =
   | "cancelled"
   | "returned";
 
-
-function getSellerOrderStatus(order: Order): OrderTab {
-  if (!order.order_items || order.order_items.length === 0)
-    return "all";
-
-  if (order.order_items.some((i) => i.status === "pending"))
-    return "pending";
-
-  if (order.order_items.some((i) => i.status === "confirmed"))
-    return "confirmed";
-
-  if (order.order_items.some((i) => i.status === "shipping"))
-    return "shipping";
-
-  if (order.order_items.every((i) => i.status === "completed"))
-    return "completed";
-
-  if (order.order_items.every((i) => i.status === "cancelled"))
-    return "cancelled";
-
-  return "all";
-}
-
 /* =========================
    PAGE
 ========================= */
@@ -106,14 +83,14 @@ export default function SellerOrdersSummaryPage() {
   /* =========================
      FILTER TAB
   ========================= */
-  const filteredOrders = useMemo(() => {
+  
+const filteredOrders = useMemo(() => {
   if (activeTab === "all") return orders;
 
   return orders.filter(
-    (o) => getSellerOrderStatus(o) === activeTab
+    (o) => o.status === activeTab
   );
 }, [orders, activeTab]);
-
   /* =========================
      COUNT PER STATUS
   ========================= */
@@ -121,7 +98,7 @@ export default function SellerOrdersSummaryPage() {
   if (status === "all") return orders.length;
 
   return orders.filter(
-    (o) => getSellerOrderStatus(o) === status
+    (o) => o.status === status
   ).length;
 };
 
