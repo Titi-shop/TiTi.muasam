@@ -30,6 +30,10 @@ export async function GET() {
      AUTH
   ========================= */
   const user = await getUserFromBearer();
+
+  // 👇 THÊM DÒNG NÀY
+  console.log("LOGGED SELLER UID:", user?.pi_uid);
+
   if (!user) {
     return NextResponse.json(
       { error: "UNAUTHENTICATED" },
@@ -41,6 +45,8 @@ export async function GET() {
      RBAC
   ========================= */
   const role = await resolveRole(user);
+  console.log("SELLER ROLE:", role); // 👈 thêm luôn để chắc chắn
+
   if (role !== "seller" && role !== "admin") {
     return NextResponse.json([], { status: 200 });
   }
@@ -48,18 +54,17 @@ export async function GET() {
   try {
     const orders = await getOrdersBySeller(user.pi_uid);
 
-    /* =========================
-       MAP SELLER STATUS
-    ========================= */
-    
-const normalized = orders.map((o) => ({
-  ...o,
-  status: resolveSellerStatus(
-    o.order_items.map((i) => ({
-      status: i.status,
-    }))
-  ),
-}));
+    console.log("ORDERS FOUND:", orders.length); // 👈 thêm dòng này nữa
+
+    const normalized = orders.map((o) => ({
+      ...o,
+      status: resolveSellerStatus(
+        o.order_items.map((i) => ({
+          status: i.status,
+        }))
+      ),
+    }));
+
     return NextResponse.json(normalized);
   } catch (err) {
     console.warn("SELLER ORDERS WARN:", err);
