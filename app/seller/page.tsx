@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import {
+  PackagePlus,
+  Package,
+  ClipboardList,
   Clock,
   CheckCircle2,
   Truck,
@@ -24,13 +27,11 @@ type OrderStatus =
 type SellerOrder = {
   id: string;
   status: OrderStatus;
-  total: number;
 };
 
 export default function SellerPage() {
   const { user, loading, piReady } = useAuth();
   const [orders, setOrders] = useState<SellerOrder[]>([]);
-  const [fetching, setFetching] = useState(false);
 
   const canOperate = user?.role === "seller";
 
@@ -38,33 +39,24 @@ export default function SellerPage() {
     if (!canOperate) return;
 
     const load = async () => {
-      try {
-        setFetching(true);
-        const res = await apiAuthFetch("/api/seller/orders", {
-          cache: "no-store",
-        });
+      const res = await apiAuthFetch("/api/seller/orders", {
+        cache: "no-store",
+      });
 
-        if (!res.ok) {
-          setOrders([]);
-          return;
-        }
+      if (!res.ok) return;
 
-        const data: unknown = await res.json();
+      const data: unknown = await res.json();
 
-        if (Array.isArray(data)) {
-          setOrders(
-            data.filter(
-              (o): o is SellerOrder =>
-                typeof o === "object" &&
-                o !== null &&
-                "id" in o &&
-                "status" in o &&
-                "total" in o
-            )
-          );
-        }
-      } finally {
-        setFetching(false);
+      if (Array.isArray(data)) {
+        setOrders(
+          data.filter(
+            (o): o is SellerOrder =>
+              typeof o === "object" &&
+              o !== null &&
+              "id" in o &&
+              "status" in o
+          )
+        );
       }
     };
 
@@ -79,6 +71,7 @@ export default function SellerPage() {
       completed: orders.filter(o => o.status === "completed").length,
       returned: orders.filter(o => o.status === "returned").length,
       cancelled: orders.filter(o => o.status === "cancelled").length,
+      total: orders.length,
     };
   }, [orders]);
 
@@ -91,103 +84,127 @@ export default function SellerPage() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto p-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-8">
+    <main className="max-w-4xl mx-auto px-4 py-6">
+      <h1 className="text-xl font-semibold text-gray-800 mb-6">
         🏪 Seller Dashboard
       </h1>
 
-      {fetching && (
-        <p className="text-sm text-gray-500 mb-4">Đang tải đơn hàng...</p>
-      )}
+      {/* ===== MAIN ACTIONS ===== */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <MainCard
+          href="/seller/post"
+          icon={<PackagePlus size={20} />}
+          label="Đăng sản phẩm"
+        />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-        <StatusCard
+        <MainCard
+          href="/seller/stock"
+          icon={<Package size={20} />}
+          label="Kho hàng"
+        />
+
+        <MainCard
+          href="/seller/orders"
+          icon={<ClipboardList size={20} />}
+          label="Tất cả đơn"
+          badge={stats.total}
+        />
+      </div>
+
+      {/* ===== ORDER STATUS ===== */}
+      <h2 className="text-sm font-semibold text-gray-600 mb-3">
+        Trạng thái đơn hàng
+      </h2>
+
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+        <StatusMiniCard
           href="/seller/orders/pending"
-          icon={<Clock size={28} />}
-          label="Chờ xác nhận"
+          icon={<Clock size={18} />}
           count={stats.pending}
-          bg="from-yellow-400 to-orange-500"
         />
 
-        <StatusCard
+        <StatusMiniCard
           href="/seller/orders/confirmed"
-          icon={<CheckCircle2 size={28} />}
-          label="Đã xác nhận"
+          icon={<CheckCircle2 size={18} />}
           count={stats.confirmed}
-          bg="from-blue-400 to-indigo-500"
         />
 
-        <StatusCard
+        <StatusMiniCard
           href="/seller/orders/shipping"
-          icon={<Truck size={28} />}
-          label="Đang vận chuyển"
+          icon={<Truck size={18} />}
           count={stats.shipping}
-          bg="from-purple-400 to-pink-500"
         />
 
-        <StatusCard
+        <StatusMiniCard
           href="/seller/orders/completed"
-          icon={<PackageCheck size={28} />}
-          label="Đã hoàn thành"
+          icon={<PackageCheck size={18} />}
           count={stats.completed}
-          bg="from-green-400 to-emerald-500"
         />
 
-        <StatusCard
+        <StatusMiniCard
           href="/seller/orders/returned"
-          icon={<RotateCcw size={28} />}
-          label="Hoàn trả"
+          icon={<RotateCcw size={18} />}
           count={stats.returned}
-          bg="from-teal-400 to-cyan-500"
         />
 
-        <StatusCard
+        <StatusMiniCard
           href="/seller/orders/cancelled"
-          icon={<XCircle size={28} />}
-          label="Đơn huỷ"
+          icon={<XCircle size={18} />}
           count={stats.cancelled}
-          bg="from-red-400 to-rose-500"
         />
       </div>
     </main>
   );
 }
 
-function StatusCard({
+/* ================= MAIN CARD ================= */
+function MainCard({
   href,
   icon,
   label,
-  count,
-  bg,
+  badge,
 }: {
   href: string;
   icon: React.ReactNode;
   label: string;
-  count: number;
-  bg: string;
+  badge?: number;
 }) {
   return (
-    <Link href={href} className="group">
-      <div
-        className={`
-          bg-gradient-to-br ${bg}
-          text-white
-          rounded-2xl
-          p-6
-          shadow-lg
-          hover:shadow-2xl
-          hover:-translate-y-1
-          transition-all
-          duration-300
-        `}
-      >
-        <div className="flex flex-col items-center text-center">
-          <div className="mb-3 group-hover:scale-110 transition">
-            {icon}
-          </div>
-          <p className="text-sm font-semibold">{label}</p>
-          <p className="text-2xl font-bold mt-2">{count}</p>
+    <Link href={href}>
+      <div className="relative bg-white rounded-xl border p-4 text-center shadow-sm hover:shadow-md transition">
+        {badge !== undefined && (
+          <span className="absolute top-2 right-2 text-xs bg-black text-white px-2 py-0.5 rounded-full">
+            {badge}
+          </span>
+        )}
+        <div className="flex flex-col items-center">
+          <div className="mb-2 text-gray-700">{icon}</div>
+          <p className="text-sm font-medium text-gray-700">{label}</p>
         </div>
+      </div>
+    </Link>
+  );
+}
+
+/* ================= MINI STATUS CARD ================= */
+function StatusMiniCard({
+  href,
+  icon,
+  count,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  count: number;
+}) {
+  return (
+    <Link href={href}>
+      <div className="bg-gray-50 rounded-lg border p-3 text-center hover:bg-gray-100 transition">
+        <div className="flex justify-center mb-1 text-gray-600">
+          {icon}
+        </div>
+        <p className="text-sm font-semibold text-gray-800">
+          {count}
+        </p>
       </div>
     </Link>
   );
