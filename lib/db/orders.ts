@@ -265,9 +265,11 @@ export async function getOrdersBySeller(
   const statusFilter = status ? `&status=eq.${status}` : "";
 
   const itemsRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}${statusFilter}`,
-    { headers: headers(), cache: "no-store" }
-  );
+  `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${encodeURIComponent(
+    sellerPiUid
+  )}${statusFilter}`,
+  { headers: headers(), cache: "no-store" }
+);
 
   if (!itemsRes.ok) return [];
 
