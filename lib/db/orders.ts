@@ -352,7 +352,7 @@ export async function getOrdersBySeller(
 
     result.push({
       id: order.id,
-      status: order.status,
+      status: sellerItems[0]?.status ?? order.status,
       created_at: order.created_at,
       total: fromMicroPi(order.total),
       buyer: {
