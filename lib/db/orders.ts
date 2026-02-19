@@ -171,11 +171,10 @@ export async function createOrderSafe({
 }: {
   buyerPiUid: string;
   items: Array<{
-    product_id: string;
-    quantity: number;
-    price: number;
-    seller_pi_uid: string;
-  }>;
+  product_id: string;
+  quantity: number;
+  price: number;
+}>;
   total: number;
   shipping: {
     name: string;
@@ -209,14 +208,30 @@ export async function createOrderSafe({
   const order = orderData[0];
   if (!order) throw new Error("ORDER_NOT_RETURNED");
 
-  const orderItemsPayload = items.map((i) => ({
+  const orderItemsPayload = [];
+
+for (const i of items) {
+  const productRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/products?id=eq.${i.product_id}&select=seller_id`,
+    { headers: headers() }
+  );
+
+  if (!productRes.ok) throw new Error("PRODUCT_NOT_FOUND");
+
+  const productData = await productRes.json();
+  const product = productData[0];
+
+  if (!product?.seller_id) throw new Error("SELLER_NOT_FOUND");
+
+  orderItemsPayload.push({
     order_id: order.id,
     product_id: i.product_id,
     quantity: i.quantity,
     price: toMicroPi(i.price),
-    seller_pi_uid: i.seller_pi_uid,
+    seller_pi_uid: product.seller_id, // ✅ LẤY TỪ products
     status: "pending",
-  }));
+  });
+}
 
   const itemsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items`,
