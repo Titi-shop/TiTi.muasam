@@ -25,14 +25,11 @@ function resolveSellerStatus(
   return "cancelled";
 }
 
-export async function GET() {
-  /* =========================
-     AUTH
-  ========================= */
-  const user = await getUserFromBearer();
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get("status") ?? undefined;
 
-  // 👇 THÊM DÒNG NÀY
-  console.log("LOGGED SELLER UID:", user?.pi_uid);
+  const user = await getUserFromBearer();
 
   if (!user) {
     return NextResponse.json(
@@ -41,20 +38,17 @@ export async function GET() {
     );
   }
 
-  /* =========================
-     RBAC
-  ========================= */
   const role = await resolveRole(user);
-  console.log("SELLER ROLE:", role); // 👈 thêm luôn để chắc chắn
 
   if (role !== "seller" && role !== "admin") {
     return NextResponse.json([], { status: 200 });
   }
 
   try {
-    const orders = await getOrdersBySeller(user.pi_uid);
-
-    console.log("ORDERS FOUND:", orders.length); // 👈 thêm dòng này nữa
+    const orders = await getOrdersBySeller(
+      user.pi_uid,
+      status ?? undefined
+    );
 
     const normalized = orders.map((o) => ({
       ...o,
@@ -66,8 +60,7 @@ export async function GET() {
     }));
 
     return NextResponse.json(normalized);
-  } catch (err) {
-    console.warn("SELLER ORDERS WARN:", err);
+  } catch {
     return NextResponse.json([], { status: 200 });
   }
 }
