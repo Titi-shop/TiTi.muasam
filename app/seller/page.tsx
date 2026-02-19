@@ -16,6 +16,8 @@ import {
   XCircle,
 } from "lucide-react";
 
+/* ================= TYPES ================= */
+
 type OrderStatus =
   | "pending"
   | "confirmed"
@@ -29,135 +31,173 @@ type SellerOrder = {
   status: OrderStatus;
 };
 
+/* ================= PAGE ================= */
+
 export default function SellerPage() {
   const { user, loading, piReady } = useAuth();
   const [orders, setOrders] = useState<SellerOrder[]>([]);
+  const [fetching, setFetching] = useState<boolean>(false);
 
-  const canOperate = user?.role === "seller";
+  const isSeller = user?.role === "seller";
+
+  /* ================= LOAD ORDERS ================= */
 
   useEffect(() => {
-    if (!canOperate) return;
+    if (!isSeller) return;
 
-    const load = async () => {
-      const res = await apiAuthFetch("/api/seller/orders", {
-        cache: "no-store",
-      });
+    const loadOrders = async () => {
+      try {
+        setFetching(true);
 
-      if (!res.ok) return;
+        const res = await apiAuthFetch("/api/seller/orders", {
+          cache: "no-store",
+        });
 
-      const data: unknown = await res.json();
+        if (!res.ok) return;
 
-      if (Array.isArray(data)) {
-        setOrders(
-          data.filter(
+        const data: unknown = await res.json();
+
+        if (Array.isArray(data)) {
+          const validOrders: SellerOrder[] = data.filter(
             (o): o is SellerOrder =>
               typeof o === "object" &&
               o !== null &&
               "id" in o &&
               "status" in o
-          )
-        );
+          );
+
+          setOrders(validOrders);
+        }
+      } catch {
+        // Pi Browser cần silent fail
+      } finally {
+        setFetching(false);
       }
     };
 
-    load();
-  }, [canOperate]);
+    loadOrders();
+  }, [isSeller]);
+
+  /* ================= STATS ================= */
 
   const stats = useMemo(() => {
+    const base = {
+      pending: 0,
+      confirmed: 0,
+      shipping: 0,
+      completed: 0,
+      returned: 0,
+      cancelled: 0,
+    };
+
+    for (const order of orders) {
+      base[order.status]++;
+    }
+
     return {
-      pending: orders.filter(o => o.status === "pending").length,
-      confirmed: orders.filter(o => o.status === "confirmed").length,
-      shipping: orders.filter(o => o.status === "shipping").length,
-      completed: orders.filter(o => o.status === "completed").length,
-      returned: orders.filter(o => o.status === "returned").length,
-      cancelled: orders.filter(o => o.status === "cancelled").length,
+      ...base,
       total: orders.length,
     };
   }, [orders]);
 
+  /* ================= LOADING ================= */
+
   if (loading || !piReady) {
     return (
-      <p className="text-center mt-10 text-gray-500">
+      <div className="flex justify-center mt-16 text-gray-500 text-sm">
         ⏳ Đang tải...
-      </p>
+      </div>
     );
   }
 
+  if (!isSeller) {
+    return (
+      <div className="flex justify-center mt-16 text-gray-500 text-sm">
+        Bạn không có quyền truy cập
+      </div>
+    );
+  }
+
+  /* ================= UI ================= */
+
   return (
-    <main className="max-w-4xl mx-auto px-4 py-6">
-      <h1 className="text-xl font-semibold text-gray-800 mb-6">
+    <main className="max-w-4xl mx-auto px-4 py-6 space-y-8">
+      <h1 className="text-lg font-semibold text-gray-800">
         🏪 Seller Dashboard
       </h1>
 
       {/* ===== MAIN ACTIONS ===== */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <section className="grid grid-cols-3 gap-3">
         <MainCard
           href="/seller/post"
-          icon={<PackagePlus size={20} />}
+          icon={<PackagePlus size={18} />}
           label="Đăng sản phẩm"
         />
 
         <MainCard
           href="/seller/stock"
-          icon={<Package size={20} />}
+          icon={<Package size={18} />}
           label="Kho hàng"
         />
 
         <MainCard
           href="/seller/orders"
-          icon={<ClipboardList size={20} />}
+          icon={<ClipboardList size={18} />}
           label="Tất cả đơn"
           badge={stats.total}
         />
-      </div>
+      </section>
 
       {/* ===== ORDER STATUS ===== */}
-      <h2 className="text-sm font-semibold text-gray-600 mb-3">
-        Trạng thái đơn hàng
-      </h2>
+      <section>
+        <h2 className="text-xs font-semibold text-gray-500 mb-3">
+          TRẠNG THÁI ĐƠN
+        </h2>
 
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-        <StatusMiniCard
-          href="/seller/orders/pending"
-          icon={<Clock size={18} />}
-          count={stats.pending}
-        />
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+          <StatusCard
+            href="/seller/orders/pending"
+            icon={<Clock size={16} />}
+            count={stats.pending}
+          />
 
-        <StatusMiniCard
-          href="/seller/orders/confirmed"
-          icon={<CheckCircle2 size={18} />}
-          count={stats.confirmed}
-        />
+          <StatusCard
+            href="/seller/orders/confirmed"
+            icon={<CheckCircle2 size={16} />}
+            count={stats.confirmed}
+          />
 
-        <StatusMiniCard
-          href="/seller/orders/shipping"
-          icon={<Truck size={18} />}
-          count={stats.shipping}
-        />
+          <StatusCard
+            href="/seller/orders/shipping"
+            icon={<Truck size={16} />}
+            count={stats.shipping}
+          />
 
-        <StatusMiniCard
-          href="/seller/orders/completed"
-          icon={<PackageCheck size={18} />}
-          count={stats.completed}
-        />
+          <StatusCard
+            href="/seller/orders/completed"
+            icon={<PackageCheck size={16} />}
+            count={stats.completed}
+          />
 
-        <StatusMiniCard
-          href="/seller/orders/returned"
-          icon={<RotateCcw size={18} />}
-          count={stats.returned}
-        />
+          <StatusCard
+            href="/seller/orders/returned"
+            icon={<RotateCcw size={16} />}
+            count={stats.returned}
+          />
 
-        <StatusMiniCard
-          href="/seller/orders/cancelled"
-          icon={<XCircle size={18} />}
-          count={stats.cancelled}
-        />
-      </div>
+          <StatusCard
+            href="/seller/orders/cancelled"
+            icon={<XCircle size={16} />}
+            count={stats.cancelled}
+          />
+        </div>
+      </section>
     </main>
   );
 }
 
 /* ================= MAIN CARD ================= */
+
 function MainCard({
   href,
   icon,
@@ -170,24 +210,28 @@ function MainCard({
   badge?: number;
 }) {
   return (
-    <Link href={href}>
-      <div className="relative bg-white rounded-xl border p-4 text-center shadow-sm hover:shadow-md transition">
-        {badge !== undefined && (
-          <span className="absolute top-2 right-2 text-xs bg-black text-white px-2 py-0.5 rounded-full">
+    <Link href={href} className="block">
+      <div className="relative bg-white border rounded-xl p-3 text-center shadow-sm active:scale-[0.98] transition">
+        {badge !== undefined && badge > 0 && (
+          <span className="absolute top-1.5 right-1.5 text-[10px] bg-black text-white px-2 py-0.5 rounded-full">
             {badge}
           </span>
         )}
-        <div className="flex flex-col items-center">
-          <div className="mb-2 text-gray-700">{icon}</div>
-          <p className="text-sm font-medium text-gray-700">{label}</p>
+
+        <div className="flex flex-col items-center gap-1">
+          <div className="text-gray-700">{icon}</div>
+          <span className="text-xs font-medium text-gray-700">
+            {label}
+          </span>
         </div>
       </div>
     </Link>
   );
 }
 
-/* ================= MINI STATUS CARD ================= */
-function StatusMiniCard({
+/* ================= STATUS CARD ================= */
+
+function StatusCard({
   href,
   icon,
   count,
@@ -197,14 +241,14 @@ function StatusMiniCard({
   count: number;
 }) {
   return (
-    <Link href={href}>
-      <div className="bg-gray-50 rounded-lg border p-3 text-center hover:bg-gray-100 transition">
+    <Link href={href} className="block">
+      <div className="bg-gray-50 border rounded-lg p-2 text-center active:scale-[0.98] transition">
         <div className="flex justify-center mb-1 text-gray-600">
           {icon}
         </div>
-        <p className="text-sm font-semibold text-gray-800">
+        <span className="text-xs font-semibold text-gray-800">
           {count}
-        </p>
+        </span>
       </div>
     </Link>
   );
