@@ -171,11 +171,10 @@ export async function createOrderSafe({
 }: {
   buyerPiUid: string;
   items: Array<{
-    product_id: string;
-    quantity: number;
-    price: number;
-    seller_pi_uid: string;
-  }>;
+  product_id: string;
+  quantity: number;
+  price: number;
+}>
   total: number;
   shipping: {
     name: string;
