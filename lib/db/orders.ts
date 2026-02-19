@@ -325,10 +325,11 @@ export async function getOrdersBySeller(
 
   for (const order of raw) {
     const sellerItems = order.order_items.filter(
-      (item) =>
-        item.seller_pi_uid === sellerPiUid &&
-        (!status || item.status === status)
-    );
+  (item) =>
+    item.seller_pi_uid?.trim().toLowerCase() ===
+      sellerPiUid?.trim().toLowerCase() &&
+    (!status || item.status === status)
+);
 
     if (sellerItems.length === 0) continue;
 
