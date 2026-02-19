@@ -344,8 +344,7 @@ export async function getOrdersBySeller(
     const sellerItems = order.order_items.filter(
   (item) =>
     item.seller_pi_uid?.trim().toLowerCase() ===
-      sellerPiUid?.trim().toLowerCase() &&
-    (!status || item.status === status)
+    sellerPiUid?.trim().toLowerCase()
 );
 
     if (sellerItems.length === 0) continue;
