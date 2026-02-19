@@ -87,12 +87,11 @@ export default function SellerShippingOrdersPage() {
     <main className="min-h-screen bg-gray-100 pb-28">
       {/* ===== HEADER XÁM MỜ ===== */}
       <header className="bg-gray-500/90 backdrop-blur text-white px-4 py-6 shadow-sm">
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-sm opacity-90">
-              🚚 Đơn đang giao
-            </p>
-              <div className="mt-2 flex justify-between items-end">
+        <p className="text-sm opacity-90">
+          🚚 Đơn đang giao
+        </p>
+
+        <div className="mt-2 flex justify-between items-end">
           <div>
             <p className="text-2xl font-semibold">
               {orders.length}
