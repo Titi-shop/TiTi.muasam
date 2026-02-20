@@ -40,6 +40,7 @@ function parseOrderStatus(
   "shipping",
   "cancelled",
   "completed",
+  "returned", 
 ];
   return allowed.includes(value as OrderStatus)
     ? (value as OrderStatus)
