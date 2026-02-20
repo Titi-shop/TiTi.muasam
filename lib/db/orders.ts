@@ -206,70 +206,111 @@ export async function updateOrderStatus(
    GET ORDERS BY SELLER (MARKETPLACE SAFE)
 ===================================================== */
 export async function getOrdersBySeller(
-  sellerPiUid: string
+  sellerPiUid: string,
+  status?: "pending" | "paid" | "shipped" | "cancelled" | "completed"
 ): Promise<OrderRecord[]> {
-  /* 1️⃣ Lấy order_id từ order_items */
-  const itemsRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}`,
-    { headers: headers(), cache: "no-store" }
-  );
 
-  if (!itemsRes.ok) return [];
-
-  const items: Array<{ order_id: string }> =
-    await itemsRes.json();
-
-  const orderIds = Array.from(
-    new Set(items.map((i) => i.order_id))
-  );
-
-  if (orderIds.length === 0) return [];
-
-  /* 2️⃣ Fetch orders + full order_items */
-  const ids = orderIds.map((id) => `"${id}"`).join(",");
-
-  const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
+  const query = new URLSearchParams({
+    select: `
       id,
       status,
       total,
       created_at,
+      buyer_name,
+      buyer_phone,
+      buyer_address,
       order_items(
         quantity,
         price,
         product_id,
         status,
-        seller_pi_uid
+        seller_pi_uid,
+        products(
+          id,
+          name,
+          images
+        )
       )
     `,
+    order: "created_at.desc"
+  });
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?${query.toString()}`,
     { headers: headers(), cache: "no-store" }
   );
 
-  if (!orderRes.ok) return [];
+  if (!res.ok) return [];
 
-  const rawOrders = await orderRes.json();
+  const raw: unknown = await res.json();
+  if (!Array.isArray(raw)) return [];
 
-  /* 3️⃣ Chỉ giữ item của seller */
-  return rawOrders
-    .map((o: any) => {
-      const sellerItems = o.order_items.filter(
-        (i: any) =>
-          i.seller_pi_uid === sellerPiUid
+  type RawProduct = {
+    id: string;
+    name: string;
+    images: string[] | null;
+  };
+
+  type RawItem = {
+    quantity: number;
+    price: number;
+    product_id: string;
+    status: string;
+    seller_pi_uid: string;
+    products: RawProduct | null;
+  };
+
+  type RawOrder = {
+    id: string;
+    status: string;
+    total: number;
+    created_at: string;
+    buyer_name: string | null;
+    buyer_phone: string | null;
+    buyer_address: string | null;
+    order_items: RawItem[];
+  };
+
+  const orders = raw as RawOrder[];
+
+  return orders
+    .map((o) => {
+
+      let sellerItems = o.order_items.filter(
+        (i) => i.seller_pi_uid === sellerPiUid
       );
+
+      if (status) {
+        sellerItems = sellerItems.filter(
+          (i) => i.status === status
+        );
+      }
 
       if (sellerItems.length === 0) return null;
 
       return {
         id: o.id,
-        status: o.status,
+        status: status ?? o.status,
         created_at: o.created_at,
         total: fromMicroPi(o.total),
-        order_items: sellerItems.map((i: any) => ({
+
+        buyer_name: o.buyer_name ?? undefined,
+        buyer_phone: o.buyer_phone ?? undefined,
+        buyer_address: o.buyer_address ?? undefined,
+
+        order_items: sellerItems.map((i) => ({
           product_id: i.product_id,
           quantity: i.quantity,
           price: fromMicroPi(i.price),
+          product: i.products
+            ? {
+                id: i.products.id,
+                name: i.products.name,
+                images: i.products.images ?? [],
+              }
+            : undefined,
         })),
       };
     })
-    .filter(Boolean) as OrderRecord[];
-     }
+    .filter((o): o is OrderRecord => o !== null);
+              }
