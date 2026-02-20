@@ -232,12 +232,11 @@ export async function getOrdersBySeller(
   status?: string
 ): Promise<OrderRecord[]> {
   /* 1️⃣ Lấy order_id theo seller_pi_uid */
-  const statusItemFilter = status
-  ? `&status=eq.${status}`
-  : "";
 
-const itemsRes = await fetch(
-  `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}${statusItemFilter}`,
+   const itemsRes = await fetch(
+  `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}`,
+  { headers: headers(), cache: "no-store" }
+);
   { headers: headers(), cache: "no-store" }
   );
 
