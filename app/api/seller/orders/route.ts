@@ -1,3 +1,11 @@
+/* =========================================================
+   app/api/seller/orders/route.ts
+   - NETWORK–FIRST Pi Auth
+   - AUTH-CENTRIC + RBAC
+   - BOOTSTRAP MODE (Phase 1)
+   - Bearer ONLY (NO cookie)
+========================================================= */
+
 import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { resolveRole } from "@/lib/auth/resolveRole";
@@ -6,31 +14,48 @@ import { getOrdersBySeller } from "@/lib/db/orders";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * SELLER STATUS = tổng hợp từ order_items.status
- */
-function resolveSellerStatus(
-  items: Array<{ status?: string }>
-):
+/* =========================
+   TYPES
+========================= */
+
+type OrderStatus =
   | "pending"
-  | "confirmed"
-  | "shipping"
-  | "completed"
-  | "cancelled" {
-  if (items.some((i) => i.status === "pending")) return "pending";
-  if (items.some((i) => i.status === "confirmed")) return "confirmed";
-  if (items.some((i) => i.status === "shipping")) return "shipping";
-  if (items.every((i) => i.status === "completed"))
-    return "completed";
-  return "cancelled";
+  | "paid"
+  | "shipped"
+  | "cancelled"
+  | "completed";
+
+/* =========================
+   HELPERS
+========================= */
+
+function parseOrderStatus(
+  value: string | null
+): OrderStatus | undefined {
+  if (!value) return undefined;
+
+  const allowed: OrderStatus[] = [
+  "pending",
+  "paid",
+  "shipped",
+  "cancelled",
+  "completed",
+];
+
+  return allowed.includes(value as OrderStatus)
+    ? (value as OrderStatus)
+    : undefined;
 }
 
+/* =========================================================
+   GET /api/seller/orders
+   BOOTSTRAP RULE:
+   - Not seller yet => return []
+========================================================= */
+
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const status = searchParams.get("status") ?? undefined;
-
+  /* 1️⃣ AUTH */
   const user = await getUserFromBearer();
-
   if (!user) {
     return NextResponse.json(
       { error: "UNAUTHENTICATED" },
@@ -38,29 +63,29 @@ export async function GET(req: Request) {
     );
   }
 
+  /* 2️⃣ RBAC */
   const role = await resolveRole(user);
 
+  // BOOTSTRAP: chưa là seller => chưa có đơn
   if (role !== "seller" && role !== "admin") {
     return NextResponse.json([], { status: 200 });
   }
 
+  /* 3️⃣ QUERY PARAMS */
+  const { searchParams } = new URL(req.url);
+  const status = parseOrderStatus(
+    searchParams.get("status")
+  );
+
+  /* 4️⃣ DB */
   try {
     const orders = await getOrdersBySeller(
       user.pi_uid,
-      status ?? undefined
+      status
     );
-
-    const normalized = orders.map((o) => ({
-      ...o,
-      status: resolveSellerStatus(
-        o.order_items.map((i) => ({
-          status: i.status,
-        }))
-      ),
-    }));
-
-    return NextResponse.json(normalized);
-  } catch {
+    return NextResponse.json(orders);
+  } catch (err) {
+    console.warn("SELLER ORDERS WARN:", err);
     return NextResponse.json([], { status: 200 });
   }
 }
