@@ -329,61 +329,64 @@ export async function getOrdersBySeller(
 
   if (!orderRes.ok) return [];
 
-  const raw = (await orderRes.json()) as Array<{
-    id: string;
+  
+const rawOrders = raw as Array<{
+  id: string;
+  status: string;
+  total: number;
+  created_at: string;
+  buyer_name?: string;
+  buyer_phone?: string;
+  buyer_address?: string;
+  order_items: Array<{
+    quantity: number;
+    price: number;
+    product_id: string;
     status: string;
-    total: number;
-    created_at: string;
-    buyer_name?: string;
-    buyer_phone?: string;
-    buyer_address?: string;
-    order_items: Array<{
-      quantity: number;
-      price: number;
-      product_id: string;
-      status: string;
-      seller_pi_uid: string;
-      product: {
-        id: string;
-        name: string;
-        images: string[] | null;
-      } | null;
-    }>;
+    seller_pi_uid: string;
   }>;
+}>;
 
-  return raw
-    .map((o) => {
-      const sellerItems = o.order_items.filter(
-        (i) =>
-          i.seller_pi_uid === sellerPiUid &&
-          (!status || i.status === status)
-      );
+// 1️⃣ Lấy tất cả product_id
+const productIds = Array.from(
+  new Set(
+    rawOrders.flatMap((o) =>
+      o.order_items.map((i) => i.product_id)
+    )
+  )
+);
 
-      if (sellerItems.length === 0) return null;
+let productsMap: Record<
+  string,
+  { id: string; name: string; images: string[] }
+> = {};
 
-      return {
-        id: o.id,
-        status: status ?? o.status,
-        created_at: o.created_at,
-        total: fromMicroPi(o.total),
-        buyer_name: o.buyer_name ?? undefined,
-        buyer_phone: o.buyer_phone ?? undefined,
-        buyer_address: o.buyer_address ?? undefined,
-        order_items: sellerItems.map((i) => ({
-          product_id: i.product_id,
-          quantity: i.quantity,
-          price: fromMicroPi(i.price),
-          product: i.product
-            ? {
-                id: i.product.id,
-                name: i.product.name,
-                images: i.product.images ?? [],
-              }
-            : undefined,
-        })),
-      };
-    })
-    .filter((o): o is OrderRecord => o !== null);
+if (productIds.length > 0) {
+  const ids = productIds.map((id) => `"${id}"`).join(",");
+
+  const productRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/products?id=in.(${ids})&select=id,name,images`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (productRes.ok) {
+    const products = (await productRes.json()) as Array<{
+      id: string;
+      name: string;
+      images: string[] | null;
+    }>;
+
+    productsMap = Object.fromEntries(
+      products.map((p) => [
+        p.id,
+        {
+          id: p.id,
+          name: p.name,
+          images: p.images ?? [],
+        },
+      ])
+    );
+  }
 }
 
 
