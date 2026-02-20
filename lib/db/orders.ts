@@ -31,20 +31,26 @@ function headers() {
 /* =========================
    TYPES
 ========================= */
-export type OrderItemRecord = {
+export type SellerOrderItemRecord = {
   quantity: number;
-  price: number; // Pi
+  price: number;
   product_id: string;
+  product_name: string;
+  product_image: string | null;
+  status: string;
 };
 
-export type OrderRecord = {
+export type SellerOrderRecord = {
   id: string;
   status: string;
-  total: number; // Pi
+  total: number;
   created_at: string;
-  order_items: OrderItemRecord[];
+  buyer: {
+    pi_uid: string;
+    username: string;
+  };
+  order_items: SellerOrderItemRecord[];
 };
-
 /* =====================================================
    GET ORDERS BY BUYER
 ===================================================== */
@@ -207,7 +213,7 @@ export async function updateOrderStatus(
 ===================================================== */
 export async function getOrdersBySeller(
   sellerPiUid: string
-): Promise<OrderRecord[]> {
+): Promise<SellerOrderRecord[]> {
   /* 1️⃣ Lấy order_id từ order_items */
   const itemsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}`,
@@ -225,21 +231,29 @@ export async function getOrdersBySeller(
 
   if (orderIds.length === 0) return [];
 
-  /* 2️⃣ Fetch orders + full order_items */
   const ids = orderIds.map((id) => `"${id}"`).join(",");
 
+  /* 2️⃣ Fetch orders + buyer + order_items + product */
   const orderRes = await fetch(
     `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
       id,
       status,
       total,
       created_at,
+      buyer:users(
+        pi_uid,
+        username
+      ),
       order_items(
         quantity,
         price,
-        product_id,
         status,
-        seller_pi_uid
+        seller_pi_uid,
+        product:products(
+          id,
+          name,
+          image_url
+        )
       )
     `,
     { headers: headers(), cache: "no-store" }
@@ -253,8 +267,7 @@ export async function getOrdersBySeller(
   return rawOrders
     .map((o: any) => {
       const sellerItems = o.order_items.filter(
-        (i: any) =>
-          i.seller_pi_uid === sellerPiUid
+        (i: any) => i.seller_pi_uid === sellerPiUid
       );
 
       if (sellerItems.length === 0) return null;
@@ -264,12 +277,20 @@ export async function getOrdersBySeller(
         status: o.status,
         created_at: o.created_at,
         total: fromMicroPi(o.total),
+        buyer: {
+          pi_uid: o.buyer?.pi_uid,
+          username: o.buyer?.username,
+        },
         order_items: sellerItems.map((i: any) => ({
-          product_id: i.product_id,
+          product_id: i.product.id,
+          product_name: i.product.name,
+          product_image: i.product.image_url,
           quantity: i.quantity,
           price: fromMicroPi(i.price),
+          status: i.status,
         })),
       };
     })
-    .filter(Boolean) as OrderRecord[];
+    .filter(Boolean) as SellerOrderRecord[];
 }
+
