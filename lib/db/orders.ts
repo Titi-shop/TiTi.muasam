@@ -205,13 +205,43 @@ export async function updateOrderStatus(
 /* =====================================================
    GET ORDERS BY SELLER (MARKETPLACE SAFE)
 ===================================================== */
-export async function getOrdersBySeller(
+
+  export async function getOrdersBySeller(
   sellerPiUid: string,
   status?: "pending" | "paid" | "shipped" | "cancelled" | "completed"
 ): Promise<OrderRecord[]> {
 
-  const query = new URLSearchParams({
-    select: `
+  /* 1️⃣ lấy order_items của seller */
+  const itemQuery = new URLSearchParams({
+    select: "order_id",
+    seller_pi_uid: `eq.${sellerPiUid}`
+  });
+
+  if (status) {
+    itemQuery.append("status", `eq.${status}`);
+  }
+
+  const itemsRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?${itemQuery.toString()}`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!itemsRes.ok) return [];
+
+  const items: Array<{ order_id: string }> =
+    await itemsRes.json();
+
+  const orderIds = Array.from(
+    new Set(items.map((i) => i.order_id))
+  );
+
+  if (orderIds.length === 0) return [];
+
+  /* 2️⃣ fetch orders */
+  const ids = orderIds.map((id) => `"${id}"`).join(",");
+
+  const orderRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
       id,
       status,
       total,
@@ -224,67 +254,39 @@ export async function getOrdersBySeller(
         price,
         product_id,
         status,
-        seller_pi_uid,
-        products(
-          id,
-          name,
-          images
-        )
+        seller_pi_uid
       )
     `,
-    order: "created_at.desc"
-  });
-
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?${query.toString()}`,
     { headers: headers(), cache: "no-store" }
   );
 
-  if (!res.ok) return [];
+  if (!orderRes.ok) return [];
 
-  const raw: unknown = await res.json();
-  if (!Array.isArray(raw)) return [];
+  const raw = await orderRes.json();
 
-  type RawProduct = {
-    id: string;
-    name: string;
-    images: string[] | null;
-  };
+  return raw
+    .map((o: {
+      id: string;
+      status: string;
+      total: number;
+      created_at: string;
+      buyer_name: string | null;
+      buyer_phone: string | null;
+      buyer_address: string | null;
+      order_items: Array<{
+        quantity: number;
+        price: number;
+        product_id: string;
+        status: string;
+        seller_pi_uid: string;
+      }>;
+    }) => {
 
-  type RawItem = {
-    quantity: number;
-    price: number;
-    product_id: string;
-    status: string;
-    seller_pi_uid: string;
-    products: RawProduct | null;
-  };
-
-  type RawOrder = {
-    id: string;
-    status: string;
-    total: number;
-    created_at: string;
-    buyer_name: string | null;
-    buyer_phone: string | null;
-    buyer_address: string | null;
-    order_items: RawItem[];
-  };
-
-  const orders = raw as RawOrder[];
-
-  return orders
-    .map((o) => {
-
-      let sellerItems = o.order_items.filter(
-        (i) => i.seller_pi_uid === sellerPiUid
+      const sellerItems = o.order_items.filter(
+        (i) =>
+          i.seller_pi_uid === sellerPiUid &&
+          (!status || i.status === status)
       );
-
-      if (status) {
-        sellerItems = sellerItems.filter(
-          (i) => i.status === status
-        );
-      }
 
       if (sellerItems.length === 0) return null;
 
@@ -302,15 +304,8 @@ export async function getOrdersBySeller(
           product_id: i.product_id,
           quantity: i.quantity,
           price: fromMicroPi(i.price),
-          product: i.products
-            ? {
-                id: i.products.id,
-                name: i.products.name,
-                images: i.products.images ?? [],
-              }
-            : undefined,
         })),
       };
     })
     .filter((o): o is OrderRecord => o !== null);
-              }
+            }
