@@ -33,7 +33,7 @@ export default function ReturnedOrdersPage() {
   const fetchOrders = async () => {
     try {
       const res = await apiAuthFetch(
-        "/api/seller/orders?status=Hoàn lại",
+        "/api/seller/orders?status=cancelled",
         { cache: "no-store" }
       );
 
