@@ -22,8 +22,9 @@ type OrderStatus =
   | "pending"
   | "confirmed"
   | "shipping"
+  | "completed"
   | "cancelled"
-  | "completed";
+  | "returned";  
 /* =========================
    HELPERS
 ========================= */
