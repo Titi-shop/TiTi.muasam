@@ -283,9 +283,9 @@ export async function getOrdersBySeller(
     seller_pi_uid: `eq.${sellerPiUid}`,
   });
 
-  if (status) {
-    itemQuery.append("status", `eq.${status}`);
-  }
+  const sellerItems = o.order_items.filter(
+  (i) => i.seller_pi_uid === sellerPiUid
+);
 
   const itemsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items?${itemQuery.toString()}`,
