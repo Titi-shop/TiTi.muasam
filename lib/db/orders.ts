@@ -295,26 +295,66 @@ export async function getOrdersBySeller(
   if (!itemsRes.ok) return [];
 
   const items: Array<{ order_id: string }> = await itemsRes.json();
-
   const orderIds = Array.from(new Set(items.map((i) => i.order_id)));
 
   if (orderIds.length === 0) return [];
 
   const ids = orderIds.map((id) => `"${id}"`).join(",");
 
+  // ✅ THÊM LEFT JOIN PRODUCTS Ở ĐÂY
   const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=id,status,total,created_at,buyer_name,buyer_phone,buyer_address,order_items(quantity,price,product_id,status,seller_pi_uid)`,
+    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
+      id,
+      status,
+      total,
+      created_at,
+      buyer_name,
+      buyer_phone,
+      buyer_address,
+      order_items(
+        quantity,
+        price,
+        product_id,
+        status,
+        seller_pi_uid,
+        product:products!left(
+          id,
+          name,
+          images
+        )
+      )
+    `,
     { headers: headers(), cache: "no-store" }
   );
 
   if (!orderRes.ok) return [];
 
-  const raw = await orderRes.json();
+  const raw = (await orderRes.json()) as Array<{
+    id: string;
+    status: string;
+    total: number;
+    created_at: string;
+    buyer_name?: string;
+    buyer_phone?: string;
+    buyer_address?: string;
+    order_items: Array<{
+      quantity: number;
+      price: number;
+      product_id: string;
+      status: string;
+      seller_pi_uid: string;
+      product: {
+        id: string;
+        name: string;
+        images: string[] | null;
+      } | null;
+    }>;
+  }>;
 
   return raw
-    .map((o: any) => {
+    .map((o) => {
       const sellerItems = o.order_items.filter(
-        (i: any) =>
+        (i) =>
           i.seller_pi_uid === sellerPiUid &&
           (!status || i.status === status)
       );
@@ -329,15 +369,22 @@ export async function getOrdersBySeller(
         buyer_name: o.buyer_name ?? undefined,
         buyer_phone: o.buyer_phone ?? undefined,
         buyer_address: o.buyer_address ?? undefined,
-        order_items: sellerItems.map((i: any) => ({
+        order_items: sellerItems.map((i) => ({
           product_id: i.product_id,
           quantity: i.quantity,
           price: fromMicroPi(i.price),
+          product: i.product
+            ? {
+                id: i.product.id,
+                name: i.product.name,
+                images: i.product.images ?? [],
+              }
+            : undefined,
         })),
       };
     })
     .filter((o): o is OrderRecord => o !== null);
-     }
+}
 
 
 /* =====================================================
