@@ -249,13 +249,19 @@ export async function updateOrderStatus(
       buyer_name,
       buyer_phone,
       buyer_address,
-      order_items(
-        quantity,
-        price,
-        product_id,
-        status,
-        seller_pi_uid
-      )
+      order_items
+      (
+  quantity,
+  price,
+  product_id,
+  status,
+  seller_pi_uid,
+  products(
+    id,
+    name,
+    image_url
+  )
+)
     `,
     { headers: headers(), cache: "no-store" }
   );
