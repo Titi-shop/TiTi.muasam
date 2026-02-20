@@ -22,7 +22,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   product: {
-  id: string;
+    id: number;
     name: string;
     price: number;
     finalPrice?: number;
@@ -180,16 +180,15 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
             await apiAuthFetch("/api/orders", {
               method: "POST",
               body: JSON.stringify({
-  items: [
-    {
-      product_id: item.id,
-      quantity,
-      price: unitPrice,
-    },
-  ],
-  total,
-  shipping, // ✅ THÊM DÒNG NÀY
-}),
+                items: [
+                  {
+                    product_id: item.id,
+                    quantity,
+                    price: unitPrice,
+                  },
+                ],
+                total,
+              }),
             });
             onClose();
             router.push("/customer/pending");
