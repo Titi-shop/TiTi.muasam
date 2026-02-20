@@ -208,7 +208,7 @@ export async function updateOrderStatus(
 
   export async function getOrdersBySeller(
   sellerPiUid: string,
-  status?: "pending" | "paid" | "shipped" | "cancelled" | "completed"
+  status?: "pending" | "confirmed" | "shipping" | "cancelled" | "completed"
 ): Promise<OrderRecord[]> {
 
   /* 1️⃣ lấy order_items của seller */
