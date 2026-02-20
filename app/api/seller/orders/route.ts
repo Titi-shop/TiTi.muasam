@@ -20,11 +20,10 @@ export const dynamic = "force-dynamic";
 
 type OrderStatus =
   | "pending"
-  | "paid"
-  | "shipped"
+  | "confirmed"
+  | "shipping"
   | "cancelled"
   | "completed";
-
 /* =========================
    HELPERS
 ========================= */
@@ -36,12 +35,11 @@ function parseOrderStatus(
 
   const allowed: OrderStatus[] = [
   "pending",
-  "paid",
-  "shipped",
+  "confirmed",
+  "shipping",
   "cancelled",
   "completed",
 ];
-
   return allowed.includes(value as OrderStatus)
     ? (value as OrderStatus)
     : undefined;
