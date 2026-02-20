@@ -48,7 +48,7 @@ export default function SellerShippingOrdersPage() {
   async function loadOrders(): Promise<void> {
     try {
       const res = await apiAuthFetch(
-        "/api/seller/orders?status=shipped",
+        "/api/seller/orders?status=shipping",
         { cache: "no-store" }
       );
 
