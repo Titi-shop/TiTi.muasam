@@ -294,96 +294,51 @@ export async function getOrdersBySeller(
 
   if (!itemsRes.ok) return [];
 
-  const items = (await itemsRes.json()) as Array<{ order_id: string }>;
+  const items: Array<{ order_id: string }> = await itemsRes.json();
+
   const orderIds = Array.from(new Set(items.map((i) => i.order_id)));
+
   if (orderIds.length === 0) return [];
 
   const ids = orderIds.map((id) => `"${id}"`).join(",");
 
   const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
-      id,
-      status,
-      total,
-      created_at,
-      buyer_name,
-      buyer_phone,
-      buyer_address,
-      order_items(
-        quantity,
-        price,
-        product_id,
-        status,
-        seller_pi_uid,
-        products(id,name,images)
-      )
-    `,
+    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=id,status,total,created_at,buyer_name,buyer_phone,buyer_address,order_items(quantity,price,product_id,status,seller_pi_uid)`,
     { headers: headers(), cache: "no-store" }
   );
 
   if (!orderRes.ok) return [];
 
-  const raw = (await orderRes.json()) as Array<{
-    id: string;
-    status: string;
-    total: number;
-    created_at: string;
-    buyer_name: string | null;
-    buyer_phone: string | null;
-    buyer_address: string | null;
-    order_items: Array<{
-      product_id: string;
-      quantity: number;
-      price: number;
-      status: string;
-      seller_pi_uid: string;
-      products?: {
-        id: string;
-        name: string;
-        images: string[] | null;
-      } | null;
-    }>;
-  }>;
+  const raw = await orderRes.json();
 
-  const result: OrderRecord[] = [];
+  return raw
+    .map((o: any) => {
+      const sellerItems = o.order_items.filter(
+        (i: any) =>
+          i.seller_pi_uid === sellerPiUid &&
+          (!status || i.status === status)
+      );
 
-  for (const order of raw) {
-    const sellerItems = order.order_items.filter(
-  (item) =>
-    item.seller_pi_uid?.trim().toLowerCase() ===
-    sellerPiUid?.trim().toLowerCase()
-);
+      if (sellerItems.length === 0) return null;
 
-    if (sellerItems.length === 0) continue;
+      return {
+        id: o.id,
+        status: status ?? o.status,
+        created_at: o.created_at,
+        total: fromMicroPi(o.total),
+        buyer_name: o.buyer_name ?? undefined,
+        buyer_phone: o.buyer_phone ?? undefined,
+        buyer_address: o.buyer_address ?? undefined,
+        order_items: sellerItems.map((i: any) => ({
+          product_id: i.product_id,
+          quantity: i.quantity,
+          price: fromMicroPi(i.price),
+        })),
+      };
+    })
+    .filter((o): o is OrderRecord => o !== null);
+     }
 
-    result.push({
-      id: order.id,
-      status: sellerItems[0]?.status ?? order.status,
-      created_at: order.created_at,
-      total: fromMicroPi(order.total),
-      buyer: {
-        name: order.buyer_name ?? "",
-        phone: order.buyer_phone ?? "",
-        address: order.buyer_address ?? "",
-      },
-      order_items: sellerItems.map((item) => ({
-  product_id: item.product_id,
-  quantity: item.quantity,
-  price: fromMicroPi(item.price),
-  status: item.status, // ✅ QUAN TRỌNG
-  product: item.products
-    ? {
-        id: item.products.id,
-        name: item.products.name,
-        images: item.products.images ?? [],
-      }
-    : undefined,
-})),
-    });
-  }
-
-  return result;
-}
 
 /* =====================================================
    CONFIRM / CANCEL / SHIPPING / COMPLETE
