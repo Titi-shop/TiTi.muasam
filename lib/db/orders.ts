@@ -250,17 +250,12 @@ export async function updateOrderStatus(
       buyer_phone,
       buyer_address,
       order_items
-      (
+      order_items(
   quantity,
   price,
   product_id,
   status,
-  seller_pi_uid,
-  products(
-    id,
-    name,
-    image_url
-  )
+  seller_pi_uid
 )
     `,
     { headers: headers(), cache: "no-store" }
