@@ -59,7 +59,7 @@ export default function SellerConfirmedOrdersPage() {
   async function loadOrders(): Promise<void> {
     try {
       const res = await apiAuthFetch(
-        "/api/seller/orders?status=confirmed",
+        "/api/seller/orders?status=paid",
         { cache: "no-store" }
       );
 
