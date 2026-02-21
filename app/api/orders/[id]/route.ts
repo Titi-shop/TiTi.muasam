@@ -140,19 +140,19 @@ export async function PATCH(
   }
 
   // SELLER chỉ được cập nhật đơn có sản phẩm của mình
-  const isOwner = order.items.some(
-    (item) =>
-      item.product.seller.pi_uid === user.pi_uid
+  const order = await getOrderByIdForSeller(
+  params.id,
+  user.pi_uid
+);
+
+if (!order) {
+  return NextResponse.json(
+    { error: "ORDER_NOT_FOUND" },
+    { status: 404 }
   );
+}
 
-  if (!isOwner) {
-    return NextResponse.json(
-      { error: "FORBIDDEN" },
-      { status: 403 }
-    );
-  }
-
-  await updateOrderStatusBySeller(
+await updateOrderStatusBySeller(
   user.pi_uid,
   params.id,
   body.status
