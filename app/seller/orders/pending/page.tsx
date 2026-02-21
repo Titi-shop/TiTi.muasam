@@ -198,14 +198,14 @@ export default function SellerPendingOrdersPage() {
               <div className="px-4 py-3 text-sm space-y-1">
                 <p>
                   <span className="text-gray-500">Khách:</span>{" "}
-                  {order.buyer_name || "—"}
+                  {order.buyer?.name || "—"}
                 </p>
                 <p>
                   <span className="text-gray-500">SĐT:</span>{" "}
-                  {order.buyer_phone || "—"}
+                  {order.buyer?.phone || "—"}
                 </p>
                 <p className="text-gray-600 text-xs">
-                  {order.buyer_address || "Không có địa chỉ"}
+                  {order.buyer?.address || "Không có địa chỉ"}
                 </p>
               </div>
 
