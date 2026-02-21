@@ -214,52 +214,78 @@ export async function getOrderByIdForSeller(
   orderId: string,
   sellerPiUid: string
 ): Promise<OrderRecord | null> {
+  const select =
+    "id,status,total,created_at,buyer_name,buyer_phone,buyer_address,order_items(quantity,price,product_id,status,seller_pi_uid)";
+
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=
-      id,
-      status,
-      total,
-      created_at,
-      buyer_name,
-      buyer_phone,
-      buyer_address,
-      order_items(quantity,price,product_id,status,seller_pi_uid)
-    `,
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=${select}`,
     { headers: headers(), cache: "no-store" }
   );
 
   if (!res.ok) return null;
 
-  const data = await res.json();
+  const data = (await res.json()) as Array<{
+    id: string;
+    status: string;
+    total: number;
+    created_at: string;
+    buyer_name: string | null;
+    buyer_phone: string | null;
+    buyer_address: string | null;
+    order_items: Array<{
+      quantity: number;
+      price: number;
+      product_id: string;
+      status: string;
+      seller_pi_uid: string;
+    }>;
+  }>;
+
   if (!data.length) return null;
 
   const o = data[0];
 
-  /* FILTER ITEM CỦA SELLER */
   const sellerItems = o.order_items.filter(
-    (i: any) => i.seller_pi_uid === sellerPiUid
+    (i) => i.seller_pi_uid === sellerPiUid
   );
 
   if (sellerItems.length === 0) return null;
 
-  /* LOAD PRODUCTS */
-  const productIds = sellerItems.map((i: any) => `"${i.product_id}"`).join(",");
-
-  const productRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/products?id=in.(${productIds})&select=id,name,images`,
-    { headers: headers(), cache: "no-store" }
+  const productIds = Array.from(
+    new Set(sellerItems.map((i) => i.product_id))
   );
 
-  let productsMap: Record<string, any> = {};
+  let productsMap: Record<
+    string,
+    { id: string; name: string; images: string[] }
+  > = {};
 
-  if (productRes.ok) {
-    const products = await productRes.json();
-    productsMap = Object.fromEntries(
-      products.map((p: any) => [
-        p.id,
-        { id: p.id, name: p.name, images: p.images ?? [] },
-      ])
+  if (productIds.length > 0) {
+    const ids = productIds.map((id) => `"${id}"`).join(",");
+
+    const productRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/products?id=in.(${ids})&select=id,name,images`,
+      { headers: headers(), cache: "no-store" }
     );
+
+    if (productRes.ok) {
+      const products = (await productRes.json()) as Array<{
+        id: string;
+        name: string;
+        images: string[] | null;
+      }>;
+
+      productsMap = Object.fromEntries(
+        products.map((p) => [
+          p.id,
+          {
+            id: p.id,
+            name: p.name,
+            images: p.images ?? [],
+          },
+        ])
+      );
+    }
   }
 
   return {
@@ -272,7 +298,7 @@ export async function getOrderByIdForSeller(
       phone: o.buyer_phone ?? "",
       address: o.buyer_address ?? "",
     },
-    order_items: sellerItems.map((i: any) => ({
+    order_items: sellerItems.map((i): OrderItemRecord => ({
       product_id: i.product_id,
       quantity: i.quantity,
       price: fromMicroPi(i.price),
@@ -281,3 +307,4 @@ export async function getOrderByIdForSeller(
     })),
   };
 }
+
