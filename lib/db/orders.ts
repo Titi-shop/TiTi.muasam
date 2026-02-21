@@ -315,7 +315,7 @@ export async function getOrdersByBuyer(
     "id,status,total,created_at,buyer_name,buyer_phone,buyer_address,order_items(quantity,price,product_id,status)";
 
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?buyer_pi_uid=eq.${buyerPiUid}&select=${select}&order=created_at.desc`,
+    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${buyerPiUid}&select=${select}&order=created_at.desc`,
     { headers: headers(), cache: "no-store" }
   );
 
