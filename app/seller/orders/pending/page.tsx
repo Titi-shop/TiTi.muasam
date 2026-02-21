@@ -27,9 +27,11 @@ interface Order {
   status: string;
   total: number;
   created_at: string;
-  buyer_name?: string;
-  buyer_phone?: string;
-  buyer_address?: string;
+  buyer?: {
+    name: string;
+    phone: string;
+    address: string;
+  };
   order_items: OrderItem[];
 }
 
