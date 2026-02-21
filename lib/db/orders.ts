@@ -1,11 +1,8 @@
-
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 /**
  * 1 Pi = 1_000_000 microPi
- * DB lưu INTEGER (microPi)
- * App hiển thị NUMBER (Pi)
  */
 const PI_BASE = 1_000_000;
 
@@ -38,13 +35,14 @@ export type OrderItemRecord = {
   product_id: string;
   quantity: number;
   price: number;
-  status: string; // ✅ thêm dòng này
+  status: string;
   product?: {
     id: string;
     name: string;
     images: string[];
   };
 };
+
 export type OrderRecord = {
   id: string;
   status: string;
@@ -64,31 +62,14 @@ export type OrderRecord = {
 export async function getOrdersByBuyerSafe(
   piUid: string
 ): Promise<OrderRecord[]> {
-  const userRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?pi_uid=eq.${piUid}&select=pi_uid`,
-    { headers: headers(), cache: "no-store" }
-  );
-
-  if (!userRes.ok) return [];
-
-  const users = (await userRes.json()) as Array<{ pi_uid: string }>;
-  const buyerId = users[0]?.pi_uid;
-  if (!buyerId) return [];
-
   const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${buyerId}&order=created_at.desc&select=
-      id,
-      total,
-      status,
-      created_at,
-      order_items(quantity,price,product_id)
-    `,
+    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${piUid}&order=created_at.desc&select=id,total,status,created_at,order_items(quantity,price,product_id,status)`,
     { headers: headers(), cache: "no-store" }
   );
 
   if (!orderRes.ok) return [];
 
-  const rawOrders = (await orderRes.json()) as Array<{
+  const raw = (await orderRes.json()) as Array<{
     id: string;
     status: string;
     total: number;
@@ -97,10 +78,11 @@ export async function getOrdersByBuyerSafe(
       quantity: number;
       price: number;
       product_id: string;
+      status: string;
     }>;
   }>;
 
-  return rawOrders.map((o) => ({
+  return raw.map((o) => ({
     id: o.id,
     status: o.status,
     created_at: o.created_at,
@@ -109,6 +91,7 @@ export async function getOrdersByBuyerSafe(
       product_id: i.product_id,
       quantity: i.quantity,
       price: fromMicroPi(i.price),
+      status: i.status,
     })),
   }));
 }
@@ -120,13 +103,7 @@ export async function getOrderById(
   orderId: string
 ): Promise<OrderRecord | null> {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=
-      id,
-      status,
-      total,
-      created_at,
-      order_items(quantity,price,product_id)
-    `,
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=id,status,total,created_at,order_items(quantity,price,product_id,status)`,
     { headers: headers(), cache: "no-store" }
   );
 
@@ -141,6 +118,7 @@ export async function getOrderById(
       quantity: number;
       price: number;
       product_id: string;
+      status: string;
     }>;
   }>;
 
@@ -156,6 +134,7 @@ export async function getOrderById(
       product_id: i.product_id,
       quantity: i.quantity,
       price: fromMicroPi(i.price),
+      status: i.status,
     })),
   };
 }
@@ -163,18 +142,13 @@ export async function getOrderById(
 /* =====================================================
    CREATE ORDER
 ===================================================== */
-export async function createOrderSafe({
-  buyerPiUid,
-  items,
-  total,
-  shipping,
-}: {
+export async function createOrderSafe(params: {
   buyerPiUid: string;
   items: Array<{
-  product_id: string;
-  quantity: number;
-  price: number;
-}>;
+    product_id: string;
+    quantity: number;
+    price: number;
+  }>;
   total: number;
   shipping: {
     name: string;
@@ -182,12 +156,11 @@ export async function createOrderSafe({
     address: string;
   };
 }): Promise<{ id: string; status: string; total: number }> {
+  const { buyerPiUid, items, total, shipping } = params;
+
   const orderRes = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
     method: "POST",
-    headers: {
-      ...headers(),
-      Prefer: "return=representation",
-    },
+    headers: { ...headers(), Prefer: "return=representation" },
     body: JSON.stringify({
       buyer_id: buyerPiUid,
       total: toMicroPi(total),
@@ -208,85 +181,64 @@ export async function createOrderSafe({
   const order = orderData[0];
   if (!order) throw new Error("ORDER_NOT_RETURNED");
 
-  const orderItemsPayload = [];
+  const payload: Array<{
+    order_id: string;
+    product_id: string;
+    quantity: number;
+    price: number;
+    seller_pi_uid: string;
+    status: string;
+  }> = [];
 
-for (const i of items) {
-  const productRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/products?id=eq.${i.product_id}&select=seller_id`,
-    { headers: headers() }
-  );
+  for (const i of items) {
+    const productRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/products?id=eq.${i.product_id}&select=seller_id`,
+      { headers: headers() }
+    );
 
-  if (!productRes.ok) throw new Error("PRODUCT_NOT_FOUND");
+    if (!productRes.ok) throw new Error("PRODUCT_NOT_FOUND");
 
-  const productData = await productRes.json();
-  const product = productData[0];
+    const productData = (await productRes.json()) as Array<{
+      seller_id: string;
+    }>;
 
-  if (!product?.seller_id) throw new Error("SELLER_NOT_FOUND");
+    const product = productData[0];
+    if (!product?.seller_id) throw new Error("SELLER_NOT_FOUND");
 
-  orderItemsPayload.push({
-    order_id: order.id,
-    product_id: i.product_id,
-    quantity: i.quantity,
-    price: toMicroPi(i.price),
-    seller_pi_uid: product.seller_id, // ✅ LẤY TỪ products
-    status: "pending",
+    payload.push({
+      order_id: order.id,
+      product_id: i.product_id,
+      quantity: i.quantity,
+      price: toMicroPi(i.price),
+      seller_pi_uid: product.seller_id,
+      status: "pending",
+    });
+  }
+
+  const itemsRes = await fetch(`${SUPABASE_URL}/rest/v1/order_items`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(payload),
   });
-}
-
-  const itemsRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items`,
-    {
-      method: "POST",
-      headers: headers(),
-      body: JSON.stringify(orderItemsPayload),
-    }
-  );
 
   if (!itemsRes.ok) throw new Error(await itemsRes.text());
 
-  return {
-    id: order.id,
-    status: order.status,
-    total,
-  };
+  return { id: order.id, status: order.status, total };
 }
 
 /* =====================================================
-   UPDATE ORDER STATUS
+   GET ORDERS BY SELLER (SAFE - NO JOIN)
 ===================================================== */
-export async function updateOrderStatus(
-  orderId: string,
-  status: string
-): Promise<void> {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`,
-    {
-      method: "PATCH",
-      headers: headers(),
-      body: JSON.stringify({ status }),
-    }
-  );
-
-  if (!res.ok) throw new Error(await res.text());
-}
-
-/* =====================================================
-   GET ORDERS BY SELLER
-===================================================== */
-
 export async function getOrdersBySeller(
   sellerPiUid: string,
   status?: "pending" | "confirmed" | "shipping" | "cancelled" | "completed"
 ): Promise<OrderRecord[]> {
-
   const itemQuery = new URLSearchParams({
     select: "order_id",
     seller_pi_uid: `eq.${sellerPiUid}`,
   });
 
-  if (status) {
-    itemQuery.append("status", `eq.${status}`);
-  }
+  if (status) itemQuery.append("status", `eq.${status}`);
 
   const itemsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items?${itemQuery.toString()}`,
@@ -295,7 +247,7 @@ export async function getOrdersBySeller(
 
   if (!itemsRes.ok) return [];
 
-  const items: Array<{ order_id: string }> = await itemsRes.json();
+  const items = (await itemsRes.json()) as Array<{ order_id: string }>;
   const orderIds = Array.from(new Set(items.map((i) => i.order_id)));
 
   if (orderIds.length === 0) return [];
@@ -309,50 +261,27 @@ export async function getOrdersBySeller(
 
   if (!orderRes.ok) return [];
 
-  const rawOrders = await orderRes.json();
+  const raw = (await orderRes.json()) as Array<{
+    id: string;
+    status: string;
+    total: number;
+    created_at: string;
+    buyer_name: string | null;
+    buyer_phone: string | null;
+    buyer_address: string | null;
+    order_items: Array<{
+      quantity: number;
+      price: number;
+      product_id: string;
+      status: string;
+      seller_pi_uid: string;
+    }>;
+  }>;
 
-  // 🔥 LẤY TẤT CẢ PRODUCT ID
-  const productIds = Array.from(
-    new Set(
-      rawOrders.flatMap((o: any) =>
-        o.order_items.map((i: any) => i.product_id)
-      )
-    )
-  );
-
-  let productsMap: Record<
-    string,
-    { id: string; name: string; images: string[] }
-  > = {};
-
-  if (productIds.length > 0) {
-    const productIdsString = productIds.map((id) => `"${id}"`).join(",");
-
-    const productRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/products?id=in.(${productIdsString})&select=id,name,images`,
-      { headers: headers(), cache: "no-store" }
-    );
-
-    if (productRes.ok) {
-      const products = await productRes.json();
-
-      productsMap = Object.fromEntries(
-        products.map((p: any) => [
-          p.id,
-          {
-            id: p.id,
-            name: p.name,
-            images: p.images ?? [],
-          },
-        ])
-      );
-    }
-  }
-
-  return rawOrders
-    .map((o: any) => {
+  return raw
+    .map((o) => {
       const sellerItems = o.order_items.filter(
-        (i: any) =>
+        (i) =>
           i.seller_pi_uid === sellerPiUid &&
           (!status || i.status === status)
       );
@@ -364,108 +293,25 @@ export async function getOrdersBySeller(
         status: status ?? o.status,
         created_at: o.created_at,
         total: fromMicroPi(o.total),
-        buyer_name: o.buyer_name ?? undefined,
-        buyer_phone: o.buyer_phone ?? undefined,
-        buyer_address: o.buyer_address ?? undefined,
-        order_items: sellerItems.map((i: any) => ({
+        buyer: {
+          name: o.buyer_name ?? "",
+          phone: o.buyer_phone ?? "",
+          address: o.buyer_address ?? "",
+        },
+        order_items: sellerItems.map((i) => ({
           product_id: i.product_id,
           quantity: i.quantity,
           price: fromMicroPi(i.price),
-          product: productsMap[i.product_id], // ✅ GẮN ẢNH Ở ĐÂY
+          status: i.status,
         })),
       };
     })
-    .filter((o: any) => o !== null);
-}
-  
-
-
-/* =====================================================
-   CONFIRM / CANCEL / SHIPPING / COMPLETE
-===================================================== */
-export async function confirmOrderBySeller(
-  sellerPiUid: string,
-  orderId: string
-): Promise<void> {
-  await updateSellerOrderItemsStatus(
-    sellerPiUid,
-    orderId,
-    "confirmed"
-  );
-}
-
-export async function cancelOrderBySeller(
-  sellerPiUid: string,
-  orderId: string
-): Promise<void> {
-  await updateSellerOrderItemsStatus(
-    sellerPiUid,
-    orderId,
-    "cancelled"
-  );
-}
-
-export async function startShippingBySeller(
-  sellerPiUid: string,
-  orderId: string
-): Promise<void> {
-  await updateSellerOrderItemsToShipping(
-    sellerPiUid,
-    orderId
-  );
-}
-
-export async function completeOrderBySeller(
-  sellerPiUid: string,
-  orderId: string
-): Promise<void> {
-  const checkRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&seller_pi_uid=eq.${sellerPiUid}&select=id,status`,
-    { headers: headers(), cache: "no-store" }
-  );
-
-  if (!checkRes.ok) throw new Error(await checkRes.text());
-
-  const items = (await checkRes.json()) as Array<{
-    id: string;
-    status: string;
-  }>;
-
-  const shippingIds = items
-    .filter((i) => i.status === "shipping")
-    .map((i) => i.id);
-
-  if (shippingIds.length === 0)
-    throw new Error("NO_SHIPPING_ITEMS");
-
-  const ids = shippingIds.map((id) => `"${id}"`).join(",");
-
-  const updateRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items?id=in.(${ids})`,
-    {
-      method: "PATCH",
-      headers: headers(),
-      body: JSON.stringify({ status: "completed" }),
-    }
-  );
-
-  if (!updateRes.ok) throw new Error(await updateRes.text());
+    .filter((o): o is OrderRecord => o !== null);
 }
 
 /* =====================================================
-   INTERNAL LOGIC
+   SELLER STATUS UPDATES
 ===================================================== */
-async function updateSellerOrderItemsToShipping(
-  sellerPiUid: string,
-  orderId: string
-): Promise<void> {
-  await updateSellerOrderItemsStatus(
-    sellerPiUid,
-    orderId,
-    "shipping"
-  );
-}
-
 async function updateSellerOrderItemsStatus(
   sellerPiUid: string,
   orderId: string,
@@ -483,14 +329,12 @@ async function updateSellerOrderItemsStatus(
     status: string;
   }>;
 
-  const validIds = items
+  const ids = items
     .filter((i) => i.status !== newStatus)
-    .map((i) => i.id);
+    .map((i) => `"${i.id}"`)
+    .join(",");
 
-  if (validIds.length === 0)
-    throw new Error("NO_VALID_ITEMS");
-
-  const ids = validIds.map((id) => `"${id}"`).join(",");
+  if (!ids) throw new Error("NO_VALID_ITEMS");
 
   const updateRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items?id=in.(${ids})`,
@@ -504,11 +348,54 @@ async function updateSellerOrderItemsStatus(
   if (!updateRes.ok) throw new Error(await updateRes.text());
 }
 
+export async function confirmOrderBySeller(
+  sellerPiUid: string,
+  orderId: string
+) {
+  await updateSellerOrderItemsStatus(
+    sellerPiUid,
+    orderId,
+    "confirmed"
+  );
+}
+
+export async function cancelOrderBySeller(
+  sellerPiUid: string,
+  orderId: string
+) {
+  await updateSellerOrderItemsStatus(
+    sellerPiUid,
+    orderId,
+    "cancelled"
+  );
+}
+
+export async function startShippingBySeller(
+  sellerPiUid: string,
+  orderId: string
+) {
+  await updateSellerOrderItemsStatus(
+    sellerPiUid,
+    orderId,
+    "shipping"
+  );
+}
+
+export async function completeOrderBySeller(
+  sellerPiUid: string,
+  orderId: string
+) {
+  await updateSellerOrderItemsStatus(
+    sellerPiUid,
+    orderId,
+    "completed"
+  );
+}
 
 export async function getOrderDetailBySeller(
   sellerPiUid: string,
   orderId: string
-) {
+): Promise<OrderRecord | null> {
   const orders = await getOrdersBySeller(sellerPiUid);
   return orders.find((o) => o.id === orderId) ?? null;
 }
