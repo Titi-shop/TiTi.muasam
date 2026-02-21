@@ -5,8 +5,9 @@ import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { resolveRole } from "@/lib/auth/resolveRole";
 import {
-  getOrderById,
-  updateOrderStatus,
+  getOrderByIdForSeller,
+  getOrdersByBuyer,
+  updateOrderStatusBySeller,
   OrderRecord,
 } from "@/lib/db/orders";
 
@@ -50,8 +51,16 @@ export async function GET(
 
   const role = await resolveRole(user);
 
-  const order: OrderRecord | null =
-    await getOrderById(params.id);
+  let order: OrderRecord | null = null;
+
+if (role === "customer") {
+  const orders = await getOrdersByBuyer(user.pi_uid);
+  order = orders.find((o) => o.id === params.id) || null;
+}
+
+if (role === "seller") {
+  order = await getOrderByIdForSeller(user.pi_uid, params.id);
+}
 
   if (!order) {
     return NextResponse.json(
@@ -120,8 +129,8 @@ export async function PATCH(
     );
   }
 
-  const order: OrderRecord | null =
-    await getOrderById(params.id);
+  const order =
+  await getOrderByIdForSeller(user.pi_uid, params.id);
 
   if (!order) {
     return NextResponse.json(
@@ -143,7 +152,11 @@ export async function PATCH(
     );
   }
 
-  await updateOrderStatus(params.id, body.status);
+  await updateOrderStatusBySeller(
+  user.pi_uid,
+  params.id,
+  body.status
+);
 
   return NextResponse.json({ success: true });
 }
