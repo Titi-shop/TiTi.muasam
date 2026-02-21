@@ -61,6 +61,9 @@ export async function getOrdersBySeller(
   status?: "pending" | "confirmed" | "shipping" | "cancelled" | "completed"
 ): Promise<OrderRecord[]> {
 
+  /* ===============================
+     1️⃣ LẤY ORDER_ID TỪ order_items
+  =============================== */
   const itemQuery = new URLSearchParams({
     select: "order_id",
     seller_pi_uid: `eq.${sellerPiUid}`,
@@ -82,12 +85,25 @@ export async function getOrdersBySeller(
   }>;
 
   const orderIds = Array.from(new Set(items.map((i) => i.order_id)));
+
   if (orderIds.length === 0) return [];
 
   const ids = orderIds.map((id) => `"${id}"`).join(",");
 
+  /* ===============================
+     2️⃣ LẤY ORDERS + BUYER INFO
+  =============================== */
   const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=id,status,total,created_at,buyer_name,buyer_phone,buyer_address,order_items(quantity,price,product_id,status,seller_pi_uid)`,
+    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
+      id,
+      status,
+      total,
+      created_at,
+      buyer_name,
+      buyer_phone,
+      buyer_address,
+      order_items(quantity,price,product_id,status,seller_pi_uid)
+    `,
     { headers: headers(), cache: "no-store" }
   );
 
@@ -110,7 +126,9 @@ export async function getOrdersBySeller(
     }>;
   }>;
 
-  // 🔥 LẤY TẤT CẢ PRODUCT ID
+  /* ===============================
+     3️⃣ LẤY PRODUCT DATA
+  =============================== */
   const productIds = Array.from(
     new Set(
       rawOrders.flatMap((o) =>
@@ -152,6 +170,9 @@ export async function getOrdersBySeller(
     }
   }
 
+  /* ===============================
+     4️⃣ FILTER CHỈ ITEM CỦA SELLER
+  =============================== */
   return rawOrders
     .map((o) => {
       const sellerItems = o.order_items.filter(
@@ -163,15 +184,18 @@ export async function getOrdersBySeller(
       if (sellerItems.length === 0) return null;
 
       return {
-  id: o.id,
-  status: status ?? o.status,
-  created_at: o.created_at,
-  total: fromMicroPi(o.total),
+        id: o.id,
+        status: status ?? o.status,
+        created_at: o.created_at,
+        total: fromMicroPi(o.total),
 
-  buyer_name: o.buyer_name ?? "",
-  buyer_phone: o.buyer_phone ?? "",
-  buyer_address: o.buyer_address ?? "",
+        /* 🔥 CHUẨN TYPE OrderRecord */
+        buyer: {
+          name: o.buyer_name ?? "",
+          phone: o.buyer_phone ?? "",
+          address: o.buyer_address ?? "",
         },
+
         order_items: sellerItems.map((i) => ({
           product_id: i.product_id,
           quantity: i.quantity,
