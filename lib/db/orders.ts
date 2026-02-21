@@ -163,14 +163,14 @@ export async function getOrdersBySeller(
       if (sellerItems.length === 0) return null;
 
       return {
-        id: o.id,
-        status: status ?? o.status,
-        created_at: o.created_at,
-        total: fromMicroPi(o.total),
-        buyer: {
-          name: o.buyer_name ?? "",
-          phone: o.buyer_phone ?? "",
-          address: o.buyer_address ?? "",
+  id: o.id,
+  status: status ?? o.status,
+  created_at: o.created_at,
+  total: fromMicroPi(o.total),
+
+  buyer_name: o.buyer_name ?? "",
+  buyer_phone: o.buyer_phone ?? "",
+  buyer_address: o.buyer_address ?? "",
         },
         order_items: sellerItems.map((i) => ({
           product_id: i.product_id,
