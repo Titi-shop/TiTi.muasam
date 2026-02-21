@@ -273,6 +273,7 @@ export async function updateOrderStatus(
 /* =====================================================
    GET ORDERS BY SELLER
 ===================================================== */
+
 export async function getOrdersBySeller(
   sellerPiUid: string,
   status?: "pending" | "confirmed" | "shipping" | "cancelled" | "completed"
@@ -283,9 +284,9 @@ export async function getOrdersBySeller(
     seller_pi_uid: `eq.${sellerPiUid}`,
   });
 
-  const sellerItems = o.order_items.filter(
-  (i) => i.seller_pi_uid === sellerPiUid
-);
+  if (status) {
+    itemQuery.append("status", `eq.${status}`);
+  }
 
   const itemsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items?${itemQuery.toString()}`,
@@ -301,93 +302,82 @@ export async function getOrdersBySeller(
 
   const ids = orderIds.map((id) => `"${id}"`).join(",");
 
-  // ✅ THÊM LEFT JOIN PRODUCTS Ở ĐÂY
   const orderRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
-      id,
-      status,
-      total,
-      created_at,
-      buyer_name,
-      buyer_phone,
-      buyer_address,
-      order_items(
-        quantity,
-        price,
-        product_id,
-        status,
-        seller_pi_uid,
-        product:products!left(
-          id,
-          name,
-          images
-        )
-      )
-    `,
+    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=id,status,total,created_at,buyer_name,buyer_phone,buyer_address,order_items(quantity,price,product_id,status,seller_pi_uid)`,
     { headers: headers(), cache: "no-store" }
   );
 
   if (!orderRes.ok) return [];
 
-  
-const rawOrders = raw as Array<{
-  id: string;
-  status: string;
-  total: number;
-  created_at: string;
-  buyer_name?: string;
-  buyer_phone?: string;
-  buyer_address?: string;
-  order_items: Array<{
-    quantity: number;
-    price: number;
-    product_id: string;
-    status: string;
-    seller_pi_uid: string;
-  }>;
-}>;
+  const rawOrders = await orderRes.json();
 
-// 1️⃣ Lấy tất cả product_id
-const productIds = Array.from(
-  new Set(
-    rawOrders.flatMap((o) =>
-      o.order_items.map((i) => i.product_id)
+  // 🔥 LẤY TẤT CẢ PRODUCT ID
+  const productIds = Array.from(
+    new Set(
+      rawOrders.flatMap((o: any) =>
+        o.order_items.map((i: any) => i.product_id)
+      )
     )
-  )
-);
-
-let productsMap: Record<
-  string,
-  { id: string; name: string; images: string[] }
-> = {};
-
-if (productIds.length > 0) {
-  const ids = productIds.map((id) => `"${id}"`).join(",");
-
-  const productRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/products?id=in.(${ids})&select=id,name,images`,
-    { headers: headers(), cache: "no-store" }
   );
 
-  if (productRes.ok) {
-    const products = (await productRes.json()) as Array<{
-      id: string;
-      name: string;
-      images: string[] | null;
-    }>;
+  let productsMap: Record<
+    string,
+    { id: string; name: string; images: string[] }
+  > = {};
 
-    productsMap = Object.fromEntries(
-      products.map((p) => [
-        p.id,
-        {
-          id: p.id,
-          name: p.name,
-          images: p.images ?? [],
-        },
-      ])
+  if (productIds.length > 0) {
+    const productIdsString = productIds.map((id) => `"${id}"`).join(",");
+
+    const productRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/products?id=in.(${productIdsString})&select=id,name,images`,
+      { headers: headers(), cache: "no-store" }
     );
+
+    if (productRes.ok) {
+      const products = await productRes.json();
+
+      productsMap = Object.fromEntries(
+        products.map((p: any) => [
+          p.id,
+          {
+            id: p.id,
+            name: p.name,
+            images: p.images ?? [],
+          },
+        ])
+      );
+    }
   }
+
+  return rawOrders
+    .map((o: any) => {
+      const sellerItems = o.order_items.filter(
+        (i: any) =>
+          i.seller_pi_uid === sellerPiUid &&
+          (!status || i.status === status)
+      );
+
+      if (sellerItems.length === 0) return null;
+
+      return {
+        id: o.id,
+        status: status ?? o.status,
+        created_at: o.created_at,
+        total: fromMicroPi(o.total),
+        buyer_name: o.buyer_name ?? undefined,
+        buyer_phone: o.buyer_phone ?? undefined,
+        buyer_address: o.buyer_address ?? undefined,
+        order_items: sellerItems.map((i: any) => ({
+          product_id: i.product_id,
+          quantity: i.quantity,
+          price: fromMicroPi(i.price),
+          product: productsMap[i.product_id], // ✅ GẮN ẢNH Ở ĐÂY
+        })),
+      };
+    })
+    .filter((o: any) => o !== null);
 }
+  
 
 
 /* =====================================================
