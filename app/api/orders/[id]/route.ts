@@ -100,7 +100,6 @@ if (role === "seller") {
 /* =========================
    PATCH /api/orders/[id]
 ========================= */
-
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
@@ -129,34 +128,30 @@ export async function PATCH(
     );
   }
 
-  const order =
-  await getOrderByIdForSeller(user.pi_uid, params.id);
+  const existingOrder = await getOrderByIdForSeller(
+    params.id,
+    user.pi_uid
+  );
 
-  if (!order) {
+  if (!existingOrder) {
     return NextResponse.json(
       { error: "ORDER_NOT_FOUND" },
       { status: 404 }
     );
   }
 
-  // SELLER chỉ được cập nhật đơn có sản phẩm của mình
-  const order = await getOrderByIdForSeller(
-  params.id,
-  user.pi_uid
-);
-
-if (!order) {
-  return NextResponse.json(
-    { error: "ORDER_NOT_FOUND" },
-    { status: 404 }
+  const ok = await updateOrderStatusBySeller(
+    user.pi_uid,
+    params.id,
+    body.status
   );
-}
 
-await updateOrderStatusBySeller(
-  user.pi_uid,
-  params.id,
-  body.status
-);
+  if (!ok) {
+    return NextResponse.json(
+      { error: "UPDATE_FAILED" },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ success: true });
 }
