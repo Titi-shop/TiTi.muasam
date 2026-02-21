@@ -410,4 +410,50 @@ export async function createOrder(params: {
 
   return order;
 }
+/* =====================================================
+   UPDATE ORDER STATUS BY SELLER (ITEM LEVEL)
+===================================================== */
+export async function updateOrderStatusBySeller(
+  sellerPiUid: string,
+  orderId: string,
+  status: string
+): Promise<boolean> {
 
+  /* 1️⃣ CẬP NHẬT CHỈ ITEM CỦA SELLER */
+  const updateRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&seller_pi_uid=eq.${sellerPiUid}`,
+    {
+      method: "PATCH",
+      headers: headers(),
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  if (!updateRes.ok) return false;
+
+  /* 2️⃣ KIỂM TRA TOÀN BỘ ITEM TRONG ORDER */
+  const checkRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&select=status`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!checkRes.ok) return true;
+
+  const items = await checkRes.json() as Array<{ status: string }>;
+
+  const allSameStatus = items.every(i => i.status === status);
+
+  /* 3️⃣ NẾU TẤT CẢ ITEM CÙNG STATUS → UPDATE ORDER */
+  if (allSameStatus) {
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`,
+      {
+        method: "PATCH",
+        headers: headers(),
+        body: JSON.stringify({ status }),
+      }
+    );
+  }
+
+  return true;
+}
