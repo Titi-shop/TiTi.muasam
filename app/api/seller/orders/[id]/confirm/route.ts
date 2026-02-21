@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { resolveRole } from "@/lib/auth/resolveRole";
-import { confirmOrderBySeller } from "@/lib/db/orders";
+import { updateOrderStatusBySeller } from "@/lib/db/orders";
 
 export async function PATCH(
   req: Request,
