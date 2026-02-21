@@ -61,7 +61,6 @@ export async function getOrdersBySeller(
   status?: "pending" | "confirmed" | "shipping" | "cancelled" | "completed"
 ): Promise<OrderRecord[]> {
 
-  // 1️⃣ Lấy order_id từ order_items
   const itemQuery = new URLSearchParams({
     select: "order_id",
     seller_pi_uid: `eq.${sellerPiUid}`,
@@ -78,14 +77,13 @@ export async function getOrdersBySeller(
 
   if (!itemsRes.ok) return [];
 
-  const items = (await itemsRes.json()) as Array<{ order_id: string }>;
+  const items: Array<{ order_id: string }> = await itemsRes.json();
   const orderIds = Array.from(new Set(items.map((i) => i.order_id)));
 
   if (orderIds.length === 0) return [];
 
   const ids = orderIds.map((id) => `"${id}"`).join(",");
 
-  // 2️⃣ Lấy orders + buyer info
   const orderRes = await fetch(
     `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=id,status,total,created_at,buyer_name,buyer_phone,buyer_address,order_items(quantity,price,product_id,status,seller_pi_uid)`,
     { headers: headers(), cache: "no-store" }
@@ -93,28 +91,13 @@ export async function getOrdersBySeller(
 
   if (!orderRes.ok) return [];
 
-  const rawOrders = (await orderRes.json()) as Array<{
-    id: string;
-    status: string;
-    total: number;
-    created_at: string;
-    buyer_name: string | null;
-    buyer_phone: string | null;
-    buyer_address: string | null;
-    order_items: Array<{
-      quantity: number;
-      price: number;
-      product_id: string;
-      status: string;
-      seller_pi_uid: string;
-    }>;
-  }>;
+  const rawOrders = await orderRes.json();
 
-  // 3️⃣ Lấy product info để có ảnh + tên
+  // 🔥 LẤY TẤT CẢ PRODUCT ID
   const productIds = Array.from(
     new Set(
-      rawOrders.flatMap((o) =>
-        o.order_items.map((i) => i.product_id)
+      rawOrders.flatMap((o: any) =>
+        o.order_items.map((i: any) => i.product_id)
       )
     )
   );
@@ -133,14 +116,10 @@ export async function getOrdersBySeller(
     );
 
     if (productRes.ok) {
-      const products = (await productRes.json()) as Array<{
-        id: string;
-        name: string;
-        images: string[] | null;
-      }>;
+      const products = await productRes.json();
 
       productsMap = Object.fromEntries(
-        products.map((p) => [
+        products.map((p: any) => [
           p.id,
           {
             id: p.id,
@@ -152,11 +131,10 @@ export async function getOrdersBySeller(
     }
   }
 
-  // 4️⃣ Map kết quả đúng type + đầy đủ thông tin
   return rawOrders
-    .map((o) => {
+    .map((o: any) => {
       const sellerItems = o.order_items.filter(
-        (i) =>
+        (i: any) =>
           i.seller_pi_uid === sellerPiUid &&
           (!status || i.status === status)
       );
@@ -168,19 +146,17 @@ export async function getOrdersBySeller(
         status: status ?? o.status,
         created_at: o.created_at,
         total: fromMicroPi(o.total),
-        buyer: {
-          name: o.buyer_name ?? "",
-          phone: o.buyer_phone ?? "",
-          address: o.buyer_address ?? "",
-        },
-        order_items: sellerItems.map((i) => ({
+        buyer_name: o.buyer_name ?? undefined,
+        buyer_phone: o.buyer_phone ?? undefined,
+        buyer_address: o.buyer_address ?? undefined,
+        order_items: sellerItems.map((i: any) => ({
           product_id: i.product_id,
           quantity: i.quantity,
           price: fromMicroPi(i.price),
-          status: i.status,
-          product: productsMap[i.product_id],
+          product: productsMap[i.product_id], // ✅ GẮN ẢNH Ở ĐÂY
         })),
       };
     })
-    .filter((o): o is OrderRecord => o !== null);
+    .filter((o: any) => o !== null);
 }
+  
