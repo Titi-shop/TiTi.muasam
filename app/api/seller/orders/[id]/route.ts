@@ -24,7 +24,6 @@ export async function GET(
 
     const token = authHeader.replace("Bearer ", "");
 
-    /* 🔐 VERIFY TOKEN VỚI PI */
     const piRes = await fetch(`${PI_API_BASE}/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -41,7 +40,6 @@ export async function GET(
 
     const piUser = (await piRes.json()) as PiUser;
 
-    /* 📦 LOAD ORDER */
     const order = await getOrderByIdForSeller(
       params.id,
       piUser.uid
