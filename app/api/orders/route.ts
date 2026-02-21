@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import {
-  getOrdersByBuyerSafe,
-  createOrderSafe,
+  getOrdersByBuyer
+createOrder
 } from "@/lib/db/orders";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
