@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { resolveRole } from "@/lib/auth/resolveRole";
-import { cancelOrderBySeller } from "@/lib/db/orders";
+import { updateOrderStatusBySeller } from "@/lib/db/orders";
 
 export async function PATCH(
   req: Request,
@@ -25,9 +25,20 @@ export async function PATCH(
     );
   }
 
-  /* 3️⃣ CANCEL ORDER ITEMS (SELLER SCOPE) */
+  /* 3️⃣ CANCEL ITEMS */
   try {
-    await cancelOrderBySeller(user.pi_uid, params.id);
+    const ok = await updateOrderStatusBySeller(
+      user.pi_uid,
+      params.id,
+      "cancelled"
+    );
+
+    if (!ok) {
+      return NextResponse.json(
+        { error: "UPDATE_FAILED" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
