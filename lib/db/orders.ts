@@ -233,12 +233,15 @@ export async function getOrdersBySeller(
   sellerPiUid: string,
   status?: "pending" | "confirmed" | "shipping" | "cancelled" | "completed"
 ): Promise<OrderRecord[]> {
+
   const itemQuery = new URLSearchParams({
     select: "order_id",
     seller_pi_uid: `eq.${sellerPiUid}`,
   });
 
-  if (status) itemQuery.append("status", `eq.${status}`);
+  if (status) {
+    itemQuery.append("status", `eq.${status}`);
+  }
 
   const itemsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items?${itemQuery.toString()}`,
@@ -247,9 +250,11 @@ export async function getOrdersBySeller(
 
   if (!itemsRes.ok) return [];
 
-  const items = (await itemsRes.json()) as Array<{ order_id: string }>;
-  const orderIds = Array.from(new Set(items.map((i) => i.order_id)));
+  const items = (await itemsRes.json()) as Array<{
+    order_id: string;
+  }>;
 
+  const orderIds = Array.from(new Set(items.map((i) => i.order_id)));
   if (orderIds.length === 0) return [];
 
   const ids = orderIds.map((id) => `"${id}"`).join(",");
@@ -261,7 +266,7 @@ export async function getOrdersBySeller(
 
   if (!orderRes.ok) return [];
 
-  const raw = (await orderRes.json()) as Array<{
+  const rawOrders = (await orderRes.json()) as Array<{
     id: string;
     status: string;
     total: number;
@@ -278,7 +283,54 @@ export async function getOrdersBySeller(
     }>;
   }>;
 
-  return raw
+  // ===============================
+  // LẤY DANH SÁCH PRODUCT ID
+  // ===============================
+  const productIds = Array.from(
+    new Set(
+      rawOrders.flatMap((o) =>
+        o.order_items.map((i) => i.product_id)
+      )
+    )
+  );
+
+  let productsMap: Record<
+    string,
+    { id: string; name: string; images: string[] }
+  > = {};
+
+  if (productIds.length > 0) {
+    const productIdsString = productIds.map((id) => `"${id}"`).join(",");
+
+    const productRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/products?id=in.(${productIdsString})&select=id,name,images`,
+      { headers: headers(), cache: "no-store" }
+    );
+
+    if (productRes.ok) {
+      const products = (await productRes.json()) as Array<{
+        id: string;
+        name: string;
+        images: string[] | null;
+      }>;
+
+      productsMap = Object.fromEntries(
+        products.map((p) => [
+          p.id,
+          {
+            id: p.id,
+            name: p.name,
+            images: p.images ?? [],
+          },
+        ])
+      );
+    }
+  }
+
+  // ===============================
+  // MAP KẾT QUẢ
+  // ===============================
+  return rawOrders
     .map((o) => {
       const sellerItems = o.order_items.filter(
         (i) =>
@@ -303,6 +355,7 @@ export async function getOrdersBySeller(
           quantity: i.quantity,
           price: fromMicroPi(i.price),
           status: i.status,
+          product: productsMap[i.product_id], // ✅ ẢNH Ở ĐÂY
         })),
       };
     })
