@@ -7,7 +7,6 @@ export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  /* 1️⃣ AUTH */
   const user = await getUserFromBearer();
   if (!user) {
     return NextResponse.json(
@@ -16,7 +15,6 @@ export async function PATCH(
     );
   }
 
-  /* 2️⃣ RBAC */
   const role = await resolveRole(user);
   if (role !== "seller" && role !== "admin") {
     return NextResponse.json(
@@ -25,9 +23,19 @@ export async function PATCH(
     );
   }
 
-  /* 3️⃣ CONFIRM SELLER ITEMS */
   try {
-    await confirmOrderBySeller(user.pi_uid, params.id);
+    const ok = await updateOrderStatusBySeller(
+      user.pi_uid,
+      params.id,
+      "confirmed"
+    );
+
+    if (!ok) {
+      return NextResponse.json(
+        { error: "UPDATE_FAILED" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
