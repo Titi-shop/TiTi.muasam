@@ -5,7 +5,7 @@ import {
 createOrder
 } from "@/lib/db/orders";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export const runtime = "nodejs";
