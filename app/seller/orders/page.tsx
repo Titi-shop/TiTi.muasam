@@ -31,6 +31,13 @@ interface Order {
   total: number;
   created_at: string;
   status: OrderStatus;
+
+  buyer?: {
+    name: string;
+    phone: string;
+    address: string;
+  };
+
   order_items?: OrderItem[];
 }
 
@@ -157,6 +164,24 @@ export default function SellerOrdersPage() {
                   {o.status}
                 </span>
               </div>
+
+
+              {/* BUYER INFO */}
+{o.buyer && (
+  <div className="px-4 py-3 text-sm border-b bg-gray-50 space-y-1">
+    <p>
+      <span className="text-gray-500">Khách:</span>{" "}
+      {o.buyer.name || "—"}
+    </p>
+    <p>
+      <span className="text-gray-500">SĐT:</span>{" "}
+      {o.buyer.phone || "—"}
+    </p>
+    <p className="text-xs text-gray-600">
+      {o.buyer.address || "Không có địa chỉ"}
+    </p>
+  </div>
+)}
 
               {/* ORDER ITEMS */}
               {o.order_items?.map((item, idx) => (
