@@ -328,39 +328,39 @@ export async function getOrdersBySeller(
   }
 
   // ===============================
-  // MAP KẾT QUẢ
-  // ===============================
-  return rawOrders
-    .map((o) => {
-      const sellerItems = o.order_items.filter(
-        (i) =>
-          i.seller_pi_uid === sellerPiUid &&
-          (!status || i.status === status)
-      );
+// MAP KẾT QUẢ (GIỮ STRUCTURE CŨ)
+// ===============================
+return rawOrders
+  .map((o) => {
+    const sellerItems = o.order_items.filter(
+      (i) =>
+        i.seller_pi_uid === sellerPiUid &&
+        (!status || i.status === status)
+    );
 
-      if (sellerItems.length === 0) return null;
+    if (sellerItems.length === 0) return null;
 
-      return {
-        id: o.id,
-        status: status ?? o.status,
-        created_at: o.created_at,
-        total: fromMicroPi(o.total),
-        buyer: {
-          name: o.buyer_name ?? "",
-          phone: o.buyer_phone ?? "",
-          address: o.buyer_address ?? "",
-        },
-        order_items: sellerItems.map((i) => ({
-          product_id: i.product_id,
-          quantity: i.quantity,
-          price: fromMicroPi(i.price),
-          status: i.status,
-          product: productsMap[i.product_id], // ✅ ẢNH Ở ĐÂY
-        })),
-      };
-    })
-    .filter((o): o is OrderRecord => o !== null);
-}
+    return {
+      id: o.id,
+      status: status ?? o.status,
+      created_at: o.created_at,
+      total: fromMicroPi(o.total),
+
+      // ✅ Trả lại đúng field UI đang dùng
+      buyer_name: o.buyer_name ?? "",
+      buyer_phone: o.buyer_phone ?? "",
+      buyer_address: o.buyer_address ?? "",
+
+      order_items: sellerItems.map((i) => ({
+        product_id: i.product_id,
+        quantity: i.quantity,
+        price: fromMicroPi(i.price),
+        status: i.status,
+        product: productsMap[i.product_id], // ảnh + tên sản phẩm
+      })),
+    };
+  })
+  .filter((o): o is OrderRecord => o !== null);
 
 /* =====================================================
    SELLER STATUS UPDATES
