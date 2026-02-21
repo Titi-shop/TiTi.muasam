@@ -308,3 +308,106 @@ export async function getOrderByIdForSeller(
   };
 }
 
+export async function getOrdersByBuyer(
+  buyerPiUid: string
+): Promise<OrderRecord[]> {
+  const select =
+    "id,status,total,created_at,buyer_name,buyer_phone,buyer_address,order_items(quantity,price,product_id,status)";
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?buyer_pi_uid=eq.${buyerPiUid}&select=${select}&order=created_at.desc`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!res.ok) return [];
+
+  const raw = (await res.json()) as Array<{
+    id: string;
+    status: string;
+    total: number;
+    created_at: string;
+    buyer_name: string | null;
+    buyer_phone: string | null;
+    buyer_address: string | null;
+    order_items: Array<{
+      quantity: number;
+      price: number;
+      product_id: string;
+      status: string;
+    }>;
+  }>;
+
+  return raw.map((o) => ({
+    id: o.id,
+    status: o.status,
+    total: fromMicroPi(o.total),
+    created_at: o.created_at,
+    buyer: {
+      name: o.buyer_name ?? "",
+      phone: o.buyer_phone ?? "",
+      address: o.buyer_address ?? "",
+    },
+    order_items: o.order_items.map((i) => ({
+      product_id: i.product_id,
+      quantity: i.quantity,
+      price: fromMicroPi(i.price),
+      status: i.status,
+    })),
+  }));
+}
+export async function createOrder(params: {
+  buyerPiUid: string;
+  items: {
+    product_id: string;
+    quantity: number;
+    price: number;
+  }[];
+  total: number;
+  shipping: {
+    name: string;
+    phone: string;
+    address: string;
+  };
+}): Promise<OrderRecord | null> {
+  const { buyerPiUid, items, total, shipping } = params;
+
+  const orderRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders`,
+    {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({
+        buyer_pi_uid: buyerPiUid,
+        buyer_name: shipping.name,
+        buyer_phone: shipping.phone,
+        buyer_address: shipping.address,
+        total: toMicroPi(total),
+        status: "pending",
+      }),
+    }
+  );
+
+  if (!orderRes.ok) return null;
+
+  const [order] = await orderRes.json();
+
+  for (const item of items) {
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/order_items`,
+      {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({
+          order_id: order.id,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price: toMicroPi(item.price),
+          status: "pending",
+        }),
+      }
+    );
+  }
+
+  return order;
+}
+
