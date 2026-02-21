@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import {
-  getOrdersByBuyer
-createOrder
+  getOrdersByBuyer,
+  createOrder
 } from "@/lib/db/orders";
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
@@ -24,7 +24,7 @@ export async function GET() {
     );
   }
 
-  const orders = await getOrdersByBuyerSafe(user.pi_uid);
+  const orders = await getOrdersByBuyer(user.pi_uid);
   return NextResponse.json(orders);
 }
 
@@ -41,14 +41,8 @@ export async function POST(req: Request) {
     );
   }
 
-  /* =========================
-     PARSE BODY
-  ========================= */
   const { items, total, shipping } = await req.json();
 
-  /* =========================
-     VALIDATE BODY
-  ========================= */
   if (!Array.isArray(items) || typeof total !== "number") {
     return NextResponse.json(
       { error: "INVALID_BODY" },
@@ -69,9 +63,6 @@ export async function POST(req: Request) {
     }
   }
 
-  /* =========================
-     VALIDATE SHIPPING
-  ========================= */
   if (
     !shipping ||
     typeof shipping.name !== "string" ||
@@ -84,19 +75,13 @@ export async function POST(req: Request) {
     );
   }
 
-  /* =========================
-     CREATE ORDER
-  ========================= */
-  const order = await createOrderSafe({
+  const order = await createOrder({
     buyerPiUid: user.pi_uid,
     items,
     total,
-    shipping, // 👈 SNAPSHOT SHIPPING
+    shipping,
   });
 
-  /* =========================
-     INCREMENT SOLD
-  ========================= */
   for (const item of items) {
     await fetch(
       `${SUPABASE_URL}/rest/v1/rpc/increment_product_sold`,
