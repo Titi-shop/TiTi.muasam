@@ -206,3 +206,78 @@ export async function getOrdersBySeller(
     })
     .filter((o): o is OrderRecord => o !== null);
 }
+
+/* =====================================================
+   GET SINGLE ORDER BY ID FOR SELLER
+===================================================== */
+export async function getOrderByIdForSeller(
+  orderId: string,
+  sellerPiUid: string
+): Promise<OrderRecord | null> {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=
+      id,
+      status,
+      total,
+      created_at,
+      buyer_name,
+      buyer_phone,
+      buyer_address,
+      order_items(quantity,price,product_id,status,seller_pi_uid)
+    `,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  if (!data.length) return null;
+
+  const o = data[0];
+
+  /* FILTER ITEM CỦA SELLER */
+  const sellerItems = o.order_items.filter(
+    (i: any) => i.seller_pi_uid === sellerPiUid
+  );
+
+  if (sellerItems.length === 0) return null;
+
+  /* LOAD PRODUCTS */
+  const productIds = sellerItems.map((i: any) => `"${i.product_id}"`).join(",");
+
+  const productRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/products?id=in.(${productIds})&select=id,name,images`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  let productsMap: Record<string, any> = {};
+
+  if (productRes.ok) {
+    const products = await productRes.json();
+    productsMap = Object.fromEntries(
+      products.map((p: any) => [
+        p.id,
+        { id: p.id, name: p.name, images: p.images ?? [] },
+      ])
+    );
+  }
+
+  return {
+    id: o.id,
+    status: o.status,
+    total: fromMicroPi(o.total),
+    created_at: o.created_at,
+    buyer: {
+      name: o.buyer_name ?? "",
+      phone: o.buyer_phone ?? "",
+      address: o.buyer_address ?? "",
+    },
+    order_items: sellerItems.map((i: any) => ({
+      product_id: i.product_id,
+      quantity: i.quantity,
+      price: fromMicroPi(i.price),
+      status: i.status,
+      product: productsMap[i.product_id],
+    })),
+  };
+}
