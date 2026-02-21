@@ -77,9 +77,11 @@ export async function getOrdersBySeller(
 
   if (!itemsRes.ok) return [];
 
-  const items: Array<{ order_id: string }> = await itemsRes.json();
-  const orderIds = Array.from(new Set(items.map((i) => i.order_id)));
+  const items = (await itemsRes.json()) as Array<{
+    order_id: string;
+  }>;
 
+  const orderIds = Array.from(new Set(items.map((i) => i.order_id)));
   if (orderIds.length === 0) return [];
 
   const ids = orderIds.map((id) => `"${id}"`).join(",");
@@ -91,13 +93,28 @@ export async function getOrdersBySeller(
 
   if (!orderRes.ok) return [];
 
-  const rawOrders = await orderRes.json();
+  const rawOrders = (await orderRes.json()) as Array<{
+    id: string;
+    status: string;
+    total: number;
+    created_at: string;
+    buyer_name: string | null;
+    buyer_phone: string | null;
+    buyer_address: string | null;
+    order_items: Array<{
+      quantity: number;
+      price: number;
+      product_id: string;
+      status: string;
+      seller_pi_uid: string;
+    }>;
+  }>;
 
   // 🔥 LẤY TẤT CẢ PRODUCT ID
   const productIds = Array.from(
     new Set(
-      rawOrders.flatMap((o: any) =>
-        o.order_items.map((i: any) => i.product_id)
+      rawOrders.flatMap((o) =>
+        o.order_items.map((i) => i.product_id)
       )
     )
   );
@@ -116,10 +133,14 @@ export async function getOrdersBySeller(
     );
 
     if (productRes.ok) {
-      const products = await productRes.json();
+      const products = (await productRes.json()) as Array<{
+        id: string;
+        name: string;
+        images: string[] | null;
+      }>;
 
       productsMap = Object.fromEntries(
-        products.map((p: any) => [
+        products.map((p) => [
           p.id,
           {
             id: p.id,
@@ -132,9 +153,9 @@ export async function getOrdersBySeller(
   }
 
   return rawOrders
-    .map((o: any) => {
+    .map((o) => {
       const sellerItems = o.order_items.filter(
-        (i: any) =>
+        (i) =>
           i.seller_pi_uid === sellerPiUid &&
           (!status || i.status === status)
       );
@@ -146,17 +167,19 @@ export async function getOrdersBySeller(
         status: status ?? o.status,
         created_at: o.created_at,
         total: fromMicroPi(o.total),
-        buyer_name: o.buyer_name ?? undefined,
-        buyer_phone: o.buyer_phone ?? undefined,
-        buyer_address: o.buyer_address ?? undefined,
-        order_items: sellerItems.map((i: any) => ({
+        buyer: {
+          name: o.buyer_name ?? "",
+          phone: o.buyer_phone ?? "",
+          address: o.buyer_address ?? "",
+        },
+        order_items: sellerItems.map((i) => ({
           product_id: i.product_id,
           quantity: i.quantity,
           price: fromMicroPi(i.price),
-          product: productsMap[i.product_id], // ✅ GẮN ẢNH Ở ĐÂY
+          status: i.status,
+          product: productsMap[i.product_id],
         })),
       };
     })
-    .filter((o: any) => o !== null);
+    .filter((o): o is OrderRecord => o !== null);
 }
-  
