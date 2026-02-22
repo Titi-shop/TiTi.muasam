@@ -1,106 +1,64 @@
 import { NextResponse } from "next/server";
-
-import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
-import { resolveRole } from "@/lib/auth/resolveRole";
-
-/**
- * API: /api/returns
- * - Customer gửi yêu cầu trả hàng
- * - NETWORK-FIRST (Bearer Pi token)
- * - AUTH-CENTRIC + RBAC
- * - NO any
- */
-
-/* =========================
-   TYPES
-========================= */
-
-type ReturnRequestBody = {
-  orderId: string;
-  reason: string;
-  images?: string[];
-};
-
-/* =========================
-   RUNTIME GUARD
-========================= */
-
-function isReturnRequestBody(
-  value: unknown
-): value is ReturnRequestBody {
-  if (typeof value !== "object" || value === null)
-    return false;
-
-  const v = value as Record<string, unknown>;
-
-  if (typeof v.orderId !== "string") return false;
-  if (typeof v.reason !== "string") return false;
-
-  if ("images" in v) {
-    if (!Array.isArray(v.images)) return false;
-    if (!v.images.every((i) => typeof i === "string"))
-      return false;
-  }
-
-  return true;
-}
-
-/* =========================
-   POST /api/returns
-========================= */
+import { getUserFromToken } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   try {
-    /* 🔐 AUTH */
-    const user = await getUserFromBearer();
+    const user = await getUserFromToken(req);
     if (!user) {
-      return NextResponse.json(
-        { error: "UNAUTHORIZED" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const role = await resolveRole(user);
-    if (role !== "customer") {
-      return NextResponse.json(
-        { error: "FORBIDDEN" },
-        { status: 403 }
-      );
-    }
+    const { orderId, reason, images } = await req.json();
 
-    /* 📦 BODY */
-    const body: unknown = await req.json().catch(() => null);
-
-    if (!isReturnRequestBody(body)) {
+    if (!orderId || !reason) {
       return NextResponse.json(
-        { error: "INVALID_BODY" },
+        { error: "Missing fields" },
         { status: 400 }
       );
     }
 
-    const { orderId, reason, images } = body;
+    /* CHECK ORDER */
+    const { data: order } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", orderId)
+      .eq("buyer_id", user.id)
+      .single();
 
-    /**
-     * 👉 Production:
-     * - validate order belongs to user
-     * - persist to DB / KV
-     */
-    console.log("📦 [RETURN REQUEST]", {
-      buyerPiUid: user.pi_uid,
-      orderId,
+    if (!order) {
+      return NextResponse.json(
+        { error: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    if (!["completed", "delivered"].includes(order.status)) {
+      return NextResponse.json(
+        { error: "Not returnable" },
+        { status: 400 }
+      );
+    }
+
+    /* INSERT RETURN */
+    await supabase.from("returns").insert({
+      order_id: orderId,
+      buyer_id: user.id,
       reason,
-      images: images ?? [],
-      createdAt: new Date().toISOString(),
+      images,
+      status: "pending",
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Yêu cầu trả hàng đã được ghi nhận.",
-    });
+    /* UPDATE ORDER */
+    await supabase
+      .from("orders")
+      .update({ status: "return_requested" })
+      .eq("id", orderId);
+
+    return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("RETURN ERROR:", err);
     return NextResponse.json(
-      { error: "INTERNAL_ERROR" },
+      { error: "Server error" },
       { status: 500 }
     );
   }
