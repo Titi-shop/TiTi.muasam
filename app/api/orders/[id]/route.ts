@@ -23,7 +23,7 @@ export async function PATCH(
 
   const orderId = params.id;
   const body = await req.json();
-  const { status } = body;
+  const { status, cancel_reason } = body;
 
   if (typeof status !== "string") {
     return NextResponse.json(
