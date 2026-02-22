@@ -136,10 +136,15 @@ function formatPi(value: number | string) {
     case "shipping":
       return orders.filter((o) => o.status === "shipping");
 
+        
     case "received": // UI received = DB completed
+        
     case "completed":
       return orders.filter((o) => o.status === "completed");
 
+        case "returned":
+  return orders.filter((o) => o.status === "returned");
+        
     case "cancelled":
       return orders.filter((o) => o.status === "cancelled");
 
