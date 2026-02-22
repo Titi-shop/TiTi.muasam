@@ -63,6 +63,12 @@ export default function SellerPendingOrdersPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  // Double click logic
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Action message
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+
   /* ================= LOAD ================= */
 
   const loadOrders = useCallback(async () => {
@@ -133,6 +139,11 @@ export default function SellerPendingOrdersPage() {
 
         if (!res.ok) return;
 
+        setActionMessage(
+          t.seller_confirm_message ??
+            "Thank you for trusting our shop. We will process your order as soon as possible."
+        );
+
         await loadOrders();
       } catch {
         // silent fail for Pi Browser
@@ -140,14 +151,11 @@ export default function SellerPendingOrdersPage() {
         setProcessingId(null);
       }
     },
-    [loadOrders]
+    [loadOrders, t.seller_confirm_message]
   );
 
   const cancelOrder = useCallback(
     async (orderId: string) => {
-      if (!window.confirm(t.confirm_cancel ?? "Cancel this order?"))
-        return;
-
       try {
         setProcessingId(orderId);
 
@@ -158,6 +166,11 @@ export default function SellerPendingOrdersPage() {
 
         if (!res.ok) return;
 
+        setActionMessage(
+          t.seller_cancel_message ??
+            "We are sorry. This product is currently out of stock. Hope to serve you next time."
+        );
+
         await loadOrders();
       } catch {
         // silent fail
@@ -165,7 +178,7 @@ export default function SellerPendingOrdersPage() {
         setProcessingId(null);
       }
     },
-    [loadOrders, t.confirm_cancel]
+    [loadOrders, t.seller_cancel_message]
   );
 
   /* ================= LOADING ================= */
@@ -182,7 +195,7 @@ export default function SellerPendingOrdersPage() {
 
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
-      {/* ===== HEADER (XÁM MỜ) ===== */}
+      {/* ===== HEADER ===== */}
       <header className="bg-gray-600/90 backdrop-blur-lg text-white px-4 py-5 shadow-md">
         <div className="bg-white/10 rounded-xl p-4 border border-white/20">
           <p className="text-sm font-medium opacity-90">
@@ -196,6 +209,13 @@ export default function SellerPendingOrdersPage() {
         </div>
       </header>
 
+      {/* ===== ACTION MESSAGE ===== */}
+      {actionMessage && (
+        <div className="mx-4 mt-4 bg-gray-800 text-white text-sm rounded-xl p-4">
+          {actionMessage}
+        </div>
+      )}
+
       {/* ===== CONTENT ===== */}
       <section className="px-4 mt-5 space-y-4">
         {orders.length === 0 ? (
@@ -206,10 +226,18 @@ export default function SellerPendingOrdersPage() {
           orders.map((order) => (
             <div
               key={order.id}
-              onClick={() =>
-                router.push(`/seller/orders/${order.id}`)
-              }
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer active:scale-[0.99] transition"
+              onClick={() => {
+                if (expandedId === order.id) {
+                  router.push(`/seller/orders/${order.id}`);
+                } else {
+                  setExpandedId(order.id);
+                }
+              }}
+              className={`bg-white rounded-xl shadow-sm border overflow-hidden cursor-pointer active:scale-[0.99] transition ${
+                expandedId === order.id
+                  ? "border-gray-400 ring-2 ring-gray-300"
+                  : "border-gray-100"
+              }`}
             >
               {/* ORDER HEADER */}
               <div className="flex justify-between px-4 py-3 border-b bg-gray-50">
@@ -296,9 +324,7 @@ export default function SellerPendingOrdersPage() {
                 <div className="flex gap-2">
                   <button
                     disabled={processingId === order.id}
-                    onClick={() =>
-                      confirmOrder(order.id)
-                    }
+                    onClick={() => confirmOrder(order.id)}
                     className="px-3 py-1.5 text-xs bg-gray-700 text-white rounded-lg disabled:opacity-50"
                   >
                     {t.confirm ?? "Confirm"}
@@ -306,9 +332,7 @@ export default function SellerPendingOrdersPage() {
 
                   <button
                     disabled={processingId === order.id}
-                    onClick={() =>
-                      cancelOrder(order.id)
-                    }
+                    onClick={() => cancelOrder(order.id)}
                     className="px-3 py-1.5 text-xs border border-gray-400 rounded-lg"
                   >
                     {t.cancel ?? "Cancel"}
