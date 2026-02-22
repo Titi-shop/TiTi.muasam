@@ -75,8 +75,8 @@ export default function CustomerPickupPage() {
 
       // ✅ chỉ lấy đơn pickup (seller đã xác nhận)
       const filtered = rawOrders.filter(
-        (o) => o.status === "pickup"
-      );
+  (o) => o.status === "confirmed"
+);
 
       const productIds = Array.from(
         new Set(
