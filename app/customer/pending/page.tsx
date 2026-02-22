@@ -250,22 +250,91 @@ export default function PendingOrdersPage() {
                 </div>
 
                 {/* FOOTER */}
-                <div className="flex justify-between items-center px-4 py-3 border-t">
-                  <p className="text-sm font-semibold">
-                    {t.total || "Tổng cộng"}: π
-                    {formatPi(o.total)}
-                  </p>
+<div className="flex justify-between items-center px-4 py-3 border-t">
+  <p className="text-sm font-semibold">
+    {t.total || "Tổng cộng"}: π
+    {formatPi(o.total)}
+  </p>
 
-                  <button
-  onClick={() => setShowCancelFor(o.id)}
-                    disabled={processingId === o.id}
-                    className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
-                  >
-                    {processingId === o.id
-                      ? "Đang huỷ..."
-                      : "Huỷ đơn"}
-                  </button>
-                </div>
+  <button
+    onClick={() => setShowCancelFor(o.id)}
+    disabled={processingId === o.id}
+    className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
+  >
+    {processingId === o.id
+      ? "Đang huỷ..."
+      : "Huỷ đơn"}
+  </button>
+</div>
+
+{/* 👇 CHÈN ĐOẠN NÀY NGAY ĐÂY */}
+{showCancelFor === o.id && (
+  <div className="px-4 pb-4 space-y-3">
+    <div className="space-y-2">
+      {CANCEL_REASONS.map((reason) => (
+        <label
+          key={reason}
+          className="flex items-center gap-2 text-sm"
+        >
+          <input
+            type="radio"
+            name={`cancel-${o.id}`}
+            value={reason}
+            checked={selectedReason === reason}
+            onChange={(e) =>
+              setSelectedReason(e.target.value)
+            }
+          />
+          {reason}
+        </label>
+      ))}
+    </div>
+
+    {selectedReason === "Khác" && (
+      <textarea
+        value={customReason}
+        onChange={(e) =>
+          setCustomReason(e.target.value)
+        }
+        placeholder="Nhập lý do cụ thể..."
+        className="w-full border rounded-md p-2 text-sm"
+        rows={3}
+      />
+    )}
+
+    <div className="flex gap-2">
+      <button
+        onClick={() => {
+          const finalReason =
+            selectedReason === "Khác"
+              ? customReason
+              : selectedReason;
+
+          if (!finalReason.trim()) {
+            alert("Vui lòng chọn lý do.");
+            return;
+          }
+
+          handleCancel(o.id, finalReason);
+        }}
+        className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-md"
+      >
+        Xác nhận huỷ
+      </button>
+
+      <button
+        onClick={() => {
+          setShowCancelFor(null);
+          setSelectedReason("");
+          setCustomReason("");
+        }}
+        className="px-4 py-1.5 text-sm border rounded-md"
+      >
+        Huỷ bỏ
+      </button>
+    </div>
+  </div>
+)}
               </div>
             ))}
           </div>
