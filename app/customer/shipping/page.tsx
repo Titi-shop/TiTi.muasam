@@ -159,6 +159,9 @@ export default function ShippingOrdersPage() {
       setProcessingId(null);
     }
   }
+   const filtered = rawOrders.filter(
+  (o) => o.status === "shipping"
+);
 
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
