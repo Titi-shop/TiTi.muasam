@@ -1,3 +1,8 @@
+Cần sửa file app/customer/pickup/page.tsx
+Chỉ sửa phần hiển thị đơn hàng như hình không thay đổi gì .
+
+app/customer/pickup/page.tsx
+
 "use client";
 
 export const dynamic = "force-dynamic";
@@ -132,18 +137,18 @@ export default function CustomerPickupPage() {
      UI
   ========================= */
   return (
-    <main className="min-h-screen bg-gray-100 pb-24">
-      {/* HEADER */}
-      <header className="bg-orange-500 text-white px-4 py-4">
-        <div className="bg-orange-400 rounded-lg p-4">
-          <p className="text-sm opacity-90">
-            {t.order_info}
-          </p>
-          <p className="text-xs opacity-80 mt-1">
-            {t.orders}: {orders.length} · π{formatPi(totalPi)}
-          </p>
-        </div>
-      </header>
+  <main className="min-h-screen bg-gray-100 pb-24">
+    {/* HEADER */}
+    <header className="bg-orange-500 text-white px-4 py-4">
+      <div className="bg-orange-400 rounded-lg p-4">
+        <p className="text-sm opacity-90">
+          {t.order_info}
+        </p>
+        <p className="text-xs opacity-80 mt-1">
+          {t.orders}: {orders.length} · π{formatPi(totalPi)}
+        </p>
+      </div>
+    </header>
 
     {/* CONTENT */}
     <section className="mt-6 px-4">
@@ -224,3 +229,4 @@ export default function CustomerPickupPage() {
     </section>
   </main>
 );
+}
