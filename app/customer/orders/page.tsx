@@ -33,7 +33,6 @@ interface Order {
 type OrderTab =
   | "all"
   | "pending"
-  | "confirmed"
   | "pickup"
   | "shipping"
   | "received"
@@ -125,10 +124,29 @@ function formatPi(value: number | string) {
      FILTER THEO TAB
   ========================= */
   const filteredOrders = useMemo(() => {
-    if (activeTab === "all") return orders;
+  if (activeTab === "all") return orders;
 
-    return orders.filter((o) => o.status === activeTab);
-  }, [orders, activeTab]);
+  switch (activeTab) {
+    case "pending":
+      return orders.filter((o) => o.status === "pending");
+
+    case "pickup": // UI pickup = DB confirmed
+      return orders.filter((o) => o.status === "confirmed");
+
+    case "shipping":
+      return orders.filter((o) => o.status === "shipping");
+
+    case "received": // UI received = DB completed
+    case "completed":
+      return orders.filter((o) => o.status === "completed");
+
+    case "cancelled":
+      return orders.filter((o) => o.status === "cancelled");
+
+    default:
+      return orders;
+  }
+}, [orders, activeTab]);
 
     /* =========================
      UI
