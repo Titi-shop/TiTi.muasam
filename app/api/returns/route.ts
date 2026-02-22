@@ -4,9 +4,13 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
   try {
-    const user = await getUserFromToken(req);
+    const user = await getUserFromBearer();
+
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const { orderId, reason, images } = await req.json();
@@ -19,14 +23,15 @@ export async function POST(req: Request) {
     }
 
     /* CHECK ORDER */
-    const { data: order } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("id", orderId)
-      .eq("buyer_id", user.id)
-      .single();
+    const { data: order, error: orderError } =
+      await supabaseAdmin
+        .from("orders")
+        .select("*")
+        .eq("id", orderId)
+        .eq("buyer_pi_uid", user.pi_uid)
+        .single();
 
-    if (!order) {
+    if (orderError || !order) {
       return NextResponse.json(
         { error: "Order not found" },
         { status: 404 }
@@ -41,22 +46,32 @@ export async function POST(req: Request) {
     }
 
     /* INSERT RETURN */
-    await supabase.from("returns").insert({
-      order_id: orderId,
-      buyer_id: user.id,
-      reason,
-      images,
-      status: "pending",
-    });
+    const { error: insertError } =
+      await supabaseAdmin.from("returns").insert({
+        order_id: orderId,
+        buyer_pi_uid: user.pi_uid,
+        reason,
+        images,
+        status: "pending",
+      });
+
+    if (insertError) {
+      console.error("INSERT RETURN ERROR:", insertError);
+      return NextResponse.json(
+        { error: insertError.message },
+        { status: 500 }
+      );
+    }
 
     /* UPDATE ORDER */
-    await supabase
+    await supabaseAdmin
       .from("orders")
       .update({ status: "return_requested" })
       .eq("id", orderId);
 
     return NextResponse.json({ success: true });
   } catch (err) {
+    console.error("RETURN API ERROR:", err);
     return NextResponse.json(
       { error: "Server error" },
       { status: 500 }
