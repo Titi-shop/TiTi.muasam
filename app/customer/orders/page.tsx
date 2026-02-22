@@ -33,6 +33,7 @@ interface Order {
 type OrderTab =
   | "all"
   | "pending"
+  | "confirmed"
   | "pickup"
   | "shipping"
   | "received"
