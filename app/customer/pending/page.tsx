@@ -157,6 +157,10 @@ export default function PendingOrdersPage() {
       setProcessingId(null);
     }
   }
+     const totalPi = orders.reduce(
+    (sum, o) => sum + Number(o.total),
+    0
+  );
 
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
