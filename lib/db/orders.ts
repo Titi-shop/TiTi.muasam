@@ -457,3 +457,50 @@ export async function updateOrderStatusBySeller(
 
   return true;
 }
+
+/* =====================================================
+   UPDATE ORDER STATUS BY BUYER (FULL ORDER)
+===================================================== */
+export async function updateOrderStatusByBuyer(
+  buyerPiUid: string,
+  orderId: string,
+  status: string
+): Promise<boolean> {
+
+  /* 1️⃣ Kiểm tra order có thuộc buyer */
+  const checkRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&buyer_pi_uid=eq.${buyerPiUid}&select=id`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!checkRes.ok) return false;
+
+  const orders = await checkRes.json() as Array<{ id: string }>;
+  if (orders.length === 0) return false;
+
+  /* 2️⃣ Update toàn bộ order_items */
+  const updateItemsRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}`,
+    {
+      method: "PATCH",
+      headers: headers(),
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  if (!updateItemsRes.ok) return false;
+
+  /* 3️⃣ Update order */
+  const updateOrderRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`,
+    {
+      method: "PATCH",
+      headers: headers(),
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  if (!updateOrderRes.ok) return false;
+
+  return true;
+}
