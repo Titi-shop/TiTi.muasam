@@ -377,7 +377,7 @@ export async function createOrder(params: {
       method: "POST",
       headers: headers(),
       body: JSON.stringify({
-        buyer_pi_uid: buyerPiUid,
+        buyer_id: buyerPiUid,
         buyer_name: shipping.name,
         buyer_phone: shipping.phone,
         buyer_address: shipping.address,
@@ -469,7 +469,7 @@ export async function updateOrderStatusByBuyer(
 
   /* 1️⃣ Kiểm tra order có thuộc buyer */
   const checkRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&buyer_pi_uid=eq.${buyerPiUid}&select=id`,
+    `${SUPABASE_URL}//rest/v1/orders?id=eq.${orderId}&buyer_id=eq.${buyerPiUid}&select=id`,
     { headers: headers(), cache: "no-store" }
   );
 
