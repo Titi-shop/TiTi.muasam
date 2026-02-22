@@ -1,8 +1,3 @@
-Cần sửa file app/customer/pickup/page.tsx
-Chỉ sửa phần hiển thị đơn hàng như hình không thay đổi gì .
-
-app/customer/pickup/page.tsx
-
 "use client";
 
 export const dynamic = "force-dynamic";
