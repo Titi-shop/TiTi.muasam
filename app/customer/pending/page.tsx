@@ -49,8 +49,11 @@ export default function PendingOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const [showCancelFor, setShowCancelFor] = useState<string | null>(null);
   const [selectedReason, setSelectedReason] = useState<string>("");
   const [customReason, setCustomReason] = useState<string>("");
+   
   function formatPi(value: number | string): string {
     return Number(value).toFixed(6);
   }
@@ -129,35 +132,42 @@ export default function PendingOrdersPage() {
   /* =========================
      CANCEL ORDER
   ========================== */
-  async function handleCancel(orderId: string) {
-    try {
-      setProcessingId(orderId);
+  async function handleCancel(
+  orderId: string,
+  reason: string
+) {
+  try {
+    setProcessingId(orderId);
 
-      const token = await getPiAccessToken();
+    const token = await getPiAccessToken();
 
-      const res = await fetch(`/api/orders/${orderId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          status: "cancelled",
-        }),
-      });
+    const res = await fetch(`/api/orders/${orderId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        status: "cancelled",
+        cancel_reason: reason,
+      }),
+    });
 
-      if (!res.ok) {
-        throw new Error("CANCEL_FAILED");
-      }
-
-      await loadOrders();
-    } catch (err) {
-      console.error("❌ Cancel order error:", err);
-      alert("Không thể huỷ đơn.");
-    } finally {
-      setProcessingId(null);
+    if (!res.ok) {
+      throw new Error("CANCEL_FAILED");
     }
+
+    setSelectedReason("");
+    setCustomReason("");
+    setShowCancelFor(null);
+
+    await loadOrders();
+  } catch (err) {
+    alert("Không thể huỷ đơn.");
+  } finally {
+    setProcessingId(null);
   }
+}
      const totalPi = orders.reduce(
     (sum, o) => sum + Number(o.total),
     0
@@ -247,9 +257,7 @@ export default function PendingOrdersPage() {
                   </p>
 
                   <button
-                    onClick={() =>
-                      handleCancel(o.id)
-                    }
+  onClick={() => setShowCancelFor(o.id)}
                     disabled={processingId === o.id}
                     className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
                   >
