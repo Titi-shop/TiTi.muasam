@@ -39,6 +39,18 @@ interface Order {
   status: OrderStatus;
   order_items: OrderItem[];
 }
+/* =========================
+   CANCEL REASONS
+========================= */
+const CANCEL_REASONS = [
+  "Thay đổi ý định mua",
+  "Đặt nhầm sản phẩm",
+  "Muốn thay đổi số lượng / biến thể",
+  "Tìm được giá tốt hơn",
+  "Thời gian giao hàng quá lâu",
+  "Muốn cập nhật địa chỉ / số điện thoại",
+  "Khác",
+];
 
 /* =========================
    PAGE
