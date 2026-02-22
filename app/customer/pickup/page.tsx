@@ -8,12 +8,37 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { getPiAccessToken } from "@/lib/piAuth";
 
 /* =========================
+   ORDER STATUS
+========================= */
+type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "pickup"
+  | "shipping"
+  | "completed"
+  | "cancelled";
+
+/* =========================
    TYPES
 ========================= */
+interface Product {
+  id: string;
+  name: string;
+  images: string[];
+}
+
+interface OrderItem {
+  quantity: number;
+  price: number;
+  product_id: string;
+  product?: Product;
+}
+
 interface Order {
-  id: number;
+  id: string;
   total: number;
-  status: string;
+  status: OrderStatus;
+  order_items: OrderItem[];
 }
 
 /* =========================
@@ -25,14 +50,15 @@ export default function CustomerPickupPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  /* =========================
-     LOAD ORDERS (PICKUP)
-  ========================= */
+  function formatPi(value: number | string): string {
+    return Number(value).toFixed(6);
+  }
+
   useEffect(() => {
-    loadOrders();
+    void loadOrders();
   }, []);
 
-  const loadOrders = async () => {
+  async function loadOrders(): Promise<void> {
     try {
       const token = await getPiAccessToken();
 
@@ -45,24 +71,60 @@ export default function CustomerPickupPage() {
 
       if (!res.ok) throw new Error("UNAUTHORIZED");
 
-      const data: unknown = await res.json();
-      const list = Array.isArray(data) ? (data as Order[]) : [];
+      const rawOrders: Order[] = await res.json();
 
-      // ✅ chỉ lấy đơn pickup
-      setOrders(list.filter((o) => o.status === "pickup"));
+      // ✅ chỉ lấy đơn pickup (seller đã xác nhận)
+      const filtered = rawOrders.filter(
+        (o) => o.status === "pickup"
+      );
+
+      const productIds = Array.from(
+        new Set(
+          filtered.flatMap((o) =>
+            o.order_items?.map((i) => i.product_id) ?? []
+          )
+        )
+      );
+
+      if (productIds.length === 0) {
+        setOrders(filtered);
+        return;
+      }
+
+      const productRes = await fetch(
+        `/api/products?ids=${productIds.join(",")}`,
+        { cache: "no-store" }
+      );
+
+      if (!productRes.ok)
+        throw new Error("FETCH_PRODUCTS_FAILED");
+
+      const products: Product[] = await productRes.json();
+
+      const productMap: Record<string, Product> =
+        Object.fromEntries(
+          products.map((p) => [p.id, p])
+        );
+
+      const enriched = filtered.map((o) => ({
+        ...o,
+        order_items: (o.order_items ?? []).map((i) => ({
+          ...i,
+          product: productMap[i.product_id],
+        })),
+      }));
+
+      setOrders(enriched);
     } catch (err) {
       console.error("❌ Load pickup orders error:", err);
       setOrders([]);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  /* =========================
-     SUMMARY
-  ========================= */
   const totalPi = orders.reduce(
-    (sum, o) => sum + Number(o.total || 0),
+    (sum, o) => sum + Number(o.total),
     0
   );
 
@@ -71,19 +133,19 @@ export default function CustomerPickupPage() {
   ========================= */
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
-      {/* ===== HEADER ===== */}
+      {/* HEADER */}
       <header className="bg-orange-500 text-white px-4 py-4">
         <div className="bg-orange-400 rounded-lg p-4">
           <p className="text-sm opacity-90">
             {t.order_info}
           </p>
           <p className="text-xs opacity-80 mt-1">
-            {t.orders}: {orders.length} · π{totalPi}
+            {t.orders}: {orders.length} · π{formatPi(totalPi)}
           </p>
         </div>
       </header>
 
-      {/* ===== CONTENT ===== */}
+      {/* CONTENT */}
       <section className="mt-6 px-4">
         {loading ? (
           <p className="text-center text-gray-400">
@@ -92,7 +154,10 @@ export default function CustomerPickupPage() {
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
             <div className="w-32 h-32 bg-gray-200 rounded-full mb-4 opacity-40" />
-            <p>{t.no_pickup_orders}</p>
+            <p>
+              {t.no_pickup_orders ||
+                "Không có đơn chờ nhận"}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -103,15 +168,45 @@ export default function CustomerPickupPage() {
               >
                 <div className="flex justify-between items-center">
                   <span className="font-semibold">
-                    #{o.id}
+                    #{o.id.slice(0, 8)}
                   </span>
                   <span className="text-orange-500 text-sm font-medium">
-                    {t.status_pickup}
+                    {t.status_pickup || "Chờ nhận hàng"}
                   </span>
                 </div>
 
-                <p className="mt-2 text-sm text-gray-700">
-                  {t.total}: π{o.total}
+                <div className="mt-3 space-y-2">
+                  {o.order_items.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex gap-3 items-center"
+                    >
+                      <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden">
+                        {item.product?.images?.[0] && (
+                          <img
+                            src={item.product.images[0]}
+                            alt={item.product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium line-clamp-1">
+                          {item.product?.name ?? "—"}
+                        </p>
+
+                        <p className="text-xs text-gray-500">
+                          x{item.quantity} · π
+                          {formatPi(item.price)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-3 text-sm text-gray-700 font-medium">
+                  {t.total}: π{formatPi(o.total)}
                 </p>
               </div>
             ))}
