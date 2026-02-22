@@ -144,11 +144,11 @@ export async function PATCH(
       );
     }
 
-    const ok = await updateOrderStatusBySeller(
-      user.pi_uid,
-      orderId,
-      "cancelled"
-    );
+    const ok = await updateOrderStatusByBuyer(
+  user.pi_uid,
+  orderId,
+  "cancelled"
+);
 
     if (!ok) {
       return NextResponse.json(
