@@ -178,27 +178,17 @@ export default function SellerPendingOrdersPage() {
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
       {/* ===== HEADER ===== */}
-      <header className="bg-gray-500/90 backdrop-blur text-white px-4 py-6 shadow-sm">
-        <p className="text-sm opacity-90">
-          Đơn hàng chờ xác nhận
-        </p>
+      <header className="bg-gray-500/90 backdrop-blur text-white px-4 py-4 shadow-sm">
+  <div className="bg-gray-400/40 backdrop-blur-md rounded-lg p-4 border border-white/10">
+    <p className="text-sm opacity-90">
+      {t.order_info}
+    </p>
 
-        <div className="mt-2 flex justify-between items-end">
-          <div>
-            <p className="text-2xl font-semibold">
-              {orders.length}
-            </p>
-            <p className="text-xs opacity-80">đơn</p>
-          </div>
-
-          <div className="text-right">
-            <p className="text-xs opacity-80">Tổng PI</p>
-            <p className="text-lg font-semibold">
-              π{formatPi(totalPi)}
-            </p>
-          </div>
-        </div>
-      </header>
+    <p className="text-xs opacity-80 mt-1">
+      {t.orders}: {orders.length} · π{formatPi(totalPi)}
+    </p>
+  </div>
+</header>
 
       {/* ===== CONTENT ===== */}
       <section className="px-4 mt-5 space-y-4">
