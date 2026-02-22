@@ -3,11 +3,13 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
+import { getPiAccessToken } from "@/lib/piAuth";
 
-/* ================= TYPES ================= */
+/* =========================
+   TYPES
+========================= */
 
 interface Product {
   id: string;
@@ -16,290 +18,242 @@ interface Product {
 }
 
 interface OrderItem {
-  product_id: string;
   quantity: number;
   price: number;
+  product_id: string;
   product?: Product;
 }
 
-interface Buyer {
-  name: string;
-  phone: string;
-  address: string;
-}
+type OrderStatus = "pending" | "confirmed" | "cancelled";
 
 interface Order {
   id: string;
-  status: "pending" | "confirmed" | "cancelled";
   total: number;
-  created_at: string;
-  buyer?: Buyer;
+  status: OrderStatus;
   order_items: OrderItem[];
 }
 
-/* ================= TYPE GUARD ================= */
+/* =========================
+   HELPERS
+========================= */
 
-function isOrderArray(data: unknown): data is Order[] {
-  if (!Array.isArray(data)) return false;
-
-  return data.every((o) =>
-    typeof o === "object" &&
-    o !== null &&
-    "id" in o &&
-    "total" in o &&
-    "created_at" in o &&
-    "order_items" in o
-  );
+function formatPi(value: number | string): string {
+  const n = Number(value);
+  return Number.isFinite(n) ? n.toFixed(6) : "0.000000";
 }
 
-/* ================= HELPERS ================= */
+/* =========================
+   PAGE
+========================= */
 
-function formatPi(value: number): string {
-  return Number.isFinite(value) ? value.toFixed(6) : "0.000000";
-}
-
-function formatDate(date: string): string {
-  const d = new Date(date);
-  return Number.isNaN(d.getTime())
-    ? "—"
-    : d.toLocaleDateString("vi-VN");
-}
-
-/* ================= PAGE ================= */
-
-export default function SellerPendingOrdersPage() {
-  const router = useRouter();
+export default function PendingOrdersPage() {
+  const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  /* ================= LOAD ================= */
+  /* =========================
+     LOAD ORDERS
+  ========================= */
 
-  const loadOrders = useCallback(async () => {
-    setLoading(true);
+  useEffect(() => {
+    void loadOrders();
+  }, []);
 
+  async function loadOrders(): Promise<void> {
     try {
-      const res = await apiAuthFetch(
-        "/api/seller/orders?status=pending",
-        { cache: "no-store" }
+      const token = await getPiAccessToken();
+
+      const res = await fetch("/api/orders", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+
+      if (!res.ok) throw new Error("UNAUTHORIZED");
+
+      const rawOrders: Order[] = await res.json();
+
+      const pendingOrders = rawOrders.filter(
+        (o) => o.status === "pending"
       );
 
-      if (!res.ok) {
-        setOrders([]);
+      /* Collect product ids */
+      const productIds = Array.from(
+        new Set(
+          pendingOrders.flatMap((o) =>
+            o.order_items?.map((i) => i.product_id) ?? []
+          )
+        )
+      );
+
+      if (productIds.length === 0) {
+        setOrders(pendingOrders);
         return;
       }
 
-      const data: unknown = await res.json();
+      const productRes = await fetch(
+        `/api/products?ids=${productIds.join(",")}`,
+        { cache: "no-store" }
+      );
 
-      if (isOrderArray(data)) {
-        setOrders(data);
-      } else {
-        setOrders([]);
-      }
-    } catch {
+      if (!productRes.ok)
+        throw new Error("FETCH_PRODUCTS_FAILED");
+
+      const products: Product[] = await productRes.json();
+
+      const productMap: Record<string, Product> =
+        Object.fromEntries(
+          products.map((p) => [p.id, p])
+        );
+
+      const enrichedOrders: Order[] = pendingOrders.map(
+        (o) => ({
+          ...o,
+          order_items: (o.order_items ?? []).map((i) => ({
+            ...i,
+            product: productMap[i.product_id],
+          })),
+        })
+      );
+
+      setOrders(enrichedOrders);
+    } catch (err) {
+      console.error("Load pending orders error:", err);
       setOrders([]);
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    void loadOrders();
-  }, [loadOrders]);
-
-  /* ================= TOTAL ================= */
-
-  const totalPi = useMemo(() => {
-    return orders.reduce((sum, o) => sum + o.total, 0);
-  }, [orders]);
-
-  /* ================= ACTIONS ================= */
-
-  const confirmOrder = useCallback(
-    async (orderId: string) => {
-      try {
-        setProcessingId(orderId);
-
-        const res = await apiAuthFetch(
-          `/api/seller/orders/${orderId}/confirm`,
-          { method: "PATCH" }
-        );
-
-        if (!res.ok) return;
-
-        await loadOrders();
-      } catch {
-        // Silent fail (Pi Browser stability)
-      } finally {
-        setProcessingId(null);
-      }
-    },
-    [loadOrders]
-  );
-
-  const cancelOrder = useCallback(
-    async (orderId: string) => {
-      if (!window.confirm("Bạn chắc chắn muốn huỷ đơn này?"))
-        return;
-
-      try {
-        setProcessingId(orderId);
-
-        const res = await apiAuthFetch(
-          `/api/seller/orders/${orderId}/cancel`,
-          { method: "PATCH" }
-        );
-
-        if (!res.ok) return;
-
-        await loadOrders();
-      } catch {
-        // Silent fail
-      } finally {
-        setProcessingId(null);
-      }
-    },
-    [loadOrders]
-  );
-
-  /* ================= LOADING ================= */
-
-  if (loading) {
-    return (
-      <p className="text-center mt-10 text-gray-500">
-        ⏳ Đang tải...
-      </p>
-    );
   }
 
-  /* ================= UI ================= */
+  /* =========================
+     SUMMARY
+  ========================= */
+
+  const totalPi = useMemo(
+    () =>
+      orders.reduce(
+        (sum, o) => sum + Number(o.total),
+        0
+      ),
+    [orders]
+  );
+
+  /* =========================
+     STATUS LABEL SAFE
+  ========================= */
+
+  function getStatusLabel(status: OrderStatus): string {
+    switch (status) {
+      case "pending":
+        return t.status_pending ?? "Pending";
+      case "confirmed":
+        return t.status_confirmed ?? "Confirmed";
+      case "cancelled":
+        return t.status_cancelled ?? "Cancelled";
+      default:
+        return status;
+    }
+  }
+
+  /* =========================
+     UI
+  ========================= */
 
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
       {/* ===== HEADER ===== */}
-      <header className="bg-gray-500/90 backdrop-blur text-white px-4 py-4 shadow-sm">
-  <div className="bg-gray-400/40 backdrop-blur-md rounded-lg p-4 border border-white/10">
-    <p className="text-sm opacity-90">
-      {t.order_info}
-    </p>
+      <header className="bg-orange-500 text-white px-4 py-4">
+        <div className="bg-orange-400 rounded-lg p-4">
+          <p className="text-sm opacity-90">
+            {t.order_info ?? "Order Information"}
+          </p>
 
-    <p className="text-xs opacity-80 mt-1">
-      {t.orders}: {orders.length} · π{formatPi(totalPi)}
-    </p>
-  </div>
-</header>
+          <p className="text-xs opacity-80 mt-1">
+            {t.orders ?? "Orders"}: {orders.length} · π
+            {formatPi(totalPi)}
+          </p>
+        </div>
+      </header>
 
       {/* ===== CONTENT ===== */}
-      <section className="px-4 mt-5 space-y-4">
-        {orders.length === 0 ? (
+      <section className="mt-6 px-4">
+        {loading ? (
           <p className="text-center text-gray-400">
-            Không có đơn chờ xác nhận
+            ⏳ {t.loading_orders ?? "Loading orders..."}
           </p>
+        ) : orders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center mt-16 text-gray-400">
+            <div className="w-24 h-24 bg-gray-200 rounded-full mb-4 opacity-40" />
+            <p>
+              {t.no_pending_orders ??
+                "No pending orders"}
+            </p>
+          </div>
         ) : (
-          orders.map((order) => (
-            <div
-              key={order.id}
-              onClick={() =>
-                router.push(`/seller/orders/${order.id}`)
-              }
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer active:scale-[0.99] transition"
-            >
-              {/* HEADER */}
-              <div className="flex justify-between px-4 py-3 border-b bg-gray-50">
-                <div>
-                  <p className="font-semibold text-sm">
-                    #{order.id.slice(0, 8)}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {formatDate(order.created_at)}
-                  </p>
-                </div>
-
-                <span className="text-xs font-medium px-3 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                  Chờ xác nhận
-                </span>
-              </div>
-
-              {/* BUYER */}
-              <div className="px-4 py-3 text-sm space-y-1">
-                <p>
-                  <span className="text-gray-500">Khách:</span>{" "}
-                  {order.buyer?.name ?? "—"}
-                </p>
-                <p>
-                  <span className="text-gray-500">SĐT:</span>{" "}
-                  {order.buyer?.phone ?? "—"}
-                </p>
-                <p className="text-gray-600 text-xs">
-                  {order.buyer?.address ??
-                    "Không có địa chỉ"}
-                </p>
-              </div>
-
-              {/* ITEMS */}
-              <div className="divide-y">
-                {order.order_items.map((item) => (
-                  <div
-                    key={`${order.id}-${item.product_id}`}
-                    className="flex gap-3 p-4"
-                  >
-                    <img
-                      src={
-                        item.product?.images?.[0] ??
-                        "/placeholder.png"
-                      }
-                      alt={item.product?.name ?? "product"}
-                      className="w-14 h-14 rounded-lg object-cover bg-gray-100"
-                    />
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium line-clamp-1">
-                        {item.product?.name ??
-                          "Sản phẩm"}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        x{item.quantity} · π
-                        {formatPi(item.price)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* FOOTER */}
+          <div className="space-y-3">
+            {orders.map((o) => (
               <div
-                className="flex justify-between items-center px-4 py-3 border-t bg-gray-50 text-sm"
-                onClick={(e) => e.stopPropagation()}
+                key={o.id}
+                className="bg-white rounded-lg p-4 shadow-sm"
               >
-                <span className="font-semibold">
-                  π{formatPi(order.total)}
-                </span>
+                {/* ORDER HEADER */}
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold">
+                    #{o.id.slice(0, 8)}
+                  </span>
 
-                <div className="flex gap-2">
-                  <button
-                    disabled={processingId === order.id}
-                    onClick={() =>
-                      confirmOrder(order.id)
-                    }
-                    className="px-3 py-1.5 text-xs bg-gray-700 text-white rounded-lg disabled:opacity-50"
-                  >
-                    Xác nhận
-                  </button>
-
-                  <button
-                    disabled={processingId === order.id}
-                    onClick={() =>
-                      cancelOrder(order.id)
-                    }
-                    className="px-3 py-1.5 text-xs border border-gray-400 rounded-lg"
-                  >
-                    Huỷ
-                  </button>
+                  <span className="text-orange-500 text-sm font-medium">
+                    {getStatusLabel(o.status)}
+                  </span>
                 </div>
+
+                {/* ITEMS */}
+                <div className="mt-3 space-y-2">
+                  {(o.order_items ?? []).map(
+                    (item) => (
+                      <div
+                        key={`${o.id}-${item.product_id}`}
+                        className="flex gap-3 items-center"
+                      >
+                        <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                          {item.product?.images?.[0] && (
+                            <img
+                              src={
+                                item.product.images[0]
+                              }
+                              alt={
+                                item.product.name
+                              }
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium line-clamp-1">
+                            {item.product?.name ?? "—"}
+                          </p>
+
+                          <p className="text-xs text-gray-500">
+                            x{item.quantity} · π
+                            {formatPi(item.price)}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+
+                {/* TOTAL */}
+                <p className="mt-3 text-sm text-gray-700 font-medium">
+                  {t.total ?? "Total"}: π
+                  {formatPi(o.total)}
+                </p>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </section>
     </main>
