@@ -35,15 +35,16 @@ export async function PATCH(
   try {
     // chỉ cho phép buyer của đơn được cập nhật
     const result = await query(
-      `
-      UPDATE orders
-      SET status = $1
-      WHERE id = $2
-        AND buyer_id = $3
-      RETURNING *
-      `,
-      [status, orderId, user.pi_uid]
-    );
+  `
+  UPDATE orders
+  SET status = $1,
+      cancel_reason = $2
+  WHERE id = $3
+    AND buyer_id = $4
+  RETURNING *
+  `,
+  [status, cancel_reason ?? null, orderId, user.pi_uid]
+);
 
     if (!result.rows.length) {
       return NextResponse.json(
