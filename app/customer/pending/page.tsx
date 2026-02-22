@@ -7,7 +7,9 @@ import { useEffect, useState } from "react";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { getPiAccessToken } from "@/lib/piAuth";
 
-/* ========================= */
+/* =========================
+   ORDER STATUS
+========================= */
 type OrderStatus =
   | "pending"
   | "confirmed"
@@ -15,7 +17,9 @@ type OrderStatus =
   | "completed"
   | "cancelled";
 
-/* ========================= */
+/* =========================
+   TYPES
+========================= */
 interface Product {
   id: string;
   name: string;
@@ -36,16 +40,15 @@ interface Order {
   order_items: OrderItem[];
 }
 
-/* ========================= */
+/* =========================
+   PAGE
+========================= */
 export default function PendingOrdersPage() {
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
-  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState<boolean>(false);
-  const [processingConfirm, setProcessingConfirm] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   function formatPi(value: number | string): string {
     return Number(value).toFixed(6);
@@ -55,12 +58,17 @@ export default function PendingOrdersPage() {
     void loadOrders();
   }, []);
 
+  /* =========================
+     LOAD ORDERS
+  ========================== */
   async function loadOrders(): Promise<void> {
     try {
       const token = await getPiAccessToken();
 
       const res = await fetch("/api/orders", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         cache: "no-store",
       });
 
@@ -90,10 +98,15 @@ export default function PendingOrdersPage() {
         { cache: "no-store" }
       );
 
+      if (!productRes.ok)
+        throw new Error("FETCH_PRODUCTS_FAILED");
+
       const products: Product[] = await productRes.json();
 
       const productMap: Record<string, Product> =
-        Object.fromEntries(products.map((p) => [p.id, p]));
+        Object.fromEntries(
+          products.map((p) => [p.id, p])
+        );
 
       const enriched = filtered.map((o) => ({
         ...o,
@@ -113,11 +126,11 @@ export default function PendingOrdersPage() {
   }
 
   /* =========================
-     CONFIRM ORDER
-  ========================= */
-  async function handleConfirm(orderId: string) {
+     CANCEL ORDER
+  ========================== */
+  async function handleCancel(orderId: string) {
     try {
-      setProcessingConfirm(orderId);
+      setProcessingId(orderId);
 
       const token = await getPiAccessToken();
 
@@ -128,58 +141,22 @@ export default function PendingOrdersPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          status: "confirmed",
-        }),
-      });
-
-      if (!res.ok) throw new Error("CONFIRM_FAILED");
-
-      await loadOrders();
-    } catch (err) {
-      console.error("❌ Confirm error:", err);
-    } finally {
-      setProcessingConfirm(null);
-    }
-  }
-
-  /* =========================
-     CANCEL ORDER
-  ========================= */
-  async function handleCancel(reason: string) {
-    if (!cancelOrderId) return;
-
-    try {
-      setSubmitting(true);
-
-      const token = await getPiAccessToken();
-
-      const res = await fetch(`/api/orders/${cancelOrderId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
           status: "cancelled",
-          cancel_reason: reason,
         }),
       });
 
-      if (!res.ok) throw new Error("CANCEL_FAILED");
+      if (!res.ok) {
+        throw new Error("CANCEL_FAILED");
+      }
 
       await loadOrders();
-      setCancelOrderId(null);
     } catch (err) {
-      console.error("❌ Cancel error:", err);
+      console.error("❌ Cancel order error:", err);
+      alert("Không thể huỷ đơn.");
     } finally {
-      setSubmitting(false);
+      setProcessingId(null);
     }
   }
-
-  const totalPi = orders.reduce(
-    (sum, o) => sum + Number(o.total),
-    0
-  );
 
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
@@ -187,55 +164,53 @@ export default function PendingOrdersPage() {
       <header className="bg-orange-500 text-white px-4 py-4">
         <div className="bg-orange-400 rounded-lg p-4">
           <p className="text-sm opacity-90">
-            {t.order_info}
+            {t.status_pending || "Chờ xác nhận"}
           </p>
           <p className="text-xs opacity-80 mt-1">
-            {t.orders}: {orders.length} · π{formatPi(totalPi)}
+            {t.orders}: {orders.length}
           </p>
         </div>
       </header>
 
+      {/* CONTENT */}
       <section className="mt-6 px-4">
         {loading ? (
           <p className="text-center text-gray-400">
-            {t.loading_orders}
+            {t.loading_orders || "Đang tải..."}
           </p>
         ) : orders.length === 0 ? (
-          <div className="text-center mt-16 text-gray-400">
-            {t.no_pending_orders}
+          <div className="flex flex-col items-center justify-center mt-16 text-gray-400">
+            <div className="w-24 h-24 bg-gray-200 rounded-full mb-4 opacity-40" />
+            <p>
+              {t.no_pending_orders ||
+                "Không có đơn chờ xác nhận"}
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
             {orders.map((o) => (
               <div
                 key={o.id}
-                className="bg-white rounded-xl shadow-sm p-4"
+                className="bg-white rounded-xl shadow-sm overflow-hidden"
               >
-                {/* Top row */}
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold">
-                    #{o.id.slice(0, 8)}
+                {/* HEADER CARD */}
+                <div className="flex justify-between items-center px-4 py-3 border-b">
+                  <span className="font-semibold text-sm">
+                    #{o.id}
                   </span>
-
-                  <button
-                    onClick={() => handleConfirm(o.id)}
-                    disabled={processingConfirm === o.id}
-                    className="px-3 py-1 text-xs border border-green-500 text-green-500 rounded hover:bg-green-500 hover:text-white"
-                  >
-                    {processingConfirm === o.id
-                      ? "Đang xử lý..."
-                      : "Xác nhận"}
-                  </button>
+                  <span className="text-orange-500 text-sm font-medium">
+                    {t.status_pending || "Chờ xác nhận"}
+                  </span>
                 </div>
 
-                {/* Products */}
-                <div className="mt-3 space-y-2">
+                {/* PRODUCTS */}
+                <div className="px-4 py-3 space-y-3">
                   {o.order_items.map((item, idx) => (
                     <div
                       key={idx}
                       className="flex gap-3 items-center"
                     >
-                      <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden">
+                      <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden">
                         {item.product?.images?.[0] && (
                           <img
                             src={item.product.images[0]}
@@ -245,29 +220,37 @@ export default function PendingOrdersPage() {
                         )}
                       </div>
 
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium line-clamp-1">
                           {item.product?.name ?? "—"}
                         </p>
+
                         <p className="text-xs text-gray-500">
-                          x{item.quantity} · π{formatPi(item.price)}
+                          x{item.quantity} · π
+                          {formatPi(item.price)}
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Bottom row */}
-                <div className="flex justify-between items-center mt-4">
+                {/* FOOTER */}
+                <div className="flex justify-between items-center px-4 py-3 border-t">
                   <p className="text-sm font-semibold">
-                    {t.total}: π{formatPi(o.total)}
+                    {t.total || "Tổng cộng"}: π
+                    {formatPi(o.total)}
                   </p>
 
                   <button
-                    onClick={() => setCancelOrderId(o.id)}
-                    className="text-xs text-red-500"
+                    onClick={() =>
+                      handleCancel(o.id)
+                    }
+                    disabled={processingId === o.id}
+                    className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
                   >
-                    Huỷ đơn
+                    {processingId === o.id
+                      ? "Đang huỷ..."
+                      : "Huỷ đơn"}
                   </button>
                 </div>
               </div>
@@ -275,40 +258,6 @@ export default function PendingOrdersPage() {
           </div>
         )}
       </section>
-
-      {/* CANCEL POPUP */}
-      {cancelOrderId && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4">
-          <div className="bg-white w-full max-w-sm rounded-lg p-4 space-y-3">
-            <h3 className="font-semibold text-sm">
-              Chọn lý do huỷ
-            </h3>
-
-            <button
-              onClick={() => handleCancel("Hết hàng")}
-              className="w-full border rounded-lg py-2 text-sm"
-              disabled={submitting}
-            >
-              Hết hàng
-            </button>
-
-            <button
-              onClick={() => handleCancel("Ngưng bán")}
-              className="w-full border rounded-lg py-2 text-sm"
-              disabled={submitting}
-            >
-              Ngưng bán
-            </button>
-
-            <button
-              onClick={() => setCancelOrderId(null)}
-              className="w-full text-gray-400 text-xs mt-2"
-            >
-              Đóng
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
