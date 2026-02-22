@@ -39,7 +39,7 @@ export async function PATCH(
       UPDATE orders
       SET status = $1
       WHERE id = $2
-        AND buyer_pi_uid = $3
+        AND buyer_id = $3
       RETURNING *
       `,
       [status, orderId, user.pi_uid]
