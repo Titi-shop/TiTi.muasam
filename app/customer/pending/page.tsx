@@ -49,13 +49,14 @@ export default function PendingOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState<string>("");
+  const [submitting, setSubmitting] = useState<boolean>(false);
+
   function formatPi(value: number | string): string {
     return Number(value).toFixed(6);
   }
 
-  /* =========================
-     LOAD ORDERS
-  ========================= */
   useEffect(() => {
     void loadOrders();
   }, []);
@@ -75,12 +76,10 @@ export default function PendingOrdersPage() {
 
       const rawOrders: Order[] = await res.json();
 
-      /* 🔥 CHỈ HIỂN THỊ ĐƠN CHỜ XÁC NHẬN */
       const filtered = rawOrders.filter(
         (o) => o.status === "pending"
       );
 
-      /* ===== LẤY PRODUCT ===== */
       const productIds = Array.from(
         new Set(
           filtered.flatMap((o) =>
@@ -127,16 +126,53 @@ export default function PendingOrdersPage() {
   }
 
   /* =========================
-     SUMMARY
+     CANCEL ORDER
   ========================= */
+  async function handleCancel(): Promise<void> {
+    if (!cancelOrderId) return;
+
+    try {
+      setSubmitting(true);
+
+      const token = await getPiAccessToken();
+
+      const res = await fetch(
+        `/api/orders/${cancelOrderId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status: "cancelled",
+            cancel_reason: cancelReason,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("CANCEL_FAILED");
+      }
+
+      setOrders((prev) =>
+        prev.filter((o) => o.id !== cancelOrderId)
+      );
+
+      setCancelOrderId(null);
+      setCancelReason("");
+    } catch (err) {
+      console.error("❌ Cancel order error:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const totalPi = orders.reduce(
     (sum, o) => sum + Number(o.total),
     0
   );
 
-  /* =========================
-     UI
-  ========================= */
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
       <header className="bg-orange-500 text-white px-4 py-4">
@@ -153,7 +189,7 @@ export default function PendingOrdersPage() {
       <section className="mt-6 px-4">
         {loading ? (
           <p className="text-center text-gray-400">
-             {t.loading_orders}
+            {t.loading_orders}
           </p>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-16 text-gray-400">
@@ -182,7 +218,7 @@ export default function PendingOrdersPage() {
                       key={idx}
                       className="flex gap-3 items-center"
                     >
-                      <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                      <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden">
                         {item.product?.images?.[0] && (
                           <img
                             src={item.product.images[0]}
@@ -208,11 +244,57 @@ export default function PendingOrdersPage() {
                 <p className="mt-3 text-sm text-gray-700 font-medium">
                   {t.total}: π{formatPi(o.total)}
                 </p>
+
+                {/* 🔥 CANCEL BUTTON */}
+                <button
+                  onClick={() => setCancelOrderId(o.id)}
+                  className="mt-3 w-full bg-red-500 text-white py-2 rounded-lg text-sm font-medium"
+                >
+                  Huỷ đơn
+                </button>
               </div>
             ))}
           </div>
         )}
       </section>
+
+      {/* 🔥 CANCEL MODAL */}
+      {cancelOrderId && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4">
+          <div className="bg-white w-full max-w-sm rounded-lg p-4">
+            <h3 className="font-semibold mb-3">
+              Lý do huỷ đơn
+            </h3>
+
+            <textarea
+              value={cancelReason}
+              onChange={(e) =>
+                setCancelReason(e.target.value)
+              }
+              className="w-full border rounded-lg p-2 text-sm"
+              rows={3}
+              placeholder="Nhập lý do..."
+            />
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => setCancelOrderId(null)}
+                className="flex-1 border rounded-lg py-2 text-sm"
+              >
+                Đóng
+              </button>
+
+              <button
+                onClick={handleCancel}
+                disabled={submitting}
+                className="flex-1 bg-red-500 text-white rounded-lg py-2 text-sm"
+              >
+                {submitting ? "Đang huỷ..." : "Xác nhận huỷ"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
