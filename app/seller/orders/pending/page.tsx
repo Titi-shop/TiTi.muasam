@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
@@ -22,27 +22,47 @@ interface OrderItem {
   product?: Product;
 }
 
+interface Buyer {
+  name: string;
+  phone: string;
+  address: string;
+}
+
 interface Order {
   id: string;
-  status: string;
+  status: "pending" | "confirmed" | "cancelled";
   total: number;
   created_at: string;
-  buyer?: {
-    name: string;
-    phone: string;
-    address: string;
-  };
+  buyer?: Buyer;
   order_items: OrderItem[];
+}
+
+/* ================= TYPE GUARD ================= */
+
+function isOrderArray(data: unknown): data is Order[] {
+  if (!Array.isArray(data)) return false;
+
+  return data.every((o) =>
+    typeof o === "object" &&
+    o !== null &&
+    "id" in o &&
+    "total" in o &&
+    "created_at" in o &&
+    "order_items" in o
+  );
 }
 
 /* ================= HELPERS ================= */
 
-function formatPi(v: number): string {
-  return Number.isFinite(v) ? v.toFixed(6) : "0.000000";
+function formatPi(value: number): string {
+  return Number.isFinite(value) ? value.toFixed(6) : "0.000000";
 }
 
 function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString("vi-VN");
+  const d = new Date(date);
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("vi-VN");
 }
 
 /* ================= PAGE ================= */
@@ -51,34 +71,44 @@ export default function SellerPendingOrdersPage() {
   const router = useRouter();
 
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   /* ================= LOAD ================= */
 
-  useEffect(() => {
-    void loadOrders();
-  }, []);
+  const loadOrders = useCallback(async () => {
+    setLoading(true);
 
-  async function loadOrders(): Promise<void> {
     try {
       const res = await apiAuthFetch(
         "/api/seller/orders?status=pending",
         { cache: "no-store" }
       );
 
-      if (!res.ok) throw new Error("LOAD_FAILED");
+      if (!res.ok) {
+        setOrders([]);
+        return;
+      }
 
       const data: unknown = await res.json();
-      setOrders(Array.isArray(data) ? (data as Order[]) : []);
+
+      if (isOrderArray(data)) {
+        setOrders(data);
+      } else {
+        setOrders([]);
+      }
     } catch {
       setOrders([]);
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  /* ================= TOTAL PI ================= */
+  useEffect(() => {
+    void loadOrders();
+  }, [loadOrders]);
+
+  /* ================= TOTAL ================= */
 
   const totalPi = useMemo(() => {
     return orders.reduce((sum, o) => sum + o.total, 0);
@@ -86,45 +116,52 @@ export default function SellerPendingOrdersPage() {
 
   /* ================= ACTIONS ================= */
 
-  async function confirmOrder(orderId: string): Promise<void> {
-    try {
-      setProcessingId(orderId);
+  const confirmOrder = useCallback(
+    async (orderId: string) => {
+      try {
+        setProcessingId(orderId);
 
-      const res = await apiAuthFetch(
-        `/api/seller/orders/${orderId}/confirm`,
-        { method: "PATCH" }
-      );
+        const res = await apiAuthFetch(
+          `/api/seller/orders/${orderId}/confirm`,
+          { method: "PATCH" }
+        );
 
-      if (!res.ok) throw new Error("CONFIRM_FAILED");
+        if (!res.ok) return;
 
-      await loadOrders();
-    } catch {
-      // silent fail for Pi Browser
-    } finally {
-      setProcessingId(null);
-    }
-  }
+        await loadOrders();
+      } catch {
+        // Silent fail (Pi Browser stability)
+      } finally {
+        setProcessingId(null);
+      }
+    },
+    [loadOrders]
+  );
 
-  async function cancelOrder(orderId: string): Promise<void> {
-    if (!confirm("Bạn chắc chắn muốn huỷ đơn này?")) return;
+  const cancelOrder = useCallback(
+    async (orderId: string) => {
+      if (!window.confirm("Bạn chắc chắn muốn huỷ đơn này?"))
+        return;
 
-    try {
-      setProcessingId(orderId);
+      try {
+        setProcessingId(orderId);
 
-      const res = await apiAuthFetch(
-        `/api/seller/orders/${orderId}/cancel`,
-        { method: "PATCH" }
-      );
+        const res = await apiAuthFetch(
+          `/api/seller/orders/${orderId}/cancel`,
+          { method: "PATCH" }
+        );
 
-      if (!res.ok) throw new Error("CANCEL_FAILED");
+        if (!res.ok) return;
 
-      await loadOrders();
-    } catch {
-      // silent fail
-    } finally {
-      setProcessingId(null);
-    }
-  }
+        await loadOrders();
+      } catch {
+        // Silent fail
+      } finally {
+        setProcessingId(null);
+      }
+    },
+    [loadOrders]
+  );
 
   /* ================= LOADING ================= */
 
@@ -140,7 +177,7 @@ export default function SellerPendingOrdersPage() {
 
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
-      {/* ===== HEADER (XÁM MỜ HIỆN ĐẠI) ===== */}
+      {/* ===== HEADER ===== */}
       <header className="bg-gray-500/90 backdrop-blur text-white px-4 py-6 shadow-sm">
         <p className="text-sm opacity-90">
           Đơn hàng chờ xác nhận
@@ -178,7 +215,7 @@ export default function SellerPendingOrdersPage() {
               }
               className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer active:scale-[0.99] transition"
             >
-              {/* ORDER HEADER */}
+              {/* HEADER */}
               <div className="flex justify-between px-4 py-3 border-b bg-gray-50">
                 <div>
                   <p className="font-semibold text-sm">
@@ -194,22 +231,23 @@ export default function SellerPendingOrdersPage() {
                 </span>
               </div>
 
-              {/* BUYER INFO */}
+              {/* BUYER */}
               <div className="px-4 py-3 text-sm space-y-1">
                 <p>
                   <span className="text-gray-500">Khách:</span>{" "}
-                  {order.buyer?.name || "—"}
+                  {order.buyer?.name ?? "—"}
                 </p>
                 <p>
                   <span className="text-gray-500">SĐT:</span>{" "}
-                  {order.buyer?.phone || "—"}
+                  {order.buyer?.phone ?? "—"}
                 </p>
                 <p className="text-gray-600 text-xs">
-                  {order.buyer?.address || "Không có địa chỉ"}
+                  {order.buyer?.address ??
+                    "Không có địa chỉ"}
                 </p>
               </div>
 
-              {/* PRODUCTS */}
+              {/* ITEMS */}
               <div className="divide-y">
                 {order.order_items.map((item) => (
                   <div
@@ -227,10 +265,12 @@ export default function SellerPendingOrdersPage() {
 
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium line-clamp-1">
-                        {item.product?.name ?? "Sản phẩm"}
+                        {item.product?.name ??
+                          "Sản phẩm"}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        x{item.quantity} · π{formatPi(item.price)}
+                        x{item.quantity} · π
+                        {formatPi(item.price)}
                       </p>
                     </div>
                   </div>
@@ -249,7 +289,9 @@ export default function SellerPendingOrdersPage() {
                 <div className="flex gap-2">
                   <button
                     disabled={processingId === order.id}
-                    onClick={() => confirmOrder(order.id)}
+                    onClick={() =>
+                      confirmOrder(order.id)
+                    }
                     className="px-3 py-1.5 text-xs bg-gray-700 text-white rounded-lg disabled:opacity-50"
                   >
                     Xác nhận
@@ -257,7 +299,9 @@ export default function SellerPendingOrdersPage() {
 
                   <button
                     disabled={processingId === order.id}
-                    onClick={() => cancelOrder(order.id)}
+                    onClick={() =>
+                      cancelOrder(order.id)
+                    }
                     className="px-3 py-1.5 text-xs border border-gray-400 rounded-lg"
                   >
                     Huỷ
