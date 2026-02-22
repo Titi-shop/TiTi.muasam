@@ -159,8 +159,9 @@ export default function ShippingOrdersPage() {
       setProcessingId(null);
     }
   }
-   const filtered = rawOrders.filter(
-  (o) => o.status === "shipping"
+   const totalPi = orders.reduce(
+  (sum, o) => sum + Number(o.total),
+  0
 );
 
   return (
