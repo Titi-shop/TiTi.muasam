@@ -6,6 +6,7 @@ export const fetchCache = "force-no-store";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 /* ================= TYPES ================= */
 
@@ -22,16 +23,18 @@ interface OrderItem {
   product?: Product;
 }
 
+interface Buyer {
+  name: string;
+  phone: string;
+  address: string;
+}
+
 interface Order {
   id: string;
   status: string;
   total: number;
   created_at: string;
-  buyer?: {
-    name: string;
-    phone: string;
-    address: string;
-  };
+  buyer?: Buyer;
   order_items: OrderItem[];
 }
 
@@ -42,17 +45,20 @@ function formatPi(v: number): string {
 }
 
 function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString("vi-VN");
+  const d = new Date(date);
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("vi-VN");
 }
 
 /* ================= PAGE ================= */
 
 export default function SellerShippingOrdersPage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [processingId, setProcessingId] = useState<string | null>(null);
 
   /* ================= LOAD ================= */
 
@@ -78,39 +84,18 @@ export default function SellerShippingOrdersPage() {
     }
   }
 
-  /* ================= TOTAL PI ================= */
+  /* ================= TOTAL ================= */
 
   const totalPi = useMemo(() => {
     return orders.reduce((sum, o) => sum + o.total, 0);
   }, [orders]);
-
-  /* ================= ACTIONS ================= */
-
-  async function completeOrder(orderId: string): Promise<void> {
-    try {
-      setProcessingId(orderId);
-
-      const res = await apiAuthFetch(
-        `/api/seller/orders/${orderId}/complete`,
-        { method: "PATCH" }
-      );
-
-      if (!res.ok) throw new Error("COMPLETE_FAILED");
-
-      await loadOrders();
-    } catch {
-      // silent fail
-    } finally {
-      setProcessingId(null);
-    }
-  }
 
   /* ================= LOADING ================= */
 
   if (loading) {
     return (
       <p className="text-center mt-10 text-gray-500">
-        ⏳ Đang tải...
+        ⏳ {t.loading ?? "Loading..."}
       </p>
     );
   }
@@ -120,25 +105,16 @@ export default function SellerShippingOrdersPage() {
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
       {/* ===== HEADER ===== */}
-      <header className="bg-gray-500/90 backdrop-blur text-white px-4 py-6 shadow-sm">
-        <p className="text-sm opacity-90">
-          Đơn hàng đang giao
-        </p>
+      <header className="bg-gray-600/90 backdrop-blur-lg text-white px-4 py-5 shadow-md">
+        <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+          <p className="text-sm font-medium opacity-90">
+            {t.shipping_orders ?? "Shipping Orders"}
+          </p>
 
-        <div className="mt-2 flex justify-between items-end">
-          <div>
-            <p className="text-2xl font-semibold">
-              {orders.length}
-            </p>
-            <p className="text-xs opacity-80">đơn</p>
-          </div>
-
-          <div className="text-right">
-            <p className="text-xs opacity-80">Tổng PI</p>
-            <p className="text-lg font-semibold">
-              π{formatPi(totalPi)}
-            </p>
-          </div>
+          <p className="text-xs mt-1 text-white/80">
+            {t.orders ?? "Orders"}: {orders.length} · π
+            {formatPi(totalPi)}
+          </p>
         </div>
       </header>
 
@@ -146,16 +122,16 @@ export default function SellerShippingOrdersPage() {
       <section className="px-4 mt-5 space-y-4">
         {orders.length === 0 ? (
           <p className="text-center text-gray-400">
-            Không có đơn đang giao
+            {t.no_shipping_orders ?? "No shipping orders"}
           </p>
         ) : (
           orders.map((order) => (
             <div
               key={order.id}
-              onClick={() =>
+              onDoubleClick={() =>
                 router.push(`/seller/orders/${order.id}`)
               }
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer active:scale-[0.99] transition"
+              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden active:scale-[0.99] transition"
             >
               {/* ORDER HEADER */}
               <div className="flex justify-between px-4 py-3 border-b bg-gray-50">
@@ -169,22 +145,29 @@ export default function SellerShippingOrdersPage() {
                 </div>
 
                 <span className="text-xs font-medium px-3 py-1 rounded-full bg-blue-100 text-blue-700">
-                  Đang giao
+                  {t.status_shipping ?? "Shipping"}
                 </span>
               </div>
 
               {/* BUYER INFO */}
               <div className="px-4 py-3 text-sm space-y-1">
                 <p>
-                  <span className="text-gray-500">Khách:</span>{" "}
-                  {order.buyer?.name || "—"}
+                  <span className="text-gray-500">
+                    {t.customer ?? "Customer"}:
+                  </span>{" "}
+                  {order.buyer?.name ?? "—"}
                 </p>
+
                 <p>
-                  <span className="text-gray-500">SĐT:</span>{" "}
-                  {order.buyer?.phone || "—"}
+                  <span className="text-gray-500">
+                    {t.phone ?? "Phone"}:
+                  </span>{" "}
+                  {order.buyer?.phone ?? "—"}
                 </p>
+
                 <p className="text-gray-600 text-xs">
-                  {order.buyer?.address || "Không có địa chỉ"}
+                  {order.buyer?.address ??
+                    (t.no_address ?? "No address")}
                 </p>
               </div>
 
@@ -206,32 +189,28 @@ export default function SellerShippingOrdersPage() {
 
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium line-clamp-1">
-                        {item.product?.name ?? "Sản phẩm"}
+                        {item.product?.name ??
+                          (t.product ?? "Product")}
                       </p>
+
                       <p className="text-xs text-gray-500 mt-1">
-                        x{item.quantity} · π{formatPi(item.price)}
+                        x{item.quantity} · π
+                        {formatPi(item.price)}
                       </p>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* FOOTER */}
+              {/* FOOTER (CHỈ HIỂN THỊ TỔNG) */}
               <div
-                className="flex justify-between items-center px-4 py-3 border-t bg-gray-50 text-sm"
+                className="px-4 py-3 border-t bg-gray-50 text-sm"
                 onClick={(e) => e.stopPropagation()}
               >
                 <span className="font-semibold">
-                  π{formatPi(order.total)}
+                  {t.total ?? "Total"}: π
+                  {formatPi(order.total)}
                 </span>
-
-                <button
-                  disabled={processingId === order.id}
-                  onClick={() => completeOrder(order.id)}
-                  className="px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg disabled:opacity-50"
-                >
-                  Hoàn thành
-                </button>
               </div>
             </div>
           ))
