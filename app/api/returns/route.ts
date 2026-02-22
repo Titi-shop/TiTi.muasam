@@ -28,7 +28,7 @@ export async function POST(req: Request) {
         .from("orders")
         .select("*")
         .eq("id", orderId)
-        .eq("buyer_pi_uid", user.pi_uid)
+        .eq("buyer_id", user.pi_uid)
         .single();
 
     if (orderError || !order) {
