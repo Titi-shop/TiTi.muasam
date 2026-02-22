@@ -3,13 +3,12 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-import { getPiAccessToken } from "@/lib/piAuth";
 
-/* =========================
-   TYPES
-========================= */
+/* ================= TYPES ================= */
 
 interface Product {
   id: string;
@@ -18,131 +17,94 @@ interface Product {
 }
 
 interface OrderItem {
+  product_id: string;
   quantity: number;
   price: number;
-  product_id: string;
   product?: Product;
+}
+
+interface Buyer {
+  name: string;
+  phone: string;
+  address: string;
 }
 
 type OrderStatus = "pending" | "confirmed" | "cancelled";
 
 interface Order {
   id: string;
-  total: number;
   status: OrderStatus;
+  total: number;
+  created_at: string;
+  buyer?: Buyer;
   order_items: OrderItem[];
 }
 
-/* =========================
-   HELPERS
-========================= */
+/* ================= HELPERS ================= */
 
-function formatPi(value: number | string): string {
-  const n = Number(value);
-  return Number.isFinite(n) ? n.toFixed(6) : "0.000000";
+function formatPi(v: number): string {
+  return Number.isFinite(v) ? v.toFixed(6) : "0.000000";
 }
 
-/* =========================
-   PAGE
-========================= */
+function formatDate(date: string): string {
+  const d = new Date(date);
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("vi-VN");
+}
 
-export default function PendingOrdersPage() {
+/* ================= PAGE ================= */
+
+export default function SellerPendingOrdersPage() {
+  const router = useRouter();
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  /* =========================
-     LOAD ORDERS
-  ========================= */
+  /* ================= LOAD ================= */
 
-  useEffect(() => {
-    void loadOrders();
-  }, []);
+  const loadOrders = useCallback(async () => {
+    setLoading(true);
 
-  async function loadOrders(): Promise<void> {
     try {
-      const token = await getPiAccessToken();
-
-      const res = await fetch("/api/orders", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
-      });
-
-      if (!res.ok) throw new Error("UNAUTHORIZED");
-
-      const rawOrders: Order[] = await res.json();
-
-      const pendingOrders = rawOrders.filter(
-        (o) => o.status === "pending"
-      );
-
-      /* Collect product ids */
-      const productIds = Array.from(
-        new Set(
-          pendingOrders.flatMap((o) =>
-            o.order_items?.map((i) => i.product_id) ?? []
-          )
-        )
-      );
-
-      if (productIds.length === 0) {
-        setOrders(pendingOrders);
-        return;
-      }
-
-      const productRes = await fetch(
-        `/api/products?ids=${productIds.join(",")}`,
+      const res = await apiAuthFetch(
+        "/api/seller/orders?status=pending",
         { cache: "no-store" }
       );
 
-      if (!productRes.ok)
-        throw new Error("FETCH_PRODUCTS_FAILED");
+      if (!res.ok) {
+        setOrders([]);
+        return;
+      }
 
-      const products: Product[] = await productRes.json();
+      const data: unknown = await res.json();
 
-      const productMap: Record<string, Product> =
-        Object.fromEntries(
-          products.map((p) => [p.id, p])
-        );
-
-      const enrichedOrders: Order[] = pendingOrders.map(
-        (o) => ({
-          ...o,
-          order_items: (o.order_items ?? []).map((i) => ({
-            ...i,
-            product: productMap[i.product_id],
-          })),
-        })
-      );
-
-      setOrders(enrichedOrders);
-    } catch (err) {
-      console.error("Load pending orders error:", err);
+      if (Array.isArray(data)) {
+        setOrders(data as Order[]);
+      } else {
+        setOrders([]);
+      }
+    } catch {
       setOrders([]);
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  /* =========================
-     SUMMARY
-  ========================= */
+  useEffect(() => {
+    void loadOrders();
+  }, [loadOrders]);
+
+  /* ================= SUMMARY ================= */
 
   const totalPi = useMemo(
-    () =>
-      orders.reduce(
-        (sum, o) => sum + Number(o.total),
-        0
-      ),
+    () => orders.reduce((sum, o) => sum + o.total, 0),
     [orders]
   );
 
-  /* =========================
-     STATUS LABEL SAFE
-  ========================= */
+  /* ================= STATUS LABEL ================= */
 
   function getStatusLabel(status: OrderStatus): string {
     switch (status) {
@@ -157,20 +119,77 @@ export default function PendingOrdersPage() {
     }
   }
 
-  /* =========================
-     UI
-  ========================= */
+  /* ================= ACTIONS ================= */
+
+  const confirmOrder = useCallback(
+    async (orderId: string) => {
+      try {
+        setProcessingId(orderId);
+
+        const res = await apiAuthFetch(
+          `/api/seller/orders/${orderId}/confirm`,
+          { method: "PATCH" }
+        );
+
+        if (!res.ok) return;
+
+        await loadOrders();
+      } catch {
+        // silent fail for Pi Browser
+      } finally {
+        setProcessingId(null);
+      }
+    },
+    [loadOrders]
+  );
+
+  const cancelOrder = useCallback(
+    async (orderId: string) => {
+      if (!window.confirm(t.confirm_cancel ?? "Cancel this order?"))
+        return;
+
+      try {
+        setProcessingId(orderId);
+
+        const res = await apiAuthFetch(
+          `/api/seller/orders/${orderId}/cancel`,
+          { method: "PATCH" }
+        );
+
+        if (!res.ok) return;
+
+        await loadOrders();
+      } catch {
+        // silent fail
+      } finally {
+        setProcessingId(null);
+      }
+    },
+    [loadOrders, t.confirm_cancel]
+  );
+
+  /* ================= LOADING ================= */
+
+  if (loading) {
+    return (
+      <p className="text-center mt-10 text-gray-500">
+        ⏳ {t.loading ?? "Loading..."}
+      </p>
+    );
+  }
+
+  /* ================= UI ================= */
 
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
-      {/* ===== HEADER ===== */}
-      <header className="bg-orange-500 text-white px-4 py-4">
-        <div className="bg-orange-400 rounded-lg p-4">
-          <p className="text-sm opacity-90">
-            {t.order_info ?? "Order Information"}
+      {/* ===== HEADER (XÁM MỜ) ===== */}
+      <header className="bg-gray-600/90 backdrop-blur-lg text-white px-4 py-5 shadow-md">
+        <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+          <p className="text-sm font-medium opacity-90">
+            {t.pending_orders ?? "Pending Orders"}
           </p>
 
-          <p className="text-xs opacity-80 mt-1">
+          <p className="text-xs mt-1 text-white/80">
             {t.orders ?? "Orders"}: {orders.length} · π
             {formatPi(totalPi)}
           </p>
@@ -178,82 +197,126 @@ export default function PendingOrdersPage() {
       </header>
 
       {/* ===== CONTENT ===== */}
-      <section className="mt-6 px-4">
-        {loading ? (
+      <section className="px-4 mt-5 space-y-4">
+        {orders.length === 0 ? (
           <p className="text-center text-gray-400">
-            ⏳ {t.loading_orders ?? "Loading orders..."}
+            {t.no_pending_orders ?? "No pending orders"}
           </p>
-        ) : orders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center mt-16 text-gray-400">
-            <div className="w-24 h-24 bg-gray-200 rounded-full mb-4 opacity-40" />
-            <p>
-              {t.no_pending_orders ??
-                "No pending orders"}
-            </p>
-          </div>
         ) : (
-          <div className="space-y-3">
-            {orders.map((o) => (
-              <div
-                key={o.id}
-                className="bg-white rounded-lg p-4 shadow-sm"
-              >
-                {/* ORDER HEADER */}
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold">
-                    #{o.id.slice(0, 8)}
-                  </span>
-
-                  <span className="text-orange-500 text-sm font-medium">
-                    {getStatusLabel(o.status)}
-                  </span>
+          orders.map((order) => (
+            <div
+              key={order.id}
+              onClick={() =>
+                router.push(`/seller/orders/${order.id}`)
+              }
+              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer active:scale-[0.99] transition"
+            >
+              {/* ORDER HEADER */}
+              <div className="flex justify-between px-4 py-3 border-b bg-gray-50">
+                <div>
+                  <p className="font-semibold text-sm">
+                    #{order.id.slice(0, 8)}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {formatDate(order.created_at)}
+                  </p>
                 </div>
 
-                {/* ITEMS */}
-                <div className="mt-3 space-y-2">
-                  {(o.order_items ?? []).map(
-                    (item) => (
-                      <div
-                        key={`${o.id}-${item.product_id}`}
-                        className="flex gap-3 items-center"
-                      >
-                        <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                          {item.product?.images?.[0] && (
-                            <img
-                              src={
-                                item.product.images[0]
-                              }
-                              alt={
-                                item.product.name
-                              }
-                              className="w-full h-full object-cover"
-                            />
-                          )}
-                        </div>
+                <span className="text-xs font-medium px-3 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                  {getStatusLabel(order.status)}
+                </span>
+              </div>
 
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium line-clamp-1">
-                            {item.product?.name ?? "—"}
-                          </p>
+              {/* BUYER */}
+              <div className="px-4 py-3 text-sm space-y-1">
+                <p>
+                  <span className="text-gray-500">
+                    {t.customer ?? "Customer"}:
+                  </span>{" "}
+                  {order.buyer?.name ?? "—"}
+                </p>
 
-                          <p className="text-xs text-gray-500">
-                            x{item.quantity} · π
-                            {formatPi(item.price)}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  )}
-                </div>
+                <p>
+                  <span className="text-gray-500">
+                    {t.phone ?? "Phone"}:
+                  </span>{" "}
+                  {order.buyer?.phone ?? "—"}
+                </p>
 
-                {/* TOTAL */}
-                <p className="mt-3 text-sm text-gray-700 font-medium">
-                  {t.total ?? "Total"}: π
-                  {formatPi(o.total)}
+                <p className="text-gray-600 text-xs">
+                  {order.buyer?.address ??
+                    (t.no_address ?? "No address")}
                 </p>
               </div>
-            ))}
-          </div>
+
+              {/* PRODUCTS */}
+              <div className="divide-y">
+                {(order.order_items ?? []).map((item) => (
+                  <div
+                    key={`${order.id}-${item.product_id}`}
+                    className="flex gap-3 p-4"
+                  >
+                    <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      {item.product?.images?.[0] ? (
+                        <img
+                          src={item.product.images[0]}
+                          alt={item.product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200" />
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium line-clamp-1">
+                        {item.product?.name ??
+                          (t.product ?? "Product")}
+                      </p>
+
+                      <p className="text-xs text-gray-500 mt-1">
+                        x{item.quantity} · π
+                        {formatPi(item.price)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* FOOTER */}
+              <div
+                className="flex justify-between items-center px-4 py-3 border-t bg-gray-50 text-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="font-semibold">
+                  {t.total ?? "Total"}: π
+                  {formatPi(order.total)}
+                </span>
+
+                <div className="flex gap-2">
+                  <button
+                    disabled={processingId === order.id}
+                    onClick={() =>
+                      confirmOrder(order.id)
+                    }
+                    className="px-3 py-1.5 text-xs bg-gray-700 text-white rounded-lg disabled:opacity-50"
+                  >
+                    {t.confirm ?? "Confirm"}
+                  </button>
+
+                  <button
+                    disabled={processingId === order.id}
+                    onClick={() =>
+                      cancelOrder(order.id)
+                    }
+                    className="px-3 py-1.5 text-xs border border-gray-400 rounded-lg"
+                  >
+                    {t.cancel ?? "Cancel"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
         )}
       </section>
     </main>
