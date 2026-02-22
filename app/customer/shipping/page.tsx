@@ -10,15 +10,30 @@ import { getPiAccessToken } from "@/lib/piAuth";
 /* =========================
    TYPES (NO any)
 ========================= */
+
+interface Product {
+  id: string;
+  name: string;
+  image_url: string | null;
+}
+
+interface OrderItem {
+  id: string;
+  quantity: number;
+  product: Product;
+}
+
 interface Order {
   id: string;
   total: number;
   status: string;
+  items: OrderItem[];
 }
 
 /* =========================
    HELPERS
 ========================= */
+
 function formatPi(value: number): string {
   return Number(value).toFixed(6);
 }
@@ -26,6 +41,7 @@ function formatPi(value: number): string {
 /* =========================
    PAGE
 ========================= */
+
 export default function CustomerShippingPage() {
   const { t } = useTranslation();
 
@@ -52,7 +68,7 @@ export default function CustomerShippingPage() {
       const data: unknown = await res.json();
       const list = Array.isArray(data) ? (data as Order[]) : [];
 
-      // ✅ chỉ lấy đơn đang giao
+      // chỉ lấy đơn đang giao
       setOrders(list.filter((o) => o.status === "shipping"));
     } catch (err) {
       console.error("❌ Load shipping orders error:", err);
@@ -85,7 +101,7 @@ export default function CustomerShippingPage() {
       <section className="mt-6 px-4">
         {loading ? (
           <p className="text-center text-gray-400">
-             {t.loading_orders}
+            {t.loading_orders}
           </p>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
@@ -93,12 +109,13 @@ export default function CustomerShippingPage() {
             <p>{t.no_shipping_orders || "Không có đơn đang giao"}</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {orders.map((o) => (
               <div
                 key={o.id}
                 className="bg-white rounded-lg p-4 shadow-sm"
               >
+                {/* ORDER HEADER */}
                 <div className="flex justify-between items-center">
                   <span className="font-semibold">
                     #{o.id.slice(0, 8)}
@@ -108,7 +125,41 @@ export default function CustomerShippingPage() {
                   </span>
                 </div>
 
-                <p className="mt-2 text-sm text-gray-700">
+                {/* PRODUCTS */}
+                <div className="mt-3 space-y-3">
+                  {o.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3"
+                    >
+                      <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
+                        {item.product.image_url ? (
+                          <img
+                            src={item.product.image_url}
+                            alt={item.product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                            No Image
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-800">
+                          {item.product.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          x{item.quantity}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* TOTAL */}
+                <p className="mt-4 text-sm text-gray-700 font-medium">
                   {t.total}: π{formatPi(o.total)}
                 </p>
               </div>
