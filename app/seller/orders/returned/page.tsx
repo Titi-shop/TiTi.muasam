@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
-/* =========================
-   TYPES (NO any)
-========================= */
+/* ================= TYPES ================= */
+
 interface Order {
   id: string;
   total: number | null;
@@ -16,9 +18,22 @@ interface Order {
   created_at: string;
 }
 
-/* =========================
-   PAGE
-========================= */
+/* ================= HELPERS ================= */
+
+function formatPi(v: number | null): string {
+  const n = Number(v ?? 0);
+  return Number.isFinite(n) ? n.toFixed(6) : "0.000000";
+}
+
+function formatDate(date: string): string {
+  const d = new Date(date);
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("vi-VN");
+}
+
+/* ================= PAGE ================= */
+
 export default function ReturnedOrdersPage() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -27,10 +42,14 @@ export default function ReturnedOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  /* =========================
-     LOAD ORDERS (AUTH-CENTRIC)
-  ========================= */
-  const fetchOrders = async () => {
+  /* ================= LOAD ================= */
+
+  useEffect(() => {
+    if (authLoading) return;
+    void fetchOrders();
+  }, [authLoading]);
+
+  async function fetchOrders(): Promise<void> {
     try {
       const res = await apiAuthFetch(
         "/api/seller/orders?status=returned",
@@ -38,121 +57,98 @@ export default function ReturnedOrdersPage() {
       );
 
       if (!res.ok) {
-        throw new Error("FAILED_TO_LOAD_ORDERS");
+        setOrders([]);
+        return;
       }
 
       const data: unknown = await res.json();
       setOrders(Array.isArray(data) ? (data as Order[]) : []);
-    } catch (err) {
-      console.error("❌ Load returned orders error:", err);
-      alert(
-        t.error_load_orders ||
-          "❌ Không thể tải đơn hàng hoàn lại"
-      );
+    } catch {
+      setOrders([]);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  /* =========================
-     EFFECT
-  ========================= */
-  useEffect(() => {
-    if (authLoading) return;
-    fetchOrders();
-  }, [authLoading]);
+  /* ================= TOTAL ================= */
 
-  /* =========================
-     STATS
-  ========================= */
-  const totalPi = orders.reduce(
-    (sum, o) => sum + (Number(o.total) || 0),
-    0
-  );
+  const totalPi = useMemo(() => {
+    return orders.reduce(
+      (sum, o) => sum + (Number(o.total) || 0),
+      0
+    );
+  }, [orders]);
 
-  /* =========================
-     LOADING
-  ========================= */
+  /* ================= LOADING ================= */
+
   if (loading || authLoading) {
     return (
       <p className="text-center mt-10 text-gray-500">
-        ⏳ {t.loading || "Đang tải..."}
+        ⏳ {t.loading ?? "Loading..."}
       </p>
     );
   }
 
-  /* =========================
-     UI
-  ========================= */
+  /* ================= UI ================= */
+
   return (
-    <main className="min-h-screen max-w-4xl mx-auto p-4 pb-24 bg-gray-50">
-      {/* HEADER */}
-      <div className="flex items-center mb-4">
-        <button
-          onClick={() => router.back()}
-          className="text-orange-500 font-semibold text-lg mr-2"
-        >
-          ←
-        </button>
-        <h1 className="text-xl font-semibold text-gray-800">
-          ↩️ {t.returned_orders || "Đơn hàng hoàn lại"}
-        </h1>
-      </div>
-
-      {/* STATS */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="card text-center">
-          <p className="text-gray-500 text-sm">
-            {t.total_orders || "Tổng đơn"}
+    <main className="min-h-screen bg-gray-100 pb-24">
+      {/* ===== HEADER XÁM MỜ ===== */}
+      <header className="bg-gray-600/90 backdrop-blur-lg text-white px-4 py-5 shadow-md">
+        <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+          <p className="text-sm font-medium opacity-90">
+            {t.returned_orders ?? "Returned Orders"}
           </p>
-          <p className="text-xl font-bold">{orders.length}</p>
-        </div>
 
-        <div className="card text-center">
-          <p className="text-gray-500 text-sm">
-            {t.total_pi || "Tổng Pi"}
-          </p>
-          <p className="text-xl font-bold">
-            {totalPi.toFixed(2)} Pi
+          <p className="text-xs mt-1 text-white/80">
+            {t.orders ?? "Orders"}: {orders.length} · π
+            {formatPi(totalPi)}
           </p>
         </div>
-      </div>
+      </header>
 
-      {/* ORDERS LIST */}
-      {orders.length === 0 ? (
-        <p className="text-center text-gray-500">
-          {t.no_return_orders ||
-            "Không có đơn hàng hoàn lại."}
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {orders.map((order) => (
+      {/* ===== CONTENT ===== */}
+      <section className="px-4 mt-5 space-y-4">
+        {orders.length === 0 ? (
+          <p className="text-center text-gray-400">
+            {t.no_return_orders ?? "No returned orders"}
+          </p>
+        ) : (
+          orders.map((order) => (
             <div
               key={order.id}
-              className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition"
+              onDoubleClick={() =>
+                router.push(`/seller/orders/${order.id}`)
+              }
+              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden active:scale-[0.99] transition"
             >
-              <p>
-                🧾 <b>{t.order_id || "Mã đơn"}:</b> #{order.id}
-              </p>
+              {/* ORDER HEADER */}
+              <div className="flex justify-between px-4 py-3 border-b bg-gray-50">
+                <div>
+                  <p className="font-semibold text-sm">
+                    #{order.id.slice(0, 8)}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {formatDate(order.created_at)}
+                  </p>
+                </div>
 
-              <p>
-                💰 <b>{t.total || "Tổng"}:</b>{" "}
-                {Number(order.total || 0).toFixed(2)} Pi
-              </p>
+                <span className="text-xs font-medium px-3 py-1 rounded-full bg-red-100 text-red-700">
+                  {t.status_returned ?? "Returned"}
+                </span>
+              </div>
 
-              <p className="text-sm text-gray-500">
-                📅 {new Date(order.created_at).toLocaleString()}
-              </p>
-
-              <p className="font-semibold text-blue-600">
-                ↩️ {t.returned_orders || "Hoàn lại"}
-              </p>
+              {/* FOOTER */}
+              <div className="px-4 py-3 border-t bg-gray-50 text-sm">
+                <span className="font-semibold">
+                  {t.total ?? "Total"}: π
+                  {formatPi(order.total)}
+                </span>
+              </div>
             </div>
-          ))}
-        </div>
-      )}
-
-      <div className="h-20" />
+          ))
+        )}
+      </section>
     </main>
   );
 }
