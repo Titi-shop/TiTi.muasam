@@ -145,74 +145,82 @@ export default function CustomerPickupPage() {
         </div>
       </header>
 
-      {/* CONTENT */}
-      <section className="mt-6 px-4">
-        {loading ? (
-          <p className="text-center text-gray-400">
-            ⏳ {t.loading_orders}
+    {/* CONTENT */}
+    <section className="mt-6 px-4">
+      {loading ? (
+        <p className="text-center text-gray-400">
+          ⏳ {t.loading_orders}
+        </p>
+      ) : orders.length === 0 ? (
+        <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
+          <div className="w-32 h-32 bg-gray-200 rounded-full mb-4 opacity-40" />
+          <p>
+            {t.no_pickup_orders || "Không có đơn chờ nhận"}
           </p>
-        ) : orders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
-            <div className="w-32 h-32 bg-gray-200 rounded-full mb-4 opacity-40" />
-            <p>
-              {t.no_pickup_orders ||
-                "Không có đơn chờ nhận"}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {orders.map((o) => (
-              <div
-                key={o.id}
-                className="bg-white rounded-lg p-4 shadow-sm"
-              >
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold">
-                    #{o.id.slice(0, 8)}
-                  </span>
-                  <span className="text-orange-500 text-sm font-medium">
-                    {t.status_pickup || "Chờ nhận hàng"}
-                  </span>
-                </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {orders.map((o) => (
+            <div
+              key={o.id}
+              className="bg-white rounded-xl shadow-sm overflow-hidden"
+            >
+              {/* HEADER CARD */}
+              <div className="flex justify-between items-center px-4 py-3 border-b">
+                <span className="font-medium text-sm break-all">
+                  #{o.id}
+                </span>
 
-                <div className="mt-3 space-y-2">
-                  {o.order_items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex gap-3 items-center"
-                    >
-                      <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden">
-                        {item.product?.images?.[0] && (
-                          <img
-                            src={item.product.images[0]}
-                            alt={item.product.name}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium line-clamp-1">
-                          {item.product?.name ?? "—"}
-                        </p>
-
-                        <p className="text-xs text-gray-500">
-                          x{item.quantity} · π
-                          {formatPi(item.price)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <p className="mt-3 text-sm text-gray-700 font-medium">
-                  {t.total}: π{formatPi(o.total)}
-                </p>
+                <span className="text-orange-500 text-sm font-medium">
+                  confirmed
+                </span>
               </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </main>
-  );
-}
+
+              {/* PRODUCT LIST */}
+              <div className="px-4 py-3 space-y-3">
+                {o.order_items.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex gap-3 items-center"
+                  >
+                    <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden">
+                      {item.product?.images?.[0] && (
+                        <img
+                          src={item.product.images[0]}
+                          alt={item.product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium line-clamp-1">
+                        {item.product?.name ?? "—"}
+                      </p>
+
+                      <p className="text-xs text-gray-500">
+                        x{item.quantity} · π
+                        {formatPi(item.price)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* FOOTER */}
+              <div className="flex justify-between items-center px-4 py-3 border-t">
+                <p className="text-sm font-semibold">
+                  Tổng cộng: π{formatPi(o.total)}
+                </p>
+
+                <button className="px-4 py-1.5 text-sm border border-orange-400 text-orange-500 rounded hover:bg-orange-500 hover:text-white transition">
+                  Mua ngay
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  </main>
+);
