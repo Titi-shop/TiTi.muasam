@@ -1,9 +1,13 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import {
   PackagePlus,
   Package,
@@ -34,13 +38,15 @@ type SellerOrder = {
 /* ================= PAGE ================= */
 
 export default function SellerPage() {
+  const { t } = useTranslation();
   const { user, loading, piReady } = useAuth();
+
   const [orders, setOrders] = useState<SellerOrder[]>([]);
-  const [fetching, setFetching] = useState<boolean>(false);
+  const [fetching, setFetching] = useState(false);
 
   const isSeller = user?.role === "seller";
 
-  /* ================= LOAD ORDERS ================= */
+  /* ================= LOAD ================= */
 
   useEffect(() => {
     if (!isSeller) return;
@@ -69,13 +75,13 @@ export default function SellerPage() {
           setOrders(validOrders);
         }
       } catch {
-        // Pi Browser cần silent fail
+        // silent fail for Pi Browser
       } finally {
         setFetching(false);
       }
     };
 
-    loadOrders();
+    void loadOrders();
   }, [isSeller]);
 
   /* ================= STATS ================= */
@@ -105,7 +111,7 @@ export default function SellerPage() {
   if (loading || !piReady) {
     return (
       <div className="flex justify-center mt-16 text-gray-500 text-sm">
-        ⏳ Đang tải...
+        ⏳ {t.loading ?? "Loading..."}
       </div>
     );
   }
@@ -113,7 +119,7 @@ export default function SellerPage() {
   if (!isSeller) {
     return (
       <div className="flex justify-center mt-16 text-gray-500 text-sm">
-        Bạn không có quyền truy cập
+        {t.no_permission ?? "You do not have permission"}
       </div>
     );
   }
@@ -123,7 +129,7 @@ export default function SellerPage() {
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-8">
       <h1 className="text-lg font-semibold text-gray-800">
-        🏪 Seller Dashboard
+        🏪 {t.seller_dashboard ?? "Seller Dashboard"}
       </h1>
 
       {/* ===== MAIN ACTIONS ===== */}
@@ -131,19 +137,19 @@ export default function SellerPage() {
         <MainCard
           href="/seller/post"
           icon={<PackagePlus size={18} />}
-          label="Đăng sản phẩm"
+          label={t.post_product ?? "Post Product"}
         />
 
         <MainCard
           href="/seller/stock"
           icon={<Package size={18} />}
-          label="Kho hàng"
+          label={t.stock ?? "Stock"}
         />
 
         <MainCard
           href="/seller/orders"
           icon={<ClipboardList size={18} />}
-          label="Tất cả đơn"
+          label={t.all_orders ?? "All Orders"}
           badge={stats.total}
         />
       </section>
@@ -151,7 +157,7 @@ export default function SellerPage() {
       {/* ===== ORDER STATUS ===== */}
       <section>
         <h2 className="text-xs font-semibold text-gray-500 mb-3">
-          TRẠNG THÁI ĐƠN
+          {t.order_status ?? "ORDER STATUS"}
         </h2>
 
         <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
@@ -159,36 +165,42 @@ export default function SellerPage() {
             href="/seller/orders/pending"
             icon={<Clock size={16} />}
             count={stats.pending}
+            label={t.pending_orders ?? "⏳ Pending"}
           />
 
           <StatusCard
             href="/seller/orders/confirmed"
             icon={<CheckCircle2 size={16} />}
             count={stats.confirmed}
+            label={t.confirmed_orders ?? "✔ Confirmed"}
           />
 
           <StatusCard
             href="/seller/orders/shipping"
             icon={<Truck size={16} />}
             count={stats.shipping}
+            label={t.shipping_orders ?? "🚚 Shipping"}
           />
 
           <StatusCard
             href="/seller/orders/completed"
             icon={<PackageCheck size={16} />}
             count={stats.completed}
+            label={t.completed_orders ?? "✅ Completed"}
           />
 
           <StatusCard
             href="/seller/orders/returned"
             icon={<RotateCcw size={16} />}
             count={stats.returned}
+            label={t.returned_orders ?? "↩️ Returned"}
           />
 
           <StatusCard
             href="/seller/orders/cancelled"
             icon={<XCircle size={16} />}
             count={stats.cancelled}
+            label={t.cancelled_orders ?? "❌ Cancelled"}
           />
         </div>
       </section>
@@ -220,7 +232,7 @@ function MainCard({
 
         <div className="flex flex-col items-center gap-1">
           <div className="text-gray-700">{icon}</div>
-          <span className="text-xs font-medium text-gray-700">
+          <span className="text-[11px] font-medium text-gray-700">
             {label}
           </span>
         </div>
@@ -235,10 +247,12 @@ function StatusCard({
   href,
   icon,
   count,
+  label,
 }: {
   href: string;
   icon: React.ReactNode;
   count: number;
+  label: string;
 }) {
   return (
     <Link href={href} className="block">
@@ -246,6 +260,11 @@ function StatusCard({
         <div className="flex justify-center mb-1 text-gray-600">
           {icon}
         </div>
+
+        <span className="block text-[11px] text-gray-600 mb-0.5">
+          {label}
+        </span>
+
         <span className="text-xs font-semibold text-gray-800">
           {count}
         </span>
