@@ -3,13 +3,12 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
-/* =========================
-   TYPES
-========================= */
+/* ================= TYPES ================= */
 
 interface Product {
   id: string;
@@ -32,34 +31,30 @@ interface Order {
   order_items: OrderItem[];
 }
 
-/* =========================
-   HELPERS
-========================= */
+/* ================= HELPERS ================= */
 
 function formatPi(v: number): string {
   return Number.isFinite(v) ? v.toFixed(6) : "0.000000";
 }
 
 function formatDate(date?: string): string {
-  if (!date) return "";
+  if (!date) return "—";
   const d = new Date(date);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString();
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("vi-VN");
 }
 
-/* =========================
-   PAGE
-========================= */
+/* ================= PAGE ================= */
 
 export default function SellerCanceledOrdersPage() {
+  const router = useRouter();
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
 
-  /* =========================
-     LOAD CANCELED ORDERS
-  ========================= */
+  /* ================= LOAD ================= */
 
   useEffect(() => {
     void loadOrders();
@@ -72,99 +67,121 @@ export default function SellerCanceledOrdersPage() {
         { cache: "no-store" }
       );
 
-      if (!res.ok) throw new Error("LOAD_FAILED");
+      if (!res.ok) {
+        setOrders([]);
+        return;
+      }
 
       const data: unknown = await res.json();
-      if (Array.isArray(data)) {
-        setOrders(data as Order[]);
-      } else {
-        setOrders([]);
-      }
-    } catch (err) {
-      console.error("❌ LOAD CANCELED ERROR:", err);
+      setOrders(Array.isArray(data) ? (data as Order[]) : []);
+    } catch {
       setOrders([]);
     } finally {
       setLoading(false);
     }
   }
 
-  /* =========================
-     UI
-  ========================= */
+  /* ================= TOTAL ================= */
+
+  const totalPi = useMemo(() => {
+    return orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+  }, [orders]);
+
+  /* ================= LOADING ================= */
 
   if (loading) {
     return (
       <p className="text-center mt-10 text-gray-500">
-        {t.loading || "Đang tải..."}
+        ⏳ {t.loading ?? "Loading..."}
       </p>
     );
   }
 
+  /* ================= UI ================= */
+
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
-      <header className="bg-gray-600 text-white px-4 py-4">
-        <div className="bg-gray-500 rounded-lg p-4">
-          <p className="text-sm">
-            {t.canceled_orders || "Đơn hàng đã huỷ"}
+      {/* ===== HEADER XÁM MỜ ===== */}
+      <header className="bg-gray-600/90 backdrop-blur-lg text-white px-4 py-5 shadow-md">
+        <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+          <p className="text-sm font-medium opacity-90">
+            {t.canceled_orders ?? "Canceled Orders"}
           </p>
-          <p className="text-xs mt-1">
-            {orders.length} đơn
+
+          <p className="text-xs mt-1 text-white/80">
+            {t.orders ?? "Orders"}: {orders.length} · π
+            {formatPi(totalPi)}
           </p>
         </div>
       </header>
 
-      <section className="mt-6 px-4 space-y-3">
+      {/* ===== CONTENT ===== */}
+      <section className="px-4 mt-5 space-y-4">
         {orders.length === 0 ? (
           <p className="text-center text-gray-400">
-            Không có đơn đã huỷ
+            {t.no_canceled_orders ?? "No canceled orders"}
           </p>
         ) : (
           orders.map((order) => (
             <div
               key={order.id}
-              className="bg-white p-4 rounded-lg shadow"
+              onDoubleClick={() =>
+                router.push(`/seller/orders/${order.id}`)
+              }
+              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden active:scale-[0.99] transition"
             >
-              <div className="flex justify-between mb-2">
-                <b>#{order.id.slice(0, 8)}</b>
-                <span className="text-gray-600">
-                  Đã huỷ
+              {/* ORDER HEADER */}
+              <div className="flex justify-between px-4 py-3 border-b bg-gray-50">
+                <div>
+                  <p className="font-semibold text-sm">
+                    #{order.id.slice(0, 8)}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {formatDate(order.created_at)}
+                  </p>
+                </div>
+
+                <span className="text-xs font-medium px-3 py-1 rounded-full bg-gray-200 text-gray-700">
+                  {t.status_canceled ?? "Canceled"}
                 </span>
               </div>
 
-              {order.created_at && (
-                <p className="text-xs text-gray-400 mb-2">
-                  {formatDate(order.created_at)}
-                </p>
-              )}
+              {/* ORDER ITEMS */}
+              <div className="px-4 py-3 space-y-2">
+                {order.order_items.map((item) => (
+                  <div
+                    key={`${order.id}-${item.product_id}`}
+                    className="flex gap-3"
+                  >
+                    <img
+                      src={
+                        item.product?.images?.[0] ??
+                        "/placeholder.png"
+                      }
+                      alt={item.product?.name ?? "product"}
+                      className="w-12 h-12 rounded object-cover"
+                    />
 
-              {order.order_items.map((item) => (
-                <div
-                  key={`${order.id}-${item.product_id}`}
-                  className="flex gap-3 mt-2"
-                >
-                  <img
-                    src={
-                      item.product?.images?.[0] ??
-                      "/placeholder.png"
-                    }
-                    alt={item.product?.name ?? "product"}
-                    className="w-12 h-12 rounded object-cover"
-                  />
+                    <div className="flex-1">
+                      <p className="text-sm">
+                        {item.product?.name ??
+                          (t.product ?? "Product")}
+                      </p>
 
-                  <div className="flex-1">
-                    <p className="text-sm">
-                      {item.product?.name ?? "Sản phẩm"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      x{item.quantity} · π{formatPi(item.price)}
-                    </p>
+                      <p className="text-xs text-gray-500">
+                        x{item.quantity} · π
+                        {formatPi(item.price)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
 
-              <p className="mt-3 font-semibold text-gray-700">
-                Tổng: π{formatPi(order.total)}
-              </p>
+              {/* FOOTER */}
+              <div className="px-4 py-3 border-t bg-gray-50 text-sm font-semibold">
+                {t.total ?? "Total"}: π
+                {formatPi(order.total)}
+              </div>
             </div>
           ))
         )}
