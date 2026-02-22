@@ -48,10 +48,7 @@ export default function PendingOrdersPage() {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
-  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
-  const [cancelReason, setCancelReason] = useState<string>("");
-  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   function formatPi(value: number | string): string {
     return Number(value).toFixed(6);
@@ -61,6 +58,9 @@ export default function PendingOrdersPage() {
     void loadOrders();
   }, []);
 
+  /* =========================
+     LOAD ORDERS
+  ========================== */
   async function loadOrders(): Promise<void> {
     try {
       const token = await getPiAccessToken();
@@ -127,98 +127,90 @@ export default function PendingOrdersPage() {
 
   /* =========================
      CANCEL ORDER
-  ========================= */
-  async function handleCancel(): Promise<void> {
-    if (!cancelOrderId) return;
-
+  ========================== */
+  async function handleCancel(orderId: string) {
     try {
-      setSubmitting(true);
+      setProcessingId(orderId);
 
       const token = await getPiAccessToken();
 
-      const res = await fetch(
-        `/api/orders/${cancelOrderId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            status: "cancelled",
-            cancel_reason: cancelReason,
-          }),
-        }
-      );
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status: "cancelled",
+        }),
+      });
 
       if (!res.ok) {
         throw new Error("CANCEL_FAILED");
       }
 
-      setOrders((prev) =>
-        prev.filter((o) => o.id !== cancelOrderId)
-      );
-
-      setCancelOrderId(null);
-      setCancelReason("");
+      await loadOrders();
     } catch (err) {
       console.error("❌ Cancel order error:", err);
+      alert("Không thể huỷ đơn.");
     } finally {
-      setSubmitting(false);
+      setProcessingId(null);
     }
   }
 
-  const totalPi = orders.reduce(
-    (sum, o) => sum + Number(o.total),
-    0
-  );
-
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
+      {/* HEADER */}
       <header className="bg-orange-500 text-white px-4 py-4">
         <div className="bg-orange-400 rounded-lg p-4">
           <p className="text-sm opacity-90">
-            {t.order_info}
+            {t.status_pending || "Chờ xác nhận"}
           </p>
           <p className="text-xs opacity-80 mt-1">
-            {t.orders}: {orders.length} · π{formatPi(totalPi)}
+            {t.orders}: {orders.length}
           </p>
         </div>
       </header>
 
+      {/* CONTENT */}
       <section className="mt-6 px-4">
         {loading ? (
           <p className="text-center text-gray-400">
-            {t.loading_orders}
+            {t.loading_orders || "Đang tải..."}
           </p>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-16 text-gray-400">
             <div className="w-24 h-24 bg-gray-200 rounded-full mb-4 opacity-40" />
-            <p>{t.no_pending_orders}</p>
+            <p>
+              {t.no_pending_orders ||
+                "Không có đơn chờ xác nhận"}
+            </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {orders.map((o) => (
               <div
                 key={o.id}
-                className="bg-white rounded-lg p-4 shadow-sm"
+                className="bg-white rounded-xl shadow-sm overflow-hidden"
               >
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold">
-                    #{o.id.slice(0, 8)}
+                {/* HEADER CARD */}
+                <div className="flex justify-between items-center px-4 py-3 border-b">
+                  <span className="font-semibold text-sm">
+                    #{o.id}
                   </span>
                   <span className="text-orange-500 text-sm font-medium">
-                    {t.status_pending}
+                    {t.status_pending || "Chờ xác nhận"}
                   </span>
                 </div>
 
-                <div className="mt-3 space-y-2">
+                {/* PRODUCTS */}
+                <div className="px-4 py-3 space-y-3">
                   {o.order_items.map((item, idx) => (
                     <div
                       key={idx}
                       className="flex gap-3 items-center"
                     >
-                      <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden">
+                      <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden">
                         {item.product?.images?.[0] && (
                           <img
                             src={item.product.images[0]}
@@ -234,67 +226,38 @@ export default function PendingOrdersPage() {
                         </p>
 
                         <p className="text-xs text-gray-500">
-                          x{item.quantity} · π{formatPi(item.price)}
+                          x{item.quantity} · π
+                          {formatPi(item.price)}
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <p className="mt-3 text-sm text-gray-700 font-medium">
-                  {t.total}: π{formatPi(o.total)}
-                </p>
+                {/* FOOTER */}
+                <div className="flex justify-between items-center px-4 py-3 border-t">
+                  <p className="text-sm font-semibold">
+                    {t.total || "Tổng cộng"}: π
+                    {formatPi(o.total)}
+                  </p>
 
-                {/* 🔥 CANCEL BUTTON */}
-                <button
-                  onClick={() => setCancelOrderId(o.id)}
-                  className="mt-3 w-full bg-red-500 text-white py-2 rounded-lg text-sm font-medium"
-                >
-                  Huỷ đơn
-                </button>
+                  <button
+                    onClick={() =>
+                      handleCancel(o.id)
+                    }
+                    disabled={processingId === o.id}
+                    className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
+                  >
+                    {processingId === o.id
+                      ? "Đang huỷ..."
+                      : "Huỷ đơn"}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </section>
-
-      {/* 🔥 CANCEL MODAL */}
-      {cancelOrderId && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4">
-          <div className="bg-white w-full max-w-sm rounded-lg p-4">
-            <h3 className="font-semibold mb-3">
-              Lý do huỷ đơn
-            </h3>
-
-            <textarea
-              value={cancelReason}
-              onChange={(e) =>
-                setCancelReason(e.target.value)
-              }
-              className="w-full border rounded-lg p-2 text-sm"
-              rows={3}
-              placeholder="Nhập lý do..."
-            />
-
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => setCancelOrderId(null)}
-                className="flex-1 border rounded-lg py-2 text-sm"
-              >
-                Đóng
-              </button>
-
-              <button
-                onClick={handleCancel}
-                disabled={submitting}
-                className="flex-1 bg-red-500 text-white rounded-lg py-2 text-sm"
-              >
-                {submitting ? "Đang huỷ..." : "Xác nhận huỷ"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
