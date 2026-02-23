@@ -76,7 +76,31 @@ export default function SellerShippingOrdersPage() {
       if (!res.ok) throw new Error("LOAD_FAILED");
 
       const data: unknown = await res.json();
-      setOrders(Array.isArray(data) ? (data as Order[]) : []);
+
+      if (!Array.isArray(data)) {
+        setOrders([]);
+        return;
+      }
+
+      const raw = data as Order[];
+
+      /* ===== FIX DUPLICATE ORDERS ===== */
+      const map = new Map<string, Order>();
+
+      for (const order of raw) {
+        if (!map.has(order.id)) {
+          map.set(order.id, {
+            ...order,
+            order_items: [...order.order_items],
+          });
+        } else {
+          const existing = map.get(order.id)!;
+
+          existing.order_items.push(...order.order_items);
+        }
+      }
+
+      setOrders(Array.from(map.values()));
     } catch {
       setOrders([]);
     } finally {
@@ -175,7 +199,7 @@ export default function SellerShippingOrdersPage() {
               <div className="divide-y">
                 {order.order_items.map((item) => (
                   <div
-                    key={`${order.id}-${item.product_id}`}
+                    key={`${order.id}-${item.product_id}-${item.quantity}`}
                     className="flex gap-3 p-4"
                   >
                     <img
@@ -202,11 +226,8 @@ export default function SellerShippingOrdersPage() {
                 ))}
               </div>
 
-              {/* FOOTER (CHỈ HIỂN THỊ TỔNG) */}
-              <div
-                className="px-4 py-3 border-t bg-gray-50 text-sm"
-                onClick={(e) => e.stopPropagation()}
-              >
+              {/* FOOTER */}
+              <div className="px-4 py-3 border-t bg-gray-50 text-sm">
                 <span className="font-semibold">
                   {t.total ?? "Total"}: π
                   {formatPi(order.total)}
