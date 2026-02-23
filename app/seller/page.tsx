@@ -84,7 +84,11 @@ export default function SellerPage() {
       cancelled: 0,
     };
 
-    for (const o of orders) base[o.status]++;
+    for (const o of orders) {
+  if (o.status in base) {
+    base[o.status as keyof typeof base]++;
+  }
+}
 
     return { ...base, total: orders.length };
   }, [orders]);
