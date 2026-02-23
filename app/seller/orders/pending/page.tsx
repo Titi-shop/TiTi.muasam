@@ -4,7 +4,6 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
@@ -40,40 +39,40 @@ interface Order {
   order_items: OrderItem[];
 }
 
+/* ================= CANCEL REASONS ================= */
+
+const SELLER_CANCEL_REASONS: string[] = [
+  "Hết hàng",
+  "Ngưng kinh doanh sản phẩm",
+  "Sai giá sản phẩm",
+  "Khác",
+];
+
 /* ================= HELPERS ================= */
 
 function formatPi(v: number): string {
   return Number.isFinite(v) ? v.toFixed(6) : "0.000000";
 }
 
-function formatDate(date: string): string {
-  const d = new Date(date);
-  return Number.isNaN(d.getTime())
-    ? "—"
-    : d.toLocaleDateString("vi-VN");
-}
-
 /* ================= PAGE ================= */
 
 export default function SellerPendingOrdersPage() {
-  const router = useRouter();
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  // Double click logic
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showConfirmFor, setShowConfirmFor] = useState<string | null>(null);
+  const [sellerMessage, setSellerMessage] = useState<string>("");
 
-  // Action message
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [showCancelFor, setShowCancelFor] = useState<string | null>(null);
+  const [selectedReason, setSelectedReason] = useState<string>("");
+  const [customReason, setCustomReason] = useState<string>("");
 
   /* ================= LOAD ================= */
 
   const loadOrders = useCallback(async () => {
-    setLoading(true);
-
     try {
       const res = await apiAuthFetch(
         "/api/seller/orders?status=pending",
@@ -103,245 +102,232 @@ export default function SellerPendingOrdersPage() {
     void loadOrders();
   }, [loadOrders]);
 
-  /* ================= SUMMARY ================= */
-
   const totalPi = useMemo(
     () => orders.reduce((sum, o) => sum + o.total, 0),
     [orders]
   );
 
-  /* ================= STATUS LABEL ================= */
+  /* ================= CONFIRM ================= */
 
-  function getStatusLabel(status: OrderStatus): string {
-    switch (status) {
-      case "pending":
-        return t.status_pending ?? "Pending";
-      case "confirmed":
-        return t.status_confirmed ?? "Confirmed";
-      case "cancelled":
-        return t.status_cancelled ?? "Cancelled";
-      default:
-        return status;
+  async function handleConfirm(orderId: string) {
+    if (!sellerMessage.trim()) return;
+
+    try {
+      setProcessingId(orderId);
+
+      const res = await apiAuthFetch(
+        `/api/seller/orders/${orderId}/confirm`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            seller_message: sellerMessage,
+          }),
+        }
+      );
+
+      if (!res.ok) return;
+
+      setSellerMessage("");
+      setShowConfirmFor(null);
+
+      await loadOrders();
+    } catch {
+      // silent fail
+    } finally {
+      setProcessingId(null);
     }
   }
 
-  /* ================= ACTIONS ================= */
+  /* ================= CANCEL ================= */
 
-  const confirmOrder = useCallback(
-    async (orderId: string) => {
-      try {
-        setProcessingId(orderId);
+  async function handleCancel(orderId: string) {
+    const finalReason =
+      selectedReason === "Khác"
+        ? customReason
+        : selectedReason;
 
-        const res = await apiAuthFetch(
-          `/api/seller/orders/${orderId}/confirm`,
-          { method: "PATCH" }
-        );
+    if (!finalReason.trim()) return;
 
-        if (!res.ok) return;
+    try {
+      setProcessingId(orderId);
 
-        setActionMessage(
-          t.seller_confirm_message ??
-            "Thank you for trusting our shop. We will process your order as soon as possible."
-        );
+      const res = await apiAuthFetch(
+        `/api/seller/orders/${orderId}/cancel`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cancel_reason: finalReason,
+          }),
+        }
+      );
 
-        await loadOrders();
-      } catch {
-        // silent fail for Pi Browser
-      } finally {
-        setProcessingId(null);
-      }
-    },
-    [loadOrders, t.seller_confirm_message]
-  );
+      if (!res.ok) return;
 
-  const cancelOrder = useCallback(
-    async (orderId: string) => {
-      try {
-        setProcessingId(orderId);
+      setSelectedReason("");
+      setCustomReason("");
+      setShowCancelFor(null);
 
-        const res = await apiAuthFetch(
-          `/api/seller/orders/${orderId}/cancel`,
-          { method: "PATCH" }
-        );
-
-        if (!res.ok) return;
-
-        setActionMessage(
-          t.seller_cancel_message ??
-            "We are sorry. This product is currently out of stock. Hope to serve you next time."
-        );
-
-        await loadOrders();
-      } catch {
-        // silent fail
-      } finally {
-        setProcessingId(null);
-      }
-    },
-    [loadOrders, t.seller_cancel_message]
-  );
-
-  /* ================= LOADING ================= */
+      await loadOrders();
+    } catch {
+      // silent fail
+    } finally {
+      setProcessingId(null);
+    }
+  }
 
   if (loading) {
     return (
-      <p className="text-center mt-10 text-gray-500">
-        ⏳ {t.loading ?? "Loading..."}
+      <p className="text-center mt-10 text-gray-400">
+        {t.loading ?? "Đang tải..."}
       </p>
     );
   }
 
-  /* ================= UI ================= */
-
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
-      {/* ===== HEADER ===== */}
-      <header className="bg-gray-600/90 backdrop-blur-lg text-white px-4 py-5 shadow-md">
-        <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-          <p className="text-sm font-medium opacity-90">
-            {t.pending_orders ?? "Pending Orders"}
+      {/* HEADER */}
+      <header className="bg-gray-600 text-white px-4 py-4">
+        <div className="bg-gray-500 rounded-lg p-4">
+          <p className="text-sm opacity-90">
+            {t.pending_orders ?? "Đơn chờ xác nhận"}
           </p>
-
-          <p className="text-xs mt-1 text-white/80">
-            {t.orders ?? "Orders"}: {orders.length} · π
+          <p className="text-xs opacity-80 mt-1">
+            {t.orders}: {orders.length} · π
             {formatPi(totalPi)}
           </p>
         </div>
       </header>
 
-      {/* ===== ACTION MESSAGE ===== */}
-      {actionMessage && (
-        <div className="mx-4 mt-4 bg-gray-800 text-white text-sm rounded-xl p-4">
-          {actionMessage}
-        </div>
-      )}
+      <section className="mt-6 px-4 space-y-4">
+        {orders.map((o) => (
+          <div
+            key={o.id}
+            className="bg-white rounded-xl shadow-sm overflow-hidden"
+          >
+            {/* HEADER CARD */}
+            <div className="flex justify-between px-4 py-3 border-b">
+              <span className="font-semibold text-sm">
+                #{o.id}
+              </span>
+              <span className="text-yellow-600 text-sm">
+                {t.status_pending ?? "Chờ xác nhận"}
+              </span>
+            </div>
 
-      {/* ===== CONTENT ===== */}
-      <section className="px-4 mt-5 space-y-4">
-        {orders.length === 0 ? (
-          <p className="text-center text-gray-400">
-            {t.no_pending_orders ?? "No pending orders"}
-          </p>
-        ) : (
-          orders.map((order) => (
-            <div
-              key={order.id}
-              onClick={() => {
-                if (expandedId === order.id) {
-                  router.push(`/seller/orders/${order.id}`);
-                } else {
-                  setExpandedId(order.id);
-                }
-              }}
-              className={`bg-white rounded-xl shadow-sm border overflow-hidden cursor-pointer active:scale-[0.99] transition ${
-                expandedId === order.id
-                  ? "border-gray-400 ring-2 ring-gray-300"
-                  : "border-gray-100"
-              }`}
-            >
-              {/* ORDER HEADER */}
-              <div className="flex justify-between px-4 py-3 border-b bg-gray-50">
-                <div>
-                  <p className="font-semibold text-sm">
-                    #{order.id.slice(0, 8)}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {formatDate(order.created_at)}
-                  </p>
-                </div>
+            {/* TOTAL */}
+            <div className="px-4 py-3 text-sm font-semibold border-b">
+              {t.total ?? "Tổng"}: π{formatPi(o.total)}
+            </div>
 
-                <span className="text-xs font-medium px-3 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                  {getStatusLabel(order.status)}
-                </span>
-              </div>
-
-              {/* BUYER */}
-              <div className="px-4 py-3 text-sm space-y-1">
-                <p>
-                  <span className="text-gray-500">
-                    {t.customer ?? "Customer"}:
-                  </span>{" "}
-                  {order.buyer?.name ?? "—"}
-                </p>
-
-                <p>
-                  <span className="text-gray-500">
-                    {t.phone ?? "Phone"}:
-                  </span>{" "}
-                  {order.buyer?.phone ?? "—"}
-                </p>
-
-                <p className="text-gray-600 text-xs">
-                  {order.buyer?.address ??
-                    (t.no_address ?? "No address")}
-                </p>
-              </div>
-
-              {/* PRODUCTS */}
-              <div className="divide-y">
-                {(order.order_items ?? []).map((item) => (
-                  <div
-                    key={`${order.id}-${item.product_id}`}
-                    className="flex gap-3 p-4"
-                  >
-                    <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                      {item.product?.images?.[0] ? (
-                        <img
-                          src={item.product.images[0]}
-                          alt={item.product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200" />
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium line-clamp-1">
-                        {item.product?.name ??
-                          (t.product ?? "Product")}
-                      </p>
-
-                      <p className="text-xs text-gray-500 mt-1">
-                        x{item.quantity} · π
-                        {formatPi(item.price)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* FOOTER */}
-              <div
-                className="flex justify-between items-center px-4 py-3 border-t bg-gray-50 text-sm"
-                onClick={(e) => e.stopPropagation()}
+            {/* ACTIONS */}
+            <div className="flex justify-end gap-2 px-4 py-3">
+              <button
+                onClick={() => setShowConfirmFor(o.id)}
+                className="px-4 py-1.5 text-sm bg-gray-700 text-white rounded-md"
               >
-                <span className="font-semibold">
-                  {t.total ?? "Total"}: π
-                  {formatPi(order.total)}
-                </span>
+                {t.confirm ?? "Xác nhận"}
+              </button>
+
+              <button
+                onClick={() => setShowCancelFor(o.id)}
+                className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-md"
+              >
+                {t.cancel ?? "Huỷ"}
+              </button>
+            </div>
+
+            {/* CONFIRM FORM */}
+            {showConfirmFor === o.id && (
+              <div className="px-4 pb-4 space-y-3">
+                <textarea
+                  value={sellerMessage}
+                  onChange={(e) =>
+                    setSellerMessage(e.target.value)
+                  }
+                  placeholder="Nhập lời chúc khách hàng..."
+                  className="w-full border rounded-md p-2 text-sm"
+                  rows={3}
+                />
 
                 <div className="flex gap-2">
                   <button
-                    disabled={processingId === order.id}
-                    onClick={() => confirmOrder(order.id)}
-                    className="px-3 py-1.5 text-xs bg-gray-700 text-white rounded-lg disabled:opacity-50"
+                    onClick={() => handleConfirm(o.id)}
+                    disabled={processingId === o.id}
+                    className="px-4 py-1.5 text-sm bg-green-600 text-white rounded-md"
                   >
-                    {t.confirm ?? "Confirm"}
+                    Xác nhận đơn
                   </button>
 
                   <button
-                    disabled={processingId === order.id}
-                    onClick={() => cancelOrder(order.id)}
-                    className="px-3 py-1.5 text-xs border border-gray-400 rounded-lg"
+                    onClick={() => {
+                      setShowConfirmFor(null);
+                      setSellerMessage("");
+                    }}
+                    className="px-4 py-1.5 text-sm border rounded-md"
                   >
-                    {t.cancel ?? "Cancel"}
+                    Huỷ bỏ
                   </button>
                 </div>
               </div>
-            </div>
-          ))
-        )}
+            )}
+
+            {/* CANCEL FORM */}
+            {showCancelFor === o.id && (
+              <div className="px-4 pb-4 space-y-3">
+                {SELLER_CANCEL_REASONS.map((reason) => (
+                  <label
+                    key={reason}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <input
+                      type="radio"
+                      value={reason}
+                      checked={selectedReason === reason}
+                      onChange={(e) =>
+                        setSelectedReason(e.target.value)
+                      }
+                    />
+                    {reason}
+                  </label>
+                ))}
+
+                {selectedReason === "Khác" && (
+                  <textarea
+                    value={customReason}
+                    onChange={(e) =>
+                      setCustomReason(e.target.value)
+                    }
+                    placeholder="Nhập lý do cụ thể..."
+                    className="w-full border rounded-md p-2 text-sm"
+                    rows={3}
+                  />
+                )}
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleCancel(o.id)}
+                    className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-md"
+                  >
+                    Xác nhận huỷ
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowCancelFor(null);
+                      setSelectedReason("");
+                      setCustomReason("");
+                    }}
+                    className="px-4 py-1.5 text-sm border rounded-md"
+                  >
+                    Huỷ bỏ
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
       </section>
     </main>
   );
