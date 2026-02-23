@@ -80,7 +80,8 @@ export default function SellerPendingOrdersPage() {
   const [showCancelFor, setShowCancelFor] = useState<string | null>(null);
   const [selectedReason, setSelectedReason] = useState("");
   const [customReason, setCustomReason] = useState("");
-
+const [confirmingOrderId, setConfirmingOrderId] = useState<string | null>(null);
+const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   /* ================= LOAD ================= */
 
   const loadOrders = useCallback(async () => {
@@ -304,18 +305,20 @@ export default function SellerPendingOrdersPage() {
 
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setShowConfirmFor(o.id)}
-                    className="px-3 py-1 text-xs bg-gray-700 text-white rounded"
-                  >
-                    {t.confirm ?? "Xác nhận"}
-                  </button>
+  disabled={processingId === order.id}
+  onClick={() => setConfirmingOrderId(order.id)}
+  className="px-3 py-1.5 text-xs bg-gray-700 text-white rounded-lg disabled:opacity-50"
+>
+  {t.confirm ?? "Confirm"}
+</button>
 
-                  <button
-                    onClick={() => setShowCancelFor(o.id)}
-                    className="px-3 py-1 text-xs border border-red-500 text-red-500 rounded"
-                  >
-                    {t.cancel ?? "Huỷ"}
-                  </button>
+<button
+  disabled={processingId === order.id}
+  onClick={() => setCancellingOrderId(order.id)}
+  className="px-3 py-1.5 text-xs border border-gray-400 rounded-lg"
+>
+  {t.cancel ?? "Cancel"}
+</button>
                 </div>
               </div>
 
