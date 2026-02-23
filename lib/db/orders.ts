@@ -360,3 +360,101 @@ export async function createOrder(params: {
   return order as unknown as OrderRecord;
 }
 
+/* =====================================================
+   GET ORDER DETAIL FOR SELLER
+===================================================== */
+export async function getOrderByIdForSeller(
+  orderId: string,
+  sellerPiUid: string
+): Promise<OrderRecord | null> {
+
+  /* =========================
+     1️⃣ VERIFY SELLER OWNS ITEM
+  ========================= */
+  const verifyRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&seller_pi_uid=eq.${sellerPiUid}&select=order_id`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!verifyRes.ok) return null;
+
+  const verifyItems = await verifyRes.json() as Array<{ order_id: string }>;
+
+  if (verifyItems.length === 0) {
+    // Seller không có item trong order này
+    return null;
+  }
+
+  /* =========================
+     2️⃣ FETCH ORDER FULL DATA
+  ========================= */
+  const orderRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=
+      id,
+      status,
+      total,
+      created_at,
+      buyer_name,
+      buyer_phone,
+      buyer_address,
+      order_items(quantity,price,product_id,status,seller_pi_uid)
+    `,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!orderRes.ok) return null;
+
+  const [rawOrder] = await orderRes.json() as Array<{
+    id: string;
+    status: string;
+    total: number;
+    created_at: string;
+    buyer_name: string | null;
+    buyer_phone: string | null;
+    buyer_address: string | null;
+    order_items: Array<{
+      quantity: number;
+      price: number;
+      product_id: string;
+      status: string;
+      seller_pi_uid: string;
+    }>;
+  }>;
+
+  if (!rawOrder) return null;
+
+  /* =========================
+     3️⃣ FILTER ONLY SELLER ITEMS
+  ========================= */
+  const sellerItems = rawOrder.order_items.filter(
+    i => i.seller_pi_uid === sellerPiUid
+  );
+
+  if (sellerItems.length === 0) return null;
+
+  const productIds = Array.from(
+    new Set(sellerItems.map(i => i.product_id))
+  );
+
+  const productsMap = await fetchProductsMap(productIds);
+
+  return {
+    id: rawOrder.id,
+    status: rawOrder.status,
+    total: fromMicroPi(rawOrder.total),
+    created_at: rawOrder.created_at,
+    buyer: {
+      name: rawOrder.buyer_name ?? "",
+      phone: rawOrder.buyer_phone ?? "",
+      address: rawOrder.buyer_address ?? "",
+    },
+    order_items: sellerItems.map(i => ({
+      product_id: i.product_id,
+      quantity: i.quantity,
+      price: fromMicroPi(i.price),
+      status: i.status,
+      product: productsMap[i.product_id],
+    })),
+  };
+}
+
