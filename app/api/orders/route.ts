@@ -1,8 +1,9 @@
-app/api/orders/route.ts
-
 import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
-import { getOrdersByBuyer,createOrder} from "@/lib/db/orders";
+import {
+  getOrdersByBuyer,
+  createOrder
+} from "@/lib/db/orders";
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
