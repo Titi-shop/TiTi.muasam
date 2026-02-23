@@ -34,10 +34,11 @@ interface OrderItem {
 }
 
 interface Order {
-  id: string;
+  id: string;       
   total: number;
-  status: OrderStatus;
-  order_items: OrderItem[];
+  created_at: string;  
+  status: string;
+  order_items?: OrderItem[];
 }
 /* =========================
    CANCEL REASONS
