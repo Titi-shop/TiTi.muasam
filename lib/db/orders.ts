@@ -469,7 +469,7 @@ export async function updateOrderStatusByBuyer(
 
   /* 1️⃣ Kiểm tra order có thuộc buyer */
   const checkRes = await fetch(
-    `${SUPABASE_URL}//rest/v1/orders?id=eq.${orderId}&buyer_id=eq.${buyerPiUid}&select=id`,
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&buyer_id=eq.${buyerPiUid}&select=id`,
     { headers: headers(), cache: "no-store" }
   );
 
