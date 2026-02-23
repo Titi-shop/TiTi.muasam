@@ -85,20 +85,7 @@ export default function SellerShippingOrdersPage() {
       const raw = data as Order[];
 
       /* ===== FIX DUPLICATE ORDERS ===== */
-      const map = new Map<string, Order>();
-
-      for (const order of raw) {
-        if (!map.has(order.id)) {
-          map.set(order.id, {
-            ...order,
-            order_items: [...order.order_items],
-          });
-        } else {
-          const existing = map.get(order.id)!;
-
-          existing.order_items.push(...order.order_items);
-        }
-      }
+      setOrders(raw);
 
       setOrders(Array.from(map.values()));
     } catch {
