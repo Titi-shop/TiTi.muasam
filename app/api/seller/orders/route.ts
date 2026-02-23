@@ -1,242 +1,92 @@
-"use client";
 
+/* =========================================================
+   app/api/seller/orders/route.ts
+   - NETWORK–FIRST Pi Auth
+   - AUTH-CENTRIC + RBAC
+   - BOOTSTRAP MODE (Phase 1)
+   - Bearer ONLY (NO cookie)
+========================================================= */
+
+import { NextResponse } from "next/server";
+import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
+import { resolveRole } from "@/lib/auth/resolveRole";
+import { getOrdersBySeller } from "@/lib/db/orders";
+
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
-import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
+/* =========================
+   TYPES
+========================= */
 
-/* ================= TYPES ================= */
+type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "shipping"
+  | "completed"
+  | "cancelled"
+  | "returned";  
+/* =========================
+   HELPERS
+========================= */
 
-interface Product {
-  id: string;
-  name: string;
-  images: string[];
+function parseOrderStatus(
+  value: string | null
+): OrderStatus | undefined {
+  if (!value) return undefined;
+
+  const allowed: OrderStatus[] = [
+  "pending",
+  "confirmed",
+  "shipping",
+  "cancelled",
+  "completed",
+  "returned", 
+];
+  return allowed.includes(value as OrderStatus)
+    ? (value as OrderStatus)
+    : undefined;
 }
 
-interface OrderItem {
-  product_id: string;
-  quantity: number;
-  price: number;
-  product?: Product;
-}
+/* =========================================================
+   GET /api/seller/orders
+   BOOTSTRAP RULE:
+   - Not seller yet => return []
+========================================================= */
 
-interface Buyer {
-  name: string;
-  phone: string;
-  address: string;
-}
-
-interface Order {
-  id: string;
-  status: string;
-  total: number;
-  created_at: string;
-  buyer?: Buyer;
-  order_items: OrderItem[];
-}
-
-/* ================= HELPERS ================= */
-
-function formatPi(v: number): string {
-  return Number.isFinite(v) ? v.toFixed(6) : "0.000000";
-}
-
-function formatDate(date: string): string {
-  const d = new Date(date);
-  return Number.isNaN(d.getTime())
-    ? "—"
-    : d.toLocaleDateString("vi-VN");
-}
-
-/* ================= PAGE ================= */
-
-export default function SellerShippingOrdersPage() {
-  const router = useRouter();
-  const { t } = useTranslation();
-
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  /* ================= LOAD ================= */
-
-  useEffect(() => {
-    void loadOrders();
-  }, []);
-
-  async function loadOrders(): Promise<void> {
-    try {
-      const res = await apiAuthFetch(
-        "/api/seller/orders?status=shipping",
-        { cache: "no-store" }
-      );
-
-      if (!res.ok) throw new Error("LOAD_FAILED");
-
-      const data: unknown = await res.json();
-
-      if (!Array.isArray(data)) {
-        setOrders([]);
-        return;
-      }
-
-      const raw = data as Order[];
-
-      /* ===== FIX DUPLICATE ORDERS ===== */
-      const map = new Map<string, Order>();
-
-      for (const order of raw) {
-        if (!map.has(order.id)) {
-          map.set(order.id, {
-            ...order,
-            order_items: [...order.order_items],
-          });
-        } else {
-          const existing = map.get(order.id)!;
-
-          existing.order_items.push(...order.order_items);
-        }
-      }
-
-      setOrders(Array.from(map.values()));
-    } catch {
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  /* ================= TOTAL ================= */
-
-  const totalPi = useMemo(() => {
-    return orders.reduce((sum, o) => sum + o.total, 0);
-  }, [orders]);
-
-  /* ================= LOADING ================= */
-
-  if (loading) {
-    return (
-      <p className="text-center mt-10 text-gray-500">
-        ⏳ {t.loading ?? "Loading..."}
-      </p>
+export async function GET(req: Request) {
+  /* 1️⃣ AUTH */
+  const user = await getUserFromBearer();
+  if (!user) {
+    return NextResponse.json(
+      { error: "UNAUTHENTICATED" },
+      { status: 401 }
     );
   }
 
-  /* ================= UI ================= */
+  /* 2️⃣ RBAC */
+  const role = await resolveRole(user);
 
-  return (
-    <main className="min-h-screen bg-gray-100 pb-24">
-      {/* ===== HEADER ===== */}
-      <header className="bg-gray-600/90 backdrop-blur-lg text-white px-4 py-5 shadow-md">
-        <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-          <p className="text-sm font-medium opacity-90">
-            {t.shipping_orders ?? "Shipping Orders"}
-          </p>
+  // BOOTSTRAP: chưa là seller => chưa có đơn
+  if (role !== "seller" && role !== "admin") {
+    return NextResponse.json([], { status: 200 });
+  }
 
-          <p className="text-xs mt-1 text-white/80">
-            {t.orders ?? "Orders"}: {orders.length} · π
-            {formatPi(totalPi)}
-          </p>
-        </div>
-      </header>
-
-      {/* ===== CONTENT ===== */}
-      <section className="px-4 mt-5 space-y-4">
-        {orders.length === 0 ? (
-          <p className="text-center text-gray-400">
-            {t.no_shipping_orders ?? "No shipping orders"}
-          </p>
-        ) : (
-          orders.map((order) => (
-            <div
-              key={order.id}
-              onDoubleClick={() =>
-                router.push(`/seller/orders/${order.id}`)
-              }
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden active:scale-[0.99] transition"
-            >
-              {/* ORDER HEADER */}
-              <div className="flex justify-between px-4 py-3 border-b bg-gray-50">
-                <div>
-                  <p className="font-semibold text-sm">
-                    #{order.id.slice(0, 8)}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {formatDate(order.created_at)}
-                  </p>
-                </div>
-
-                <span className="text-xs font-medium px-3 py-1 rounded-full bg-blue-100 text-blue-700">
-                  {t.status_shipping ?? "Shipping"}
-                </span>
-              </div>
-
-              {/* BUYER INFO */}
-              <div className="px-4 py-3 text-sm space-y-1">
-                <p>
-                  <span className="text-gray-500">
-                    {t.customer ?? "Customer"}:
-                  </span>{" "}
-                  {order.buyer?.name ?? "—"}
-                </p>
-
-                <p>
-                  <span className="text-gray-500">
-                    {t.phone ?? "Phone"}:
-                  </span>{" "}
-                  {order.buyer?.phone ?? "—"}
-                </p>
-
-                <p className="text-gray-600 text-xs">
-                  {order.buyer?.address ??
-                    (t.no_address ?? "No address")}
-                </p>
-              </div>
-
-              {/* PRODUCTS */}
-              <div className="divide-y">
-                {order.order_items.map((item) => (
-                  <div
-                    key={`${order.id}-${item.product_id}-${item.quantity}`}
-                    className="flex gap-3 p-4"
-                  >
-                    <img
-                      src={
-                        item.product?.images?.[0] ??
-                        "/placeholder.png"
-                      }
-                      alt={item.product?.name ?? "product"}
-                      className="w-14 h-14 rounded-lg object-cover bg-gray-100"
-                    />
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium line-clamp-1">
-                        {item.product?.name ??
-                          (t.product ?? "Product")}
-                      </p>
-
-                      <p className="text-xs text-gray-500 mt-1">
-                        x{item.quantity} · π
-                        {formatPi(item.price)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* FOOTER */}
-              <div className="px-4 py-3 border-t bg-gray-50 text-sm">
-                <span className="font-semibold">
-                  {t.total ?? "Total"}: π
-                  {formatPi(order.total)}
-                </span>
-              </div>
-            </div>
-          ))
-        )}
-      </section>
-    </main>
+  /* 3️⃣ QUERY PARAMS */
+  const { searchParams } = new URL(req.url);
+  const status = parseOrderStatus(
+    searchParams.get("status")
   );
+
+  /* 4️⃣ DB */
+  try {
+    const orders = await getOrdersBySeller(
+      user.pi_uid,
+      status
+    );
+    return NextResponse.json(orders);
+  } catch (err) {
+    console.warn("SELLER ORDERS WARN:", err);
+    return NextResponse.json([], { status: 200 });
+  }
 }
