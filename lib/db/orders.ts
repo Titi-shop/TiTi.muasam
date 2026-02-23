@@ -272,11 +272,17 @@ export async function createOrder(params: {
 
   const { buyerPiUid, items, total, shipping } = params;
 
+  /* =========================
+     1️⃣ CREATE ORDER
+  ========================= */
   const orderRes = await fetch(
     `${SUPABASE_URL}/rest/v1/orders`,
     {
       method: "POST",
-      headers: headers(),
+      headers: {
+        ...headers(),
+        Prefer: "return=representation",
+      },
       body: JSON.stringify({
         buyer_id: buyerPiUid,
         buyer_name: shipping.name,
@@ -288,12 +294,51 @@ export async function createOrder(params: {
     }
   );
 
-  if (!orderRes.ok) return null;
+  if (!orderRes.ok) {
+    console.error(await orderRes.text());
+    return null;
+  }
 
   const [order] = await orderRes.json() as Array<{ id: string }>;
 
+  if (!order?.id) return null;
+
+  /* =========================
+     2️⃣ FETCH SELLER MAP
+  ========================= */
+  const productIds = items.map(i => `"${i.product_id}"`).join(",");
+
+  const productRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/products?id=in.(${productIds})&select=id,seller_id`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!productRes.ok) {
+    console.error(await productRes.text());
+    return null;
+  }
+
+  const products = await productRes.json() as Array<{
+    id: string;
+    seller_id: string;
+  }>;
+
+  const sellerMap: Record<string, string> =
+    Object.fromEntries(products.map(p => [p.id, p.seller_id]));
+
+  /* =========================
+     3️⃣ INSERT ORDER ITEMS
+  ========================= */
   for (const item of items) {
-    await fetch(
+
+    const seller = sellerMap[item.product_id];
+
+    if (!seller) {
+      console.error("SELLER_NOT_FOUND_FOR_PRODUCT", item.product_id);
+      continue;
+    }
+
+    const itemRes = await fetch(
       `${SUPABASE_URL}/rest/v1/order_items`,
       {
         method: "POST",
@@ -301,13 +346,19 @@ export async function createOrder(params: {
         body: JSON.stringify({
           order_id: order.id,
           product_id: item.product_id,
+          seller_pi_uid: seller,
           quantity: item.quantity,
           price: toMicroPi(item.price),
           status: "pending",
         }),
       }
     );
+
+    if (!itemRes.ok) {
+      console.error(await itemRes.text());
+    }
   }
 
   return order as unknown as OrderRecord;
 }
+
