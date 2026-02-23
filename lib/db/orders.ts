@@ -308,6 +308,28 @@ export async function getOrderByIdForSeller(
   };
 }
 
+type RawProduct = {
+  id: string;
+  name: string;
+  images: string[] | null;
+} | null;
+
+type RawOrderItem = {
+  quantity: number | null;
+  price: number | null;
+  product_id: string;
+  status: string | null;
+  products: RawProduct;
+};
+
+type RawOrder = {
+  id: string;
+  status: string;
+  total: number | null;
+  created_at: string;
+  order_items: RawOrderItem[] | null;
+};
+
 export async function getOrdersByBuyer(
   buyerPiUid: string
 ): Promise<OrderRecord[]> {
@@ -316,9 +338,6 @@ id,
 status,
 total,
 created_at,
-buyer_name,
-buyer_phone,
-buyer_address,
 order_items(
   quantity,
   price,
@@ -339,34 +358,29 @@ order_items(
 
   if (!res.ok) return [];
 
-  const raw = await res.json();
+  const raw: RawOrder[] = await res.json();
 
-  return raw.map((o: any) => ({
+  return raw.map((o): OrderRecord => ({
     id: o.id,
     status: o.status,
     total: fromMicroPi(o.total ?? 0),
     created_at: o.created_at,
 
-    // ✅ FIX buyer info null-safe
-    buyer: {
-      name: o.buyer_name?.trim() ?? "",
-      phone: o.buyer_phone?.trim() ?? "",
-      address: o.buyer_address?.trim() ?? "",
-    },
-
-    // ✅ JOIN product luôn tại đây
-    order_items: (o.order_items ?? []).map((i: any) => ({
-      product_id: i.product_id,
-      quantity: i.quantity ?? 0,
-      price: fromMicroPi(i.price ?? 0),
-      status: i.status ?? "pending",
-
-      // ✅ FIX ảnh + tên
-      name: i.products?.name ?? "",
-      images: Array.isArray(i.products?.images)
-        ? i.products.images
-        : [],
-    })),
+    order_items: (o.order_items ?? []).map(
+      (i): OrderItemRecord => ({
+        product_id: i.product_id,
+        quantity: i.quantity ?? 0,
+        price: fromMicroPi(i.price ?? 0),
+        status: i.status ?? "pending",
+        product: i.products
+          ? {
+              id: i.products.id,
+              name: i.products.name,
+              images: i.products.images ?? [],
+            }
+          : undefined,
+      })
+    ),
   }));
 }
 export async function createOrder(params: {
