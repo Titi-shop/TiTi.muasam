@@ -1,10 +1,3 @@
-app/seller/orders/[id]/page.tsx
-Sửa lại file này mới đúng .
-Không nút quay về không người gữi và người nhận .
-Nút lưu ở dưới và nút in .
-
-app/seller/orders/[id]/page.tsx
-
 "use client";
 
 export const dynamic = "force-dynamic";
