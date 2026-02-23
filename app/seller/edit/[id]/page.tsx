@@ -56,27 +56,6 @@ export default function SellerOrderDetailPage() {
 
     loadOrder();
   }, [authLoading, user, id]);
-
-  /* ================= DOWNLOAD PDF ================= */
-
-  const handleDownload = async () => {
-    const element = document.getElementById("print-area");
-    if (!element) return;
-
-    const html2canvas = (await import("html2canvas")).default;
-    const jsPDF = (await import("jspdf")).default;
-
-    const canvas = await html2canvas(element);
-    const imgData = canvas.toDataURL("image/png");
-
-    const pdf = new jsPDF("p", "mm", "a4");
-    const width = 210;
-    const height = (canvas.height * width) / canvas.width;
-
-    pdf.addImage(imgData, "PNG", 0, 0, width, height);
-    pdf.save(`order-${order?.id}.pdf`);
-  };
-
   /* ================= UI ================= */
 
   if (authLoading || loading) {
@@ -147,12 +126,6 @@ export default function SellerOrderDetailPage() {
 
       {/* ================= ACTION BUTTONS ================= */}
       <div className="flex gap-3 justify-end no-print">
-        <button
-          onClick={handleDownload}
-          className="px-4 py-2 rounded-lg bg-stone-700 text-white text-sm"
-        >
-          {t.download ?? "Download PDF"}
-        </button>
 
         <button
           onClick={() => window.print()}
