@@ -24,6 +24,7 @@ type OrderStatus =
   | "confirmed"
   | "shipping"
   | "completed"
+  | "returned"
   | "cancelled";
 
 interface Order {
@@ -119,13 +120,14 @@ export default function SellerOrdersPage() {
       <div className="bg-white border-b">
         <div className="flex gap-6 px-4 py-3 text-sm overflow-x-auto whitespace-nowrap">
           {([
-            ["all", "Tất cả"],
-            ["pending", "Chờ xác nhận"],
-            ["confirmed", "Đã xác nhận"],
-            ["shipping", "Đang vận chuyển"],
-            ["completed", "Đã hoàn thành"],
-            ["cancelled", "Huỷ"],
-          ] as [OrderTab, string][]).map(([key, label]) => (
+  ["all", "Tất cả"],
+  ["pending", "Chờ xác nhận"],
+  ["confirmed", "Đã xác nhận"],
+  ["shipping", "Đang vận chuyển"],
+  ["completed", "Đã hoàn thành"],
+  ["returned", "Hoàn trả"],
+  ["cancelled", "Huỷ"],
+] as [OrderTab, string][]).map(([key, label]) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
