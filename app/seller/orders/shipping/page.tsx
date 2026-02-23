@@ -83,11 +83,7 @@ export default function SellerShippingOrdersPage() {
       }
 
       const raw = data as Order[];
-
-      /* ===== FIX DUPLICATE ORDERS ===== */
-      setOrders(raw);
-
-      setOrders(Array.from(map.values()));
+setOrders(raw);
     } catch {
       setOrders([]);
     } finally {
