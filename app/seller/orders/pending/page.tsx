@@ -80,8 +80,7 @@ export default function SellerPendingOrdersPage() {
   const [showCancelFor, setShowCancelFor] = useState<string | null>(null);
   const [selectedReason, setSelectedReason] = useState("");
   const [customReason, setCustomReason] = useState("");
-const [confirmingOrderId, setConfirmingOrderId] = useState<string | null>(null);
-const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+
   /* ================= LOAD ================= */
 
   const loadOrders = useCallback(async () => {
@@ -324,55 +323,89 @@ const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
 
               {/* CONFIRM FORM */}
               {showConfirmFor === o.id && (
-                <div className="mt-3 space-y-2">
-                  <textarea
-                    value={sellerMessage}
-                    onChange={(e) =>
-                      setSellerMessage(e.target.value)
-                    }
-                    placeholder="Nhập lời chúc khách hàng..."
-                    className="w-full border rounded-md p-2 text-sm"
-                    rows={3}
-                  />
-                  <button
-                    onClick={() => handleConfirm(o.id)}
-                    className="px-4 py-1 text-sm bg-green-600 text-white rounded"
-                  >
-                    Xác nhận đơn
-                  </button>
-                </div>
-              )}
+  <div className="mt-3 space-y-3 bg-gray-50 p-3 rounded-lg">
+    <textarea
+      value={sellerMessage}
+      onChange={(e) => setSellerMessage(e.target.value)}
+      placeholder={
+        t.seller_message_placeholder ??
+        "Nhập lời chúc khách hàng..."
+      }
+      className="w-full border rounded-md p-2 text-sm"
+      rows={3}
+    />
+
+    <div className="flex gap-2">
+      <button
+        onClick={() => handleConfirm(o.id)}
+        disabled={processingId === o.id}
+        className="px-4 py-1 text-sm bg-green-600 text-white rounded disabled:opacity-50"
+      >
+        {t.confirm_order ?? "Xác nhận đơn"}
+      </button>
+
+      <button
+        onClick={() => {
+          setShowConfirmFor(null);
+          setSellerMessage("");
+        }}
+        className="px-4 py-1 text-sm border rounded"
+      >
+        {t.back ?? "Huỷ bỏ"}
+      </button>
+    </div>
+  </div>
+)}
 
               {/* CANCEL FORM */}
               {showCancelFor === o.id && (
-                <div className="mt-3 space-y-2">
-                  {SELLER_CANCEL_REASONS.map((reason) => (
-                    <label
-                      key={reason}
-                      className="flex items-center gap-2 text-sm"
-                    >
-                      <input
-                        type="radio"
-                        value={reason}
-                        checked={selectedReason === reason}
-                        onChange={(e) =>
-                          setSelectedReason(e.target.value)
-                        }
-                      />
-                      {reason}
-                    </label>
-                  ))}
+  <div className="mt-3 space-y-3 bg-gray-50 p-3 rounded-lg">
+    {SELLER_CANCEL_REASONS.map((reason) => (
+      <label
+        key={reason}
+        className="flex items-center gap-2 text-sm"
+      >
+        <input
+          type="radio"
+          value={reason}
+          checked={selectedReason === reason}
+          onChange={(e) => setSelectedReason(e.target.value)}
+        />
+        {reason}
+      </label>
+    ))}
 
-                  {selectedReason === "Khác" && (
-                    <textarea
-                      value={customReason}
-                      onChange={(e) =>
-                        setCustomReason(e.target.value)
-                      }
-                      className="w-full border rounded-md p-2 text-sm"
-                      rows={3}
-                    />
-                  )}
+    {selectedReason === "Khác" && (
+      <textarea
+        value={customReason}
+        onChange={(e) => setCustomReason(e.target.value)}
+        className="w-full border rounded-md p-2 text-sm"
+        rows={3}
+      />
+    )}
+
+    <div className="flex gap-2">
+      <button
+        onClick={() => handleCancel(o.id)}
+        disabled={processingId === o.id}
+        className="px-4 py-1 text-sm bg-red-500 text-white rounded disabled:opacity-50"
+      >
+        {t.confirm_cancel ?? "Xác nhận huỷ"}
+      </button>
+
+      <button
+        onClick={() => {
+          setShowCancelFor(null);
+          setSelectedReason("");
+          setCustomReason("");
+        }}
+        className="px-4 py-1 text-sm border rounded"
+      >
+        {t.back ?? "Huỷ bỏ"}
+      </button>
+    </div>
+  </div>
+)}
 
                   <button
                     onClick={() => handleCancel(o.id)}
