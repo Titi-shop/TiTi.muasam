@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
@@ -43,7 +44,7 @@ interface Order {
 
 const SELLER_CANCEL_REASONS: string[] = [
   "Hết hàng",
-  "Ngưng kinh doanh sản phẩm",
+  "Ngưng bán sản phẩm",
   "Sai giá sản phẩm",
   "Khác",
 ];
@@ -54,21 +55,31 @@ function formatPi(v: number): string {
   return Number.isFinite(v) ? v.toFixed(6) : "0.000000";
 }
 
+function formatDate(date: string): string {
+  const d = new Date(date);
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("vi-VN");
+}
+
 /* ================= PAGE ================= */
 
 export default function SellerPendingOrdersPage() {
+  const router = useRouter();
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   const [showConfirmFor, setShowConfirmFor] = useState<string | null>(null);
-  const [sellerMessage, setSellerMessage] = useState<string>("");
+  const [sellerMessage, setSellerMessage] = useState("");
 
   const [showCancelFor, setShowCancelFor] = useState<string | null>(null);
-  const [selectedReason, setSelectedReason] = useState<string>("");
-  const [customReason, setCustomReason] = useState<string>("");
+  const [selectedReason, setSelectedReason] = useState("");
+  const [customReason, setCustomReason] = useState("");
 
   /* ================= LOAD ================= */
 
@@ -128,12 +139,11 @@ export default function SellerPendingOrdersPage() {
 
       if (!res.ok) return;
 
-      setSellerMessage("");
       setShowConfirmFor(null);
-
+      setSellerMessage("");
       await loadOrders();
     } catch {
-      // silent fail
+      // silent
     } finally {
       setProcessingId(null);
     }
@@ -165,13 +175,13 @@ export default function SellerPendingOrdersPage() {
 
       if (!res.ok) return;
 
+      setShowCancelFor(null);
       setSelectedReason("");
       setCustomReason("");
-      setShowCancelFor(null);
 
       await loadOrders();
     } catch {
-      // silent fail
+      // silent
     } finally {
       setProcessingId(null);
     }
@@ -204,128 +214,172 @@ export default function SellerPendingOrdersPage() {
         {orders.map((o) => (
           <div
             key={o.id}
-            className="bg-white rounded-xl shadow-sm overflow-hidden"
+            onClick={() => {
+              if (expandedId === o.id) {
+                router.push(`/seller/orders/${o.id}`);
+              } else {
+                setExpandedId(o.id);
+              }
+            }}
+            className="bg-white rounded-xl shadow-sm overflow-hidden border"
           >
-            {/* HEADER CARD */}
-            <div className="flex justify-between px-4 py-3 border-b">
-              <span className="font-semibold text-sm">
-                #{o.id}
-              </span>
-              <span className="text-yellow-600 text-sm">
+            {/* HEADER */}
+            <div className="flex justify-between px-4 py-3 border-b bg-gray-50">
+              <div>
+                <p className="font-semibold text-sm">
+                  #{o.id.slice(0, 8)}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {formatDate(o.created_at)}
+                </p>
+              </div>
+              <span className="text-yellow-600 text-sm font-medium">
                 {t.status_pending ?? "Chờ xác nhận"}
               </span>
             </div>
 
-            {/* TOTAL */}
-            <div className="px-4 py-3 text-sm font-semibold border-b">
-              {t.total ?? "Tổng"}: π{formatPi(o.total)}
+            {/* BUYER INFO */}
+            <div className="px-4 py-3 text-sm space-y-1 border-b">
+              <p>
+                <span className="text-gray-500">
+                  {t.customer ?? "Khách hàng"}:
+                </span>{" "}
+                {o.buyer?.name ?? "—"}
+              </p>
+              <p>
+                <span className="text-gray-500">
+                  {t.phone ?? "SĐT"}:
+                </span>{" "}
+                {o.buyer?.phone ?? "—"}
+              </p>
+              <p className="text-gray-600 text-xs">
+                {o.buyer?.address ??
+                  (t.no_address ?? "Không có địa chỉ")}
+              </p>
             </div>
 
-            {/* ACTIONS */}
-            <div className="flex justify-end gap-2 px-4 py-3">
-              <button
-                onClick={() => setShowConfirmFor(o.id)}
-                className="px-4 py-1.5 text-sm bg-gray-700 text-white rounded-md"
-              >
-                {t.confirm ?? "Xác nhận"}
-              </button>
+            {/* PRODUCTS */}
+            <div className="divide-y">
+              {(o.order_items ?? []).map((item) => (
+                <div
+                  key={`${o.id}-${item.product_id}`}
+                  className="flex gap-3 p-4"
+                >
+                  <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden">
+                    {item.product?.images?.[0] ? (
+                      <img
+                        src={item.product.images[0]}
+                        alt={item.product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200" />
+                    )}
+                  </div>
 
-              <button
-                onClick={() => setShowCancelFor(o.id)}
-                className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-md"
-              >
-                {t.cancel ?? "Huỷ"}
-              </button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium line-clamp-1">
+                      {item.product?.name ??
+                        (t.product ?? "Sản phẩm")}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      x{item.quantity} · π
+                      {formatPi(item.price)}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
 
-            {/* CONFIRM FORM */}
-            {showConfirmFor === o.id && (
-              <div className="px-4 pb-4 space-y-3">
-                <textarea
-                  value={sellerMessage}
-                  onChange={(e) =>
-                    setSellerMessage(e.target.value)
-                  }
-                  placeholder="Nhập lời chúc khách hàng..."
-                  className="w-full border rounded-md p-2 text-sm"
-                  rows={3}
-                />
+            {/* FOOTER */}
+            <div
+              className="px-4 py-3 border-t bg-gray-50 text-sm"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">
+                  {t.total ?? "Tổng"}: π
+                  {formatPi(o.total)}
+                </span>
 
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleConfirm(o.id)}
-                    disabled={processingId === o.id}
-                    className="px-4 py-1.5 text-sm bg-green-600 text-white rounded-md"
+                    onClick={() => setShowConfirmFor(o.id)}
+                    className="px-3 py-1 text-xs bg-gray-700 text-white rounded"
                   >
-                    Xác nhận đơn
+                    {t.confirm ?? "Xác nhận"}
                   </button>
 
                   <button
-                    onClick={() => {
-                      setShowConfirmFor(null);
-                      setSellerMessage("");
-                    }}
-                    className="px-4 py-1.5 text-sm border rounded-md"
+                    onClick={() => setShowCancelFor(o.id)}
+                    className="px-3 py-1 text-xs border border-red-500 text-red-500 rounded"
                   >
-                    Huỷ bỏ
+                    {t.cancel ?? "Huỷ"}
                   </button>
                 </div>
               </div>
-            )}
 
-            {/* CANCEL FORM */}
-            {showCancelFor === o.id && (
-              <div className="px-4 pb-4 space-y-3">
-                {SELLER_CANCEL_REASONS.map((reason) => (
-                  <label
-                    key={reason}
-                    className="flex items-center gap-2 text-sm"
-                  >
-                    <input
-                      type="radio"
-                      value={reason}
-                      checked={selectedReason === reason}
-                      onChange={(e) =>
-                        setSelectedReason(e.target.value)
-                      }
-                    />
-                    {reason}
-                  </label>
-                ))}
-
-                {selectedReason === "Khác" && (
+              {/* CONFIRM FORM */}
+              {showConfirmFor === o.id && (
+                <div className="mt-3 space-y-2">
                   <textarea
-                    value={customReason}
+                    value={sellerMessage}
                     onChange={(e) =>
-                      setCustomReason(e.target.value)
+                      setSellerMessage(e.target.value)
                     }
-                    placeholder="Nhập lý do cụ thể..."
+                    placeholder="Nhập lời chúc khách hàng..."
                     className="w-full border rounded-md p-2 text-sm"
                     rows={3}
                   />
-                )}
+                  <button
+                    onClick={() => handleConfirm(o.id)}
+                    className="px-4 py-1 text-sm bg-green-600 text-white rounded"
+                  >
+                    Xác nhận đơn
+                  </button>
+                </div>
+              )}
 
-                <div className="flex gap-2">
+              {/* CANCEL FORM */}
+              {showCancelFor === o.id && (
+                <div className="mt-3 space-y-2">
+                  {SELLER_CANCEL_REASONS.map((reason) => (
+                    <label
+                      key={reason}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="radio"
+                        value={reason}
+                        checked={selectedReason === reason}
+                        onChange={(e) =>
+                          setSelectedReason(e.target.value)
+                        }
+                      />
+                      {reason}
+                    </label>
+                  ))}
+
+                  {selectedReason === "Khác" && (
+                    <textarea
+                      value={customReason}
+                      onChange={(e) =>
+                        setCustomReason(e.target.value)
+                      }
+                      className="w-full border rounded-md p-2 text-sm"
+                      rows={3}
+                    />
+                  )}
+
                   <button
                     onClick={() => handleCancel(o.id)}
-                    className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-md"
+                    className="px-4 py-1 text-sm bg-red-500 text-white rounded"
                   >
                     Xác nhận huỷ
                   </button>
-
-                  <button
-                    onClick={() => {
-                      setShowCancelFor(null);
-                      setSelectedReason("");
-                      setCustomReason("");
-                    }}
-                    className="px-4 py-1.5 text-sm border rounded-md"
-                  >
-                    Huỷ bỏ
-                  </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         ))}
       </section>
