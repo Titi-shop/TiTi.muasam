@@ -214,7 +214,6 @@ ${order.order_items
             ))}
           </tbody>
         </table>
-        </div>
       </section>
     </main>
   );
