@@ -1,15 +1,30 @@
 import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
-import {
-  getOrdersByBuyer,
-  createOrder
-} from "@/lib/db/orders";
-
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+import { getOrdersByBuyer, createOrder } from "@/lib/db/orders";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/* =========================
+   TYPES
+========================= */
+type OrderItemInput = {
+  product_id: string;
+  quantity: number;
+  price: number;
+};
+
+type ShippingInput = {
+  name: string;
+  phone: string;
+  address: string;
+};
+
+type CreateOrderBody = {
+  items: OrderItemInput[];
+  total: number;
+  shipping: ShippingInput;
+};
 
 /* =========================
    GET /api/orders
@@ -18,10 +33,7 @@ export async function GET() {
   const user = await getUserFromBearer();
 
   if (!user) {
-    return NextResponse.json(
-      { error: "UNAUTHORIZED" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
 
   const orders = await getOrdersByBuyer(user.pi_uid);
@@ -35,34 +47,52 @@ export async function POST(req: Request) {
   const user = await getUserFromBearer();
 
   if (!user) {
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+  }
+
+  /* 1️⃣ Parse JSON an toàn */
+  let body: unknown;
+
+  try {
+    body = await req.json();
+  } catch {
     return NextResponse.json(
-      { error: "UNAUTHORIZED" },
-      { status: 401 }
+      { error: "EMPTY_OR_INVALID_JSON" },
+      { status: 400 }
     );
   }
 
-  const { items, total, shipping } = await req.json();
-
-  if (!Array.isArray(items) || typeof total !== "number") {
+  if (!body || typeof body !== "object") {
     return NextResponse.json(
       { error: "INVALID_BODY" },
       { status: 400 }
     );
   }
 
-  for (const i of items) {
+  const { items, total, shipping } = body as CreateOrderBody;
+
+  /* 2️⃣ Validate items */
+  if (!Array.isArray(items) || typeof total !== "number") {
+    return NextResponse.json(
+      { error: "INVALID_BODY_STRUCTURE" },
+      { status: 400 }
+    );
+  }
+
+  for (const item of items) {
     if (
-      !i.product_id ||
-      typeof i.quantity !== "number" ||
-      typeof i.price !== "number"
+      typeof item.product_id !== "string" ||
+      typeof item.quantity !== "number" ||
+      typeof item.price !== "number"
     ) {
       return NextResponse.json(
-        { error: "INVALID_ORDER_ITEM", item: i },
+        { error: "INVALID_ORDER_ITEM", item },
         { status: 400 }
       );
     }
   }
 
+  /* 3️⃣ Validate shipping */
   if (
     !shipping ||
     typeof shipping.name !== "string" ||
@@ -75,6 +105,7 @@ export async function POST(req: Request) {
     );
   }
 
+  /* 4️⃣ Create Order */
   const order = await createOrder({
     buyerPiUid: user.pi_uid,
     items,
@@ -82,21 +113,10 @@ export async function POST(req: Request) {
     shipping,
   });
 
-  for (const item of items) {
-    await fetch(
-      `${SUPABASE_URL}/rest/v1/rpc/increment_product_sold`,
-      {
-        method: "POST",
-        headers: {
-          apikey: SERVICE_KEY,
-          Authorization: `Bearer ${SERVICE_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          pid: item.product_id,
-          qty: item.quantity ?? 1,
-        }),
-      }
+  if (!order) {
+    return NextResponse.json(
+      { error: "FAILED_TO_CREATE_ORDER" },
+      { status: 500 }
     );
   }
 
