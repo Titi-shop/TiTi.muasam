@@ -1,9 +1,17 @@
+app/seller/orders/[id]/page.tsx
+Sửa lại file này mới đúng .
+Không nút quay về không người gữi và người nhận .
+Nút lưu ở dưới và nút in .
+
+app/seller/orders/[id]/page.tsx
+
 "use client";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
 /* =========================
@@ -19,9 +27,18 @@ interface OrderItem {
   product?: Product;
 }
 
+interface Buyer {
+  name: string;
+  phone?: string;
+  address?: string;
+  province?: string;
+  country?: string;
+}
+
 interface Order {
   id: string;
   created_at: string;
+  buyer: Buyer;
   order_items: OrderItem[];
 }
 
@@ -52,9 +69,11 @@ export default function SellerOrderDetailPage({
 }: {
   params: { id: string };
 }) {
+  const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
+  /* LOAD ORDER */
   useEffect(() => {
     loadOrder();
   }, []);
@@ -91,52 +110,109 @@ export default function SellerOrderDetailPage({
     );
   }
 
-  /* ===== CONTENT FOR DOWNLOAD ===== */
-
+  /* PREPARE DOWNLOAD CONTENT */
   const downloadContent = `
 ĐƠN HÀNG: ${order.id}
 Ngày tạo: ${formatDate(order.created_at)}
+
+NGƯỜI NHẬN:
+Tên: ${order.buyer.name}
+SĐT: ${order.buyer.phone ?? ""}
+Địa chỉ: ${order.buyer.address ?? ""}
+Tỉnh/TP: ${order.buyer.province ?? ""}
+Quốc gia: ${order.buyer.country ?? ""}
 
 SẢN PHẨM:
 ${order.order_items
   .map(
     (item, idx) =>
-      `${idx + 1}. ${item.product?.name ?? "Sản phẩm"} x${item.quantity}`
+      `${idx + 1}. ${item.product?.name ?? "Sản phẩm"} x${
+        item.quantity
+      }`
   )
   .join("\n")}
 `;
 
   return (
     <main className="min-h-screen bg-[#f4efe6] p-6 print:bg-white">
+      {/* ACTION BAR (NOT PRINTED) */}
+      <div className="flex justify-between items-center mb-6 print:hidden">
+
+        <div className="flex gap-2">
+          <button
+            onClick={() =>
+              downloadText(
+                `order-${order.id}.txt`,
+                downloadContent
+              )
+            }
+            className="px-4 py-2 border border-[#7a553a] text-[#7a553a] rounded"
+          >
+            💾 Lưu về máy
+          </button>
+
+          <button
+            onClick={() => window.print()}
+            className="px-4 py-2 bg-[#7a553a] text-white rounded"
+          >
+            🖨 In đơn
+          </button>
+        </div>
+      </div>
 
       {/* ORDER PAPER */}
-      <section
-        id="print-area"
-        className="max-w-2xl mx-auto bg-white p-6 border shadow print:shadow-none"
-      >
-        <h1 className="text-xl font-semibold text-center mb-4">
-          PHIẾU ĐƠN HÀNG
+      <section className="max-w-2xl mx-auto bg-white p-6 border shadow print:shadow-none">
+        <h1 className="text-xl font-semibold text-center mb-6">
+          PHIẾU GIAO HÀNG
         </h1>
 
-        <p className="text-sm text-center mb-6">
-          Mã đơn: {order.id} <br />
-          Ngày tạo: {formatDate(order.created_at)}
-        </p>
+        {/* BUYER INFO */}
+        <div className="space-y-1 text-sm mb-6">
+          <p>
+            <b>Người nhận:</b> {order.buyer.name}
+          </p>
+          <p>
+            <b>SĐT:</b> {order.buyer.phone ?? ""}
+          </p>
+          <p>
+            <b>Địa chỉ:</b> {order.buyer.address ?? ""}
+          </p>
+          <p>
+            <b>Tỉnh/TP:</b> {order.buyer.province ?? ""}
+          </p>
+          <p>
+            <b>Quốc gia:</b> {order.buyer.country ?? ""}
+          </p>
+          <p>
+            <b>Ngày tạo:</b>{" "}
+            {formatDate(order.created_at)}
+          </p>
+        </div>
 
+        {/* ITEMS */}
         <table className="w-full border text-sm">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-2 py-1 text-left">#</th>
-              <th className="border px-2 py-1 text-left">Sản phẩm</th>
-              <th className="border px-2 py-1 text-center">SL</th>
+              <th className="border px-2 py-1 text-left">
+                #
+              </th>
+              <th className="border px-2 py-1 text-left">
+                Sản phẩm
+              </th>
+              <th className="border px-2 py-1 text-center">
+                SL
+              </th>
             </tr>
           </thead>
           <tbody>
             {order.order_items.map((item, i) => (
               <tr key={i}>
-                <td className="border px-2 py-1">{i + 1}</td>
                 <td className="border px-2 py-1">
-                  {item.product?.name ?? "Sản phẩm"}
+                  {i + 1}
+                </td>
+                <td className="border px-2 py-1">
+                  {item.product?.name ??
+                    "Sản phẩm"}
                 </td>
                 <td className="border px-2 py-1 text-center">
                   {item.quantity}
@@ -145,47 +221,8 @@ ${order.order_items
             ))}
           </tbody>
         </table>
+        </div>
       </section>
-
-      {/* ACTION BUTTONS BELOW ORDER */}
-      <div className="max-w-2xl mx-auto mt-6 flex justify-end gap-3 print:hidden">
-        <button
-          onClick={() =>
-            downloadText(`order-${order.id}.txt`, downloadContent)
-          }
-          className="px-4 py-2 border border-[#7a553a] text-[#7a553a] rounded"
-        >
-          💾 Lưu
-        </button>
-
-        <button
-          onClick={() => window.print()}
-          className="px-4 py-2 bg-[#7a553a] text-white rounded"
-        >
-          🖨 In
-        </button>
-      </div>
-
-      {/* PRINT STYLE */}
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-
-          #print-area,
-          #print-area * {
-            visibility: visible;
-          }
-
-          #print-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-        }
-      `}</style>
     </main>
   );
 }
