@@ -311,8 +311,26 @@ export async function getOrderByIdForSeller(
 export async function getOrdersByBuyer(
   buyerPiUid: string
 ): Promise<OrderRecord[]> {
-  const select =
-    "id,status,total,created_at,buyer_name,buyer_phone,buyer_address,order_items(quantity,price,product_id,status)";
+  const select = `
+id,
+status,
+total,
+created_at,
+buyer_name,
+buyer_phone,
+buyer_address,
+order_items(
+  quantity,
+  price,
+  product_id,
+  status,
+  products (
+    id,
+    name,
+    images
+  )
+)
+`.replace(/\s+/g, "");
 
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${buyerPiUid}&select=${select}&order=created_at.desc`,
@@ -321,37 +339,33 @@ export async function getOrdersByBuyer(
 
   if (!res.ok) return [];
 
-  const raw = (await res.json()) as Array<{
-    id: string;
-    status: string;
-    total: number;
-    created_at: string;
-    buyer_name: string | null;
-    buyer_phone: string | null;
-    buyer_address: string | null;
-    order_items: Array<{
-      quantity: number;
-      price: number;
-      product_id: string;
-      status: string;
-    }>;
-  }>;
+  const raw = await res.json();
 
-  return raw.map((o) => ({
+  return raw.map((o: any) => ({
     id: o.id,
     status: o.status,
-    total: fromMicroPi(o.total),
+    total: fromMicroPi(o.total ?? 0),
     created_at: o.created_at,
+
+    // ✅ FIX buyer info null-safe
     buyer: {
-      name: o.buyer_name ?? "",
-      phone: o.buyer_phone ?? "",
-      address: o.buyer_address ?? "",
+      name: o.buyer_name?.trim() ?? "",
+      phone: o.buyer_phone?.trim() ?? "",
+      address: o.buyer_address?.trim() ?? "",
     },
-    order_items: o.order_items.map((i) => ({
+
+    // ✅ JOIN product luôn tại đây
+    order_items: (o.order_items ?? []).map((i: any) => ({
       product_id: i.product_id,
-      quantity: i.quantity,
-      price: fromMicroPi(i.price),
-      status: i.status,
+      quantity: i.quantity ?? 0,
+      price: fromMicroPi(i.price ?? 0),
+      status: i.status ?? "pending",
+
+      // ✅ FIX ảnh + tên
+      name: i.products?.name ?? "",
+      images: Array.isArray(i.products?.images)
+        ? i.products.images
+        : [],
     })),
   }));
 }
