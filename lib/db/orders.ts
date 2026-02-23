@@ -207,6 +207,120 @@ export async function getOrdersBySeller(
     .filter((o): o is OrderRecord => o !== null);
 }
 
+
+type RawOrderItem = {
+  quantity: number;
+  price: number;
+  product_id: string;
+  status: string;
+};
+
+type RawOrder = {
+  id: string;
+  status: string;
+  total: number;
+  created_at: string;
+  order_items: RawOrderItem[];
+};
+
+type RawProduct = {
+  id: string;
+  name: string;
+  images: string[] | null;
+};
+
+export async function getOrdersByBuyer(
+  buyerPiUid: string
+): Promise<OrderRecord[]> {
+
+  /* ===============================
+     1️⃣ LẤY ORDERS + ORDER_ITEMS
+  =============================== */
+  const orderRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${buyerPiUid}&order=created_at.desc&select=
+      id,
+      status,
+      total,
+      created_at,
+      order_items(
+        quantity,
+        price,
+        product_id,
+        status
+      )
+    `,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!orderRes.ok) return [];
+
+  const rawOrders: RawOrder[] = await orderRes.json();
+
+  if (rawOrders.length === 0) return [];
+
+  /* ===============================
+     2️⃣ LẤY PRODUCT IDS
+  =============================== */
+  const productIds = Array.from(
+    new Set(
+      rawOrders.flatMap((o) =>
+        o.order_items.map((i) => i.product_id)
+      )
+    )
+  );
+
+  /* ===============================
+     3️⃣ FETCH PRODUCTS
+  =============================== */
+  let productsMap: Record<
+    string,
+    { id: string; name: string; images: string[] }
+  > = {};
+
+  if (productIds.length > 0) {
+    const ids = productIds.map((id) => `"${id}"`).join(",");
+
+    const productRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/products?id=in.(${ids})&select=id,name,images`,
+      { headers: headers(), cache: "no-store" }
+    );
+
+    if (productRes.ok) {
+      const products: RawProduct[] = await productRes.json();
+
+      productsMap = Object.fromEntries(
+        products.map((p) => [
+          p.id,
+          {
+            id: p.id,
+            name: p.name,
+            images: p.images ?? [],
+          },
+        ])
+      );
+    }
+  }
+
+  /* ===============================
+     4️⃣ MAP KẾT QUẢ CUỐI
+  =============================== */
+  return rawOrders.map((o): OrderRecord => ({
+    id: o.id,
+    status: o.status,
+    total: fromMicroPi(o.total),
+    created_at: o.created_at,
+
+    order_items: o.order_items.map(
+      (i): OrderItemRecord => ({
+        product_id: i.product_id,
+        quantity: i.quantity,
+        price: fromMicroPi(i.price),
+        status: i.status,
+        product: productsMap[i.product_id], // có thể undefined
+      })
+    ),
+  }));
+}
 /* =====================================================
    GET SINGLE ORDER BY ID FOR SELLER
 ===================================================== */
