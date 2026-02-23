@@ -160,8 +160,6 @@ export async function getOrdersBySeller(
     seller_pi_uid: `eq.${sellerPiUid}`,
   });
 
-  if (status) itemQuery.append("status", `eq.${status}`);
-
   const itemsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/order_items?${itemQuery.toString()}`,
     { headers: headers(), cache: "no-store" }
@@ -222,11 +220,11 @@ export async function getOrdersBySeller(
   return rawOrders
     .map((o): OrderRecord | null => {
 
-      const sellerItems = o.order_items.filter(
-        i =>
-          i.seller_pi_uid === sellerPiUid &&
-          (!status || i.status === status)
-      );
+      if (status && o.status !== status) return null;
+
+const sellerItems = o.order_items.filter(
+  i => i.seller_pi_uid === sellerPiUid
+);
 
       if (sellerItems.length === 0) return null;
 
