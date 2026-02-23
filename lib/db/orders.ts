@@ -185,7 +185,7 @@ export async function getOrdersBySeller(
 
       return {
         id: o.id,
-        status: status ?? o.status,
+        status: o.status,
         created_at: o.created_at,
         total: fromMicroPi(o.total),
 
