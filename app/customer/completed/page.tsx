@@ -3,9 +3,9 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-import { getPiAccessToken } from "@/lib/piAuth";
+import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
 /* =========================
    ORDER STATUS
@@ -15,7 +15,8 @@ type OrderStatus =
   | "confirmed"
   | "shipping"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "returned";
 
 /* =========================
    TYPES
@@ -28,6 +29,13 @@ interface Order {
 }
 
 /* =========================
+   HELPERS
+========================= */
+function formatPi(value: number | string): string {
+  return Number(value).toFixed(6);
+}
+
+/* =========================
    PAGE
 ========================= */
 export default function CustomerCompletedPage() {
@@ -35,10 +43,6 @@ export default function CustomerCompletedPage() {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
-  function formatPi(value: number | string): string {
-    return Number(value).toFixed(6);
-  }
 
   /* =========================
      LOAD COMPLETED ORDERS
@@ -49,22 +53,21 @@ export default function CustomerCompletedPage() {
 
   async function loadOrders(): Promise<void> {
     try {
-      const token = await getPiAccessToken();
+      const res = await apiAuthFetch(
+        "/api/orders?status=completed",
+        { cache: "no-store" }
+      );
 
-      const res = await fetch("/api/orders", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
-      });
+      if (!res.ok) throw new Error("LOAD_FAILED");
 
-      if (!res.ok) throw new Error("UNAUTHORIZED");
+      const data: unknown = await res.json();
 
-      const rawOrders: Order[] = await res.json();
+      if (!Array.isArray(data)) {
+        setOrders([]);
+        return;
+      }
 
-      /* ✅ CHỈ LẤY COMPLETED */
-      const completedOrders = rawOrders
-        .filter((o) => o.status === "completed")
+      const cleanOrders = (data as Order[])
         .sort((a, b) => {
           if (!a.created_at || !b.created_at) return 0;
           return (
@@ -73,7 +76,7 @@ export default function CustomerCompletedPage() {
           );
         });
 
-      setOrders(completedOrders);
+      setOrders(cleanOrders);
     } catch (err) {
       console.error("❌ Load completed orders error:", err);
       setOrders([]);
@@ -85,10 +88,12 @@ export default function CustomerCompletedPage() {
   /* =========================
      SUMMARY
   ========================= */
-  const totalPi = orders.reduce(
-    (sum, o) => sum + Number(o.total),
-    0
-  );
+  const totalPi = useMemo(() => {
+    return orders.reduce(
+      (sum, o) => sum + Number(o.total),
+      0
+    );
+  }, [orders]);
 
   /* =========================
      UI
@@ -112,7 +117,7 @@ export default function CustomerCompletedPage() {
       <section className="mt-6 px-4">
         {loading ? (
           <p className="text-center text-gray-400">
-            ⏳ {t.loading_orders}
+            ⏳ {t.loading_orders || "Đang tải..."}
           </p>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
