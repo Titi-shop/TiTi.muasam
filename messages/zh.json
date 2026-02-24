@@ -400,7 +400,25 @@
 
   "submitting": "提交中...",
   "submit_review": "提交评价",
-  "invalid_date": "日期无效"
+  "invalid_date": "日期无效",
+  "shop_orders": "店铺订单",
+  "orders": "单",
+  "all": "全部",
+  "loading": "加载中...",
+  "no_orders": "暂无订单",
+  "customer": "客户",
+  "phone": "电话",
+  "no_address": "暂无地址",
+  "total": "总计",
+
+  "order_status_pending": "待确认",
+  "order_status_confirmed": "已确认",
+  "order_status_shipping": "配送中",
+  "order_status_completed": "已完成",
+  "order_status_returned": "已退货",
+  "order_status_cancelled": "已取消"
+
+  
   
 
   
