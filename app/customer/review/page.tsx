@@ -21,8 +21,7 @@ interface Order {
 const getDefaultComment = (
   t: Record<string, string>
 ): string =>
-  t.default_review_comment ||
-  "Sản phẩm tốt, giao hàng nhanh, sẽ ủng hộ lần sau.";
+ ( t.default_review_comment)
 
 /* =========================
    PAGE
