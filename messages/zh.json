@@ -428,7 +428,15 @@
   "confirm_cancel": "确认取消",
   "close": "关闭",
 
-  "confirm": "确认"
+  "confirm": "确认",
+  "loading": "加载中...",
+  "confirmed_orders": "已确认订单",
+  "orders": "订单",
+  "no_confirmed_orders": "暂无已确认订单",
+  "status_confirmed": "已确认",
+  "product": "商品",
+  "total": "总计",
+  "start_shipping": "开始发货"
 
   
 }
