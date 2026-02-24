@@ -453,7 +453,18 @@
   "quantity": "数量",
   "download": "下载",
   "print": "打印",
-  "delivery_note": "发货单"
+  "delivery_note": "发货单",
+  "loading": "加载中...",
+  "completed_orders": "已完成订单",
+  "orders": "订单",
+  "no_completed_orders": "暂无已完成订单",
+  "status_completed": "已完成",
+  "customer": "客户",
+  "phone": "电话",
+  "no_address": "暂无地址",
+  "product": "商品",
+  "total": "总计"
+
 
 
   
