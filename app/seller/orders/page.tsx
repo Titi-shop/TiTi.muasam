@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
-
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 /* ================= TYPES ================= */
 
 interface Product {
@@ -50,7 +50,7 @@ export default function SellerOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<OrderTab>("all");
-
+const { t } = useTranslation();
   /* ================= FORMAT ================= */
 
   function formatPi(value: number) {
@@ -109,10 +109,13 @@ export default function SellerOrdersPage() {
       {/* HEADER */}
       <header className="bg-gray-700 text-white px-4 py-4">
         <div className="bg-gray-600 rounded-lg p-4">
-          <p className="text-sm opacity-90">Đơn hàng của shop</p>
-          <p className="text-xs opacity-80 mt-1">
-            {filteredOrders.length} đơn
-          </p>
+
+          <p className="text-sm opacity-90">
+  {t.shop_orders ?? "Shop Orders"}
+</p>
+<p className="text-xs opacity-80 mt-1">
+  {filteredOrders.length} {t.orders ?? "orders"}
+</p>
         </div>
       </header>
 
@@ -120,14 +123,16 @@ export default function SellerOrdersPage() {
       <div className="bg-white border-b">
         <div className="flex gap-6 px-4 py-3 text-sm overflow-x-auto whitespace-nowrap">
           {([
-  ["all", "Tất cả"],
-  ["pending", "Chờ xác nhận"],
-  ["confirmed", "Đã xác nhận"],
-  ["shipping", "Đang vận chuyển"],
-  ["completed", "Đã hoàn thành"],
-  ["returned", "Hoàn trả"],
-  ["cancelled", "Huỷ"],
-] as [OrderTab, string][]).map(([key, label]) => (
+  ["all", t.all ?? "All"],
+  ["pending", t.pending_orders ?? "Pending"],
+  ["confirmed", t.confirmed_orders ?? "Confirmed"],
+  ["shipping", t.shipping_orders ?? "Shipping"],
+  ["completed", t.completed_orders ?? "Completed"],
+  ["returned", t.returned_orders ?? "Returned"],
+  ["cancelled", t.cancelled_orders ?? "Cancelled"],
+] as [OrderTab, string][])
+
+      .map(([key, label]) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
@@ -150,11 +155,11 @@ export default function SellerOrdersPage() {
       <section className="px-4 mt-4 space-y-4">
         {loading ? (
           <p className="text-center text-gray-500">
-            ⏳ Đang tải...
+             {t.loading ?? "Loading..."}
           </p>
         ) : filteredOrders.length === 0 ? (
           <p className="text-center text-gray-400">
-            Không có đơn hàng
+            {t.no_orders ?? "No orders"}
           </p>
         ) : (
           filteredOrders.map((o) => (
@@ -163,7 +168,9 @@ export default function SellerOrdersPage() {
               <div className="flex justify-between px-4 py-2 border-b text-sm">
                 <span className="font-semibold">#{o.id}</span>
                 <span className="capitalize text-gray-700">
-                  {o.status}
+                  {
+  t[`order_status_${o.status}`] ?? o.status
+}
                 </span>
               </div>
 
@@ -172,15 +179,15 @@ export default function SellerOrdersPage() {
 {o.buyer && (
   <div className="px-4 py-3 text-sm border-b bg-gray-50 space-y-1">
     <p>
-      <span className="text-gray-500">Khách:</span>{" "}
+      <span className="text-gray-500">{t.customer ?? "Customer"}: </span>{" "}
       {o.buyer.name || "—"}
     </p>
     <p>
-      <span className="text-gray-500">SĐT:</span>{" "}
+      <span className="text-gray-500">{t.phone ?? "Phone"}:</span>{" "}
       {o.buyer.phone || "—"}
     </p>
     <p className="text-xs text-gray-600">
-      {o.buyer.address || "Không có địa chỉ"}
+      {o.buyer.address || t.no_address ?? "No address"}
     </p>
   </div>
 )}
@@ -215,7 +222,7 @@ export default function SellerOrdersPage() {
               {/* FOOTER */}
               <div className="flex justify-between items-center px-4 py-3 border-t text-sm">
                 <span>
-                  Tổng: <b>π{formatPi(o.total)}</b>
+                 {t.total ?? "Total"}:  <b>π{formatPi(o.total)}</b>
                 </span>
               </div>
             </div>
