@@ -105,14 +105,14 @@ export default function ReturnPage() {
       alert(t.return_submitted);
       router.push("/customer/orders");
     } catch {
-      alert(t.return_failed);
+      alert(t("return_failed"));
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) {
-    return <p className="text-center mt-10"> {t.loading}</p>;
+    return <p className="text-center mt-10">{t("loading")} </p>;
   }
 
   return (
@@ -168,7 +168,7 @@ export default function ReturnPage() {
         <label className="font-semibold"> {t.proof_images} </label>
         <label className="flex gap-2 bg-orange-500 text-white px-4 py-2 rounded mt-2 cursor-pointer w-fit">
           <Upload size={18} />
-         uploading ? t.uploading : t.upload_image
+{uploading ? t("uploading") : t("upload_image")}
           <input
             type="file"
             hidden
@@ -197,7 +197,7 @@ export default function ReturnPage() {
           className="bg-green-600 text-white px-6 py-2 rounded"
         >
           <Send size={18} className="inline mr-2" />
-          submitting ? t.sending : t.submit_request
+{submitting ? t("sending") : t("submit_request")}
         </button>
       </div>
     </main>
