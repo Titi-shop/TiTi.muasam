@@ -157,7 +157,7 @@ export default function CustomerReviewPage() {
     ? new Date(order.createdAt).toLocaleString()
     : (t.invalid_date || "—")}
 </span>
-                </div>
+      
 
                 {/* STAR RATING */}
                 <div className="flex gap-1 my-3">
