@@ -8,198 +8,201 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
 interface Order {
-  id: string;
-  status: string;
+id: string;
+status: string;
 }
 
 const RETURN_REASON_KEYS = [
-  "return_reason_defective",
-  "return_reason_wrong_item",
-  "return_reason_missing_item",
-  "return_reason_not_as_described",
-  "return_reason_late_delivery",
-  "return_reason_other",
+"return_reason_defective",
+"return_reason_wrong_item",
+"return_reason_missing_item",
+"return_reason_not_as_described",
+"return_reason_late_delivery",
+"return_reason_other",
 ];
 export default function ReturnPage() {
-  const router = useRouter();
-  const { t } = useTranslation();
+const router = useRouter();
+const { t } = useTranslation();
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState("");
-  const [reason, setReason] = useState("");
-  const [images, setImages] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
+const [orders, setOrders] = useState<Order[]>([]);
+const [selectedOrder, setSelectedOrder] = useState("");
+const [reason, setReason] = useState("");
+const [images, setImages] = useState<string[]>([]);
+const [uploading, setUploading] = useState(false);
+const [submitting, setSubmitting] = useState(false);
+const [loading, setLoading] = useState(true);
 
-  /* LOAD RETURNABLE ORDERS */
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await apiAuthFetch(
-          "/api/orders?returnable=true",
-          { cache: "no-store" }
-        );
+/* LOAD RETURNABLE ORDERS */
+useEffect(() => {
+const load = async () => {
+try {
+const res = await apiAuthFetch(
+"/api/orders?returnable=true",
+{ cache: "no-store" }
+);
 
-        if (!res.ok) throw new Error();
+if (!res.ok) throw new Error();  
 
-        const data = await res.json();
-        setOrders(Array.isArray(data) ? data : []);
-      } catch {
-        setOrders([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const data = await res.json();  
+    setOrders(Array.isArray(data) ? data : []);  
+  } catch {  
+    setOrders([]);  
+  } finally {  
+    setLoading(false);  
+  }  
+};  
 
-    load();
-  }, []);
+load();
 
-  /* UPLOAD */
-  const handleUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+}, []);
 
-    setUploading(true);
-    try {
-      const form = new FormData();
-      form.append("file", file);
+/* UPLOAD */
+const handleUpload = async (
+e: React.ChangeEvent<HTMLInputElement>
+) => {
+const file = e.target.files?.[0];
+if (!file) return;
 
-      const res = await apiAuthFetch("/api/upload", {
-        method: "POST",
-        body: form,
-      });
+setUploading(true);  
+try {  
+  const form = new FormData();  
+  form.append("file", file);  
 
-      const data = await res.json();
-      if (data?.url) {
-        setImages(prev => [...prev, data.url]);
-      }
-    } finally {
-      setUploading(false);
-    }
-  };
+  const res = await apiAuthFetch("/api/upload", {  
+    method: "POST",  
+    body: form,  
+  });  
 
-  /* SUBMIT */
-  const handleSubmit = async () => {
-    if (!selectedOrder || !reason || images.length === 0) {
-      alert(t.return_validation_error);
-      return;
-    }
+  const data = await res.json();  
+  if (data?.url) {  
+    setImages(prev => [...prev, data.url]);  
+  }  
+} finally {  
+  setUploading(false);  
+}
 
-    setSubmitting(true);
+};
 
-    try {
-      const res = await apiAuthFetch("/api/returns", {
-        method: "POST",
-        body: JSON.stringify({
-          orderId: selectedOrder,
-          reason,
-          images,
-        }),
-      });
+/* SUBMIT */
+const handleSubmit = async () => {
+if (!selectedOrder || !reason || images.length === 0) {
+alert(t.return_validation_error);
+return;
+}
 
-      if (!res.ok) throw new Error();
+setSubmitting(true);  
 
-      alert(t.return_submitted);
-      router.push("/customer/orders");
-    } catch {
-      alert(t("return_failed"));
-    } finally {
-      setSubmitting(false);
-    }
-  };
+try {  
+  const res = await apiAuthFetch("/api/returns", {  
+    method: "POST",  
+    body: JSON.stringify({  
+      orderId: selectedOrder,  
+      reason,  
+      images,  
+    }),  
+  });  
 
-  if (loading) {
-    return <p className="text-center mt-10">{t("loading")} </p>;
-  }
+  if (!res.ok) throw new Error();  
 
-  return (
-    <main className="min-h-screen bg-gray-50 pb-10">
-      <div className="flex items-center bg-white p-4 shadow-sm">
-        <button onClick={() => router.back()}>
-          <ArrowLeft size={22} />
-        </button>
-        <h1 className="mx-auto font-semibold">
-          {t.return_request}
-        </h1>
-      </div>
+  alert(t.return_submitted);  
+  router.push("/customer/orders");  
+} catch {  
+  alert(t.return_failed);  
+} finally {  
+  setSubmitting(false);  
+}
 
-      <div className="p-4">
-        <label className="font-semibold">{t.select_order}</label>
-        <select
-          className="w-full border p-2 rounded mt-2"
-          value={selectedOrder}
-          onChange={(e) => setSelectedOrder(e.target.value)}
-        >
-          <option value="">-- {t.select} --</option>
-          {orders.map(o => (
-            <option key={o.id} value={o.id}>
-              #{o.id}
-            </option>
-          ))}
-        </select>
+};
 
-        {orders.length === 0 && (
-          <p className="text-sm text-gray-400 mt-2">
-            {t.no_returnable_orders}
-          </p>
-        )}
-      </div>
+if (loading) {
+return <p className="text-center mt-10"> {t.loading}</p>;
+}
 
-      <div className="p-4">
-        <label className="font-semibold">{t.reason}</label>
-        <select
-          className="w-full border p-2 rounded mt-2"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-        >
-          <option value="">-- -- {t.select_reason} -- --</option>
-          {RETURN_REASON_KEYS.map((key) => (
-  <option key={key} value={key}>
-    {t[key]}
-  </option>
-))}
-        </select>
-      </div>
+return (
+<main className="min-h-screen bg-gray-50 pb-10">
+<div className="flex items-center bg-white p-4 shadow-sm">
+<button onClick={() => router.back()}>
+<ArrowLeft size={22} />
+</button>
+<h1 className="mx-auto font-semibold">
+{t.return_request}
+</h1>
+</div>
 
-      <div className="p-4">
-        <label className="font-semibold"> {t.proof_images} </label>
-        <label className="flex gap-2 bg-orange-500 text-white px-4 py-2 rounded mt-2 cursor-pointer w-fit">
-          <Upload size={18} />
-{uploading ? t("uploading") : t("upload_image")}
-          <input
-            type="file"
-            hidden
-            accept="image/*"
-            onChange={handleUpload}
-          />
-        </label>
+<div className="p-4">  
+    <label className="font-semibold">{t.select_order}</label>  
+    <select  
+      className="w-full border p-2 rounded mt-2"  
+      value={selectedOrder}  
+      onChange={(e) => setSelectedOrder(e.target.value)}  
+    >  
+      <option value="">-- {t.select} --</option>  
+      {orders.map(o => (  
+        <option key={o.id} value={o.id}>  
+          #{o.id}  
+        </option>  
+      ))}  
+    </select>  
 
-        {images.length > 0 && (
-          <div className="flex gap-3 mt-3 flex-wrap">
-            {images.map((url, i) => (
-              <img
-                key={i}
-                src={url}
-                className="w-20 h-20 object-cover rounded border"
-              />
-            ))}
-          </div>
-        )}
-      </div>
+    {orders.length === 0 && (  
+      <p className="text-sm text-gray-400 mt-2">  
+        {t.no_returnable_orders}  
+      </p>  
+    )}  
+  </div>  
 
-      <div className="flex justify-center mt-6">
-        <button
-          onClick={handleSubmit}
-          disabled={submitting}
-          className="bg-green-600 text-white px-6 py-2 rounded"
-        >
-          <Send size={18} className="inline mr-2" />
-{submitting ? t("sending") : t("submit_request")}
-        </button>
-      </div>
-    </main>
-  );
+  <div className="p-4">  
+    <label className="font-semibold">{t.reason}</label>  
+    <select  
+      className="w-full border p-2 rounded mt-2"  
+      value={reason}  
+      onChange={(e) => setReason(e.target.value)}  
+    >  
+      <option value="">-- -- {t.select_reason} -- --</option>  
+      {RETURN_REASON_KEYS.map((key) => (
+
+  <option key={key} value={key}>  
+    {t[key]}  
+  </option>  
+))}  
+        </select>  
+      </div>  <div className="p-4">  
+    <label className="font-semibold"> {t.proof_images} </label>  
+    <label className="flex gap-2 bg-orange-500 text-white px-4 py-2 rounded mt-2 cursor-pointer w-fit">  
+      <Upload size={18} />  
+     uploading ? t.uploading : t.upload_image  
+      <input  
+        type="file"  
+        hidden  
+        accept="image/*"  
+        onChange={handleUpload}  
+      />  
+    </label>  
+
+    {images.length > 0 && (  
+      <div className="flex gap-3 mt-3 flex-wrap">  
+        {images.map((url, i) => (  
+          <img  
+            key={i}  
+            src={url}  
+            className="w-20 h-20 object-cover rounded border"  
+          />  
+        ))}  
+      </div>  
+    )}  
+  </div>  
+
+  <div className="flex justify-center mt-6">  
+    <button  
+      onClick={handleSubmit}  
+      disabled={submitting}  
+      className="bg-green-600 text-white px-6 py-2 rounded"  
+    >  
+      <Send size={18} className="inline mr-2" />  
+      submitting ? t.sending : t.submit_request  
+    </button>  
+  </div>  
+</main>
+
+);
 }
