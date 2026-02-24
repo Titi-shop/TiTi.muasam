@@ -338,22 +338,18 @@
   "all": "全部",
 
 
+ "cancel_order": "取消订单",
+"canceling": "正在取消...",
+"confirm_cancel": "确认取消",
+"cancel": "取消",
+"select_cancel_reason": "请选择取消原因。",
+"enter_cancel_reason": "请输入具体原因...",
 
-
-  "loading_orders": "正在加载订单...",
-  "cancel": "取消",
-  "cancel_order": "取消订单",
-  "canceling": "正在取消...",
-  "confirm_cancel": "确认取消",
-  "select_cancel_reason": "请选择取消原因。",
-  "enter_cancel_reason": "请输入具体原因...",
-  "cancel_failed": "无法取消订单。",
-
-  "cancel_reason_change_mind": "改变购买想法",
-  "cancel_reason_wrong_product": "下错商品",
-  "cancel_reason_change_variant": "想更改数量 / 规格",
-  "cancel_reason_better_price": "找到更优惠的价格",
-  "cancel_reason_delivery_slow": "配送时间太长",
-  "cancel_reason_update_address": "想更新地址 / 电话号码",
-  "cancel_reason_other": "其他"
+"cancel_reason_change_mind": "改变购买想法",
+"cancel_reason_wrong_product": "下错商品",
+"cancel_reason_change_variant": "想更改数量 / 规格",
+"cancel_reason_better_price": "找到更优惠的价格",
+"cancel_reason_delivery_slow": "配送时间太长",
+"cancel_reason_update_address": "想更新地址 / 电话号码",
+"cancel_reason_other": "其他"
 }
