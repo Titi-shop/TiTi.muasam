@@ -35,8 +35,17 @@ export async function GET() {
 ========================================================= */
 export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => ({}));
-    const accessToken = body?.accessToken as string | undefined;
+    
+   const authHeader = req.headers.get("authorization");
+
+if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  return NextResponse.json(
+    { success: false, error: "MISSING_ACCESS_TOKEN" },
+    { status: 401 }
+  );
+}
+
+const accessToken = authHeader.slice(7).trim();
 
     if (!accessToken) {
       return NextResponse.json(
