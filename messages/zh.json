@@ -463,7 +463,11 @@
   "phone": "电话",
   "no_address": "暂无地址",
   "product": "商品",
-  "total": "总计"
+  "total": "总计",
+  
+  "seller_dashboard": "卖家控制台",
+  "order_status": "订单状态",
+  "confirmed_orders": "已确认"
 
 
 
