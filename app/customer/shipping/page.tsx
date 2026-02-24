@@ -183,14 +183,13 @@ export default function ShippingOrdersPage() {
       <section className="mt-6 px-4">
         {loading ? (
           <p className="text-center text-gray-400">
-            {t.loading_orders || "Đang tải..."}
+            {t.loading_orders}
           </p>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-16 text-gray-400">
             <div className="w-24 h-24 bg-gray-200 rounded-full mb-4 opacity-40" />
             <p>
-              {t.no_shipping_orders ||
-                "Không có đơn đang giao"}
+              {t.no_shipping_orders}
             </p>
           </div>
         ) : (
@@ -206,7 +205,7 @@ export default function ShippingOrdersPage() {
                     #{o.id}
                   </span>
                   <span className="text-orange-500 text-sm font-medium">
-                    {t.status_shipping || "Đang vận chuyển"}
+                    {t.status_shipping}
                   </span>
                 </div>
 
@@ -244,7 +243,7 @@ export default function ShippingOrdersPage() {
                 {/* FOOTER */}
                 <div className="flex justify-between items-center px-4 py-3 border-t">
                   <p className="text-sm font-semibold">
-                    {t.total || "Tổng cộng"}: π
+                    {t.total}: π
                     {formatPi(o.total)}
                   </p>
 
@@ -255,9 +254,9 @@ export default function ShippingOrdersPage() {
                     disabled={processingId === o.id}
                     className="px-4 py-1.5 text-sm border border-orange-500 text-orange-500 rounded-md hover:bg-orange-500 hover:text-white transition disabled:opacity-50"
                   >
-                    {processingId === o.id
-                      ? "Đang xử lý..."
-                      : t.received || "Đã nhận"}
+                     {processingId === o.id
+                    ? t.processing
+                 : t.received}
                   </button>
                 </div>
               </div>
