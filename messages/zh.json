@@ -416,10 +416,17 @@
   "order_status_shipping": "配送中",
   "order_status_completed": "已完成",
   "order_status_returned": "已退货",
-  "order_status_cancelled": "已取消"
+  "order_status_cancelled": "已取消",
+  
+  "cancel_reason_out_of_stock": "缺货",
+  "cancel_reason_discontinued": "商品已下架",
+  "cancel_reason_wrong_price": "价格错误",
+  "cancel_reason_other": "其他",
 
-  
-  
+  "confirm_default_message": "感谢您的订单，我们将尽快处理并发货。",
+  "confirm_order": "确认订单",
+  "confirm_cancel": "确认取消",
+  "close": "关闭"
 
   
 }
