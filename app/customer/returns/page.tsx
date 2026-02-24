@@ -12,15 +12,14 @@ interface Order {
   status: string;
 }
 
-const RETURN_REASONS = [
-  "Hàng bị lỗi",
-  "Sai sản phẩm",
-  "Thiếu hàng",
-  "Không đúng mô tả",
-  "Giao hàng trễ",
-  "Khác",
+const RETURN_REASON_KEYS = [
+  "return_reason_defective",
+  "return_reason_wrong_item",
+  "return_reason_missing_item",
+  "return_reason_not_as_described",
+  "return_reason_late_delivery",
+  "return_reason_other",
 ];
-
 export default function ReturnPage() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -85,7 +84,7 @@ export default function ReturnPage() {
   /* SUBMIT */
   const handleSubmit = async () => {
     if (!selectedOrder || !reason || images.length === 0) {
-      alert("Vui lòng chọn đơn, lý do và tải ảnh");
+      alert(t.return_validation_error);
       return;
     }
 
@@ -103,17 +102,17 @@ export default function ReturnPage() {
 
       if (!res.ok) throw new Error();
 
-      alert("Đã gửi yêu cầu hoàn trả");
+      alert(t.return_submitted);
       router.push("/customer/orders");
     } catch {
-      alert("Gửi yêu cầu thất bại");
+      alert(t.return_failed);
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) {
-    return <p className="text-center mt-10">⏳ Đang tải...</p>;
+    return <p className="text-center mt-10"> {t.loading}</p>;
   }
 
   return (
@@ -123,18 +122,18 @@ export default function ReturnPage() {
           <ArrowLeft size={22} />
         </button>
         <h1 className="mx-auto font-semibold">
-          Yêu cầu hoàn trả
+          {t.return_request}
         </h1>
       </div>
 
       <div className="p-4">
-        <label className="font-semibold">Chọn đơn</label>
+        <label className="font-semibold">{t.select_order}</label>
         <select
           className="w-full border p-2 rounded mt-2"
           value={selectedOrder}
           onChange={(e) => setSelectedOrder(e.target.value)}
         >
-          <option value="">-- Chọn --</option>
+          <option value="">-- {t.select} --</option>
           {orders.map(o => (
             <option key={o.id} value={o.id}>
               #{o.id}
@@ -144,30 +143,32 @@ export default function ReturnPage() {
 
         {orders.length === 0 && (
           <p className="text-sm text-gray-400 mt-2">
-            Không có đơn đủ điều kiện hoàn trả
+            {t.no_returnable_orders}
           </p>
         )}
       </div>
 
       <div className="p-4">
-        <label className="font-semibold">Lý do</label>
+        <label className="font-semibold">{t.reason}</label>
         <select
           className="w-full border p-2 rounded mt-2"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         >
-          <option value="">-- Chọn lý do --</option>
-          {RETURN_REASONS.map(r => (
-            <option key={r} value={r}>{r}</option>
-          ))}
+          <option value="">-- -- {t.select_reason} -- --</option>
+          {RETURN_REASON_KEYS.map((key) => (
+  <option key={key} value={key}>
+    {t[key]}
+  </option>
+))}
         </select>
       </div>
 
       <div className="p-4">
-        <label className="font-semibold">Ảnh minh chứng</label>
+        <label className="font-semibold"> {t.proof_images} </label>
         <label className="flex gap-2 bg-orange-500 text-white px-4 py-2 rounded mt-2 cursor-pointer w-fit">
           <Upload size={18} />
-          {uploading ? "Đang upload..." : "Tải ảnh"}
+         uploading ? t.uploading : t.upload_image
           <input
             type="file"
             hidden
@@ -196,7 +197,7 @@ export default function ReturnPage() {
           className="bg-green-600 text-white px-6 py-2 rounded"
         >
           <Send size={18} className="inline mr-2" />
-          {submitting ? "Đang gửi..." : "Gửi yêu cầu"}
+          submitting ? t.sending : t.submit_request
         </button>
       </div>
     </main>
