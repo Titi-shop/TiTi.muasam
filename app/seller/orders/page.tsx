@@ -187,7 +187,7 @@ const { t } = useTranslation();
       {o.buyer.phone || "—"}
     </p>
     <p className="text-xs text-gray-600">
-      {o.buyer.address || t.no_address ?? "No address"}
+      {o.buyer.address || (t.no_address ?? "No address")}
     </p>
   </div>
 )}
