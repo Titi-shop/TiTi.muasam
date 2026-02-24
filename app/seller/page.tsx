@@ -35,6 +35,29 @@ type SellerOrder = {
   status: OrderStatus;
 };
 
+/* ================= TYPE GUARD ================= */
+
+function isSellerOrder(value: unknown): value is SellerOrder {
+  if (typeof value !== "object" || value === null) return false;
+
+  const obj = value as Record<string, unknown>;
+
+  const validStatus: OrderStatus[] = [
+    "pending",
+    "confirmed",
+    "shipping",
+    "completed",
+    "returned",
+    "cancelled",
+  ];
+
+  return (
+    typeof obj.id === "string" &&
+    typeof obj.status === "string" &&
+    validStatus.includes(obj.status as OrderStatus)
+  );
+}
+
 /* ================= PAGE ================= */
 
 export default function SellerPage() {
@@ -42,40 +65,40 @@ export default function SellerPage() {
   const { user, loading, piReady } = useAuth();
 
   const [orders, setOrders] = useState<SellerOrder[]>([]);
+
   const isSeller = user?.role === "seller";
 
-  /* LOAD */
+  /* LOAD ORDERS */
   useEffect(() => {
-    if (!isSeller) return;
+    if (!isSeller || !piReady) return;
 
     const loadOrders = async () => {
       try {
         const res = await apiAuthFetch("/api/seller/orders", {
           cache: "no-store",
         });
+
         if (!res.ok) return;
 
         const data: unknown = await res.json();
+
         if (Array.isArray(data)) {
-          setOrders(
-            data.filter(
-              (o): o is SellerOrder =>
-                typeof o === "object" &&
-                o !== null &&
-                "id" in o &&
-                "status" in o
-            )
-          );
+          setOrders(data.filter(isSellerOrder));
+        } else {
+          setOrders([]);
         }
-      } catch {}
+      } catch {
+        setOrders([]);
+      }
     };
 
     void loadOrders();
-  }, [isSeller]);
+  }, [isSeller, piReady]);
 
-  /* STATS */
+  /* ================= STATS ================= */
+
   const stats = useMemo(() => {
-    const base = {
+    const base: Record<OrderStatus, number> = {
       pending: 0,
       confirmed: 0,
       shipping: 0,
@@ -84,16 +107,18 @@ export default function SellerPage() {
       cancelled: 0,
     };
 
-    for (const o of orders) {
-  if (o.status in base) {
-    base[o.status as keyof typeof base]++;
-  }
-}
+    for (const order of orders) {
+      base[order.status]++;
+    }
 
-    return { ...base, total: orders.length };
+    return {
+      ...base,
+      total: orders.length,
+    };
   }, [orders]);
 
-  /* LOADING */
+  /* ================= LOADING ================= */
+
   if (loading || !piReady) {
     return (
       <div className="flex justify-center mt-16 text-stone-500 text-sm">
@@ -110,14 +135,15 @@ export default function SellerPage() {
     );
   }
 
-  /* UI */
+  /* ================= UI ================= */
+
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-8 bg-amber-50 min-h-screen">
       <h1 className="text-lg font-semibold text-amber-800">
         🏪 {t.seller_dashboard ?? "Seller Dashboard"}
       </h1>
 
-      {/* ===== MAIN ACTIONS ===== */}
+      {/* MAIN ACTIONS */}
       <section className="grid grid-cols-3 gap-3">
         <MainCard
           href="/seller/post"
@@ -139,7 +165,7 @@ export default function SellerPage() {
         />
       </section>
 
-      {/* ===== ORDER STATUS ===== */}
+      {/* ORDER STATUS */}
       <section>
         <h2 className="text-xs font-semibold text-stone-600 mb-3 tracking-wide">
           {t.order_status ?? "ORDER STATUS"}
