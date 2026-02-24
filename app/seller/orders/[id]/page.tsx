@@ -163,22 +163,12 @@ ${order.order_items
         {/* BUYER INFO */}
         <div className="space-y-1 text-sm mb-6">
           <p>
-            <b>Người nhận:</b> {order.buyer.name}
-          </p>
-          <p>
-            <b>SĐT:</b> {order.buyer.phone ?? ""}
-          </p>
-          <p>
-            <b>Địa chỉ:</b> {order.buyer.address ?? ""}
-          </p>
-          <p>
-            <b>Tỉnh/TP:</b> {order.buyer.province ?? ""}
-          </p>
-          <p>
-            <b>Quốc gia:</b> {order.buyer.country ?? ""}
-          </p>
-          <p>
-            <b>Ngày tạo:</b>{" "}
+            <b>{t.receiver ?? "Receiver"}:</b>
+<b>{t.phone ?? "Phone"}:</b>
+<b>{t.address ?? "Address"}:</b>
+<b>{t.province ?? "Province"}:</b>
+<b>{t.country ?? "Country"}:</b>
+<b>{t.created_at ?? "Created at"}:</b>
             {formatDate(order.created_at)}
           </p>
         </div>
@@ -191,10 +181,10 @@ ${order.order_items
                 #
               </th>
               <th className="border px-2 py-1 text-left">
-                Sản phẩm
+                {t.product ?? "Product"}
               </th>
               <th className="border px-2 py-1 text-center">
-                SL
+                {t.quantity ?? "Qty"}
               </th>
             </tr>
           </thead>
