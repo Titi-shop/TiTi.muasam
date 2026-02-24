@@ -338,6 +338,8 @@
   "all": "全部",
 
 
+  
+
  "cancel_order": "取消订单",
 "canceling": "正在取消...",
 "confirm_cancel": "确认取消",
@@ -362,7 +364,29 @@
   "order_status_confirmed": "已确认",
   "no_pickup_orders": "暂无待领取订单",
   "buy_now": "立即购买",
-  "no_name": "无名称"
+  "no_name": "无名称",
+  "loading": "加载中...",
+  "return_request": "退货申请",
+  "select_order": "选择订单",
+  "select": "选择",
+  "no_returnable_orders": "暂无可退货订单",
+  "reason": "原因",
+  "select_reason": "选择原因",
+  "proof_images": "证明图片",
+  "upload_image": "上传图片",
+  "uploading": "上传中...",
+  "submit_request": "提交申请",
+  "sending": "提交中...",
+  "return_validation_error": "请选择订单、原因并上传图片",
+  "return_submitted": "退货申请已提交",
+  "return_failed": "提交失败",
+
+  "return_reason_defective": "商品有缺陷",
+  "return_reason_wrong_item": "商品错误",
+  "return_reason_missing_item": "缺少商品",
+  "return_reason_not_as_described": "与描述不符",
+  "return_reason_late_delivery": "配送延迟",
+  "return_reason_other": "其他"
 
   
 }
