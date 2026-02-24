@@ -43,15 +43,15 @@ order_items?: OrderItem[];
 /* =========================
 CANCEL REASONS
 ========================= */
-const CANCEL_REASONS = [
-"Thay đổi ý định mua",
-"Đặt nhầm sản phẩm",
-"Muốn thay đổi số lượng / biến thể",
-"Tìm được giá tốt hơn",
-"Thời gian giao hàng quá lâu",
-"Muốn cập nhật địa chỉ / số điện thoại",
-"Khác",
-];
+const CANCEL_REASON_KEYS = [
+  "cancel_reason_change_mind",
+  "cancel_reason_wrong_product",
+  "cancel_reason_change_variant",
+  "cancel_reason_better_price",
+  "cancel_reason_delivery_slow",
+  "cancel_reason_update_address",
+  "cancel_reason_other",
+] as const;
 
 /* =========================
 PAGE
@@ -277,9 +277,9 @@ className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-md hov
 
 > 
 
-{processingId === o.id  
-  ? "Đang huỷ..."  
-  : "Huỷ đơn"}
+{processingId === o.id
+  ? t.canceling
+  : t.cancel_order}
 
   </button>  
 </div>  {/* 👇 CHÈN ĐOẠN NÀY NGAY ĐÂY */}
@@ -287,30 +287,25 @@ className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-md hov
 
   <div className="px-4 pb-4 space-y-3">  
     <div className="space-y-2">  
-      {CANCEL_REASONS.map((reason) => (  
-        <label  
-          key={reason}  
-          className="flex items-center gap-2 text-sm"  
-        >  
-          <input  
-            type="radio"  
-            name={`cancel-${o.id}`}  
-            value={reason}  
-            checked={selectedReason === reason}  
-            onChange={(e) =>  
-              setSelectedReason(e.target.value)  
-            }  
-          />  
-          {reason}  
-        </label>  
-      ))}  
+        {CANCEL_REASON_KEYS.map((key) => (
+  <label key={key} className="flex items-center gap-2 text-sm">
+    <input
+      type="radio"
+      name={`cancel-${o.id}`}
+      value={key}
+      checked={selectedReason === key}
+      onChange={(e) => setSelectedReason(e.target.value)}
+    />
+    {t[key]}
+  </label>
+))}
     </div>  {selectedReason === "Khác" && (  
   <textarea  
     value={customReason}  
     onChange={(e) =>  
       setCustomReason(e.target.value)  
     }  
-    placeholder="Nhập lý do cụ thể..."  
+    placeholder={t.enter_cancel_reason}  
     className="w-full border rounded-md p-2 text-sm"  
     rows={3}  
   />  
@@ -320,12 +315,12 @@ className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-md hov
   <button  
     onClick={() => {  
       const finalReason =  
-        selectedReason === "Khác"  
+        selectedReason === "cancel_reason_other"  
           ? customReason  
           : selectedReason;  
 
       if (!finalReason.trim()) {  
-        alert("Vui lòng chọn lý do.");  
+        alert(t.select_cancel_reason);  
         return;  
       }  
 
@@ -333,7 +328,7 @@ className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-md hov
     }}  
     className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-md"  
   >  
-    Xác nhận huỷ  
+    {t.confirm_cancel}  
   </button>  
 
   <button  
@@ -344,7 +339,7 @@ className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-md hov
     }}  
     className="px-4 py-1.5 text-sm border rounded-md"  
   >  
-    Huỷ bỏ  
+    {t.cancel} 
   </button>  
 </div>
 
