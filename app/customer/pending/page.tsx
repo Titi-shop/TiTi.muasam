@@ -41,10 +41,7 @@ interface Order {
   order_items?: OrderItem[];
 }
 /* =========================
-   CANCEL REASONS
-========================= */
-/* =========================
-   CANCEL REASONS (i18n keys)
+   CANCEL REASONS (safe keys)
 ========================= */
 const CANCEL_REASON_KEYS = [
   "cancel_reason_change_mind",
@@ -54,7 +51,7 @@ const CANCEL_REASON_KEYS = [
   "cancel_reason_delivery_slow",
   "cancel_reason_update_address",
   "cancel_reason_other",
-];
+] as const;
 /* =========================
    PAGE
 ========================= */
