@@ -43,16 +43,18 @@ interface Order {
 /* =========================
    CANCEL REASONS
 ========================= */
-const CANCEL_REASONS = [
-  "Thay đổi ý định mua",
-  "Đặt nhầm sản phẩm",
-  "Muốn thay đổi số lượng / biến thể",
-  "Tìm được giá tốt hơn",
-  "Thời gian giao hàng quá lâu",
-  "Muốn cập nhật địa chỉ / số điện thoại",
-  "Khác",
+/* =========================
+   CANCEL REASONS (i18n keys)
+========================= */
+const CANCEL_REASON_KEYS = [
+  "cancel_reason_change_mind",
+  "cancel_reason_wrong_product",
+  "cancel_reason_change_variant",
+  "cancel_reason_better_price",
+  "cancel_reason_delivery_slow",
+  "cancel_reason_update_address",
+  "cancel_reason_other",
 ];
-
 /* =========================
    PAGE
 ========================= */
