@@ -152,10 +152,11 @@ export default function CustomerReviewPage() {
                 <div className="flex justify-between text-sm">
                   <span className="font-semibold">
                     #{order.id}
-                  </span>
                   <span className="text-gray-500">
-                    {new Date(order.createdAt).toLocaleString()}
-                  </span>
+  {order.createdAt && !isNaN(Date.parse(order.createdAt))
+    ? new Date(order.createdAt).toLocaleString()
+    : t.invalid_date || "—"}
+</span>
                 </div>
 
                 {/* STAR RATING */}
