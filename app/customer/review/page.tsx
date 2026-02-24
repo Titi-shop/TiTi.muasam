@@ -118,7 +118,7 @@ export default function CustomerReviewPage() {
       {/* HEADER */}
       <header className="bg-orange-500 text-white px-4 py-4">
         <div className="bg-orange-400 rounded-lg p-4">
-          <p className="text-sm opacity-90">{t("order_info")}</p>
+          <p className="text-sm opacity-90">{t.order_info}</p>
           <p className="text-xs opacity-80 mt-1">
             {t.orders}: {orders.length}
           </p>
@@ -129,7 +129,7 @@ export default function CustomerReviewPage() {
       <section className="px-4 mt-4">
         {loading && (
           <p className="text-center text-gray-500">
-            ⏳ {t("loading_orders")}
+            ⏳ {t.loading_orders}
           </p>
         )}
 
