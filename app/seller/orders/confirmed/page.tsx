@@ -42,7 +42,7 @@ function formatDate(date?: string): string {
   const d = new Date(date);
   return Number.isNaN(d.getTime())
     ? "—"
-    : d.toLocaleDateString("vi-VN");
+    : d.toLocaleDateString();
 }
 
 /* ================= PAGE ================= */
@@ -111,7 +111,7 @@ export default function SellerConfirmedOrdersPage() {
   if (loading) {
     return (
       <p className="text-center mt-10 text-gray-500">
-        ⏳ {t.loading ?? "Loading..."}
+        {t.loading ?? "Loading..."}
       </p>
     );
   }
@@ -177,7 +177,7 @@ export default function SellerConfirmedOrdersPage() {
                         item.product?.images?.[0] ??
                         "/placeholder.png"
                       }
-                      alt={item.product?.name ?? "product"}
+                      alt={item.product?.name ?? (t.product ?? "Product")}
                       className="w-14 h-14 rounded-lg object-cover bg-gray-100"
                     />
 
