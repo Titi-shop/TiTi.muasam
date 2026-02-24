@@ -351,5 +351,18 @@
 "cancel_reason_better_price": "找到更优惠的价格",
 "cancel_reason_delivery_slow": "配送时间太长",
 "cancel_reason_update_address": "想更新地址 / 电话号码",
-"cancel_reason_other": "其他"
+"cancel_reason_other": "其他",
+
+  "loading_orders": "加载中...",
+  "no_shipping_orders": "暂无配送中的订单",
+  "received": "已收到",
+  "processing": "处理中...",
+  "confirm_failed": "无法确认订单。",
+  "no_name": "无名称",
+  "order_status_confirmed": "已确认",
+  "no_pickup_orders": "暂无待领取订单",
+  "buy_now": "立即购买",
+  "no_name": "无名称"
+
+  
 }
