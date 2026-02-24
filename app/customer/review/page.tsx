@@ -155,7 +155,7 @@ export default function CustomerReviewPage() {
                   <span className="text-gray-500">
   {order.createdAt && !isNaN(Date.parse(order.createdAt))
     ? new Date(order.createdAt).toLocaleString()
-    : t.invalid_date || "—"}
+    : (t.invalid_date || "—")}
 </span>
                 </div>
 
