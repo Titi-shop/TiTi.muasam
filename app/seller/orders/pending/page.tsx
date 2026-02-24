@@ -43,10 +43,10 @@ interface Order {
 /* ================= CANCEL REASONS ================= */
 
 const SELLER_CANCEL_REASONS: string[] = [
-  "Hết hàng",
-  "Ngưng bán sản phẩm",
-  "Sai giá sản phẩm",
-  "Khác",
+  t.cancel_reason_out_of_stock ?? "Out of stock",
+  t.cancel_reason_discontinued ?? "Product discontinued",
+  t.cancel_reason_wrong_price ?? "Wrong price",
+  t.cancel_reason_other ?? "Other",
 ];
 
 /* ================= HELPERS ================= */
@@ -153,7 +153,7 @@ export default function SellerPendingOrdersPage() {
 
   async function handleCancel(orderId: string): Promise<void> {
     const finalReason =
-      selectedReason === "Khác"
+      selectedReason === (t.cancel_reason_other ?? "Other")
         ? customReason
         : selectedReason;
 
@@ -315,8 +315,9 @@ export default function SellerPendingOrdersPage() {
                       disabled={processingId === o.id}
                       onClick={() => {
                         setSellerMessage(
-                          "Cảm ơn bạn đã tin tưởng cửa hàng. Chúng tôi sẽ xử lý đơn hàng và giao sớm nhất có thể. Chúc bạn một ngày thật vui vẻ!"
-                        );
+  t.confirm_default_message ??
+    "Thank you for your order. "
+);
                         setShowConfirmFor(o.id);
                         setShowCancelFor(null);
                       }}
@@ -356,7 +357,7 @@ export default function SellerPendingOrdersPage() {
                         disabled={processingId === o.id}
                         className="px-4 py-1 text-sm bg-green-600 text-white rounded disabled:opacity-50"
                       >
-                        Xác nhận đơn
+                        {t.confirm_order ?? "Confirm order"}
                       </button>
 
                       <button
@@ -366,7 +367,7 @@ export default function SellerPendingOrdersPage() {
                         }}
                         className="px-4 py-1 text-sm border rounded"
                       >
-                        Huỷ bỏ
+                        {t.close ?? "Close"}
                       </button>
                     </div>
                   </div>
@@ -409,7 +410,7 @@ export default function SellerPendingOrdersPage() {
                         disabled={processingId === o.id}
                         className="px-4 py-1 text-sm bg-red-500 text-white rounded disabled:opacity-50"
                       >
-                        Xác nhận huỷ
+                        {t.confirm_cancel ?? "Confirm cancel"}
                       </button>
 
                       <button
@@ -420,7 +421,7 @@ export default function SellerPendingOrdersPage() {
                         }}
                         className="px-4 py-1 text-sm border rounded"
                       >
-                        Huỷ bỏ
+                        {t.close ?? "Close"}
                       </button>
                     </div>
                   </div>
