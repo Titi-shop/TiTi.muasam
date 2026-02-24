@@ -18,8 +18,10 @@ interface Order {
 /* =========================
    DEFAULT COMMENT
 ========================= */
-const getDefaultComment = (t: (key: string) => string): string =>
-  t("default_review_comment") ||
+const getDefaultComment = (
+  t: Record<string, string>
+): string =>
+  t.default_review_comment ||
   "Sản phẩm tốt, giao hàng nhanh, sẽ ủng hộ lần sau.";
 
 /* =========================
@@ -84,7 +86,7 @@ export default function CustomerReviewPage() {
     const comment = comments[orderId] || "";
 
     if (!rating) {
-      alert(t("select_rating"));
+      alert(t.select_rating);
       return;
     }
 
@@ -99,10 +101,10 @@ export default function CustomerReviewPage() {
       if (!res.ok) throw new Error("REVIEW_FAILED");
 
       setOrders((prev) => prev.filter((o) => o.id !== orderId));
-      alert(t("review_success"));
+      alert(t.review_success);
     } catch (e) {
       console.error("❌ Submit review error:", e);
-      alert(t("review_failed"));
+      alert(t.review_failed);
     } finally {
       setSubmittingId(null);
     }
@@ -118,7 +120,7 @@ export default function CustomerReviewPage() {
         <div className="bg-orange-400 rounded-lg p-4">
           <p className="text-sm opacity-90">{t("order_info")}</p>
           <p className="text-xs opacity-80 mt-1">
-            {t("orders")}: {orders.length}
+            {t.orders}: {orders.length}
           </p>
         </div>
       </header>
@@ -134,7 +136,7 @@ export default function CustomerReviewPage() {
         {!loading && orders.length === 0 && (
           <div className="flex flex-col items-center text-gray-400 mt-16">
             <div className="w-28 h-28 bg-gray-200 rounded-full mb-4 opacity-40" />
-            <p>{t("no_orders_to_review")}</p>
+            <p>{t.no_orders_to_review}</p>
           </div>
         )}
 
@@ -204,8 +206,8 @@ export default function CustomerReviewPage() {
                   }`}
                 >
                   {submittingId === order.id
-                    ? t("submitting")
-                    : t("submit_review")}
+                    ? t.submitting
+                    : t.submit_review}
                 </button>
               </div>
             ))}
