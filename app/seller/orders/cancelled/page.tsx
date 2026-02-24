@@ -105,7 +105,7 @@ export default function SellerCanceledOrdersPage() {
       <header className="bg-gray-600/90 backdrop-blur-lg text-white px-4 py-5 shadow-md">
         <div className="bg-white/10 rounded-xl p-4 border border-white/20">
           <p className="text-sm font-medium opacity-90">
-            {t.canceled_orders ?? "Canceled Orders"}
+            {t.cancelled_orders ?? "Canceled Orders"}
           </p>
 
           <p className="text-xs mt-1 text-white/80">
@@ -119,7 +119,7 @@ export default function SellerCanceledOrdersPage() {
       <section className="px-4 mt-5 space-y-4">
         {orders.length === 0 ? (
           <p className="text-center text-gray-400">
-            {t.no_canceled_orders ?? "No canceled orders"}
+            {t.no_cancelled_orders ?? "No canceled orders"}
           </p>
         ) : (
           orders.map((order) => (
@@ -142,7 +142,7 @@ export default function SellerCanceledOrdersPage() {
                 </div>
 
                 <span className="text-xs font-medium px-3 py-1 rounded-full bg-gray-200 text-gray-700">
-                  {t.status_canceled ?? "Canceled"}
+                  {t.status_cancelled ?? "Canceled"}
                 </span>
               </div>
 
