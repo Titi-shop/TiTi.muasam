@@ -2,7 +2,6 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
@@ -16,14 +15,17 @@ interface Order {
   reviewed?: boolean;
 }
 
-
+/* =========================
+   DEFAULT COMMENT
+========================= */
+const getDefaultComment = (t: Record<string, string>): string =>
+  t.default_review_comment ||
+  "Sản phẩm tốt, giao hàng nhanh, sẽ ủng hộ lần sau.";
 
 /* =========================
    PAGE
 ========================= */
 export default function CustomerReviewPage() {
-  const router = useRouter();
-  const pathname = usePathname();
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -48,15 +50,23 @@ export default function CustomerReviewPage() {
 
       const data: Order[] = await res.json();
 
-      // ✅ CHỈ ĐƠN ĐÃ NHẬN / HOÀN TẤT & CHƯA REVIEW
-      setOrders(
-        (data || []).filter(
-          (o) =>
-            (o.status === "completed" ||
-              o.status === "received") &&
-            !o.reviewed
-        )
+      const reviewable = (data || []).filter(
+        (o) =>
+          (o.status === "completed" || o.status === "received") &&
+          !o.reviewed
       );
+
+      setOrders(reviewable);
+
+      // ✅ Set default comment cho từng đơn
+      const defaultComment = getDefaultComment(t);
+
+      const initialComments: Record<number, string> = {};
+      reviewable.forEach((o) => {
+        initialComments[o.id] = defaultComment;
+      });
+
+      setComments(initialComments);
     } catch (e) {
       console.error("❌ Load review orders error:", e);
       setOrders([]);
@@ -89,7 +99,6 @@ export default function CustomerReviewPage() {
 
       if (!res.ok) throw new Error("REVIEW_FAILED");
 
-      // ✅ UI UPDATE NGAY
       setOrders((prev) => prev.filter((o) => o.id !== orderId));
       alert(t.review_success);
     } catch (e) {
@@ -100,26 +109,22 @@ export default function CustomerReviewPage() {
     }
   };
 
-
   /* =========================
      UI
   ========================= */
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
-      {/* ===== HEADER ===== */}
+      {/* HEADER */}
       <header className="bg-orange-500 text-white px-4 py-4">
-  <div className="bg-orange-400 rounded-lg p-4">
-    <p className="text-sm opacity-90">
-      {t.order_info}
-    </p>
-    <p className="text-xs opacity-80 mt-1">
-      {t.orders}: {orders.length}
-    </p>
-  </div>
-</header>
+        <div className="bg-orange-400 rounded-lg p-4">
+          <p className="text-sm opacity-90">{t.order_info}</p>
+          <p className="text-xs opacity-80 mt-1">
+            {t.orders}: {orders.length}
+          </p>
+        </div>
+      </header>
 
-
-      {/* ===== CONTENT ===== */}
+      {/* CONTENT */}
       <section className="px-4 mt-4">
         {loading && (
           <p className="text-center text-gray-500">
@@ -176,7 +181,6 @@ export default function CustomerReviewPage() {
                 <textarea
                   rows={3}
                   className="w-full border rounded p-2 text-sm"
-                  placeholder={t.comment_placeholder}
                   value={comments[order.id] || ""}
                   onChange={(e) =>
                     setComments((p) => ({
