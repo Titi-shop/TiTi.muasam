@@ -426,7 +426,9 @@
   "confirm_default_message": "感谢您的订单，我们将尽快处理并发货。",
   "confirm_order": "确认订单",
   "confirm_cancel": "确认取消",
-  "close": "关闭"
+  "close": "关闭",
+
+  "confirm": "确认"
 
   
 }
