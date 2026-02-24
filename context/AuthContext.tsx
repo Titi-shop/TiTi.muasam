@@ -8,8 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { getPiAccessToken } from "@/lib/piAuth";
-import type { Role } from "@/lib/auth/role";
-role: Role;
+
 /* =========================
    TYPES
 ========================= */
@@ -42,9 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [piReady, setPiReady] = useState(false);
 
-  /* -------------------------
-     INIT PI SDK
-  ------------------------- */
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -58,9 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(timer);
   }, []);
 
-  /* -------------------------
-     LOAD USER (BOOTSTRAP)
-  ------------------------- */
   useEffect(() => {
     try {
       const rawUser = localStorage.getItem(USER_KEY);
@@ -72,10 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  /* -------------------------
-     LOGIN WITH PI
-     (CALL piAuth ONLY)
-  ------------------------- */
   const pilogin = async () => {
     try {
       setLoading(true);
@@ -84,8 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const res = await fetch("/api/pi/verify", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessToken: token }),
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const data = await res.json();
@@ -107,9 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  /* -------------------------
-     LOGOUT
-  ------------------------- */
   const logout = () => {
     localStorage.removeItem(USER_KEY);
     setUser(null);
