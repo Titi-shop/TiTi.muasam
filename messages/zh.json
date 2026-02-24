@@ -386,7 +386,21 @@
   "return_reason_missing_item": "缺少商品",
   "return_reason_not_as_described": "与描述不符",
   "return_reason_late_delivery": "配送延迟",
-  "return_reason_other": "其他"
+  "return_reason_other": "其他",
+  "order_info": "订单信息",
+  "orders": "订单",
+  "loading_orders": "正在加载订单...",
+  "no_orders_to_review": "暂无可评价订单",
+
+  "default_review_comment": "商品很好，发货很快，下次还会支持。",
+
+  "select_rating": "请选择评分",
+  "review_success": "评价成功",
+  "review_failed": "评价失败，请稍后再试",
+
+  "submitting": "提交中...",
+  "submit_review": "提交评价"
+  
 
   
 }
