@@ -154,7 +154,7 @@ export default function ShippingOrdersPage() {
       await loadOrders();
     } catch (err) {
       console.error("❌ Confirm received error:", err);
-      alert("Không thể xác nhận đơn.");
+      alert(t.confirm_failed);
     } finally {
       setProcessingId(null);
     }
@@ -228,7 +228,7 @@ export default function ShippingOrdersPage() {
 
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium line-clamp-1">
-                          {item.product?.name ?? "—"}
+                          {item.product?.name ?? t.no_name}
                         </p>
 
                         <p className="text-xs text-gray-500">
