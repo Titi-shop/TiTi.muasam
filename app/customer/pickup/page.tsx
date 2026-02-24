@@ -155,7 +155,7 @@ export default function CustomerPickupPage() {
         <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
           <div className="w-32 h-32 bg-gray-200 rounded-full mb-4 opacity-40" />
           <p>
-            {t.no_pickup_orders || "Không có đơn chờ nhận"}
+           {t.no_pickup_orders}
           </p>
         </div>
       ) : (
@@ -172,8 +172,8 @@ export default function CustomerPickupPage() {
                 </span>
 
                 <span className="text-orange-500 text-sm font-medium">
-                  confirmed
-                </span>
+           {t.order_status_confirmed}
+             </span>
               </div>
 
               {/* PRODUCT LIST */}
@@ -210,11 +210,10 @@ export default function CustomerPickupPage() {
               {/* FOOTER */}
               <div className="flex justify-between items-center px-4 py-3 border-t">
                 <p className="text-sm font-semibold">
-                  Tổng cộng: π{formatPi(o.total)}
+               {t.total}: π{formatPi(o.total)}
                 </p>
-
                 <button className="px-4 py-1.5 text-sm border border-orange-400 text-orange-500 rounded hover:bg-orange-500 hover:text-white transition">
-                  Mua ngay
+                {t.buy_now}
                 </button>
               </div>
             </div>
