@@ -4,19 +4,13 @@
   "order_shipping": "运输中",
   "order_review": "评价",
   "order_received": "已收货",
-
-  "phone": "电话",
   "admin": "管理员",
   "back": "返回",
   "order_details": "订单详情",
   "buyer": "买家",
   "address": "地址",
-  "province": "省 / 城市",
-  "download": "下载",
   "print": "打印订单",
-
   "checking_account": "正在检查账户...",
-  "loading": "加载中",
   "no_permission": "您没有权限编辑该商品！",
   "product_not_found": "未找到商品！",
   "edit_product": "编辑商品",
@@ -30,14 +24,10 @@
   "start_date": "开始日期",
   "end_date": "结束日期",
   "description": "商品描述",
-  "product_images": "商品图片",
   "saving": "保存中...",
   "save_changes": "保存修改",
   "save_success": "保存成功！",
   "save_failed": "保存失败！",
-
-  "shipping_address": "收货地址",
-  "country": "国家",
   "full_name": "姓名",
   "phone_number": "电话号码",
   "enter_phone": "输入电话号码",
@@ -49,7 +39,6 @@
   "loading_address": "加载地址中...",
   "login_required": "您需要登录后才能继续",
   "login_with_pi": "使用 Pi 登录",
-
   "cart_title": "购物车",
   "empty_cart": "购物车为空。",
   "back_to_shop": "返回商店",
@@ -57,10 +46,8 @@
   "delete": "删除",
   "select_all": "全选",
   "unselect_all": "取消全选",
-  "total": "合计",
   "order_now": "立即下单",
   "processing": "处理中...",
-
   "please_select_item": "请选择商品！",
   "payment_success": "付款成功！",
   "payment_cancelled": "交易已取消。",
@@ -70,7 +57,6 @@
   "must_login_first_pay": "请先登录 Pi 再进行付款！",
   "pi_not_ready": "请在 Pi 浏览器中打开并等待 SDK 加载！",
   "verify_failed": "账号验证失败，请重新登录。",
-
   "pay_now": "立即支付",
   "pi_not_ready_warning": "Pi SDK 尚未准备好，请在 Pi 浏览器中打开！",
   "must_login_before_pay": "请先登录 Pi 再继续付款！",
@@ -83,14 +69,12 @@
   "payment_canceled_icon": "交易已取消。",
   "payment_error_icon": "支付错误：",
   "transaction_failed": "交易失败或已取消。",
-
   "checkout": "结算",
   "add_shipping": "添加收货地址",
   "edit": "编辑",
   "products": "商品",
   "no_products": "没有商品。",
   "total_label": "总计：",
-
   "loading_initial": "正在加载...",
   "welcome": "欢迎",
   "must_agree_terms": "请先同意使用条款再登录。",
@@ -102,8 +86,6 @@
   "privacy_policy": "隐私政策",
   "and": "和",
   "all_rights_reserved": "版权所有",
-
-  "select_category": "选择分类",
   "category_1": "手机和笔记本电脑",
   "category_2": "男装",
   "category_3": "女装",
@@ -122,7 +104,6 @@
   "category_18": "相机与无人机",
   "category_19": "玩具",
   "category_20": "家具家居",
-
   "language": "中文",
   "welcome_to_store": "欢迎来到 TiTi 商城",
   "login": "登录",
@@ -130,7 +111,6 @@
   "register": "注册",
   "username": "用户名",
   "password": "密码",
-
   "wallet": "Pi 网络钱包",
   "wallet_address": "钱包地址",
   "link_wallet": "连接钱包",
@@ -139,11 +119,9 @@
   "receive": "接收 Pi",
   "transactions": "交易记录",
   "recent_transactions": "最近交易",
-
   "notifications": "通知",
   "no_notifications": "没有新的通知。",
   "fetch_error": "无法加载通知。",
-
   "search_placeholder": "输入关键词进行搜索...",
   "recent_searches": "最近搜索",
   "clear_all": "清除全部",
@@ -153,7 +131,6 @@
   "no_results": "没有搜索结果",
   "remove_product": "删除此商品",
   "type_to_search": "输入关键词开始搜索商品。",
-
   "load_orders_failed": "无法加载订单。",
   "upload_error": "上传图片失败。",
   "warning_select_order_and_reason": "请选择订单并填写退货原因。",
@@ -162,22 +139,15 @@
   "server_error": "服务器连接错误。",
   "login_required_return": "您需要登录才能申请退货。",
   "login_now": "立即登录",
-
-  "return_request": "退货申请",
   "select_order": "选择需要退货的订单",
   "select_order_placeholder": "-- 请选择订单 --",
   "return_reason": "退货原因",
   "reason_placeholder": "请填写退货原因...",
   "proof_images": "凭证图片（可选）",
-  "upload_image": "上传图片",
   "uploading": "上传中...",
   "send_request": "提交申请",
-  "sending": "正在提交...",
-
   "email": "电子邮件",
   "status": "状态",
-  "created_at": "创建时间",
-
   "profile_error_not_logged_in": "无法加载个人资料。您尚未登录。",
   "invalid_email": "邮箱格式无效！",
   "profile_saved": "资料已保存！",
@@ -194,159 +164,106 @@
   "wait_for_pi_sdk": "正在等待 Pi SDK...",
   "not_set": "(未填写)",
   "edit_profile": "编辑资料",
-
   "shipping_orders": "运输中订单",
-  "no_shipping_orders": "您当前没有运输中的订单。",
   "confirm_received": "确认收货",
   "confirm_received_message": "您确定已经收到货物了吗？",
   "thanks_receive": "感谢确认！",
   "error_confirm": "确认订单时发生错误。",
   "total_pi": "Pi 总额",
   "total_orders": "订单总数",
-
   "pickup_orders": "待取货订单",
-  "no_pickup_orders": "您当前没有待取货的订单。",
   "order_code": "订单编号",
-
   "pending_orders": "待确认订单",
   "no_pending_orders": "没有待确认的订单。",
-  "cancel_order": "取消订单",
-  "canceling": "正在取消...",
-  "confirm_cancel": "你确定要取消这个订单吗？",
   "cancel_success": "订单已成功取消！",
   "cancel_failed": "取消失败",
-
   "return_orders": "退货订单",
   "no_return_orders": "没有退货订单。",
-
   "completed_orders": "已完成订单",
   "no_completed_orders": "没有已完成的订单。",
-
   "orders_summary": "订单汇总",
   "order_summary": "订单总览",
   "order_id": "订单编号",
   "error_load_orders_general": "无法加载订单！",
-
-  "orders": "订单",
   "unpaid_orders": "未支付订单",
   "paid_orders": "已支付订单",
   "shipping": "运输中订单",
   "completed": "已完成订单",
   "confirm_received_btn": "确认收货",
   "no_orders": "你还没有订单。",
-
-  "buy_now": "立即购买",
   "add_to_cart": "加入购物车",
   "cart": "购物车",
   "payment_success_general": "支付成功",
   "payment_failed_general": "支付失败",
-
   "language_switch": "切换语言",
-
   "categories": "分类",
   "loading_categories": "正在加载分类...",
   "highest_price": "最高价格",
   "newest_products": "最新商品",
   "discount_products": "促销商品",
   "all_products": "全部商品",
-  "loading_products": "正在加载商品...",
   "views": "次浏览",
   "load_more": "加载更多",
-
   "home": "首页",
   "category": "分类",
   "search": "搜索",
   "me": "我的",
   "seller_center": "卖家中心",
-
   "profile": "个人资料",
   "my_orders": "我的订单",
   "pi_wallet": "Pi 钱包",
   "messages": "消息",
   "support": "客服支持",
-
   "seller_channel": "🛒 卖家平台",
   "post_product": "发布商品",
   "stock": "库存",
   "seller_orders": "卖家订单",
-
   "enter_valid_name_price": "请输入有效的商品名称和价格！",
   "post_success": "商品发布成功！",
   "posting": "正在发布...",
-
   "my_stock": "我的商品库存",
   "no_seller_products": "你还没有发布任何商品。",
-  "confirm_delete": "你确定要删除此商品？",
   "delete_success": "删除成功！",
   "delete_failed": "删除失败！",
-
   "orders_list": "订单分类",
   "all_orders": "全部订单",
   "cancelled_orders": "已取消",
   "returned_orders": "已退货",
   "review_orders": "评价",
-
   "order_count": "单",
-
+  "status_completed": "已完成",
   "status_pending": "待确认",
   "status_shipping": "运输中",
-  "status_completed": "已完成",
   "status_cancelled": "已取消",
   "status_returned": "已退货",
-
-  
-  "status_pending": "待确认",
-  "status_shipping": "运输中",
-  "status_completed": "已完成",
-  "status_cancelled": "已取消",
-  "status_returned": "已退货",
-
-  "all": "全部",
-  
   "sale_time": "促销时间",
   "sale_price_optional": "促销价（可选）",
   "product_detail": "商品详细描述",
-
-  
   "register_seller": "注册成为卖家",
   "seller_note": "您可以注册成为卖家以开启自己的店铺。",
   "product_images": "商品图片",
   "order_returned": "已退货",
   "order_cancelled": "已取消",
-  
-  
   "product_description": "产品描述",
   "product_details": "产品详情",
   "product_related_products": "相关产品",
-  
   "shop_confidence": "在 TiTi 购物更安心",
   "add_address": "添加地址",
-
-  "delete": "删除",
   "set_default": "设为默认",
   "default": "默认",
   "shipping_address": "收货地址",
   "confirm_delete": "确定删除该地址吗？",
-
-
-  
   "flash_sale": "限时抢购",
   "ends_in": "结束倒计时",
   "best_seller": "热卖商品",
   "sold": "已售",
   "loading_products": "正在加载商品...",
-  "all": "全部",
-
-
-  
-
  "cancel_order": "取消订单",
 "canceling": "正在取消...",
 "confirm_cancel": "确认取消",
 "cancel": "取消",
 "select_cancel_reason": "请选择取消原因。",
 "enter_cancel_reason": "请输入具体原因...",
-
 "cancel_reason_change_mind": "改变购买想法",
 "cancel_reason_wrong_product": "下错商品",
 "cancel_reason_change_variant": "想更改数量 / 规格",
@@ -354,7 +271,6 @@
 "cancel_reason_delivery_slow": "配送时间太长",
 "cancel_reason_update_address": "想更新地址 / 电话号码",
 "cancel_reason_other": "其他",
-
   "loading_orders": "加载中...",
   "no_shipping_orders": "暂无配送中的订单",
   "received": "已收到",
@@ -364,23 +280,17 @@
   "order_status_confirmed": "已确认",
   "no_pickup_orders": "暂无待领取订单",
   "buy_now": "立即购买",
-  "no_name": "无名称",
-  "loading": "加载中...",
   "return_request": "退货申请",
-  "select_order": "选择订单",
   "select": "选择",
   "no_returnable_orders": "暂无可退货订单",
   "reason": "原因",
   "select_reason": "选择原因",
-  "proof_images": "证明图片",
   "upload_image": "上传图片",
-  "uploading": "上传中...",
   "submit_request": "提交申请",
   "sending": "提交中...",
   "return_validation_error": "请选择订单、原因并上传图片",
   "return_submitted": "退货申请已提交",
   "return_failed": "提交失败",
-
   "return_reason_defective": "商品有缺陷",
   "return_reason_wrong_item": "商品错误",
   "return_reason_missing_item": "缺少商品",
@@ -388,48 +298,32 @@
   "return_reason_late_delivery": "配送延迟",
   "return_reason_other": "其他",
   "order_info": "订单信息",
-  "orders": "订单",
-  "loading_orders": "正在加载订单...",
   "no_orders_to_review": "暂无可评价订单",
-
   "default_review_comment": "商品很好，发货很快，下次还会支持。",
-
   "select_rating": "请选择评分",
   "review_success": "评价成功",
   "review_failed": "评价失败，请稍后再试",
-
   "submitting": "提交中...",
   "submit_review": "提交评价",
   "invalid_date": "日期无效",
   "shop_orders": "店铺订单",
-  "orders": "单",
   "all": "全部",
   "loading": "加载中...",
   "no_orders": "暂无订单",
-  "customer": "客户",
-  "phone": "电话",
   "no_address": "暂无地址",
-  "total": "总计",
-
   "order_status_pending": "待确认",
   "order_status_confirmed": "已确认",
   "order_status_shipping": "配送中",
   "order_status_completed": "已完成",
   "order_status_returned": "已退货",
   "order_status_cancelled": "已取消",
-  
   "cancel_reason_out_of_stock": "缺货",
   "cancel_reason_discontinued": "商品已下架",
   "cancel_reason_wrong_price": "价格错误",
-  "cancel_reason_other": "其他",
-
   "confirm_default_message": "感谢您的订单，我们将尽快处理并发货。",
   "confirm_order": "确认订单",
-  "confirm_cancel": "确认取消",
   "close": "关闭",
-
   "confirm": "确认",
-  "loading": "加载中...",
   "confirmed_orders": "已确认订单",
   "orders": "订单",
   "no_confirmed_orders": "暂无已确认订单",
@@ -437,36 +331,21 @@
   "product": "商品",
   "total": "总计",
   "start_shipping": "开始发货",
-  
   "loading_order": "正在加载订单...",
   "order_not_found": "未找到订单",
   "order": "订单",
   "created_at": "创建时间",
   "receiver": "收件人",
   "name": "姓名",
-  "phone": "电话",
-  "address": "地址",
   "province": "省/市",
   "country": "国家",
-  "products": "商品",
-  "product": "商品",
   "quantity": "数量",
   "download": "下载",
-  "print": "打印",
   "delivery_note": "发货单",
-  "loading": "加载中...",
-  "completed_orders": "已完成订单",
-  "orders": "订单",
-  "no_completed_orders": "暂无已完成订单",
   "status_completed": "已完成",
   "customer": "客户",
   "phone": "电话",
-  "no_address": "暂无地址",
-  "product": "商品",
-  "total": "总计",
-  
   "seller_dashboard": "卖家控制台",
   "order_status": "订单状态",
-  "confirmed_orders": "已确认"
   
 }
