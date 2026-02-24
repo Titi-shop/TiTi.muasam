@@ -8,7 +8,8 @@ import {
   ReactNode,
 } from "react";
 import { getPiAccessToken } from "@/lib/piAuth";
-
+import type { Role } from "@/lib/auth/role";
+role: Role;
 /* =========================
    TYPES
 ========================= */
@@ -16,7 +17,6 @@ export type PiUser = {
   pi_uid: string;
   username: string;
   wallet_address?: string | null;
-  role: "customer" | "seller" | "admin";
 };
 
 type AuthContextType = {
