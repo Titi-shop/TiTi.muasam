@@ -41,8 +41,10 @@ export default function CustomerReviewPage() {
      LOAD REVIEWABLE ORDERS
   ========================= */
   useEffect(() => {
+  if (Object.keys(t).length > 0) {
     loadOrders();
-  }, []);
+  }
+}, [t]);
 
   const loadOrders = async () => {
     try {
