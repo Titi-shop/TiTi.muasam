@@ -457,4 +457,78 @@ export async function getOrderByIdForSeller(
     })),
   };
 }
+/* =====================================================
+   UPDATE ORDER STATUS BY SELLER
+===================================================== */
+export async function updateOrderStatusBySeller(
+  orderId: string,
+  sellerPiUid: string,
+  newStatus: "confirmed" | "shipping" | "cancelled" | "completed"
+): Promise<boolean> {
 
+  /* =========================
+     1️⃣ VERIFY SELLER HAS ITEMS
+  ========================= */
+  const verifyRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&seller_pi_uid=eq.${sellerPiUid}&select=id`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!verifyRes.ok) return false;
+
+  const sellerItems = await verifyRes.json() as Array<{ id: string }>;
+
+  if (sellerItems.length === 0) {
+    return false;
+  }
+
+  /* =========================
+     2️⃣ UPDATE SELLER ITEMS STATUS
+  ========================= */
+  const updateRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&seller_pi_uid=eq.${sellerPiUid}`,
+    {
+      method: "PATCH",
+      headers: headers(),
+      body: JSON.stringify({
+        status: newStatus,
+      }),
+    }
+  );
+
+  if (!updateRes.ok) {
+    console.error(await updateRes.text());
+    return false;
+  }
+
+  /* =========================
+     3️⃣ OPTIONAL: CHECK IF ALL ITEMS SAME STATUS
+     THEN UPDATE ORDER STATUS
+  ========================= */
+
+  const checkRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&select=status`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!checkRes.ok) return true;
+
+  const allItems = await checkRes.json() as Array<{ status: string }>;
+
+  const allSame = allItems.every(i => i.status === newStatus);
+
+  if (allSame) {
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`,
+      {
+        method: "PATCH",
+        headers: headers(),
+        body: JSON.stringify({
+          status: newStatus,
+        }),
+      }
+    );
+  }
+
+  return true;
+}
