@@ -70,7 +70,7 @@
   "must_login_first_pay": "请先登录 Pi 再进行付款！",
   "pi_not_ready": "请在 Pi 浏览器中打开并等待 SDK 加载！",
   "verify_failed": "账号验证失败，请重新登录。",
-  
+
   "pay_now": "立即支付",
   "pi_not_ready_warning": "Pi SDK 尚未准备好，请在 Pi 浏览器中打开！",
   "must_login_before_pay": "请先登录 Pi 再继续付款！",
@@ -144,7 +144,6 @@
   "no_notifications": "没有新的通知。",
   "fetch_error": "无法加载通知。",
 
-    ,
   "search_placeholder": "输入关键词进行搜索...",
   "recent_searches": "最近搜索",
   "clear_all": "清除全部",
@@ -196,7 +195,6 @@
   "not_set": "(未填写)",
   "edit_profile": "编辑资料",
 
-    ,
   "shipping_orders": "运输中订单",
   "no_shipping_orders": "您当前没有运输中的订单。",
   "confirm_received": "确认收货",
@@ -266,7 +264,7 @@
   "pi_wallet": "Pi 钱包",
   "messages": "消息",
   "support": "客服支持",
-    ,
+
   "seller_channel": "🛒 卖家平台",
   "post_product": "发布商品",
   "stock": "库存",
@@ -296,6 +294,7 @@
   "status_cancelled": "已取消",
   "status_returned": "已退货",
 
+  
   "status_pending": "待确认",
   "status_shipping": "运输中",
   "status_completed": "已完成",
@@ -303,21 +302,23 @@
   "status_returned": "已退货",
 
   "all": "全部",
-
+  
   "sale_time": "促销时间",
   "sale_price_optional": "促销价（可选）",
   "product_detail": "商品详细描述",
 
+  
   "register_seller": "注册成为卖家",
   "seller_note": "您可以注册成为卖家以开启自己的店铺。",
   "product_images": "商品图片",
   "order_returned": "已退货",
   "order_cancelled": "已取消",
-
+  
+  
   "product_description": "产品描述",
   "product_details": "产品详情",
   "product_related_products": "相关产品",
-
+  
   "shop_confidence": "在 TiTi 购物更安心",
   "add_address": "添加地址",
 
@@ -327,27 +328,32 @@
   "shipping_address": "收货地址",
   "confirm_delete": "确定删除该地址吗？",
 
+
+  
   "flash_sale": "限时抢购",
   "ends_in": "结束倒计时",
   "best_seller": "热卖商品",
   "sold": "已售",
   "loading_products": "正在加载商品...",
   "all": "全部",
-    ,
-  "cancel_order": "取消订单",
-  "canceling": "正在取消...",
-  "confirm_cancel": "确认取消",
-  "cancel": "取消",
-  "select_cancel_reason": "请选择取消原因。",
-  "enter_cancel_reason": "请输入具体原因...",
 
-  "cancel_reason_change_mind": "改变购买想法",
-  "cancel_reason_wrong_product": "下错商品",
-  "cancel_reason_change_variant": "想更改数量 / 规格",
-  "cancel_reason_better_price": "找到更优惠的价格",
-  "cancel_reason_delivery_slow": "配送时间太长",
-  "cancel_reason_update_address": "想更新地址 / 电话号码",
-  "cancel_reason_other": "其他",
+
+  
+
+ "cancel_order": "取消订单",
+"canceling": "正在取消...",
+"confirm_cancel": "确认取消",
+"cancel": "取消",
+"select_cancel_reason": "请选择取消原因。",
+"enter_cancel_reason": "请输入具体原因...",
+
+"cancel_reason_change_mind": "改变购买想法",
+"cancel_reason_wrong_product": "下错商品",
+"cancel_reason_change_variant": "想更改数量 / 规格",
+"cancel_reason_better_price": "找到更优惠的价格",
+"cancel_reason_delivery_slow": "配送时间太长",
+"cancel_reason_update_address": "想更新地址 / 电话号码",
+"cancel_reason_other": "其他",
 
   "loading_orders": "加载中...",
   "no_shipping_orders": "暂无配送中的订单",
@@ -381,7 +387,6 @@
   "return_reason_not_as_described": "与描述不符",
   "return_reason_late_delivery": "配送延迟",
   "return_reason_other": "其他",
-
   "order_info": "订单信息",
   "orders": "订单",
   "loading_orders": "正在加载订单...",
@@ -412,7 +417,7 @@
   "order_status_completed": "已完成",
   "order_status_returned": "已退货",
   "order_status_cancelled": "已取消",
-
+  
   "cancel_reason_out_of_stock": "缺货",
   "cancel_reason_discontinued": "商品已下架",
   "cancel_reason_wrong_price": "价格错误",
@@ -432,7 +437,7 @@
   "product": "商品",
   "total": "总计",
   "start_shipping": "开始发货",
-
+  
   "loading_order": "正在加载订单...",
   "order_not_found": "未找到订单",
   "order": "订单",
@@ -459,12 +464,9 @@
   "no_address": "暂无地址",
   "product": "商品",
   "total": "总计",
-
+  
   "seller_dashboard": "卖家控制台",
   "order_status": "订单状态",
-  "confirmed_orders": "已确认",
-
-  }
+  "confirmed_orders": "已确认"
   
-
-  
+}
