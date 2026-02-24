@@ -40,15 +40,6 @@ interface Order {
   order_items: OrderItem[];
 }
 
-/* ================= CANCEL REASONS ================= */
-
-const SELLER_CANCEL_REASONS: string[] = [
-  t.cancel_reason_out_of_stock ?? "Out of stock",
-  t.cancel_reason_discontinued ?? "Product discontinued",
-  t.cancel_reason_wrong_price ?? "Wrong price",
-  t.cancel_reason_other ?? "Other",
-];
-
 /* ================= HELPERS ================= */
 
 function formatPi(v: number): string {
@@ -67,6 +58,13 @@ function formatDate(date: string): string {
 export default function SellerPendingOrdersPage() {
   const router = useRouter();
   const { t } = useTranslation();
+
+    const SELLER_CANCEL_REASONS: string[] = [
+    t.cancel_reason_out_of_stock ?? "Out of stock",
+    t.cancel_reason_discontinued ?? "Product discontinued",
+    t.cancel_reason_wrong_price ?? "Wrong price",
+    t.cancel_reason_other ?? "Other",
+  ];
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -393,7 +391,7 @@ export default function SellerPendingOrdersPage() {
                       </label>
                     ))}
 
-                    {selectedReason === "Khác" && (
+                    {selectedReason === (t.cancel_reason_other ?? "Other") && (
                       <textarea
                         value={customReason}
                         onChange={(e) =>
