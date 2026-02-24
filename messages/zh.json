@@ -343,6 +343,8 @@
   "customer": "客户",
   "phone": "电话",
   "seller_dashboard": "卖家控制台",
-  "order_status": "订单状态"
+  "order_status": "订单状态",
+  "cancelled_orders": "已取消",
+  "status_cancelled": "已取消"
   
 }
