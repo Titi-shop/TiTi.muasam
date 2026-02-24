@@ -32,23 +32,23 @@ export default function CustomerReviewPage() {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [ratings, setRatings] = useState<Record<number, number>>({});
   const [comments, setComments] = useState<Record<number, string>>({});
   const [submittingId, setSubmittingId] = useState<number | null>(null);
 
   /* =========================
-     LOAD REVIEWABLE ORDERS
+     LOAD ORDERS
   ========================= */
   useEffect(() => {
-  if (Object.keys(t).length > 0) {
-    loadOrders();
-  }
-}, [t]);
+    if (Object.keys(t).length > 0) {
+      loadOrders();
+    }
+  }, [t]);
 
   const loadOrders = async () => {
     try {
       setLoading(true);
+
       const res = await apiAuthFetch("/api/orders?reviewable=true");
       if (!res.ok) throw new Error("UNAUTHORIZED");
 
@@ -70,8 +70,8 @@ export default function CustomerReviewPage() {
       });
 
       setComments(initialComments);
-    } catch (e) {
-      console.error("❌ Load review orders error:", e);
+    } catch (error) {
+      console.error("Load review orders error:", error);
       setOrders([]);
     } finally {
       setLoading(false);
@@ -104,8 +104,8 @@ export default function CustomerReviewPage() {
 
       setOrders((prev) => prev.filter((o) => o.id !== orderId));
       alert(t.review_success);
-    } catch (e) {
-      console.error("❌ Submit review error:", e);
+    } catch (error) {
+      console.error("Submit review error:", error);
       alert(t.review_failed);
     } finally {
       setSubmittingId(null);
@@ -113,11 +113,20 @@ export default function CustomerReviewPage() {
   };
 
   /* =========================
+     FORMAT DATE SAFE
+  ========================= */
+  const formatDate = (dateString: string) => {
+    if (!dateString) return t.invalid_date || "—";
+    const parsed = Date.parse(dateString);
+    if (isNaN(parsed)) return t.invalid_date || "—";
+    return new Date(parsed).toLocaleString();
+  };
+
+  /* =========================
      UI
   ========================= */
   return (
     <main className="min-h-screen bg-gray-100 pb-24">
-      {/* HEADER */}
       <header className="bg-orange-500 text-white px-4 py-4">
         <div className="bg-orange-400 rounded-lg p-4">
           <p className="text-sm opacity-90">{t.order_info}</p>
@@ -127,7 +136,6 @@ export default function CustomerReviewPage() {
         </div>
       </header>
 
-      {/* CONTENT */}
       <section className="px-4 mt-4">
         {loading && (
           <p className="text-center text-gray-500">
@@ -144,76 +152,77 @@ export default function CustomerReviewPage() {
 
         {!loading && orders.length > 0 && (
           <div className="space-y-4">
-            {orders.map((order) => (
-              <div
-                key={order.id}
-                className="bg-white rounded-lg shadow p-4"
-              >
-                <div className="flex justify-between text-sm">
-                  <span className="font-semibold">
-                    #{order.id}
-                  <span className="text-gray-500">
-  {order.createdAt && !isNaN(Date.parse(order.createdAt))
-    ? new Date(order.createdAt).toLocaleString()
-    : (t.invalid_date || "—")}
-</span>
-      
-
-                {/* STAR RATING */}
-                <div className="flex gap-1 my-3">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() =>
-                        setRatings((p) => ({
-                          ...p,
-                          [order.id]: star,
-                        }))
-                      }
-                      className={`text-2xl ${
-                        (ratings[order.id] || 0) >= star
-                          ? "text-yellow-400"
-                          : "text-gray-300"
-                      }`}
-                    >
-                      ★
-                    </button>
-                  ))}
-                </div>
-
-                {/* COMMENT */}
-                <textarea
-                  rows={3}
-                  className="w-full border rounded p-2 text-sm"
-                  value={comments[order.id] || ""}
-                  onChange={(e) =>
-                    setComments((p) => ({
-                      ...p,
-                      [order.id]: e.target.value,
-                    }))
-                  }
-                />
-
-                {/* SUBMIT */}
-                <button
-                  onClick={() => submitReview(order.id)}
-                  disabled={
-                    submittingId === order.id ||
-                    !ratings[order.id]
-                  }
-                  className={`mt-3 w-full py-2 rounded text-white ${
-                    submittingId === order.id ||
-                    !ratings[order.id]
-                      ? "bg-gray-400"
-                      : "bg-orange-500 hover:bg-orange-600"
-                  }`}
+            {orders.map((order) => {
+              return (
+                <div
+                  key={order.id}
+                  className="bg-white rounded-lg shadow p-4"
                 >
-                  {submittingId === order.id
-                    ? t.submitting
-                    : t.submit_review}
-                </button>
-              </div>
-            ))}
+                  <div className="flex justify-between text-sm">
+                    <span className="font-semibold">
+                      #{order.id}
+                    </span>
+                    <span className="text-gray-500">
+                      {formatDate(order.createdAt)}
+                    </span>
+                  </div>
+
+                  {/* STAR RATING */}
+                  <div className="flex gap-1 my-3">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() =>
+                          setRatings((prev) => ({
+                            ...prev,
+                            [order.id]: star,
+                          }))
+                        }
+                        className={`text-2xl ${
+                          (ratings[order.id] || 0) >= star
+                            ? "text-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* COMMENT */}
+                  <textarea
+                    rows={3}
+                    className="w-full border rounded p-2 text-sm"
+                    value={comments[order.id] || ""}
+                    onChange={(e) =>
+                      setComments((prev) => ({
+                        ...prev,
+                        [order.id]: e.target.value,
+                      }))
+                    }
+                  />
+
+                  {/* SUBMIT */}
+                  <button
+                    onClick={() => submitReview(order.id)}
+                    disabled={
+                      submittingId === order.id ||
+                      !ratings[order.id]
+                    }
+                    className={`mt-3 w-full py-2 rounded text-white ${
+                      submittingId === order.id ||
+                      !ratings[order.id]
+                        ? "bg-gray-400"
+                        : "bg-orange-500 hover:bg-orange-600"
+                    }`}
+                  >
+                    {submittingId === order.id
+                      ? t.submitting
+                      : t.submit_review}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
