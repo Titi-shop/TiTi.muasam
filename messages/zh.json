@@ -1,7 +1,3 @@
-Viết lại 1-1 giống 100/100
-
-messages/zh.json viết lại đầy đủ không thiếu key loại bỏ key trùng .
-
 {
   "order_pending": "待确认",
   "order_pickup": "待取货",
