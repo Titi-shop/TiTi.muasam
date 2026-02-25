@@ -232,12 +232,16 @@ const sellerItems = o.order_items.filter(
           address: o.buyer_address ?? "",
         },
         order_items: sellerItems.map(i => ({
-          product_id: i.product_id,
-          quantity: i.quantity,
-          price: fromMicroPi(i.price),
-          status: i.status,
-          product: productsMap[i.product_id],
-        })),
+  product_id: i.product_id,
+  quantity: i.quantity,
+  price: fromMicroPi(i.price),
+  status: i.status,
+  cancel_reason:
+    o.status === "cancelled"
+      ? i.cancel_reason ?? null
+      : null,
+  product: productsMap[i.product_id],
+})),
       };
     })
     .filter((o): o is OrderRecord => o !== null);
