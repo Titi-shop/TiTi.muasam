@@ -37,6 +37,11 @@ export default function CustomerAddressPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
+   const getCountryDisplay = (code: string) => {
+  const found = countries.find((c) => c.code === code);
+  return found ? `${found.flag} ${found.name}` : code;
+};
+
   /* =========================
      LOAD
   ========================= */
@@ -157,6 +162,9 @@ if (!token) return;
                   {a.countryCode} {a.phone}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">{a.address}</p>
+                 <p className="text-sm text-gray-500">
+  {getCountryDisplay(a.country)}
+</p>
               </div>
 
               {a.is_default && (
