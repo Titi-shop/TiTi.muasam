@@ -1,3 +1,7 @@
+Chỉ còn chỉnh nhẹ file này hiển thị nội dung huỷ ở phần ảnh sản phẩm là ok .
+
+app/seller/orders/cancelled/page.tsx
+
 "use client";
 
 export const dynamic = "force-dynamic";
@@ -173,15 +177,16 @@ export default function SellerCanceledOrdersPage() {
                         x{item.quantity} · π
                         {formatPi(item.price)}
                       </p>
-
-                        {order.cancel_reason && (
-  <div className="px-4 pb-3 text-xs text-red-500">
-    {t.cancel_reason ?? "Cancel reason"}: {order.cancel_reason}
-  </div>
-)}
+                      {/* 👇 Hiển thị lý do huỷ */}
+  {order.cancel_reason && (
+    <p className="text-xs text-red-500 mt-1">
+      {t.cancel_reason ?? "Reason"}: {order.cancel_reason}
+    </p>
+  )}
+</div>
                   
-                
-              
+                  </div>
+                ))}
               </div>
 
               {/* FOOTER */}
