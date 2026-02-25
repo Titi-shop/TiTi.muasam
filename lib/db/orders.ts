@@ -535,3 +535,9 @@ export async function updateOrderStatusBySeller(
         body: JSON.stringify({
           status: newStatus,
         }),
+               }
+    );
+  }
+
+  return true;
+}
