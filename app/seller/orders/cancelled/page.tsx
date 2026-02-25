@@ -93,7 +93,7 @@ export default function SellerCanceledOrdersPage() {
   if (loading) {
     return (
       <p className="text-center mt-10 text-gray-500">
-        ⏳ {t.loading ?? "Loading..."}
+         {t.loading ?? "Loading..."}
       </p>
     );
   }
@@ -174,10 +174,14 @@ export default function SellerCanceledOrdersPage() {
                         {formatPi(item.price)}
                       </p>
                       {/* 👇 Hiển thị lý do huỷ */}
-  {order.cancel_reason && (
-    <p className="text-xs text-red-500 mt-1">
-      {t.cancel_reason ?? "Reason"}: {order.cancel_reason}
-    </p>
+                   {order.cancel_reason && (
+               <p className="text-xs text-red-500 mt-1">
+                  {t.cancel_reason ?? "Reason"}: {order.cancel_reason}
+                </p>
+                )}
+             </div>
+              
+                  </div>
                 ))}
               </div>
 
