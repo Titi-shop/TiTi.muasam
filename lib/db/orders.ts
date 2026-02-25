@@ -155,10 +155,6 @@ export async function getOrdersBySeller(
   status?: "pending" | "confirmed" | "shipping" | "cancelled" | "completed"
 ): Promise<OrderRecord[]> {
 
-  /* =========================================================
-     1️⃣ LẤY order_id của seller
-  ========================================================= */
-
   const itemQuery = new URLSearchParams({
     select: "order_id",
     seller_pi_uid: `eq.${sellerPiUid}`,
@@ -178,10 +174,6 @@ export async function getOrdersBySeller(
 
   const ids = orderIds.map(id => `"${id}"`).join(",");
 
-  /* =========================================================
-     2️⃣ LẤY orders + order_items
-  ========================================================= */
-
   const orderRes = await fetch(
     `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
       id,
@@ -191,15 +183,7 @@ export async function getOrdersBySeller(
       buyer_name,
       buyer_phone,
       buyer_address,
-      order_items(
-        quantity,
-        price,
-        product_id,
-        status,
-        seller_pi_uid,
-        cancel_reason,
-        seller_cancel_reason
-      )
+      order_items(quantity,price,product_id,status,seller_pi_uid)
     `,
     { headers: headers(), cache: "no-store" }
   );
@@ -220,14 +204,8 @@ export async function getOrdersBySeller(
       product_id: string;
       status: string;
       seller_pi_uid: string;
-      cancel_reason: string | null;
-      seller_cancel_reason: string | null;
     }>;
   }>;
-
-  /* =========================================================
-     3️⃣ LOAD PRODUCTS
-  ========================================================= */
 
   const productIds = Array.from(
     new Set(
@@ -239,16 +217,14 @@ export async function getOrdersBySeller(
 
   const productsMap = await fetchProductsMap(productIds);
 
-  /* =========================================================
-     4️⃣ BUILD RESPONSE (lọc theo item.status)
-  ========================================================= */
-
   return rawOrders
     .map((o): OrderRecord | null => {
 
-      const sellerItems = o.order_items
-        .filter(i => i.seller_pi_uid === sellerPiUid)
-        .filter(i => !status || i.status === status);
+      if (status && o.status !== status) return null;
+
+const sellerItems = o.order_items.filter(
+  i => i.seller_pi_uid === sellerPiUid
+);
 
       if (sellerItems.length === 0) return null;
 
@@ -267,8 +243,6 @@ export async function getOrdersBySeller(
           quantity: i.quantity,
           price: fromMicroPi(i.price),
           status: i.status,
-          cancel_reason: i.cancel_reason,
-          seller_cancel_reason: i.seller_cancel_reason,
           product: productsMap[i.product_id],
         })),
       };
