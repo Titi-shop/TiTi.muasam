@@ -15,7 +15,6 @@ interface Address {
   phone: string;
   address: string;
   country: string;
-  countryCode: string;
   is_default: boolean;
 }
 
@@ -24,7 +23,6 @@ const emptyForm: Omit<Address, "id" | "is_default"> = {
   phone: "",
   address: "",
   country: "",
-  countryCode: "",
 };
 
 export default function CustomerAddressPage() {
@@ -68,7 +66,6 @@ if (!token) return;
     setForm({
       ...form,
       country: selected.code,
-      countryCode: selected.dial,
     });
   };
 
@@ -159,7 +156,7 @@ if (!token) return;
               <div>
                 <p className="font-semibold">{a.name}</p>
                 <p className="text-sm text-gray-600">
-                  {a.countryCode} {a.phone}
+                   {a.phone}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">{a.address}</p>
                  <p className="text-sm text-gray-500">
