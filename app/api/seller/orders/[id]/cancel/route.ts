@@ -25,12 +25,21 @@ export async function PATCH(
     );
   }
 
+  const body = await req.json();
+const cancelReason: string | null =
+  typeof body?.cancel_reason === "string"
+    ? body.cancel_reason.trim()
+    : null;
+
   /* 3️⃣ CANCEL ITEMS */
   try {
-    const ok = await updateOrderStatusBySeller(
-  params.id,     // ✅ orderId
-  user.pi_uid,   // ✅ sellerPiUid
-  "cancelled"
+   const ok = await updateOrderStatusBySeller(
+  params.id,
+  user.pi_uid,
+  "cancelled",
+  {
+    sellerCancelReason: cancelReason,
+  }
 );
 
     if (!ok) {
