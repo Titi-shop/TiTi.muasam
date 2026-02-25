@@ -33,12 +33,17 @@ const cancelReason: string | null =
 
   /* 3️⃣ CANCEL ITEMS */
   try {
-   const ok = await updateOrderStatusBySeller(
+   const body = await req.json();
+
+const ok = await updateOrderStatusBySeller(
   params.id,
   user.pi_uid,
-  "cancelled",
+  "confirmed",
   {
-    sellerCancelReason: cancelReason,
+    sellerMessage:
+      typeof body?.seller_message === "string"
+        ? body.seller_message.trim()
+        : null,
   }
 );
 
