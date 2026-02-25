@@ -1,7 +1,3 @@
-Chỉ còn chỉnh nhẹ file này hiển thị nội dung huỷ ở phần ảnh sản phẩm là ok .
-
-app/seller/orders/cancelled/page.tsx
-
 "use client";
 
 export const dynamic = "force-dynamic";
