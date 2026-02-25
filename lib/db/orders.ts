@@ -463,9 +463,12 @@ export async function getOrderByIdForSeller(
 export async function updateOrderStatusBySeller(
   orderId: string,
   sellerPiUid: string,
-  newStatus: "confirmed" | "shipping" | "cancelled" | "completed"
+  newStatus: "confirmed" | "shipping" | "cancelled" | "completed",
+  extra?: {
+    sellerMessage?: string | null;
+    sellerCancelReason?: string | null;
+  }
 ): Promise<boolean> {
-
   /* =========================
      1️⃣ VERIFY SELLER HAS ITEMS
   ========================= */
@@ -491,8 +494,14 @@ export async function updateOrderStatusBySeller(
       method: "PATCH",
       headers: headers(),
       body: JSON.stringify({
-        status: newStatus,
-      }),
+  status: newStatus,
+  ...(extra?.sellerMessage
+    ? { seller_message: extra.sellerMessage }
+    : {}),
+  ...(extra?.sellerCancelReason
+    ? { seller_cancel_reason: extra.sellerCancelReason }
+    : {}),
+}),
     }
   );
 
