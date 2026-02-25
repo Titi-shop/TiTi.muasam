@@ -28,10 +28,10 @@ export async function PATCH(
   /* 3️⃣ CANCEL ITEMS */
   try {
     const ok = await updateOrderStatusBySeller(
-      user.pi_uid,
-      params.id,
-      "cancelled"
-    );
+  params.id,     // ✅ orderId
+  user.pi_uid,   // ✅ sellerPiUid
+  "cancelled"
+);
 
     if (!ok) {
       return NextResponse.json(
