@@ -24,7 +24,7 @@ interface OrderItem {
 }
 
 interface Order {
-  id: number;
+  id: string | number;
   total: number;
   createdAt: string;
   status: string;
