@@ -184,7 +184,7 @@ export async function getOrdersBySeller(
       buyer_name,
       buyer_phone,
       buyer_address,
-      order_items(quantity,price,product_id,status,seller_pi_uid)
+      order_items(quantity,price,product_id,status,seller_pi_uid,cancel_reason)
     `,
     { headers: headers(), cache: "no-store" }
   );
@@ -205,6 +205,7 @@ export async function getOrdersBySeller(
       product_id: string;
       status: string;
       seller_pi_uid: string;
+       cancel_reason: string;
     }>;
   }>;
 
@@ -244,6 +245,7 @@ const sellerItems = o.order_items.filter(
           quantity: i.quantity,
           price: fromMicroPi(i.price),
           status: i.status,
+          cancel_reason,
           product: productsMap[i.product_id],
         })),
       };
