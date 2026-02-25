@@ -249,7 +249,7 @@ const sellerItems = o.order_items.filter(
       };
     })
     .filter((o): o is OrderRecord => o !== null);
-
+}
 /* =====================================================
    CREATE ORDER
 ===================================================== */
