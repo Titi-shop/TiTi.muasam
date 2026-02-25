@@ -30,6 +30,7 @@ interface OrderItem {
   quantity: number;
   price: number;
   product_id: string;
+  seller_message?: string | null;
   product?: Product;
 }
 
@@ -235,10 +236,17 @@ export default function ShippingOrdersPage() {
                           x{item.quantity} · π
                           {formatPi(item.price)}
                         </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                         {item.seller_message && (
+          <p className="text-xs text-blue-600 mt-1">
+            {t.seller_message ?? "Seller message"}:{" "}
+            {item.seller_message}
+          </p>
+        )}
+      </div>
+
+    </div>
+  ))}
+</div>
 
                 {/* FOOTER */}
                 <div className="flex justify-between items-center px-4 py-3 border-t">
