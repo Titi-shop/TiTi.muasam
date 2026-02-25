@@ -180,8 +180,8 @@ export default function SellerCanceledOrdersPage() {
   </div>
 )}
                   
-                  </div>
-                ))}
+                
+              
               </div>
 
               {/* FOOTER */}
