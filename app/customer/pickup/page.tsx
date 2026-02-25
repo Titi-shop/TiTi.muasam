@@ -31,6 +31,7 @@ interface OrderItem {
   quantity: number;
   price: number;
   product_id: string;
+  seller_message?: string | null;
   product?: Product;
 }
 
@@ -149,7 +150,7 @@ export default function CustomerPickupPage() {
     <section className="mt-6 px-4">
       {loading ? (
         <p className="text-center text-gray-400">
-          ⏳ {t.loading_orders}
+          {t.loading_orders}
         </p>
       ) : orders.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
@@ -202,7 +203,16 @@ export default function CustomerPickupPage() {
                         x{item.quantity} · π
                         {formatPi(item.price)}
                       </p>
-                    </div>
+
+                       
+                    {/* Seller message */}
+  {item.seller_message && (
+    <p className="text-xs text-blue-600 mt-1">
+      {t.seller_message ?? "Seller message"}: {item.seller_message}
+    </p>
+  )}
+
+
                   </div>
                 ))}
               </div>
