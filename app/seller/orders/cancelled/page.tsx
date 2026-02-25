@@ -28,6 +28,7 @@ interface Order {
   status: string;
   total: number;
   created_at?: string;
+  cancel_reason?: string | null;
   order_items: OrderItem[];
 }
 
@@ -172,6 +173,13 @@ export default function SellerCanceledOrdersPage() {
                         x{item.quantity} · π
                         {formatPi(item.price)}
                       </p>
+
+                        {/* 👇 Hiển thị lý do huỷ */}
+                    {order.cancel_reason && (
+                 <p className="text-xs text-red-500 mt-1">
+                {t.cancel_reason ?? "Reason"}: {order.cancel_reason}
+              </p>
+                  )}
                     </div>
                   </div>
                 ))}
