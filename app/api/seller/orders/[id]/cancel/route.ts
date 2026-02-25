@@ -25,24 +25,27 @@ export async function PATCH(
     );
   }
 
-  /* 3️⃣ READ BODY (CHỈ 1 LẦN) */
   const body = await req.json();
+const cancelReason: string | null =
+  typeof body?.cancel_reason === "string"
+    ? body.cancel_reason.trim()
+    : null;
 
-  const cancelReason: string | null =
-    typeof body?.cancel_reason === "string"
-      ? body.cancel_reason.trim()
-      : null;
-
-  /* 4️⃣ CANCEL */
+  /* 3️⃣ CANCEL ITEMS */
   try {
-    const ok = await updateOrderStatusBySeller(
-      params.id,
-      user.pi_uid,
-      "cancelled",
-      {
-        sellerCancelReason: cancelReason,
-      }
-    );
+   const body = await req.json();
+
+const ok = await updateOrderStatusBySeller(
+  params.id,
+  user.pi_uid,
+  "confirmed",
+  {
+    sellerMessage:
+      typeof body?.seller_message === "string"
+        ? body.seller_message.trim()
+        : null,
+  }
+);
 
     if (!ok) {
       return NextResponse.json(
