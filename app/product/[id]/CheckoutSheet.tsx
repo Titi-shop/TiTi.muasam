@@ -1,5 +1,5 @@
 "use client";
-
+import { countries } from "@/data/countries";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -45,6 +45,14 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
   const n = Number(qtyDraft);
   return Number.isInteger(n) && n >= 1 ? n : 1;
 }, [qtyDraft]);
+
+   const getCountryDisplay = (code?: string) => {
+  if (!code) return "";
+  const found = countries.find(
+    (c) => c.code.toUpperCase() === code.toUpperCase()
+  );
+  return found ? `${found.flag} ${found.name}` : code;
+};
    
   const item = useMemo(() => {
   if (!product) return null;
@@ -192,10 +200,11 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
     ],
     total,
     shipping: {
-      name: shipping.name,
-      phone: shipping.phone,
-      address: shipping.address,
-    },
+  name: shipping.name,
+  phone: shipping.phone,
+  address: shipping.address,
+  country: shipping.country,
+},
   }),
 });
             onClose();
@@ -236,10 +245,13 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
           >
             {shipping ? (
               <>
-                <p className="font-medium">{shipping.name}</p>
-                <p className="text-sm text-gray-600">{shipping.phone}</p>
-                <p className="text-sm text-gray-500">{shipping.address}</p>
-              </>
+  <p className="font-medium">{shipping.name}</p>
+  <p className="text-sm text-gray-600">{shipping.phone}</p>
+  <p className="text-sm text-gray-500">{shipping.address}</p>
+  <p className="text-sm text-gray-500">
+    {getCountryDisplay(shipping.country)}
+  </p>
+</>
             ) : (
               <p className="text-gray-500">➕ {t.add_shipping}</p>
             )}
