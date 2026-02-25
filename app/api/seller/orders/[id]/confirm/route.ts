@@ -14,6 +14,7 @@ export async function PATCH(
       { status: 401 }
     );
   }
+  
 
   const role = await resolveRole(user);
   if (role !== "seller" && role !== "admin") {
@@ -24,10 +25,20 @@ export async function PATCH(
   }
 
   try {
+    
+    const body = await req.json();
+const sellerMessage: string | null =
+  typeof body?.seller_message === "string"
+    ? body.seller_message.trim()
+    : null;
+    
     const ok = await updateOrderStatusBySeller(
-  params.id,    
-  user.pi_uid,   
-  "confirmed"
+  params.id,
+  user.pi_uid,
+  "confirmed",
+  {
+    sellerMessage,
+  }
 );
 
     if (!ok) {
