@@ -182,10 +182,6 @@ export default function SellerCanceledOrdersPage() {
     <p className="text-xs text-red-500 mt-1">
       {t.cancel_reason ?? "Reason"}: {order.cancel_reason}
     </p>
-  )}
-</div>
-                  
-                  </div>
                 ))}
               </div>
 
