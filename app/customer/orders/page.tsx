@@ -18,6 +18,7 @@ interface OrderItem {
   id: string | number;
   product_id: string;
   seller_message?: string | null;
+  seller_cancel_reason?: string | null;
   price: number;
   quantity: number;
   product?: Product;
@@ -238,13 +239,20 @@ function formatPi(value: number | string) {
           <p className="text-xs text-gray-500">
             x{item.quantity} · π{formatPi(item.price)}
           </p>
-           {item.seller_message && (
-          <p className="text-xs text-blue-600 mt-1">
-            {t.seller_message ?? "Seller message"}:{" "}
-            {item.seller_message}
-          </p>
-        )}
-      </div>
+           {/* Seller message */}
+  {item.seller_message && (
+    <p className="text-xs text-blue-600 mt-1">
+      {t.seller_message ?? "Seller message"}: {item.seller_message}
+    </p>
+  )}
+
+  {/* Seller cancel reason */}
+  {item.seller_cancel_reason && (
+    <p className="text-xs text-red-500 mt-1">
+      {t.seller_cancel_reason ?? "Seller reason"}: {item.seller_cancel_reason}
+    </p>
+  )}
+</div>
 
     </div>
   ))}
