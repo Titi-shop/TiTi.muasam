@@ -176,9 +176,18 @@ export async function getOrdersBySeller(
   const ids = orderIds.map(id => `"${id}"`).join(",");
 
   const orderRes = await fetch(
-  `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=id,status,total,created_at,buyer_name,buyer_phone,buyer_address,order_items(quantity,price,product_id,status,seller_pi_uid,cancel_reason)`,
-  { headers: headers(), cache: "no-store" }
-);
+    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&order=created_at.desc&select=
+      id,
+      status,
+      total,
+      created_at,
+      buyer_name,
+      buyer_phone,
+      buyer_address,
+      order_items(quantity,price,product_id,status,seller_pi_uid)
+    `,
+    { headers: headers(), cache: "no-store" }
+  );
 
   if (!orderRes.ok) return [];
 
@@ -196,7 +205,6 @@ export async function getOrdersBySeller(
       product_id: string;
       status: string;
       seller_pi_uid: string;
-       cancel_reason: string | null;
     }>;
   }>;
 
@@ -232,22 +240,16 @@ const sellerItems = o.order_items.filter(
           address: o.buyer_address ?? "",
         },
         order_items: sellerItems.map(i => ({
-  product_id: i.product_id,
-  quantity: i.quantity,
-  price: fromMicroPi(i.price),
-  status: i.status,
-  cancel_reason:
-    o.status === "cancelled"
-      ? i.cancel_reason ?? null
-      : null,
-  product: productsMap[i.product_id],
-})),
+          product_id: i.product_id,
+          quantity: i.quantity,
+          price: fromMicroPi(i.price),
+          status: i.status,
+          product: productsMap[i.product_id],
+        })),
       };
     })
     .filter((o): o is OrderRecord => o !== null);
 }
-
-
 /* =====================================================
    UPDATE ORDER STATUS BY SELLER
 ===================================================== */
