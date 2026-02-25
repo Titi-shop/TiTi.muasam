@@ -31,6 +31,7 @@ interface OrderItem {
   quantity: number;
   price: number;
   product_id: string;
+  seller_cancel_reason?: string | null;
   seller_message?: string | null;
   product?: Product;
 }
@@ -203,13 +204,20 @@ export default function CustomerPickupPage() {
                         x{item.quantity} · π
                         {formatPi(item.price)}
                       </p>
-                       {item.seller_message && (
-          <p className="text-xs text-blue-600 mt-1">
-            {t.seller_message ?? "Seller message"}:{" "}
-            {item.seller_message}
-          </p>
-        )}
-      </div>
+                       {/* Seller message */}
+  {item.seller_message && (
+    <p className="text-xs text-blue-600 mt-1">
+      {t.seller_message ?? "Seller message"}: {item.seller_message}
+    </p>
+  )}
+
+  {/* Seller cancel reason */}
+  {item.seller_cancel_reason && (
+    <p className="text-xs text-red-500 mt-1">
+      {t.seller_cancel_reason ?? "Seller reason"}: {item.seller_cancel_reason}
+    </p>
+  )}
+</div>
 
     </div>
   ))}
