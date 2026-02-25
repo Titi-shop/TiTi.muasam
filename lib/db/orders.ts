@@ -102,7 +102,7 @@ export async function getOrdersByBuyer(
       status,
       total,
       created_at,
-      order_items(quantity,price,product_id,status)
+      order_items(quantity,price,product_id,status,seller_cancel_reason,seller_message)
     `,
     { headers: headers(), cache: "no-store" }
   );
@@ -119,6 +119,8 @@ export async function getOrdersByBuyer(
       price: number;
       product_id: string;
       status: string;
+     seller_cancel_reason: string | null;
+     seller_message: string | null;
     }>;
   }>;
 
@@ -142,6 +144,8 @@ export async function getOrdersByBuyer(
       quantity: i.quantity,
       price: fromMicroPi(i.price),
       status: i.status,
+       seller_cancel_reason: i.seller_cancel_reason ?? null,
+    seller_message: i.seller_message ?? null,
       product: productsMap[i.product_id],
     })),
   }));
