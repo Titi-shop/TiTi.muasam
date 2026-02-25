@@ -495,10 +495,10 @@ export async function updateOrderStatusBySeller(
       headers: headers(),
       body: JSON.stringify({
   status: newStatus,
-  ...(extra?.sellerMessage
+  ...(extra && "sellerMessage" in extra
     ? { seller_message: extra.sellerMessage }
     : {}),
-  ...(extra?.sellerCancelReason
+  ...(extra && "sellerCancelReason" in extra
     ? { seller_cancel_reason: extra.sellerCancelReason }
     : {}),
 }),
