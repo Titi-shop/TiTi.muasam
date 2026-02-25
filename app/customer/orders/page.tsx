@@ -17,6 +17,7 @@ interface Product {
 interface OrderItem {
   id: string | number;
   product_id: string;
+  seller_message?: string | null;
   price: number;
   quantity: number;
   product?: Product;
@@ -237,11 +238,17 @@ function formatPi(value: number | string) {
           <p className="text-xs text-gray-500">
             x{item.quantity} · π{formatPi(item.price)}
           </p>
-        </div>
+           {item.seller_message && (
+          <p className="text-xs text-blue-600 mt-1">
+            {t.seller_message ?? "Seller message"}:{" "}
+            {item.seller_message}
+          </p>
+        )}
       </div>
-    ))}
-  </div>
-)}
+
+    </div>
+  ))}
+</div>
 
               {/* FOOTER */}
               <div className="flex justify-between items-center px-4 py-3 border-t text-sm">
