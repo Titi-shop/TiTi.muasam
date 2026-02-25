@@ -212,7 +212,7 @@ function formatPi(value: number | string) {
                   {t[`status_${o.status}`] ?? o.status}
                 </span>
               </div>
-               
+            
               {/* PRODUCTS */}
 {o.order_items && o.order_items.length > 0 && (
   <div className="mt-3 space-y-2">
@@ -249,7 +249,7 @@ function formatPi(value: number | string) {
     </div>
   ))}
 </div>
-
+)}
               {/* FOOTER */}
               <div className="flex justify-between items-center px-4 py-3 border-t text-sm">
                 <span>
