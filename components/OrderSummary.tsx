@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Clock,
@@ -117,7 +118,7 @@ function Item({
       <div className="relative flex items-center justify-center w-11 h-11 rounded-full bg-gray-100 shadow-sm mb-1">
   {icon}
 
-  {count && count > 0 && (
+  {typeof count === "number" && count > 0 && (
     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full font-semibold shadow">
       {count > 99 ? "99+" : count}
     </span>
