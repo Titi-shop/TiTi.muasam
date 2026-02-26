@@ -16,6 +16,26 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 export default function OrderSummary() {
   const { t } = useTranslation();
   const router = useRouter();
+  const [counts, setCounts] = useState({
+  pending: 0,
+  pickup: 0,
+  shipping: 0,
+  review: 0,
+  returns: 0,
+});
+  useEffect(() => {
+  async function loadCounts() {
+    try {
+      const res = await fetch("/api/orders/count");
+      if (!res.ok) return;
+
+      const data = await res.json();
+      setCounts(data);
+    } catch {}
+  }
+
+  loadCounts();
+}, []);
 
   return (
     <section className="bg-white mx-4 mt-4 rounded-xl shadow border border-gray-100">
@@ -35,32 +55,37 @@ export default function OrderSummary() {
 
       {/* ITEMS */}
       <div className="grid grid-cols-5 py-4">
-        <Item
-          icon={<Clock size={22} />}
-          label={t.pending_orders}
-          path="/customer/pending"
-        />
-        <Item
-          icon={<Package size={22} />}
-          label={t.pickup_orders}
-          path="/customer/pickup"
-        />
-        <Item
-          icon={<Truck size={22} />}
-          label={t.shipping_orders}
-          path="/customer/shipping"
-        />
-        <Item
-          icon={<Star size={22} />}
-          label={t.review_orders}
-          path="/customer/review"
-        />
-        <Item
-          icon={<RotateCcw size={22} />}
-          label={t.return_orders}
-          path="/customer/returns"
-        />
-      </div>
+  <Item
+    icon={<Clock size={22} />}
+    label={t.pending_orders}
+    path="/customer/pending"
+    count={counts.pending}
+  />
+  <Item
+    icon={<Package size={22} />}
+    label={t.pickup_orders}
+    path="/customer/pickup"
+    count={counts.pickup}
+  />
+  <Item
+    icon={<Truck size={22} />}
+    label={t.shipping_orders}
+    path="/customer/shipping"
+    count={counts.shipping}
+  />
+  <Item
+    icon={<Star size={22} />}
+    label={t.review_orders}
+    path="/customer/review"
+    count={counts.review}
+  />
+  <Item
+    icon={<RotateCcw size={22} />}
+    label={t.return_orders}
+    path="/customer/returns"
+    count={counts.returns}
+  />
+</div>
     </section>
   );
 }
@@ -72,11 +97,14 @@ function Item({
   icon,
   label,
   path,
+  count,
 }: {
   icon: React.ReactNode;
   label: string;
   path: string;
-}) {
+  count?: number;
+})
+{
   const router = useRouter();
 
   return (
@@ -86,9 +114,15 @@ function Item({
       className="flex flex-col items-center justify-start h-[88px] text-gray-700 hover:text-orange-500 transition"
     >
       {/* ICON */}
-      <div className="flex items-center justify-center w-11 h-11 rounded-full bg-gray-100 shadow-sm mb-1">
-        {icon}
-      </div>
+      <div className="relative flex items-center justify-center w-11 h-11 rounded-full bg-gray-100 shadow-sm mb-1">
+  {icon}
+
+  {count && count > 0 && (
+    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full font-semibold shadow">
+      {count > 99 ? "99+" : count}
+    </span>
+  )}
+</div>
 
       {/* LABEL */}
       <span className="text-[11px] leading-snug text-center line-clamp-2 max-w-[64px]">
