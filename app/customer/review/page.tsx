@@ -9,7 +9,7 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
    TYPES
 ========================= */
 interface Order {
-  id: string;              // ✅ uuid
+  id: string; // uuid
   createdAt: string;
   status: string;
   reviewed?: boolean;
@@ -31,20 +31,21 @@ export default function CustomerReviewPage() {
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [ratings, setRatings] = useState<Record<string, number>>({});
-const [comments, setComments] = useState<Record<string, string>>({});
-const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [comments, setComments] = useState<Record<string, string>>({});
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
+
   /* =========================
      LOAD ORDERS
   ========================= */
   useEffect(() => {
     if (Object.keys(t).length > 0) {
-      loadOrders();
+      void loadOrders();
     }
   }, [t]);
 
-  const loadOrders = async () => {
+  const loadOrders = async (): Promise<void> => {
     try {
       setLoading(true);
 
@@ -62,8 +63,8 @@ const [submittingId, setSubmittingId] = useState<string | null>(null);
       setOrders(reviewable);
 
       const defaultComment = getDefaultComment(t);
-
       const initialComments: Record<string, string> = {};
+
       reviewable.forEach((o) => {
         initialComments[o.id] = defaultComment;
       });
@@ -80,7 +81,9 @@ const [submittingId, setSubmittingId] = useState<string | null>(null);
   /* =========================
      SUBMIT REVIEW
   ========================= */
-  const submitReview = async (orderId: string)
+  const submitReview = async (
+    orderId: string
+  ): Promise<void> => {
     if (submittingId !== null) return;
 
     const rating = ratings[orderId];
@@ -96,12 +99,19 @@ const [submittingId, setSubmittingId] = useState<string | null>(null);
 
       const res = await apiAuthFetch("/api/reviews", {
         method: "POST",
-        body: JSON.stringify({ orderId, rating, comment }),
+        body: JSON.stringify({
+          orderId,
+          rating,
+          comment,
+        }),
       });
 
       if (!res.ok) throw new Error("REVIEW_FAILED");
 
-      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      setOrders((prev) =>
+        prev.filter((o) => o.id !== orderId)
+      );
+
       alert(t.review_success);
     } catch (error) {
       console.error("Submit review error:", error);
@@ -114,10 +124,12 @@ const [submittingId, setSubmittingId] = useState<string | null>(null);
   /* =========================
      FORMAT DATE SAFE
   ========================= */
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     if (!dateString) return t.invalid_date || "—";
+
     const parsed = Date.parse(dateString);
     if (isNaN(parsed)) return t.invalid_date || "—";
+
     return new Date(parsed).toLocaleString();
   };
 
@@ -128,7 +140,9 @@ const [submittingId, setSubmittingId] = useState<string | null>(null);
     <main className="min-h-screen bg-gray-100 pb-24">
       <header className="bg-orange-500 text-white px-4 py-4">
         <div className="bg-orange-400 rounded-lg p-4">
-          <p className="text-sm opacity-90">{t.order_info}</p>
+          <p className="text-sm opacity-90">
+            {t.order_info}
+          </p>
           <p className="text-xs opacity-80 mt-1">
             {t.orders}: {orders.length}
           </p>
@@ -138,7 +152,7 @@ const [submittingId, setSubmittingId] = useState<string | null>(null);
       <section className="px-4 mt-4">
         {loading && (
           <p className="text-center text-gray-500">
-             {t.loading_orders}
+            {t.loading_orders}
           </p>
         )}
 
@@ -151,77 +165,79 @@ const [submittingId, setSubmittingId] = useState<string | null>(null);
 
         {!loading && orders.length > 0 && (
           <div className="space-y-4">
-            {orders.map((order) => {
-              return (
-                <div
-                  key={order.id}
-                  className="bg-white rounded-lg shadow p-4"
-                >
-                  <div className="flex justify-between text-sm">
-                    <span className="font-semibold">
-                      #{order.id}
-                    </span>
-                    <span className="text-gray-500">
-                      {formatDate(order.createdAt)}
-                    </span>
-                  </div>
-
-                  {/* STAR RATING */}
-                  <div className="flex gap-1 my-3">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() =>
-                          setRatings((prev) => ({
-                            ...prev,
-                            [order.id]: star,
-                          }))
-                        }
-                        className={`text-2xl ${
-                          (ratings[order.id] || 0) >= star
-                            ? "text-yellow-400"
-                            : "text-gray-300"
-                        }`}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* COMMENT */}
-                  <textarea
-                    rows={3}
-                    className="w-full border rounded p-2 text-sm"
-                    value={comments[order.id] || ""}
-                    onChange={(e) =>
-                      setComments((prev) => ({
-                        ...prev,
-                        [order.id]: e.target.value,
-                      }))
-                    }
-                  />
-
-                  {/* SUBMIT */}
-                  <button
-                    onClick={() => submitReview(order.id)}
-                    disabled={
-                      submittingId === order.id ||
-                      !ratings[order.id]
-                    }
-                    className={`mt-3 w-full py-2 rounded text-white ${
-                      submittingId === order.id ||
-                      !ratings[order.id]
-                        ? "bg-gray-400"
-                        : "bg-orange-500 hover:bg-orange-600"
-                    }`}
-                  >
-                    {submittingId === order.id
-                      ? t.submitting
-                      : t.submit_review}
-                  </button>
+            {orders.map((order) => (
+              <div
+                key={order.id}
+                className="bg-white rounded-lg shadow p-4"
+              >
+                <div className="flex justify-between text-sm">
+                  <span className="font-semibold">
+                    #{order.id}
+                  </span>
+                  <span className="text-gray-500">
+                    {formatDate(order.createdAt)}
+                  </span>
                 </div>
-              );
-            })}
+
+                {/* STAR RATING */}
+                <div className="flex gap-1 my-3">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() =>
+                        setRatings((prev) => ({
+                          ...prev,
+                          [order.id]: star,
+                        }))
+                      }
+                      className={`text-2xl ${
+                        (ratings[order.id] || 0) >= star
+                          ? "text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+
+                {/* COMMENT */}
+                <textarea
+                  rows={3}
+                  className="w-full border rounded p-2 text-sm"
+                  value={comments[order.id] || ""}
+                  onChange={(e) =>
+                    setComments((prev) => ({
+                      ...prev,
+                      [order.id]: e.target.value,
+                    }))
+                  }
+                />
+
+                {/* SUBMIT */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    submitReview(order.id)
+                  }
+                  disabled={
+                    submittingId === order.id ||
+                    !ratings[order.id]
+                  }
+                  className={`mt-3 w-full py-2 rounded text-white ${
+                    submittingId === order.id ||
+                    !ratings[order.id]
+                      ? "bg-gray-400"
+                      : "bg-orange-500 hover:bg-orange-600"
+                  }`}
+                >
+                  {submittingId === order.id
+                    ? t.submitting
+                    : t.submit_review}
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </section>
