@@ -620,14 +620,6 @@ for (const row of rows) {
 export async function getSellerOrdersCount(
   sellerPiUid: string
 ) {
-  const itemRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items?select=status&seller_pi_uid=eq.${sellerPiUid}`,
-    {
-      headers: headers(),
-      cache: "no-store",
-    }
-  );
-
   const empty = {
     pending: 0,
     confirmed: 0,
@@ -638,21 +630,42 @@ export async function getSellerOrdersCount(
     total: 0,
   };
 
+  /* 1️⃣ Lấy order_id của seller */
+  const itemRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?select=order_id&seller_pi_uid=eq.${sellerPiUid}`,
+    { headers: headers(), cache: "no-store" }
+  );
+
   if (!itemRes.ok) return empty;
 
-  const rows = await itemRes.json() as Array<{
-    status: string;
-  }>;
+  const items = await itemRes.json() as Array<{ order_id: string }>;
 
-  for (const row of rows) {
-    switch (row.status) {
+  const orderIds = Array.from(new Set(items.map(i => i.order_id)));
+
+  if (orderIds.length === 0) return empty;
+
+  const ids = orderIds.map(id => `"${id}"`).join(",");
+
+  /* 2️⃣ Lấy status từ bảng orders */
+  const orderRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?id=in.(${ids})&select=status`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!orderRes.ok) return empty;
+
+  const orders = await orderRes.json() as Array<{ status: string }>;
+
+  /* 3️⃣ Đếm theo order */
+  for (const o of orders) {
+    switch (o.status) {
       case "pending":
       case "confirmed":
       case "shipping":
       case "completed":
       case "returned":
       case "cancelled":
-        empty[row.status]++;
+        empty[o.status]++;
         empty.total++;
         break;
       default:
