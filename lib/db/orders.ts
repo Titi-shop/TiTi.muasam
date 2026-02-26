@@ -616,3 +616,51 @@ for (const row of rows) {
 
   return result;
 }
+
+export async function getSellerOrdersCount(
+  sellerPiUid: string
+) {
+  const itemRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/order_items?select=order_id,status&seller_pi_uid=eq.${sellerPiUid}`,
+    {
+      headers: headers(),
+      cache: "no-store",
+    }
+  );
+
+  if (!itemRes.ok) {
+    return {
+      pending: 0,
+      confirmed: 0,
+      shipping: 0,
+      completed: 0,
+      returned: 0,
+      cancelled: 0,
+      total: 0,
+    };
+  }
+
+  const rows = await itemRes.json() as Array<{
+    order_id: string;
+    status: string;
+  }>;
+
+  const result = {
+    pending: 0,
+    confirmed: 0,
+    shipping: 0,
+    completed: 0,
+    returned: 0,
+    cancelled: 0,
+    total: 0,
+  };
+
+  for (const row of rows) {
+    if (row.status in result) {
+      result[row.status as keyof typeof result]++;
+      result.total++;
+    }
+  }
+
+  return result;
+}
