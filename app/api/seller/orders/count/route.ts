@@ -1,14 +1,10 @@
-import { NextResponse } from "next/server";
-import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
-import { getSellerOrdersCount } from "@/lib/db/orders";
-
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 export async function GET() {
   const user = await getUserFromBearer();
 
+  console.log("SELLER COUNT USER:", user);
+
   if (!user || user.role !== "seller") {
+    console.log("UNAUTHORIZED SELLER COUNT");
     return NextResponse.json(
       { error: "UNAUTHORIZED" },
       { status: 401 }
