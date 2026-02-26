@@ -630,39 +630,18 @@ export async function getSellerOrdersCount(
     total: 0,
   };
 
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items?select=order_id,status&seller_pi_uid=eq.${sellerPiUid}`,
-    { headers: headers(), cache: "no-store" }
-  );
+  // 🔥 Lấy toàn bộ order giống route chính
+  const orders = await getOrdersBySeller(sellerPiUid);
 
-  if (!res.ok) return empty;
-
-  const rows = await res.json() as Array<{
-    order_id: string;
-    status: string;
-  }>;
-
-  // 🔥 GROUP theo order_id
-  const orderMap = new Map<string, string>();
-
-  for (const row of rows) {
-    // nếu 1 order có nhiều item
-    // ưu tiên status cao hơn nếu cần (có thể nâng cấp sau)
-    if (!orderMap.has(row.order_id)) {
-      orderMap.set(row.order_id, row.status);
-    }
-  }
-
-  // 🔥 Đếm theo ORDER (không phải item)
-  for (const status of orderMap.values()) {
-    switch (status) {
+  for (const order of orders) {
+    switch (order.status) {
       case "pending":
       case "confirmed":
       case "shipping":
       case "completed":
       case "returned":
       case "cancelled":
-        empty[status]++;
+        empty[order.status]++;
         empty.total++;
         break;
       default:
