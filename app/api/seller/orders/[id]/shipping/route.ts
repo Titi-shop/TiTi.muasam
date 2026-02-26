@@ -25,10 +25,10 @@ export async function PATCH(
 
   try {
     const ok = await updateOrderStatusBySeller(
-      user.pi_uid,
-      params.id,
-      "shipping"
-    );
+  params.id,     // orderId
+  user.pi_uid,   // sellerPiUid
+  "shipping"
+);
 
     if (!ok) {
       return NextResponse.json(
