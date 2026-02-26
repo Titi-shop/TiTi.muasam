@@ -23,7 +23,6 @@ export default function OrderSummary() {
   pickup: 0,
   shipping: 0,
   review: 0,
-  returns: 0,
 });
   useEffect(() => {
   async function loadCounts() {
@@ -98,7 +97,7 @@ export default function OrderSummary() {
     icon={<RotateCcw size={22} />}
     label={t.return_orders}
     path="/customer/returns"
-    count={counts.returns}
+  
   />
 </div>
     </section>
