@@ -570,7 +570,7 @@ export async function getOrdersCountByBuyer(
     `
     SELECT status, COUNT(*)::int AS count
     FROM orders
-    WHERE buyer_pi_uid = $1
+    WHERE buyer_pi = $1
     GROUP BY status
     `,
     [buyerPiUid]
