@@ -61,42 +61,50 @@ function isSellerOrder(value: unknown): value is SellerOrder {
 export default function SellerPage() {
   const { t } = useTranslation();
   const { user, loading, piReady } = useAuth();
-  const [orders, setOrders] = useState<SellerOrder[]>([]);
+  const [stats, setStats] = useState({
+  pending: 0,
+  confirmed: 0,
+  shipping: 0,
+  completed: 0,
+  returned: 0,
+  cancelled: 0,
+  total: 0,
+});
 
   const isSeller = user?.role === "seller";
 
   useEffect(() => {
-    if (!isSeller || !piReady) return;
+  if (!isSeller || !piReady) return;
 
-    const loadOrders = async () => {
-      try {
-        const res = await apiAuthFetch("/api/seller/orders", {
-          cache: "no-store",
-        });
+  const loadStats = async () => {
+    try {
+      const res = await apiAuthFetch(
+        "/api/seller/orders/count",
+        { cache: "no-store" }
+      );
 
-        if (!res.ok) return;
+      if (!res.ok) return;
 
-        const data: unknown = await res.json();
-        if (Array.isArray(data)) {
-          setOrders(data.filter(isSellerOrder));
-        }
-      } catch {
-        setOrders([]);
-      }
-    };
+      const data = await res.json();
+      setStats(data);
+    } catch {
+      setStats({
+        pending: 0,
+        confirmed: 0,
+        shipping: 0,
+        completed: 0,
+        returned: 0,
+        cancelled: 0,
+        total: 0,
+      });
+    }
+  };
+
+  void loadStats();
+}, [isSeller, piReady]);
 
     void loadOrders();
   }, [isSeller, piReady]);
-
-  const stats = useMemo(() => {
-    const base: Record<OrderStatus, number> = {
-      pending: 0,
-      confirmed: 0,
-      shipping: 0,
-      completed: 0,
-      returned: 0,
-      cancelled: 0,
-    };
 
     for (const order of orders) {
       base[order.status]++;
@@ -108,7 +116,7 @@ export default function SellerPage() {
   if (loading || !piReady) {
     return (
       <div className="flex justify-center mt-16 text-gray-500 text-sm">
-        ⏳ {t.loading ?? "Loading..."}
+         {t.loading ?? "Loading..."}
       </div>
     );
   }
