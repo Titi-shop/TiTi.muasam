@@ -555,26 +555,28 @@ export async function updateOrderStatusBySeller(
 }
 
 
-import { query } from "@/lib/db";
-
-/* =========================
-   COUNT ORDERS BY STATUS
-========================= */
 export async function getOrdersCountByBuyer(
   buyerPiUid: string
 ) {
-  const rows = await query<{
-    status: string;
-    count: number;
-  }>(
-    `
-    SELECT status, COUNT(*)::int AS count
-    FROM orders
-    WHERE buyer_id = $1
-    GROUP BY status
-    `,
-    [buyerPiUid]
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${buyerPiUid}&select=status`,
+    {
+      headers: headers(),
+      cache: "no-store",
+    }
   );
+
+  if (!res.ok) {
+    return {
+      pending: 0,
+      pickup: 0,
+      shipping: 0,
+      review: 0,
+      returns: 0,
+    };
+  }
+
+  const rows = await res.json() as Array<{ status: string }>;
 
   const result = {
     pending: 0,
@@ -586,7 +588,7 @@ export async function getOrdersCountByBuyer(
 
   for (const row of rows) {
     if (row.status in result) {
-      result[row.status as keyof typeof result] = row.count;
+      result[row.status as keyof typeof result]++;
     }
   }
 
