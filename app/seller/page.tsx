@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
@@ -20,48 +20,95 @@ import {
   XCircle,
 } from "lucide-react";
 
+/* ================= TYPES ================= */
+
+type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "shipping"
+  | "completed"
+  | "returned"
+  | "cancelled";
+
+type SellerOrder = {
+  id: string;
+  status: OrderStatus;
+};
+
+function isSellerOrder(value: unknown): value is SellerOrder {
+  if (typeof value !== "object" || value === null) return false;
+
+  const obj = value as Record<string, unknown>;
+
+  const validStatus: OrderStatus[] = [
+    "pending",
+    "confirmed",
+    "shipping",
+    "completed",
+    "returned",
+    "cancelled",
+  ];
+
+  return (
+    typeof obj.id === "string" &&
+    typeof obj.status === "string" &&
+    validStatus.includes(obj.status as OrderStatus)
+  );
+}
+
+/* ================= PAGE ================= */
+
 export default function SellerPage() {
   const { t } = useTranslation();
   const { user, loading, piReady } = useAuth();
-
-  const [stats, setStats] = useState({
-    pending: 0,
-    confirmed: 0,
-    shipping: 0,
-    completed: 0,
-    returned: 0,
-    cancelled: 0,
-    total: 0,
-  });
+  const [orders, setOrders] = useState<SellerOrder[]>([]);
 
   const isSeller = user?.role === "seller";
 
   useEffect(() => {
     if (!isSeller || !piReady) return;
 
-    const loadStats = async () => {
+    const loadOrders = async () => {
       try {
-        const res = await apiAuthFetch(
-          "/api/seller/orders/count",
-          { cache: "no-store" }
-        );
+        const res = await apiAuthFetch("/api/seller/orders", {
+          cache: "no-store",
+        });
 
         if (!res.ok) return;
 
-        const data = await res.json();
-        setStats(data);
-      } catch (err) {
-        console.error(err);
+        const data: unknown = await res.json();
+        if (Array.isArray(data)) {
+          setOrders(data.filter(isSellerOrder));
+        }
+      } catch {
+        setOrders([]);
       }
     };
 
-    void loadStats();
+    void loadOrders();
   }, [isSeller, piReady]);
+
+  const stats = useMemo(() => {
+    const base: Record<OrderStatus, number> = {
+      pending: 0,
+      confirmed: 0,
+      shipping: 0,
+      completed: 0,
+      returned: 0,
+      cancelled: 0,
+    };
+
+    for (const order of orders) {
+      base[order.status]++;
+    }
+
+    return { ...base, total: orders.length };
+  }, [orders]);
 
   if (loading || !piReady) {
     return (
       <div className="flex justify-center mt-16 text-gray-500 text-sm">
-        {t.loading ?? "Loading..."}
+         {t.loading ?? "Loading..."}
       </div>
     );
   }
@@ -77,12 +124,14 @@ export default function SellerPage() {
   return (
     <main className="max-w-4xl mx-auto px-4 py-8 space-y-8 bg-gray-100 min-h-screen">
 
+      {/* HEADER */}
       <div className="bg-gray-200 border border-gray-300 rounded-xl p-4">
         <h1 className="text-lg font-semibold text-gray-800">
           🏪 {t.seller_dashboard ?? "Seller Dashboard"}
         </h1>
       </div>
 
+      {/* MAIN ACTIONS */}
       <section className="grid grid-cols-3 gap-4">
         <MainCard
           href="/seller/post"
@@ -104,6 +153,7 @@ export default function SellerPage() {
         />
       </section>
 
+      {/* ORDER STATUS */}
       <section>
         <div className="bg-gray-200 border border-gray-300 rounded-xl p-3 mb-4">
           <h2 className="text-xs font-semibold text-gray-700 tracking-wide">
@@ -124,23 +174,35 @@ export default function SellerPage() {
   );
 }
 
-function MainCard({ href, icon, label, badge }: any) {
+/* ================= MAIN CARD ================= */
+
+function MainCard({
+  href,
+  icon,
+  label,
+  badge,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  badge?: number;
+}) {
   return (
     <Link href={href} className="block">
-      <div className="relative bg-white border rounded-xl p-4 text-center shadow-sm h-[96px] flex flex-col justify-center">
+      <div className="relative bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm h-[96px] flex flex-col justify-center hover:shadow-md transition">
 
-        {badge > 0 && (
+        {badge !== undefined && badge > 0 && (
           <span className="absolute top-2 right-2 text-[10px] bg-gray-800 text-white px-2 py-0.5 rounded-full">
             {badge}
           </span>
         )}
 
         <div className="flex flex-col items-center gap-2">
-          <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-700">
             {icon}
           </div>
 
-          <span className="text-[12px] font-medium text-gray-700">
+          <span className="text-[12px] font-medium text-gray-700 text-center leading-tight">
             {label}
           </span>
         </div>
@@ -149,14 +211,31 @@ function MainCard({ href, icon, label, badge }: any) {
   );
 }
 
-function StatusCard({ href, icon, count, label }: any) {
+/* ================= STATUS CARD ================= */
+
+function StatusCard({
+  href,
+  icon,
+  count,
+  label,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  count: number;
+  label: string;
+}) {
   return (
     <Link href={href} className="block">
-      <div className="bg-white border rounded-xl p-4 text-center shadow-sm h-[110px] flex flex-col justify-between">
-        <div className="w-8 h-8 mx-auto rounded-full bg-gray-200 flex items-center justify-center">
+      <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm h-[110px] flex flex-col justify-between hover:shadow-md transition">
+
+        <div className="w-8 h-8 mx-auto rounded-full bg-gray-200 flex items-center justify-center text-gray-700">
           {icon}
         </div>
-        <span className="text-[11px] text-gray-600">{label}</span>
+
+        <span className="text-[11px] text-gray-600 leading-tight px-1">
+          {label}
+        </span>
+
         <span className="text-sm font-semibold text-gray-800">
           {count}
         </span>
