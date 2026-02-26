@@ -553,3 +553,42 @@ export async function updateOrderStatusBySeller(
 
   return true;
 }
+
+
+import { query } from "@/lib/db";
+
+/* =========================
+   COUNT ORDERS BY STATUS
+========================= */
+export async function getOrdersCountByBuyer(
+  buyerPiUid: string
+) {
+  const rows = await query<{
+    status: string;
+    count: number;
+  }>(
+    `
+    SELECT status, COUNT(*)::int AS count
+    FROM orders
+    WHERE buyer_pi_uid = $1
+    GROUP BY status
+    `,
+    [buyerPiUid]
+  );
+
+  const result = {
+    pending: 0,
+    pickup: 0,
+    shipping: 0,
+    review: 0,
+    returns: 0,
+  };
+
+  for (const row of rows) {
+    if (row.status in result) {
+      result[row.status as keyof typeof result] = row.count;
+    }
+  }
+
+  return result;
+}
