@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { getPiAccessToken } from "@/lib/piAuth";
 import {
   Clock,
   Package,
@@ -27,7 +28,9 @@ export default function OrderSummary() {
   useEffect(() => {
   async function loadCounts() {
     try {
-      const token = await getPiAccessToken(); // lấy Pi token
+      const token = await getPiAccessToken();
+
+      console.log("TOKEN:", token);
 
       if (!token) return;
 
@@ -37,11 +40,13 @@ export default function OrderSummary() {
         },
       });
 
-      if (!res.ok) return;
-
       const data = await res.json();
+      console.log("DATA:", data);
+
       setCounts(data);
-    } catch {}
+    } catch (err) {
+      console.log("ERROR:", err);
+    }
   }
 
   loadCounts();
