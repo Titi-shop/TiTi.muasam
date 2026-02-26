@@ -1,15 +1,7 @@
-import { NextResponse } from "next/server";
-import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
-import { getOrdersCountByBuyer } from "@/lib/db/orders";
-
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
-/* =========================
-   GET /api/orders/count
-========================= */
 export async function GET() {
   const user = await getUserFromBearer();
+
+  console.log("USER:", user);
 
   if (!user) {
     return NextResponse.json(
@@ -19,6 +11,8 @@ export async function GET() {
   }
 
   const counts = await getOrdersCountByBuyer(user.pi_uid);
+
+  console.log("COUNTS:", counts);
 
   return NextResponse.json(counts);
 }
