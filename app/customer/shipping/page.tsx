@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { getPiAccessToken } from "@/lib/piAuth";
@@ -47,6 +48,7 @@ interface Order {
 ========================= */
 export default function ShippingOrdersPage() {
   const { t } = useTranslation();
+   const router = useRouter();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -151,9 +153,8 @@ export default function ShippingOrdersPage() {
       if (!res.ok) {
         throw new Error("UPDATE_FAILED");
       }
-
-      // reload lại danh sách
-      await loadOrders();
+// chuyển sang trang đánh giá
+router.push(`/customer/review?orderId=${orderId}`);
     } catch (err) {
       console.error("❌ Confirm received error:", err);
       alert(t.confirm_failed);
