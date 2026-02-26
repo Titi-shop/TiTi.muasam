@@ -27,7 +27,16 @@ export default function OrderSummary() {
   useEffect(() => {
   async function loadCounts() {
     try {
-      const res = await fetch("/api/orders/count");
+      const token = await getPiAccessToken(); // lấy Pi token
+
+      if (!token) return;
+
+      const res = await fetch("/api/orders/count", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       if (!res.ok) return;
 
       const data = await res.json();
