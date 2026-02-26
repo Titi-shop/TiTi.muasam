@@ -15,15 +15,23 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 ========================= */
 export default function OrderSummary() {
   const { t } = useTranslation();
+  const router = useRouter();
 
   return (
     <section className="bg-white mx-4 mt-4 rounded-xl shadow border border-gray-100">
       {/* HEADER */}
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold text-gray-800">
-          {t.orders}
-        </h2>
-      </div>
+     <div
+  onClick={() => router.push("/customer/order")}
+  className="p-4 border-b flex justify-between items-center cursor-pointer hover:bg-gray-50 transition"
+>
+  <h2 className="text-lg font-semibold text-gray-800">
+    {t.orders}
+  </h2>
+
+  <span className="text-sm text-orange-600 font-medium">
+    →
+  </span>
+</div>
 
       {/* ITEMS */}
       <div className="grid grid-cols-5 py-4">
