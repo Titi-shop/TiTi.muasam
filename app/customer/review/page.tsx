@@ -9,7 +9,7 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
    TYPES
 ========================= */
 interface Order {
-  id: number;
+  id: string;              // ✅ uuid
   createdAt: string;
   status: string;
   reviewed?: boolean;
@@ -32,10 +32,9 @@ export default function CustomerReviewPage() {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [ratings, setRatings] = useState<Record<number, number>>({});
-  const [comments, setComments] = useState<Record<number, string>>({});
-  const [submittingId, setSubmittingId] = useState<number | null>(null);
-
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+const [comments, setComments] = useState<Record<string, string>>({});
+const [submittingId, setSubmittingId] = useState<string | null>(null);
   /* =========================
      LOAD ORDERS
   ========================= */
@@ -64,7 +63,7 @@ export default function CustomerReviewPage() {
 
       const defaultComment = getDefaultComment(t);
 
-      const initialComments: Record<number, string> = {};
+      const initialComments: Record<string, string> = {};
       reviewable.forEach((o) => {
         initialComments[o.id] = defaultComment;
       });
@@ -81,7 +80,7 @@ export default function CustomerReviewPage() {
   /* =========================
      SUBMIT REVIEW
   ========================= */
-  const submitReview = async (orderId: number) => {
+  const submitReview = async (orderId: string)
     if (submittingId !== null) return;
 
     const rating = ratings[orderId];
@@ -139,7 +138,7 @@ export default function CustomerReviewPage() {
       <section className="px-4 mt-4">
         {loading && (
           <p className="text-center text-gray-500">
-            ⏳ {t.loading_orders}
+             {t.loading_orders}
           </p>
         )}
 
