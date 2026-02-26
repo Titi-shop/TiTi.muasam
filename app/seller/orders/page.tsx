@@ -32,7 +32,7 @@ interface Order {
   total: number;
   created_at: string;
   status: OrderStatus;
-  cancel_reason?: string | null;
+
 
   buyer?: {
     name: string;
@@ -216,12 +216,7 @@ const { t } = useTranslation();
                     <p className="text-xs text-gray-500">
                       x{item.quantity} · π{formatPi(item.price)}
                     </p>
-                    {/* 👇 Hiển thị lý do huỷ */}
-  {order.cancel_reason && (
-    <p className="text-xs text-red-500 mt-1">
-      {t.cancel_reason ?? "Reason"}: {order.cancel_reason}
-    </p>
-  )}
+                    
                   </div>
                 </div>
               ))}
