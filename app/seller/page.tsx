@@ -20,90 +20,75 @@ import {
   XCircle,
 } from "lucide-react";
 
-/* ================= TYPES ================= */
-
-type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "shipping"
-  | "completed"
-  | "returned"
-  | "cancelled";
-
-type SellerOrder = {
-  id: string;
-  status: OrderStatus;
-};
-
-function isSellerOrder(value: unknown): value is SellerOrder {
-  if (typeof value !== "object" || value === null) return false;
-
-  const obj = value as Record<string, unknown>;
-
-  const validStatus: OrderStatus[] = [
-    "pending",
-    "confirmed",
-    "shipping",
-    "completed",
-    "returned",
-    "cancelled",
-  ];
-
-  return (
-    typeof obj.id === "string" &&
-    typeof obj.status === "string" &&
-    validStatus.includes(obj.status as OrderStatus)
-  );
-}
 
 /* ================= PAGE ================= */
 
 export default function SellerPage() {
   const { t } = useTranslation();
   const { user, loading, piReady } = useAuth();
-  const [orders, setOrders] = useState<SellerOrder[]>([]);
 
-  const isSeller = user?.role === "seller";
+  const [stats, setStats] = useState({
+  pending: 0,
+  confirmed: 0,
+  shipping: 0,
+  completed: 0,
+  returned: 0,
+  cancelled: 0,
+  total: 0,
+});
 
-  useEffect(() => {
-    if (!isSeller || !piReady) return;
+const isSeller = user?.role === "seller";
 
-    const loadOrders = async () => {
-      try {
-        const res = await apiAuthFetch("/api/seller/orders", {
-          cache: "no-store",
+useEffect(() => {
+  if (!isSeller || !piReady) return;
+
+  const loadStats = async () => {
+    try {
+      const res = await apiAuthFetch(
+        "/api/seller/orders/count",
+        { cache: "no-store" }
+      );
+
+      if (!res.ok) {
+        setStats({
+          pending: 0,
+          confirmed: 0,
+          shipping: 0,
+          completed: 0,
+          returned: 0,
+          cancelled: 0,
+          total: 0,
         });
-
-        if (!res.ok) return;
-
-        const data: unknown = await res.json();
-        if (Array.isArray(data)) {
-          setOrders(data.filter(isSellerOrder));
-        }
-      } catch {
-        setOrders([]);
+        return;
       }
-    };
 
-    void loadOrders();
-  }, [isSeller, piReady]);
+      const data = await res.json();
 
-  const stats = useMemo(() => {
-    const base: Record<OrderStatus, number> = {
-      pending: 0,
-      confirmed: 0,
-      shipping: 0,
-      completed: 0,
-      returned: 0,
-      cancelled: 0,
-    };
+      setStats({
+        pending: data.pending ?? 0,
+        confirmed: data.confirmed ?? 0,
+        shipping: data.shipping ?? 0,
+        completed: data.completed ?? 0,
+        returned: data.returned ?? 0,
+        cancelled: data.cancelled ?? 0,
+        total: data.total ?? 0,
+      });
 
-    for (const order of orders) {
-      base[order.status]++;
+    } catch {
+      setStats({
+        pending: 0,
+        confirmed: 0,
+        shipping: 0,
+        completed: 0,
+        returned: 0,
+        cancelled: 0,
+        total: 0,
+      });
     }
+  };
 
-    return { ...base, total: orders.length };
-  }, [orders]);
+  void loadStats();
+}, [isSeller, piReady]);
 
   if (loading || !piReady) {
     return (
