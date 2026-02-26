@@ -554,7 +554,9 @@ export async function updateOrderStatusBySeller(
   return true;
 }
 
-
+/* =========================
+   COUNT ORDERS BY STATUS
+========================= *
 export async function getOrdersCountByBuyer(
   buyerPiUid: string
 ) {
