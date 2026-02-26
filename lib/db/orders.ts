@@ -581,18 +581,38 @@ export async function getOrdersCountByBuyer(
   const rows = await res.json() as Array<{ status: string }>;
 
   const result = {
-    pending: 0,
-    pickup: 0,
-    shipping: 0,
-    review: 0,
-    returns: 0,
-  };
+  pending: 0,
+  pickup: 0,
+  shipping: 0,
+  review: 0,
+  returns: 0,
+};
 
-  for (const row of rows) {
-    if (row.status in result) {
-      result[row.status as keyof typeof result]++;
-    }
+for (const row of rows) {
+  switch (row.status) {
+    case "pending":
+      result.pending++;
+      break;
+
+    case "confirmed":
+      result.pickup++;
+      break;
+
+    case "shipping":
+    case "delivering":
+      result.shipping++;
+      break;
+
+    case "completed":
+      result.review++;
+      break;
+
+    case "cancelled":
+    case "returned":
+      result.returns++;
+      break;
   }
+}
 
   return result;
 }
