@@ -28,7 +28,7 @@ export default function OrderSummary() {
     {t.orders}
   </h2>
 
-  <span className="text-sm text-orange-600 font-medium">
+  <span className="text-sm text-orange-1000 font-medium">
     →
   </span>
 </div>
