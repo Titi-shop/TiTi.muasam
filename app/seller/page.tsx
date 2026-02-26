@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
@@ -20,103 +20,58 @@ import {
   XCircle,
 } from "lucide-react";
 
-/* ================= TYPES ================= */
-
-type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "shipping"
-  | "completed"
-  | "returned"
-  | "cancelled";
-
-type SellerOrder = {
-  id: string;
-  status: OrderStatus;
-};
-
-function isSellerOrder(value: unknown): value is SellerOrder {
-  if (typeof value !== "object" || value === null) return false;
-
-  const obj = value as Record<string, unknown>;
-
-  const validStatus: OrderStatus[] = [
-    "pending",
-    "confirmed",
-    "shipping",
-    "completed",
-    "returned",
-    "cancelled",
-  ];
-
-  return (
-    typeof obj.id === "string" &&
-    typeof obj.status === "string" &&
-    validStatus.includes(obj.status as OrderStatus)
-  );
-}
-
 /* ================= PAGE ================= */
 
 export default function SellerPage() {
   const { t } = useTranslation();
   const { user, loading, piReady } = useAuth();
+
   const [stats, setStats] = useState({
-  pending: 0,
-  confirmed: 0,
-  shipping: 0,
-  completed: 0,
-  returned: 0,
-  cancelled: 0,
-  total: 0,
-});
+    pending: 0,
+    confirmed: 0,
+    shipping: 0,
+    completed: 0,
+    returned: 0,
+    cancelled: 0,
+    total: 0,
+  });
 
   const isSeller = user?.role === "seller";
 
   useEffect(() => {
-  if (!isSeller || !piReady) return;
+    if (!isSeller || !piReady) return;
 
-  const loadStats = async () => {
-    try {
-      const res = await apiAuthFetch(
-        "/api/seller/orders/count",
-        { cache: "no-store" }
-      );
+    const loadStats = async () => {
+      try {
+        const res = await apiAuthFetch(
+          "/api/seller/orders/count",
+          { cache: "no-store" }
+        );
 
-      if (!res.ok) return;
+        if (!res.ok) return;
 
-      const data = await res.json();
-      setStats(data);
-    } catch {
-      setStats({
-        pending: 0,
-        confirmed: 0,
-        shipping: 0,
-        completed: 0,
-        returned: 0,
-        cancelled: 0,
-        total: 0,
-      });
-    }
-  };
+        const data = await res.json();
+        setStats(data);
+      } catch {
+        setStats({
+          pending: 0,
+          confirmed: 0,
+          shipping: 0,
+          completed: 0,
+          returned: 0,
+          cancelled: 0,
+          total: 0,
+        });
+      }
+    };
 
-  void loadStats();
-}, [isSeller, piReady]);
-
-    void loadOrders();
+    void loadStats();
   }, [isSeller, piReady]);
-
-    for (const order of orders) {
-      base[order.status]++;
-    }
-
-    return { ...base, total: orders.length };
-  }, [orders]);
 
   if (loading || !piReady) {
     return (
       <div className="flex justify-center mt-16 text-gray-500 text-sm">
-         {t.loading ?? "Loading..."}
+        {t.loading ?? "Loading..."}
       </div>
     );
   }
@@ -179,75 +134,5 @@ export default function SellerPage() {
         </div>
       </section>
     </main>
-  );
-}
-
-/* ================= MAIN CARD ================= */
-
-function MainCard({
-  href,
-  icon,
-  label,
-  badge,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  badge?: number;
-}) {
-  return (
-    <Link href={href} className="block">
-      <div className="relative bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm h-[96px] flex flex-col justify-center hover:shadow-md transition">
-
-        {badge !== undefined && badge > 0 && (
-          <span className="absolute top-2 right-2 text-[10px] bg-gray-800 text-white px-2 py-0.5 rounded-full">
-            {badge}
-          </span>
-        )}
-
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-700">
-            {icon}
-          </div>
-
-          <span className="text-[12px] font-medium text-gray-700 text-center leading-tight">
-            {label}
-          </span>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-/* ================= STATUS CARD ================= */
-
-function StatusCard({
-  href,
-  icon,
-  count,
-  label,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  count: number;
-  label: string;
-}) {
-  return (
-    <Link href={href} className="block">
-      <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm h-[110px] flex flex-col justify-between hover:shadow-md transition">
-
-        <div className="w-8 h-8 mx-auto rounded-full bg-gray-200 flex items-center justify-center text-gray-700">
-          {icon}
-        </div>
-
-        <span className="text-[11px] text-gray-600 leading-tight px-1">
-          {label}
-        </span>
-
-        <span className="text-sm font-semibold text-gray-800">
-          {count}
-        </span>
-      </div>
-    </Link>
   );
 }
