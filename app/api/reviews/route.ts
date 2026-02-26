@@ -1,71 +1,25 @@
 import { NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
+import { query } from "@/lib/db";
 
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { resolveRole } from "@/lib/auth/resolveRole";
 
-/* =======================
+/* =========================
    Types
-======================= */
+========================= */
 
-type Review = {
-  id: number;
-  orderId: string;
+type ReviewRow = {
+  id: string;
+  order_id: string;
+  user_pi_uid: string;
   rating: number;
-  comment: string;
-  username: string;
-  createdAt: string;
+  comment: string | null;
+  created_at: string;
 };
 
-type ReviewsKV = Review[];
-
-/* =======================
-   Utils
-======================= */
-
-function isReview(value: unknown): value is Review {
-  if (typeof value !== "object" || value === null) return false;
-
-  const v = value as Record<string, unknown>;
-
-  return (
-    typeof v.id === "number" &&
-    typeof v.orderId === "string" &&
-    typeof v.rating === "number" &&
-    typeof v.comment === "string" &&
-    typeof v.username === "string" &&
-    typeof v.createdAt === "string"
-  );
-}
-
-function normalizeReviews(data: unknown): ReviewsKV {
-  if (!data) return [];
-
-  if (Array.isArray(data)) {
-    return data.filter(isReview);
-  }
-
-  if (typeof data === "string") {
-    try {
-      const parsed: unknown = JSON.parse(data);
-      return Array.isArray(parsed)
-        ? parsed.filter(isReview)
-        : [];
-    } catch {
-      return [];
-    }
-  }
-
-  if (typeof data === "object") {
-    return Object.values(data).filter(isReview);
-  }
-
-  return [];
-}
-
-/* =======================
+/* =========================
    POST /api/reviews
-======================= */
+========================= */
 
 export async function POST(req: Request) {
   try {
@@ -104,35 +58,73 @@ export async function POST(req: Request) {
     const comment =
       typeof b.comment === "string" ? b.comment : "";
 
-    if (!orderId || !rating) {
+    if (!orderId || !rating || rating < 1 || rating > 5) {
       return NextResponse.json(
         { error: "INVALID_REVIEW_DATA" },
         { status: 400 }
       );
     }
 
-    /* 📦 LOAD EXISTING */
-    const stored = await kv.get("reviews");
-    const reviews = normalizeReviews(stored);
+    /* ✅ CHECK ORDER BELONGS TO USER + COMPLETED */
+    const orderResult = await query<{
+      id: string;
+      user_pi_uid: string;
+      status: string;
+    }>(
+      `
+      select id, user_pi_uid, status
+      from orders
+      where id = $1
+      limit 1
+      `,
+      [orderId]
+    );
 
-    const newReview: Review = {
-      id: Date.now(),
-      orderId,
-      rating,
-      comment,
-      username: user.username, // ✅ từ Pi token
-      createdAt: new Date().toISOString(),
-    };
+    if (orderResult.rows.length === 0) {
+      return NextResponse.json(
+        { error: "ORDER_NOT_FOUND" },
+        { status: 404 }
+      );
+    }
 
-    reviews.unshift(newReview);
-    await kv.set("reviews", reviews);
+    const order = orderResult.rows[0];
+
+    if (order.user_pi_uid !== user.pi_uid) {
+      return NextResponse.json(
+        { error: "FORBIDDEN_ORDER" },
+        { status: 403 }
+      );
+    }
+
+    if (
+      order.status !== "completed" &&
+      order.status !== "received"
+    ) {
+      return NextResponse.json(
+        { error: "ORDER_NOT_REVIEWABLE" },
+        { status: 400 }
+      );
+    }
+
+    /* ✅ INSERT REVIEW */
+    const insertResult = await query<ReviewRow>(
+      `
+      insert into reviews (order_id, user_pi_uid, rating, comment)
+      values ($1, $2, $3, $4)
+      returning *
+      `,
+      [orderId, user.pi_uid, rating, comment]
+    );
+
+    const review = insertResult.rows[0];
 
     return NextResponse.json({
       success: true,
-      review: newReview,
+      review,
     });
-  } catch (err) {
-    console.error("REVIEW ERROR:", err);
+  } catch (error) {
+    console.error("REVIEW ERROR:", error);
+
     return NextResponse.json(
       { error: "INTERNAL_ERROR" },
       { status: 500 }
