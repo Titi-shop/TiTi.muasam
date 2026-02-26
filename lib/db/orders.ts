@@ -621,31 +621,14 @@ export async function getSellerOrdersCount(
   sellerPiUid: string
 ) {
   const itemRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/order_items?select=order_id,status&seller_pi_uid=eq.${sellerPiUid}`,
+    `${SUPABASE_URL}/rest/v1/order_items?select=status&seller_pi_uid=eq.${sellerPiUid}`,
     {
       headers: headers(),
       cache: "no-store",
     }
   );
 
-  if (!itemRes.ok) {
-    return {
-      pending: 0,
-      confirmed: 0,
-      shipping: 0,
-      completed: 0,
-      returned: 0,
-      cancelled: 0,
-      total: 0,
-    };
-  }
-
-  const rows = await itemRes.json() as Array<{
-    order_id: string;
-    status: string;
-  }>;
-
-  const result = {
+  const empty = {
     pending: 0,
     confirmed: 0,
     shipping: 0,
@@ -655,12 +638,27 @@ export async function getSellerOrdersCount(
     total: 0,
   };
 
+  if (!itemRes.ok) return empty;
+
+  const rows = await itemRes.json() as Array<{
+    status: string;
+  }>;
+
   for (const row of rows) {
-    if (row.status in result) {
-      result[row.status as keyof typeof result]++;
-      result.total++;
+    switch (row.status) {
+      case "pending":
+      case "confirmed":
+      case "shipping":
+      case "completed":
+      case "returned":
+      case "cancelled":
+        empty[row.status]++;
+        empty.total++;
+        break;
+      default:
+        break;
     }
   }
 
-  return result;
+  return empty;
 }
