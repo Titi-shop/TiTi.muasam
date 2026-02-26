@@ -21,7 +21,7 @@ export default function OrderSummary() {
     <section className="bg-white mx-4 mt-4 rounded-xl shadow border border-gray-100">
       {/* HEADER */}
      <div
-  onClick={() => router.push("/customer/order")}
+  onClick={() => router.push("/customer/orders")}
   className="p-4 border-b flex justify-between items-center cursor-pointer hover:bg-gray-50 transition"
 >
   <h2 className="text-lg font-semibold text-gray-800">
