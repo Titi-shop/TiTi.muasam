@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
-
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { resolveRole } from "@/lib/auth/resolveRole";
 
@@ -33,7 +32,7 @@ export async function POST(req: Request) {
     }
 
     const role = await resolveRole(user);
-    if  (!role){
+    if (!role) {
       return NextResponse.json(
         { error: "FORBIDDEN" },
         { status: 403 }
@@ -52,9 +51,11 @@ export async function POST(req: Request) {
     const b = body as Record<string, unknown>;
 
     const orderId =
-  typeof b.order_id === "string" ? b.order_id : null;
+      typeof b.order_id === "string" ? b.order_id : null;
+
     const rating =
       typeof b.rating === "number" ? b.rating : null;
+
     const comment =
       typeof b.comment === "string" ? b.comment : "";
 
@@ -65,20 +66,20 @@ export async function POST(req: Request) {
       );
     }
 
-    /* ✅ CHECK ORDER BELONGS TO USER + COMPLETED */
+    /* ✅ CHECK ORDER */
     const orderResult = await query<{
-  id: string;
-  buyer_id: string;
-  status: string;
-}>(
-  `
-  select id, buyer_id, status
-  from orders
-  where id = $1
-  limit 1
-  `,
-  [orderId]
-);
+      id: string;
+      buyer_id: string;
+      status: string;
+    }>(
+      `
+      select id, buyer_id, status
+      from orders
+      where id = $1
+      limit 1
+      `,
+      [orderId]
+    );
 
     if (orderResult.rows.length === 0) {
       return NextResponse.json(
@@ -107,33 +108,47 @@ export async function POST(req: Request) {
     }
 
     /* ✅ CHECK REVIEW EXISTS */
-const existing = await query<ReviewRow>(
-  `
-  select *
-  from reviews
-  where order_id = $1
-  and user_pi_uid = $2
-  limit 1
-  `,
-  [orderId, user.pi_uid]
-);
+    const existing = await query<ReviewRow>(
+      `
+      select *
+      from reviews
+      where order_id = $1
+      and user_pi_uid = $2
+      limit 1
+      `,
+      [orderId, user.pi_uid]
+    );
 
-if (existing.rows.length > 0) {
-  return NextResponse.json(
-    { error: "ALREADY_REVIEWED" },
-    { status: 400 }
-  );
+    if (existing.rows.length > 0) {
+      return NextResponse.json(
+        { error: "ALREADY_REVIEWED" },
+        { status: 400 }
+      );
+    }
+
+    /* ✅ INSERT REVIEW */
+    const insertResult = await query<ReviewRow>(
+      `
+      insert into reviews (order_id, user_pi_uid, rating, comment)
+      values ($1, $2, $3, $4)
+      returning *
+      `,
+      [orderId, user.pi_uid, rating, comment]
+    );
+
+    const review = insertResult.rows[0];
+
+    return NextResponse.json({
+      success: true,
+      review,
+    });
+
+  } catch (error) {
+    console.error("REVIEW ERROR:", error);
+
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR" },
+      { status: 500 }
+    );
+  }
 }
-
-/* ✅ INSERT REVIEW */
-const insertResult = await query<ReviewRow>(
-  `
-  insert into reviews (order_id, user_pi_uid, rating, comment)
-  values ($1, $2, $3, $4)
-  returning *
-  `,
-  [orderId, user.pi_uid, rating, comment]
-);
-
-const review = insertResult.rows[0];
-    
