@@ -1,3 +1,7 @@
+Ok reviews thành công nhưng chưa báo nội dung đánh giá .
+Cột comment
+Kiểm tra file .
+
 "use client";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +14,6 @@ import { getPiAccessToken } from "@/lib/piAuth";
 /* =========================
    TYPES
 ========================= */
-
 type OrderStatus =
   | "pending"
   | "confirmed"
@@ -28,6 +31,8 @@ interface OrderItem {
   quantity: number;
   price: number;
   product_id: string;
+  seller_message?: string | null;
+  seller_cancel_reason?: string | null;
   product?: Product;
 }
 
@@ -38,45 +43,34 @@ interface Order {
   order_items: OrderItem[];
 }
 
-interface Review {
-  order_id: string;
-  product_id: string;
-  rating: number;
-  comment: string;
+interface ReviewMap {
+  [orderId: string]: boolean;
 }
 
 /* =========================
    PAGE
 ========================= */
-
 export default function CompletedOrdersPage() {
   const { t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const [reviewedOrders, setReviewedOrders] = useState<Set<string>>(new Set());
-
+  const [reviewedMap, setReviewedMap] = useState<ReviewMap>({});
   const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>("");
-  const [reviewError, setReviewError] = useState<string | null>(null);
-
+const [reviewError, setReviewError] = useState<string | null>(null);
+   
   function formatPi(value: number | string): string {
     return Number(value).toFixed(6);
   }
 
   useEffect(() => {
-    void init();
+    void loadOrders();
   }, []);
 
-  async function init(): Promise<void> {
-    await loadOrders();
-    await loadReviews();
-  }
-
   /* =========================
-     LOAD ORDERS
+     LOAD COMPLETED ORDERS
   ========================== */
   async function loadOrders(): Promise<void> {
     try {
@@ -87,7 +81,7 @@ export default function CompletedOrdersPage() {
         cache: "no-store",
       });
 
-      if (!res.ok) throw new Error("LOAD_ORDERS_FAILED");
+      if (!res.ok) throw new Error("UNAUTHORIZED");
 
       const rawOrders: Order[] = await res.json();
 
@@ -95,9 +89,45 @@ export default function CompletedOrdersPage() {
         (o) => o.status === "completed"
       );
 
-      setOrders(completed);
+      const productIds = Array.from(
+        new Set(
+          completed.flatMap((o) =>
+            (o.order_items ?? []).map((i) => i.product_id) ?? []
+          )
+        )
+      );
+
+      if (productIds.length === 0) {
+        setOrders(completed);
+        return;
+      }
+
+      const productRes = await fetch(
+        `/api/products?ids=${productIds.join(",")}`,
+        { cache: "no-store" }
+      );
+
+      if (!productRes.ok)
+        throw new Error("FETCH_PRODUCTS_FAILED");
+
+      const products: Product[] = await productRes.json();
+
+      const productMap: Record<string, Product> =
+        Object.fromEntries(
+          products.map((p) => [p.id, p])
+        );
+
+      const enriched = completed.map((o) => ({
+        ...o,
+        order_items: (o.order_items ?? []).map((i) => ({
+          ...i,
+          product: productMap[i.product_id],
+        })),
+      }));
+
+      setOrders(enriched);
     } catch (err) {
-      console.error(err);
+      console.error("Load completed error:", err);
       setOrders([]);
     } finally {
       setLoading(false);
@@ -105,191 +135,221 @@ export default function CompletedOrdersPage() {
   }
 
   /* =========================
-     LOAD REVIEWS
-  ========================== */
-  async function loadReviews(): Promise<void> {
-    try {
-      const token = await getPiAccessToken();
-
-      const res = await fetch("/api/reviews", {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      });
-
-      if (!res.ok) return;
-
-      const reviews: Review[] = await res.json();
-
-      const reviewedSet = new Set(
-        reviews.map((r) => r.order_id)
-      );
-
-      setReviewedOrders(reviewedSet);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  /* =========================
      SUBMIT REVIEW
   ========================== */
   async function submitReview(
-    orderId: string,
-    productId: string
-  ): Promise<void> {
-    try {
-      setReviewError(null);
+  orderId: string,
+  productId: string
+) {
+  try {
+    setReviewError(null);
 
-      if (!comment.trim()) {
-        setReviewError(
-          t.review_comment_required ?? "Comment required"
-        );
-        return;
+    const token = await getPiAccessToken();
+
+    const res = await fetch("/api/reviews", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+  order_id: orderId,
+  product_id: productId,
+  rating,
+  comment,
+}),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (data?.error === "ALREADY_REVIEWED") {
+        setReviewError(t.already_reviewed ?? "Already reviewed");
+      } else {
+        setReviewError(t.review_failed ?? "Review failed");
       }
-
-      const token = await getPiAccessToken();
-
-      const res = await fetch("/api/reviews", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          order_id: orderId,
-          product_id: productId,
-          rating,
-          comment,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setReviewError(
-          data?.error ?? t.review_failed ?? "Review failed"
-        );
-        return;
-      }
-
-      // đánh dấu đã review
-      setReviewedOrders((prev) => {
-        const updated = new Set(prev);
-        updated.add(orderId);
-        return updated;
-      });
-
-      setActiveReviewId(null);
-      setComment("");
-      setRating(5);
-    } catch (err) {
-      setReviewError(t.review_failed ?? "Review failed");
+      return;
     }
-  }
 
-  /* =========================
-     UI
-  ========================== */
+    setReviewedMap((prev) => ({
+      ...prev,
+      [orderId]: true,
+    }));
+
+    setActiveReviewId(null);
+    setComment("");
+    setRating(5);
+  } catch (err) {
+    setReviewError(t.review_failed ?? "Review failed");
+  }
+}
+
+  const totalPi = orders.reduce(
+    (sum, o) => sum + Number(o.total),
+    0
+  );
 
   return (
-    <main className="min-h-screen bg-gray-100 pb-24 px-4 pt-6">
-      {loading ? (
-        <p className="text-center text-gray-400">
-          {t.loading_orders}
-        </p>
-      ) : orders.length === 0 ? (
-        <p className="text-center text-gray-400">
-          {t.no_completed_orders}
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {orders.map((o) => (
-            <div
-              key={o.id}
-              className="bg-white rounded-xl shadow-sm p-4"
-            >
-              <div className="flex justify-between mb-2">
-                <span className="font-semibold text-sm">
-                  #{o.id}
-                </span>
-                <span className="text-orange-500 text-sm">
-                  {t.status_completed}
-                </span>
-              </div>
-
-              <p className="text-sm font-medium mb-3">
-                {t.total}: π{formatPi(o.total)}
-              </p>
-
-              {/* ĐÃ REVIEW */}
-              {reviewedOrders.has(o.id) ? (
-                <div className="px-4 py-2 text-sm bg-green-100 text-green-600 rounded-md inline-block">
-                  {t.order_review ?? "Đã đánh giá"}
-                </div>
-              ) : activeReviewId === o.id ? (
-                /* FORM REVIEW */
-                <div className="space-y-3">
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => setRating(star)}
-                        className={`text-lg ${
-                          star <= rating
-                            ? "text-yellow-500"
-                            : "text-gray-300"
-                        }`}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-
-                  <textarea
-                    value={comment}
-                    onChange={(e) =>
-                      setComment(e.target.value)
-                    }
-                    placeholder={
-                      t.default_review_comment ??
-                      "Write your review..."
-                    }
-                    className="w-full border rounded-md p-2 text-sm"
-                  />
-
-                  {reviewError && (
-                    <p className="text-sm text-red-500">
-                      {reviewError}
-                    </p>
-                  )}
-
-                  <button
-                    onClick={() =>
-                      submitReview(
-                        o.id,
-                        o.order_items?.[0]?.product_id
-                      )
-                    }
-                    className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded-md"
-                  >
-                    {t.submit_review}
-                  </button>
-                </div>
-              ) : (
-                /* NÚT ĐÁNH GIÁ */
-                <button
-                  onClick={() =>
-                    setActiveReviewId(o.id)
-                  }
-                  className="px-4 py-1.5 text-sm border border-orange-500 text-orange-500 rounded-md"
-                >
-                  {t.review_orders}
-                </button>
-              )}
-            </div>
-          ))}
+    <main className="min-h-screen bg-gray-100 pb-24">
+      {/* HEADER */}
+      <header className="bg-orange-500 text-white px-4 py-4">
+        <div className="bg-orange-400 rounded-lg p-4">
+          <p className="text-sm opacity-90">
+            {t.order_info}
+          </p>
+          <p className="text-xs opacity-80 mt-1">
+            {t.orders}: {orders.length} · π{formatPi(totalPi)}
+          </p>
         </div>
-      )}
+      </header>
+
+      {/* CONTENT */}
+      <section className="mt-6 px-4">
+        {loading ? (
+          <p className="text-center text-gray-400">
+            {t.loading_orders}
+          </p>
+        ) : orders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center mt-16 text-gray-400">
+            <div className="w-24 h-24 bg-gray-200 rounded-full mb-4 opacity-40" />
+            <p>{t.no_completed_orders}</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {orders.map((o) => (
+              <div
+                key={o.id}
+                className="bg-white rounded-xl shadow-sm overflow-hidden"
+              >
+                {/* CARD HEADER */}
+                <div className="flex justify-between items-center px-4 py-3 border-b">
+                  <span className="font-semibold text-sm">
+                    #{o.id}
+                  </span>
+                  <span className="text-orange-500 text-sm font-medium">
+                    {t.status_completed}
+                  </span>
+                </div>
+
+                {/* PRODUCTS */}
+                <div className="px-4 py-3 space-y-3">
+                  {o.order_items.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex gap-3 items-center"
+                    >
+                      <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden">
+                        {item.product?.images?.[0] && (
+                          <img
+                            src={item.product?.images?.[0]}
+                            alt={item.product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium line-clamp-1">
+                          {item.product?.name ?? t.no_name}
+                        </p>
+
+                        <p className="text-xs text-gray-500">
+                          x{item.quantity} · π
+                          {formatPi(item.price)}
+                        </p>
+
+                        {item.seller_message && (
+                          <p className="text-xs text-blue-600 mt-1">
+                            {t.seller_message}: {item.seller_message}
+                          </p>
+                        )}
+
+                        {item.seller_cancel_reason && (
+                          <p className="text-xs text-red-500 mt-1">
+                            {t.seller_cancel_reason}:{" "}
+                            {item.seller_cancel_reason}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* FOOTER */}
+                <div className="px-4 py-3 border-t">
+                  <p className="text-sm font-semibold mb-3">
+                    {t.total}: π{formatPi(o.total)}
+                  </p>
+
+                  {reviewedMap[o.id] ? (
+                    <button
+                      disabled
+                      className="px-4 py-1.5 text-sm bg-orange-100 text-orange-500 rounded-md"
+                    >
+                      {t.order_review}
+                    </button>
+                  ) : activeReviewId === o.id ? (
+                    <div className="space-y-3">
+                      {/* STARS */}
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            onClick={() => setRating(star)}
+                            className={`text-lg ${
+                              star <= rating
+                                ? "text-yellow-500"
+                                : "text-gray-300"
+                            }`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* COMMENT */}
+                      
+<textarea
+  value={comment}
+  onChange={(e) =>
+    setComment(e.target.value)
+  }
+  placeholder={t.default_review_comment}
+  className="w-full border rounded-md p-2 text-sm"
+/>
+
+{/* 🔴 ERROR MESSAGE HERE */}
+{reviewError && (
+  <p className="text-sm text-red-500">
+    {reviewError}
+  </p>
+)}
+
+<button 
+  onClick={() =>
+  submitReview(o.id, o.order_items?.[0]?.product_id)
+}
+  className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
+>
+  {t.submit_review}
+</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        setActiveReviewId(o.id)
+                      }
+                      className="px-4 py-1.5 text-sm border border-orange-500 text-orange-500 rounded-md hover:bg-orange-500 hover:text-white transition"
+                    >
+                      {t.review_orders}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }
