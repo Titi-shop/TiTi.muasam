@@ -52,7 +52,7 @@ export default function CompletedOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewedMap, setReviewedMap] = useState<ReviewMap>({});
-  const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
+  const [activeReviewKey, setActiveReviewKey] = useState<string | null>(null);
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>("");
 const [reviewError, setReviewError] = useState<string | null>(null);
@@ -133,7 +133,10 @@ const [reviewError, setReviewError] = useState<string | null>(null);
   /* =========================
      SUBMIT REVIEW
   ========================== */
-  async function submitReview(orderId: string) {
+  async function submitReview(
+  orderId: string,
+  productId: string
+) {
   try {
     setReviewError(null);
 
@@ -146,10 +149,11 @@ const [reviewError, setReviewError] = useState<string | null>(null);
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        order_id: orderId,
-        rating,
-        comment,
-      }),
+  order_id: orderId,
+  product_id: productId,
+  rating,
+  comment,
+}),
     });
 
     const data = await res.json();
@@ -318,7 +322,7 @@ const [reviewError, setReviewError] = useState<string | null>(null);
 )}
 
 <button 
-  onClick={() => submitReview(o.id)}
+  onClick={() => submitReview(o.id, item.product_id)}
   className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
 >
   {t.submit_review}
