@@ -257,7 +257,7 @@ export default function CompletedOrdersPage() {
                       disabled
                       className="px-4 py-1.5 text-sm bg-orange-100 text-orange-500 rounded-md"
                     >
-                      {t.reviewed}
+                      {t.order_review}
                     </button>
                   ) : activeReviewId === o.id ? (
                     <div className="space-y-2">
