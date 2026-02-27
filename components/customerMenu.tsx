@@ -26,58 +26,58 @@ export default function CustomerMenu() {
   const isSeller = user?.role === "seller" || user?.role === "admin";
 
   async function handleSellerClick() {
-    if (!user) {
+  if (!user) {
+    await pilogin();
+    return;
+  }
+
+  if (isSeller) {
+    router.push("/seller");
+    return;
+  }
+
+  try {
+    setSellerLoading(true);
+    setSellerMessage(null);
+
+    const token = await getPiAccessToken();
+    if (!token) {
+      setSellerMessage("⚠️ Phiên đăng nhập đã hết hạn");
       await pilogin();
       return;
     }
 
-    if (isSeller) {
-      router.push("/seller");
+    const res = await fetch("/api/seller/register", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data: unknown = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      const err =
+        typeof data === "object" &&
+        data !== null &&
+        "error" in data
+          ? String((data as { error: string }).error)
+          : "Đăng ký thất bại";
+
+      setSellerMessage(`❌ ${err}`);
       return;
     }
 
-    try {
-      setSellerLoading(true);
-      setSellerMessage(null);
-
-      const token = localStorage.getItem("pi_access_token");
-      if (!token) {
-        setSellerMessage("⚠️ Chưa đăng nhập");
-        return;
-      }
-
-      const res = await fetch("/api/seller/register", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data: unknown = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        const err =
-          typeof data === "object" &&
-          data !== null &&
-          "error" in data
-            ? String((data as { error: string }).error)
-            : "Đăng ký thất bại";
-
-        setSellerMessage(`❌ ${err}`);
-        return;
-      }
-
-      setSellerMessage(
-        "✅ Đã gửi yêu cầu đăng ký bán hàng. Vui lòng chờ duyệt."
-      );
-    } catch (err) {
-      console.error("SELLER REGISTER ERROR:", err);
-      setSellerMessage("❌ Có lỗi xảy ra, vui lòng thử lại");
-    } finally {
-      setSellerLoading(false);
-    }
+    setSellerMessage(
+      "✅ Đã gửi yêu cầu đăng ký bán hàng. Vui lòng chờ duyệt."
+    );
+  } catch (err) {
+    console.error("SELLER REGISTER ERROR:", err);
+    setSellerMessage("❌ Có lỗi xảy ra, vui lòng thử lại");
+  } finally {
+    setSellerLoading(false);
   }
+}
 
   const customerMenuItems = [
     { label: t.profile, icon: <User size={22} />, path: "/customer/profile" },
