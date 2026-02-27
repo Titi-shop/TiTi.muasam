@@ -68,13 +68,14 @@ export async function POST(req: Request) {
 
     /* ✅ CHECK ORDER */
     const orderResult = await query<{
-      id: string;
-      buyer_id: string;
-      status: string;
+  id: string;
+  buyer_id: string;
+  status: string;
+  product_id: string;
     }>(
       `
-      select id, buyer_id, status
-      from orders
+      select id, buyer_id, status, product_id
+from orders
       where id = $1
       limit 1
       `,
@@ -129,11 +130,24 @@ export async function POST(req: Request) {
     /* ✅ INSERT REVIEW */
     const insertResult = await query<ReviewRow>(
       `
-      insert into reviews (order_id, user_pi_uid, rating, comment)
-      values ($1, $2, $3, $4)
+      insert into reviews (
+  order_id,
+  product_id,
+  user_pi_uid,
+  rating,
+  comment
+)
+values ($1, $2, $3, $4, $5)
+returning *
       returning *
       `,
-      [orderId, user.pi_uid, rating, comment]
+      [
+  orderId,
+  order.product_id,
+  user.pi_uid,
+  rating,
+  comment
+]
     );
 
     const review = insertResult.rows[0];
