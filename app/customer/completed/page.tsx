@@ -1,7 +1,3 @@
-Ok reviews thành công nhưng chưa báo nội dung đánh giá .
-Cột comment
-Kiểm tra file .
-
 "use client";
 
 export const dynamic = "force-dynamic";
