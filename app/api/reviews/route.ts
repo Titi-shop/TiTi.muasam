@@ -106,28 +106,34 @@ export async function POST(req: Request) {
       );
     }
 
-    /* ✅ INSERT REVIEW */
-    const insertResult = await query<ReviewRow>(
-      `
-      insert into reviews (order_id, user_pi_uid, rating, comment)
-      values ($1, $2, $3, $4)
-      returning *
-      `,
-      [orderId, user.pi_uid, rating, comment]
-    );
+    /* ✅ CHECK REVIEW EXISTS */
+const existing = await query<ReviewRow>(
+  `
+  select *
+  from reviews
+  where order_id = $1
+  and user_pi_uid = $2
+  limit 1
+  `,
+  [orderId, user.pi_uid]
+);
 
-    const review = insertResult.rows[0];
-
-    return NextResponse.json({
-      success: true,
-      review,
-    });
-  } catch (error) {
-    console.error("REVIEW ERROR:", error);
-
-    return NextResponse.json(
-      { error: "INTERNAL_ERROR" },
-      { status: 500 }
-    );
-  }
+if (existing.rows.length > 0) {
+  return NextResponse.json(
+    { error: "ALREADY_REVIEWED" },
+    { status: 400 }
+  );
 }
+
+/* ✅ INSERT REVIEW */
+const insertResult = await query<ReviewRow>(
+  `
+  insert into reviews (order_id, user_pi_uid, rating, comment)
+  values ($1, $2, $3, $4)
+  returning *
+  `,
+  [orderId, user.pi_uid, rating, comment]
+);
+
+const review = insertResult.rows[0];
+    
