@@ -573,7 +573,7 @@ export async function getOrdersCountByBuyer(
       pending: 0,
       pickup: 0,
       shipping: 0,
-      review: 0,
+      completed: 0,
       returns: 0,
     };
   }
@@ -584,7 +584,7 @@ export async function getOrdersCountByBuyer(
   pending: 0,
   pickup: 0,
   shipping: 0,
-  review: 0,
+  completed: 0,
   returns: 0,
 };
 
@@ -604,8 +604,8 @@ for (const row of rows) {
       break;
 
     case "completed":
-      result.review++;
-      break;
+  result.completed++;
+  break;
 
     case "cancelled":
     case "returned":
