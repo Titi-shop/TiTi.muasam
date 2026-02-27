@@ -10,11 +10,16 @@ import { resolveRole } from "@/lib/auth/resolveRole";
 type ReviewRow = {
   id: string;
   order_id: string;
-   product_id: string;
+  product_id: string;
   user_pi_uid: string;
   rating: number;
   comment: string | null;
   created_at: string;
+};
+
+type OrderCheckRow = {
+  buyer_id: string;
+  status: string;
 };
 
 /* =========================
@@ -23,7 +28,7 @@ type ReviewRow = {
 
 export async function POST(req: Request) {
   try {
-    /* 🔐 AUTH */
+    /* 🔐 AUTH (Network-First) */
     const user = await getUserFromBearer();
     if (!user) {
       return NextResponse.json(
@@ -42,6 +47,7 @@ export async function POST(req: Request) {
 
     /* 📦 BODY */
     const body: unknown = await req.json().catch(() => null);
+
     if (typeof body !== "object" || body === null) {
       return NextResponse.json(
         { error: "INVALID_BODY" },
@@ -54,116 +60,143 @@ export async function POST(req: Request) {
     const orderId =
       typeof b.order_id === "string" ? b.order_id : null;
 
-    const rating =
-      typeof b.rating === "number" ? b.rating : null;
+    const productId =
+      typeof b.product_id === "string" ? b.product_id : null;
 
     const comment =
       typeof b.comment === "string" ? b.comment : "";
 
-    const productId =
-  typeof b.product_id === "string" ? b.product_id : null;
+    /* ⭐ rating hỗ trợ number hoặc string */
+    const ratingRaw = b.rating;
 
-if (
-  !orderId ||
-  !productId ||
-  rating === null ||
-  rating < 1 ||
-  rating > 5
-) {
-  return NextResponse.json(
-    { error: "INVALID_REVIEW_DATA" },
-    { status: 400 }
-  );
-}
-    
+    const rating =
+      typeof ratingRaw === "number"
+        ? ratingRaw
+        : typeof ratingRaw === "string"
+        ? Number(ratingRaw)
+        : null;
 
-    /* ✅ CHECK ORDER */
-    
-     
-    const productCheck = await query<{
-  buyer_id: string;
-  status: string;
-}>(
-  `
-  select o.buyer_id, o.status
-  from orders o
-  join order_items oi on oi.order_id = o.id
-  where o.id = $1
-  and oi.product_id = $2
-  limit 1
-  `,
-  [orderId, productId]
-);
+    if (
+      !orderId ||
+      !productId ||
+      rating === null ||
+      Number.isNaN(rating) ||
+      rating < 1 ||
+      rating > 5
+    ) {
+      return NextResponse.json(
+        { error: "INVALID_REVIEW_DATA" },
+        { status: 400 }
+      );
+    }
 
-if (productCheck.rows.length === 0) {
-  return NextResponse.json(
-    { error: "PRODUCT_NOT_IN_ORDER" },
-    { status: 404 }
-  );
-}
+    /* =========================
+       CHECK ORDER + PRODUCT
+    ========================== */
 
-const order = productCheck.rows[0];
+    const orderCheck = await query<OrderCheckRow>(
+      `
+      select o.buyer_id, o.status
+      from orders o
+      join order_items oi on oi.order_id = o.id
+      where o.id = $1
+      and oi.product_id = $2
+      limit 1
+      `,
+      [orderId, productId]
+    );
 
-if (order.buyer_id !== user.pi_uid) {
-  return NextResponse.json(
-    { error: "FORBIDDEN_ORDER" },
-    { status: 403 }
-  );
-}
+    if (orderCheck.rows.length === 0) {
+      return NextResponse.json(
+        { error: "PRODUCT_NOT_IN_ORDER" },
+        { status: 404 }
+      );
+    }
 
-if (
-  order.status !== "completed" &&
-  order.status !== "received"
-) {
-  return NextResponse.json(
-    { error: "ORDER_NOT_REVIEWABLE" },
-    { status: 400 }
-  );
-}
+    const order = orderCheck.rows[0];
 
-    /* ✅ CHECK REVIEW EXISTS */
+    if (order.buyer_id !== user.pi_uid) {
+      return NextResponse.json(
+        { error: "FORBIDDEN_ORDER" },
+        { status: 403 }
+      );
+    }
+
+    const status = order.status.toLowerCase();
+
+    if (status !== "completed" && status !== "received") {
+      return NextResponse.json(
+        { error: "ORDER_NOT_REVIEWABLE" },
+        { status: 400 }
+      );
+    }
+
+    /* =========================
+       CHECK REVIEW EXISTS
+    ========================== */
+
     const existing = await query(
-  `
-  select 1
-  from reviews
-  where order_id = $1
-  and product_id = $2
-  and user_pi_uid = $3
-  limit 1
-  `,
-  [orderId, productId, user.pi_uid]
-);
+      `
+      select 1
+      from reviews
+      where order_id = $1
+      and product_id = $2
+      and user_pi_uid = $3
+      limit 1
+      `,
+      [orderId, productId, user.pi_uid]
+    );
 
-if (existing.rows.length > 0) {
-  return NextResponse.json(
-    { error: "ALREADY_REVIEWED" },
-    { status: 400 }
-  );
-}
-    /* ✅ INSERT REVIEW */
+    if (existing.rows.length > 0) {
+      return NextResponse.json(
+        { error: "ALREADY_REVIEWED" },
+        { status: 400 }
+      );
+    }
+
+    /* =========================
+       INSERT REVIEW
+    ========================== */
+
     const insertResult = await query<ReviewRow>(
       `
       insert into reviews (
-  order_id,
-  product_id,
-  user_pi_uid,
-  rating,
-  comment
-)
-values ($1, $2, $3, $4, $5)
-returning *
+        order_id,
+        product_id,
+        user_pi_uid,
+        rating,
+        comment
+      )
+      values ($1, $2, $3, $4, $5)
+      returning *
       `,
-  [
-  orderId,
-  productId,
-  user.pi_uid,
-  rating,
-  comment
-
-]
+      [
+        orderId,
+        productId,
+        user.pi_uid,
+        rating,
+        comment,
+      ]
     );
 
     const review = insertResult.rows[0];
+
+    /* =========================
+       UPDATE PRODUCT AVG RATING
+    ========================== */
+
+    await query(
+      `
+      update products
+      set rating_avg = (
+        select avg(rating)
+        from reviews
+        where product_id = $1
+      )
+      where id = $1
+      `,
+      [productId]
+    );
 
     return NextResponse.json({
       success: true,
