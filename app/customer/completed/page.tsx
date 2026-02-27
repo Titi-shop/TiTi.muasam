@@ -52,7 +52,7 @@ export default function CompletedOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewedMap, setReviewedMap] = useState<ReviewMap>({});
-  const [activeReviewKey, setActiveReviewKey] = useState<string | null>(null);
+  const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>("");
 const [reviewError, setReviewError] = useState<string | null>(null);
