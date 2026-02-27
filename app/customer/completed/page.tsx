@@ -322,7 +322,9 @@ const [reviewError, setReviewError] = useState<string | null>(null);
 )}
 
 <button 
-  onClick={() => submitReview(o.id, item.product_id)}
+  onClick={() =>
+  submitReview(o.id, o.order_items?.[0]?.product_id)
+}
   className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
 >
   {t.submit_review}
