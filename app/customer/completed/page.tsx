@@ -28,8 +28,6 @@ interface OrderItem {
   quantity: number;
   price: number;
   product_id: string;
-  seller_message?: string | null;
-  seller_cancel_reason?: string | null;
   product?: Product;
 }
 
@@ -70,42 +68,64 @@ export default function CompletedOrdersPage() {
      LOAD COMPLETED ORDERS
   ========================== */
   async function loadOrders(): Promise<void> {
-    try {
-      const token = await getPiAccessToken();
+  try {
+    const token = await getPiAccessToken();
 
-      const res = await fetch("/api/orders", {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      });
+    const res = await fetch("/api/orders", {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
 
-      if (!res.ok) throw new Error("UNAUTHORIZED");
+    if (!res.ok) throw new Error("UNAUTHORIZED");
 
-      const rawOrders: Order[] = await res.json();
+    const rawOrders: Order[] = await res.json();
 
-      const filtered = rawOrders.filter(
-        (o) => o.status === "completed"
-      );
+    const filtered = rawOrders.filter(
+      (o) => o.status === "completed"
+    );
 
+    const productIds = Array.from(
+      new Set(
+        filtered.flatMap((o) =>
+          o.order_items?.map((i) => i.product_id) ?? []
+        )
+      )
+    );
+
+    if (productIds.length === 0) {
       setOrders(filtered);
-
-      // check review existence
-      const reviewRes = await fetch("/api/reviews/my", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (reviewRes.ok) {
-        const reviewedIds: string[] = await reviewRes.json();
-        const map: ReviewMap = {};
-        reviewedIds.forEach((id) => (map[id] = true));
-        setReviewedMap(map);
-      }
-    } catch (err) {
-      console.error("Load completed error:", err);
-      setOrders([]);
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    const productRes = await fetch(
+      `/api/products?ids=${productIds.join(",")}`,
+      { cache: "no-store" }
+    );
+
+    if (!productRes.ok)
+      throw new Error("FETCH_PRODUCTS_FAILED");
+
+    const products: Product[] = await productRes.json();
+
+    const productMap: Record<string, Product> =
+      Object.fromEntries(products.map((p) => [p.id, p]));
+
+    const enriched = filtered.map((o) => ({
+      ...o,
+      order_items: (o.order_items ?? []).map((i) => ({
+        ...i,
+        product: productMap[i.product_id],
+      })),
+    }));
+
+    setOrders(enriched);
+  } catch (err) {
+    console.error("Load completed error:", err);
+    setOrders([]);
+  } finally {
+    setLoading(false);
   }
+}
 
   /* =========================
      SUBMIT REVIEW
@@ -182,7 +202,7 @@ export default function CompletedOrdersPage() {
                   <span className="font-semibold text-sm">
                     #{o.id}
                   </span>
-                  <span className="text-green-600 text-sm font-medium">
+                  <span className="text-orange-500 text-sm font-medium">
                     {t.status_completed}
                   </span>
                 </div>
@@ -190,7 +210,15 @@ export default function CompletedOrdersPage() {
                 <div className="px-4 py-3 space-y-3">
                   {o.order_items.map((item, idx) => (
                     <div key={idx} className="flex gap-3">
-                      <div className="w-14 h-14 bg-gray-100 rounded" />
+                      <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden">
+  {item.product?.images?.[0] && (
+    <img
+      src={item.product.images[0]}
+      alt={item.product.name}
+      className="w-full h-full object-cover"
+    />
+  )}
+</div>
                       <div className="flex-1">
                         <p className="text-sm font-medium">
                           {item.product?.name ?? t.no_name}
@@ -213,9 +241,9 @@ export default function CompletedOrdersPage() {
                   {reviewedMap[o.id] ? (
                     <button
                       disabled
-                      className="px-4 py-1.5 text-sm bg-gray-200 text-gray-500 rounded-md"
+                      className="px-4 py-1.5 text-sm bg-orange-100 text-orange-500 rounded-md"
                     >
-                      {t.review_orders}
+                      {t.reviewed}
                     </button>
                   ) : activeReviewId === o.id ? (
                     <div className="space-y-2">
@@ -248,7 +276,7 @@ export default function CompletedOrdersPage() {
 
                       <button
                         onClick={() => submitReview(o.id)}
-                        className="px-4 py-1.5 text-sm bg-green-500 text-white rounded-md"
+                        className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
                       >
                         {t.submit_review}
                       </button>
@@ -256,7 +284,7 @@ export default function CompletedOrdersPage() {
                   ) : (
                     <button
                       onClick={() => setActiveReviewId(o.id)}
-                      className="px-4 py-1.5 text-sm border border-green-500 text-green-500 rounded-md hover:bg-green-500 hover:text-white transition"
+                      className="px-4 py-1.5 text-sm border border-orange-500 text-orange-500 rounded-md hover:bg-orange-500 hover:text-white transition"
                     >
                       {t.review}
                     </button>
