@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     }
 
     const role = await resolveRole(user);
-    if (role !== "customer") {
+    if  (!role){
       return NextResponse.json(
         { error: "FORBIDDEN" },
         { status: 403 }
@@ -67,18 +67,18 @@ export async function POST(req: Request) {
 
     /* ✅ CHECK ORDER BELONGS TO USER + COMPLETED */
     const orderResult = await query<{
-      id: string;
-      user_pi_uid: string;
-      status: string;
-    }>(
-      `
-      select id, buyer_id, status
-from orders
-where id = $1
-      limit 1
-      `,
-      [orderId]
-    );
+  id: string;
+  buyer_id: string;
+  status: string;
+}>(
+  `
+  select id, buyer_id, status
+  from orders
+  where id = $1
+  limit 1
+  `,
+  [orderId]
+);
 
     if (orderResult.rows.length === 0) {
       return NextResponse.json(
