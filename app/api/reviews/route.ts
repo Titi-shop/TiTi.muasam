@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     const b = body as Record<string, unknown>;
 
     const orderId =
-      typeof b.orderId === "string" ? b.orderId : null;
+  typeof b.order_id === "string" ? b.order_id : null;
     const rating =
       typeof b.rating === "number" ? b.rating : null;
     const comment =
