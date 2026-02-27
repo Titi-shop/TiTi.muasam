@@ -55,7 +55,8 @@ export default function CompletedOrdersPage() {
   const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>("");
-
+const [reviewError, setReviewError] = useState<string | null>(null);
+   
   function formatPi(value: number | string): string {
     return Number(value).toFixed(6);
   }
@@ -133,36 +134,47 @@ export default function CompletedOrdersPage() {
      SUBMIT REVIEW
   ========================== */
   async function submitReview(orderId: string) {
-    try {
-      const token = await getPiAccessToken();
+  try {
+    setReviewError(null);
 
-      const res = await fetch("/api/reviews", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-  order_id: orderId,
-  rating,
-  comment,
-}),
-      });
+    const token = await getPiAccessToken();
 
-      if (!res.ok) throw new Error("REVIEW_FAILED");
+    const res = await fetch("/api/reviews", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        order_id: orderId,
+        rating,
+        comment,
+      }),
+    });
 
-      setReviewedMap((prev) => ({
-        ...prev,
-        [orderId]: true,
-      }));
+    const data = await res.json();
 
-      setActiveReviewId(null);
-      setComment("");
-      setRating(5);
-    } catch (err) {
-      alert(t.review_failed ?? "Review failed");
+    if (!res.ok) {
+      if (data?.error === "ALREADY_REVIEWED") {
+        setReviewError(t.already_reviewed ?? "Already reviewed");
+      } else {
+        setReviewError(t.review_failed ?? "Review failed");
+      }
+      return;
     }
+
+    setReviewedMap((prev) => ({
+      ...prev,
+      [orderId]: true,
+    }));
+
+    setActiveReviewId(null);
+    setComment("");
+    setRating(5);
+  } catch (err) {
+    setReviewError(t.review_failed ?? "Review failed");
   }
+}
 
   const totalPi = orders.reduce(
     (sum, o) => sum + Number(o.total),
