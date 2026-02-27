@@ -133,35 +133,45 @@ export default function ShippingOrdersPage() {
   /* =========================
      CONFIRM RECEIVED
   ========================== */
-  async function handleConfirmReceived(orderId: string) {
-    try {
-      setProcessingId(orderId);
+  /* =========================
+   CONFIRM RECEIVED
+========================= */
+async function handleConfirmReceived(orderId: string) {
+  try {
+    setProcessingId(orderId);
 
-      const token = await getPiAccessToken();
+    const token = await getPiAccessToken();
 
-      const res = await fetch(`/api/orders/${orderId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          status: "completed",
-        }),
-      });
+    const res = await fetch(`/api/orders/${orderId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        status: "completed",
+      }),
+    });
 
-      if (!res.ok) {
-        throw new Error("UPDATE_FAILED");
-      }
-// chuyển sang trang đánh giá
-router.push(`/customer/review?orderId=${orderId}`);
-    } catch (err) {
-      console.error("❌ Confirm received error:", err);
-      alert(t.confirm_failed);
-    } finally {
-      setProcessingId(null);
+    if (!res.ok) {
+      throw new Error("UPDATE_FAILED");
     }
+
+    // ✅ Cập nhật UI ngay lập tức (xoá khỏi shipping list)
+    setOrders((prev) =>
+      prev.filter((o) => o.id !== orderId)
+    );
+
+    // ✅ Chuyển đúng flow sang completed page
+    router.push("/customer/completed");
+
+  } catch (err) {
+    console.error("❌ Confirm received error:", err);
+    alert(t.confirm_failed);
+  } finally {
+    setProcessingId(null);
   }
+}
    const totalPi = orders.reduce(
   (sum, o) => sum + Number(o.total),
   0
