@@ -28,6 +28,8 @@ interface OrderItem {
   quantity: number;
   price: number;
   product_id: string;
+  seller_message?: string | null;
+  seller_cancel_reason?: string | null;
   product?: Product;
 }
 
