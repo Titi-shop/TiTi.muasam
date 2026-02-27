@@ -73,15 +73,20 @@ export async function POST(req: Request) {
   buyer_id: string;
   status: string;
   product_id: string;
-    }>(
-      `
-      select id, buyer_id, status, product_id
-from orders
-      where id = $1
-      limit 1
-      `,
-      [orderId]
-    );
+}>(
+  `
+  select 
+    o.id,
+    o.buyer_id,
+    o.status,
+    oi.product_id
+  from orders o
+  join order_items oi on oi.order_id = o.id
+  where o.id = $1
+  limit 1
+  `,
+  [orderId]
+);
 
     if (orderResult.rows.length === 0) {
       return NextResponse.json(
