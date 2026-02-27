@@ -143,10 +143,10 @@ export default function CompletedOrdersPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          order_id: orderId,
-          rating,
-          comment,
-        }),
+      orderId: orderId,
+      rating,
+      comment,
+      }),
       });
 
       if (!res.ok) throw new Error("REVIEW_FAILED");
@@ -297,15 +297,12 @@ export default function CompletedOrdersPage() {
                         className="w-full border rounded-md p-2 text-sm"
                       />
 
-                      <button
-                        onClick={() => {
-                          setActiveReviewId(o.id);
-                          setComment(t.default_review_comment);
-                         }}
-                        className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
-                      >
-                        {t.submit_review}
-                      </button>
+                      <button 
+                     onClick={() => submitReview(o.id)}
+                       className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
+                       >
+                      {t.submit_review}
+                    </button>
                     </div>
                   ) : (
                     <button
