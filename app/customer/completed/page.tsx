@@ -298,13 +298,13 @@ export default function CompletedOrdersPage() {
                       />
 
                       <button
-                    onClick={() => {
-                   setActiveReviewId(o.id);
-                  setComment(t.default_review_comment);
-                  }}
-                  className="px-4 py-1.5 text-sm border border-orange-500 text-orange-500 rounded-md hover:bg-orange-500 hover:text-white transition"
-                  >
-                   {t.review_orders}
+                        onClick={() => {
+                          setActiveReviewId(o.id);
+                          setComment(t.default_review_comment);
+                         }}
+                        className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
+                      >
+                        {t.submit_review}
                       </button>
                     </div>
                   ) : (
