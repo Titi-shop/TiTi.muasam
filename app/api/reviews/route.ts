@@ -63,7 +63,13 @@ export async function POST(req: Request) {
     const productId =
   typeof b.product_id === "string" ? b.product_id : null;
 
-if (!orderId || !productId || !rating || rating < 1 || rating > 5) {
+if (
+  !orderId ||
+  !productId ||
+  rating === null ||
+  rating < 1 ||
+  rating > 5
+) {
   return NextResponse.json(
     { error: "INVALID_REVIEW_DATA" },
     { status: 400 }
