@@ -341,5 +341,8 @@
   "customer": "客户",
   "phone": "电话",
   "seller_dashboard": "卖家控制台",
-  "order_status": "订单状态"
+  "order_status": "订单状态",
+  "default_review_comment": "商品质量很好，发货速度快，包装也很仔细。"
+
+  
 }
