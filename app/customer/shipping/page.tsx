@@ -129,10 +129,6 @@ export default function ShippingOrdersPage() {
       setLoading(false);
     }
   }
-
-  /* =========================
-     CONFIRM RECEIVED
-  ========================== */
   /* =========================
    CONFIRM RECEIVED
 ========================= */
