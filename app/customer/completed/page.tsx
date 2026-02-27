@@ -88,7 +88,7 @@ const [reviewError, setReviewError] = useState<string | null>(null);
       const productIds = Array.from(
         new Set(
           completed.flatMap((o) =>
-            o.order_items?.map((i) => i.product_id) ?? []
+            (o.order_items ?? []).map((i) => i.product_id) ?? []
           )
         )
       );
@@ -237,7 +237,7 @@ const [reviewError, setReviewError] = useState<string | null>(null);
                       <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden">
                         {item.product?.images?.[0] && (
                           <img
-                            src={item.product.images[0]}
+                            src={item.product?.images?.[0]}
                             alt={item.product.name}
                             className="w-full h-full object-cover"
                           />
