@@ -143,10 +143,10 @@ export default function CompletedOrdersPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-      orderId: orderId,
-      rating,
-      comment,
-      }),
+  order_id: orderId,
+  rating,
+  comment,
+}),
       });
 
       if (!res.ok) throw new Error("REVIEW_FAILED");
