@@ -10,6 +10,7 @@ import { resolveRole } from "@/lib/auth/resolveRole";
 type ReviewRow = {
   id: string;
   order_id: string;
+   product_id: string;
   user_pi_uid: string;
   rating: number;
   comment: string | null;
@@ -139,7 +140,6 @@ from orders
 )
 values ($1, $2, $3, $4, $5)
 returning *
-      returning *
       `,
       [
   orderId,
