@@ -72,9 +72,9 @@ export async function POST(req: Request) {
       status: string;
     }>(
       `
-      select id, user_pi_uid, status
-      from orders
-      where id = $1
+      select id, buyer_id, status
+from orders
+where id = $1
       limit 1
       `,
       [orderId]
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
 
     const order = orderResult.rows[0];
 
-    if (order.user_pi_uid !== user.pi_uid) {
+    if (order.buyer_id !== user.pi_uid) {
       return NextResponse.json(
         { error: "FORBIDDEN_ORDER" },
         { status: 403 }
