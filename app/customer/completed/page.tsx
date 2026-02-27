@@ -293,14 +293,15 @@ export default function CompletedOrdersPage() {
                         onChange={(e) =>
                           setComment(e.target.value)
                         }
-                        placeholder="Great product!"
+                        placeholder={t.default_review_comment}
                         className="w-full border rounded-md p-2 text-sm"
                       />
 
                       <button
-                        onClick={() =>
-                          submitReview(o.id)
-                        }
+                        onClick={() => {
+                          setActiveReviewId(o.id);
+                          setComment(t.default_review_comment);
+                         }}
                         className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
                       >
                         {t.submit_review}
