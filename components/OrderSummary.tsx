@@ -7,7 +7,6 @@ import {
   Clock,
   Package,
   Truck,
-  Star,
   RotateCcw,
 } from "lucide-react";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
@@ -22,7 +21,7 @@ export default function OrderSummary() {
   pending: 0,
   pickup: 0,
   shipping: 0,
-  review: 0,
+  completed: 0,
 });
   useEffect(() => {
   async function loadCounts() {
@@ -87,11 +86,11 @@ export default function OrderSummary() {
     path="/customer/shipping"
     count={counts.shipping}
   />
-  <Item
-    icon={<Star size={22} />}
-    label={t.review_orders}
-    path="/customer/review"
-    count={counts.review}
+    <Item
+  icon={<Package size={22} />}
+  label={t.completed_orders}
+  path="/customer/completed"
+  count={counts.completed}
   />
   <Item
     icon={<RotateCcw size={22} />}
