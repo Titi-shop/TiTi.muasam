@@ -97,6 +97,9 @@ export async function getOrdersByBuyer(
   buyerPiUid: string
 ): Promise<OrderRecord[]> {
 
+  /* =========================
+     1️⃣ FETCH ORDERS
+  ========================= */
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/orders?buyer_id=eq.${buyerPiUid}&order=created_at.desc&select=
       id,
@@ -120,11 +123,29 @@ export async function getOrdersByBuyer(
       price: number;
       product_id: string;
       status: string;
-     seller_cancel_reason: string | null;
-     seller_message: string | null;
+      seller_cancel_reason: string | null;
+      seller_message: string | null;
     }>;
   }>;
 
+  /* =========================
+     2️⃣ FETCH REVIEWS
+  ========================= */
+  const reviewRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/reviews?user_pi_uid=eq.${buyerPiUid}&select=order_id`,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  let reviewedOrderIds: string[] = [];
+
+  if (reviewRes.ok) {
+    const reviews = await reviewRes.json() as Array<{ order_id: string }>;
+    reviewedOrderIds = reviews.map(r => r.order_id);
+  }
+
+  /* =========================
+     3️⃣ FETCH PRODUCTS
+  ========================= */
   const productIds = Array.from(
     new Set(
       raw.flatMap((o) =>
@@ -135,18 +156,22 @@ export async function getOrdersByBuyer(
 
   const productsMap = await fetchProductsMap(productIds);
 
+  /* =========================
+     4️⃣ RETURN ENRICHED DATA
+  ========================= */
   return raw.map((o): OrderRecord => ({
     id: o.id,
     status: o.status,
     total: fromMicroPi(o.total),
     created_at: o.created_at,
+    is_reviewed: reviewedOrderIds.includes(o.id), // 👈 thêm dòng này
     order_items: o.order_items.map((i): OrderItemRecord => ({
       product_id: i.product_id,
       quantity: i.quantity,
       price: fromMicroPi(i.price),
       status: i.status,
-       seller_cancel_reason: i.seller_cancel_reason ?? null,
-    seller_message: i.seller_message ?? null,
+      seller_cancel_reason: i.seller_cancel_reason ?? null,
+      seller_message: i.seller_message ?? null,
       product: productsMap[i.product_id],
     })),
   }));
