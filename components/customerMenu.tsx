@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { useAuth } from "@/context/AuthContext";
+import { getPiAccessToken } from "@/lib/piAuth";
 
 export default function CustomerMenu() {
   const router = useRouter();
