@@ -94,15 +94,17 @@ export default function CompletedOrdersPage() {
         });
 
         if (reviewRes.ok) {
-          const reviews: { order_id: string }[] =
-            await reviewRes.json();
+  const data: {
+    reviews: { order_id: string }[];
+  } = await reviewRes.json();
 
-          const map: ReviewMap = {};
-          reviews.forEach((r) => {
-            map[r.order_id] = true;
-          });
+  const map: ReviewMap = {};
 
-          setReviewedMap(map);
+  data.reviews.forEach((r) => {
+    map[r.order_id] = true;
+  });
+
+  setReviewedMap(map);
         }
       } catch (err) {
         console.error("Load reviews error:", err);
