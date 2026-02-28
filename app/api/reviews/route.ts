@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
-import { resolveRole } from "@/lib/auth/resolveRole";
 
 /* =========================
    Types
@@ -22,65 +21,68 @@ type OrderCheckRow = {
   status: string;
 };
 
-/* =========================
+/* =========================================================
    POST /api/reviews
-========================= */
+   - Tạo review
+========================================================= */
 export async function POST(req: Request) {
   try {
+    /* 🔐 AUTH */
     const user = await getUserFromBearer();
     if (!user) {
-      return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+      return NextResponse.json(
+        { error: "UNAUTHORIZED" },
+        { status: 401 }
+      );
     }
 
+    /* 📦 BODY */
     const body: unknown = await req.json().catch(() => null);
     if (typeof body !== "object" || body === null) {
-      return NextResponse.json({ error: "INVALID_BODY" }, { status: 400 });
+      return NextResponse.json(
+        { error: "INVALID_BODY" },
+        { status: 400 }
+      );
     }
 
-    // ... toàn bộ logic POST của bạn ở đây ...
+    const b = body as Record<string, unknown>;
 
-    return NextResponse.json({
-      success: true,
-      review,
-    });
+    const orderId =
+      typeof b.order_id === "string" ? b.order_id : null;
 
-  } catch (error) {
-    console.error("REVIEW ERROR:", error);
-    return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
-  }
-}
+    const productId =
+      typeof b.product_id === "string" ? b.product_id : null;
 
-/* =========================
-   GET /api/reviews
-========================= */
-export async function GET() {
-  try {
-    const user = await getUserFromBearer();
-    if (!user) {
-      return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    const rawComment =
+      typeof b.comment === "string" ? b.comment.trim() : "";
+
+    const comment =
+      rawComment.length > 0 ? rawComment : "Default review";
+
+    const ratingRaw = b.rating;
+
+    const rating =
+      typeof ratingRaw === "number"
+        ? ratingRaw
+        : typeof ratingRaw === "string"
+        ? Number(ratingRaw)
+        : null;
+
+    if (
+      !orderId ||
+      !productId ||
+      rating === null ||
+      Number.isNaN(rating) ||
+      rating < 1 ||
+      rating > 5
+    ) {
+      return NextResponse.json(
+        { error: "INVALID_REVIEW_DATA" },
+        { status: 400 }
+      );
     }
 
-    const result = await query<{
-      order_id: string;
-      product_id: string;
-    }>(
-      `
-      select order_id, product_id
-      from reviews
-      where user_pi_uid = $1
-      `,
-      [user.pi_uid]
-    );
-
-    return NextResponse.json(result.rows);
-
-  } catch (error) {
-    console.error("GET REVIEWS ERROR:", error);
-    return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
-  }
-}
-
-    /* ========================
+    /* =========================
        CHECK ORDER + PRODUCT
     ========================== */
 
@@ -195,6 +197,50 @@ export async function GET() {
 
   } catch (error) {
     console.error("REVIEW ERROR:", error);
+
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR" },
+      { status: 500 }
+    );
+  }
+}
+
+/* =========================================================
+   GET /api/reviews
+   - Lấy danh sách review của user hiện tại
+========================================================= */
+export async function GET() {
+  try {
+    const user = await getUserFromBearer();
+    if (!user) {
+      return NextResponse.json(
+        { error: "UNAUTHORIZED" },
+        { status: 401 }
+      );
+    }
+
+    const result = await query<{
+      order_id: string;
+      product_id: string;
+      rating: number;
+      comment: string | null;
+      created_at: string;
+    }>(
+      `
+      select order_id, product_id, rating, comment, created_at
+      from reviews
+      where user_pi_uid = $1
+      order by created_at desc
+      `,
+      [user.pi_uid]
+    );
+
+    return NextResponse.json({
+      reviews: result.rows,
+    });
+
+  } catch (error) {
+    console.error("GET REVIEWS ERROR:", error);
 
     return NextResponse.json(
       { error: "INTERNAL_ERROR" },
