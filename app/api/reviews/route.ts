@@ -38,12 +38,13 @@ export async function POST(req: Request) {
     }
 
     const role = await resolveRole(user);
-    if (!role) {
-      return NextResponse.json(
-        { error: "FORBIDDEN" },
-        { status: 403 }
-      );
-    }
+    
+    if (role !== "customer") {
+  return NextResponse.json(
+    { error: "FORBIDDEN_ROLE" },
+    { status: 403 }
+  );
+}
 
     /* 📦 BODY */
     const body: unknown = await req.json().catch(() => null);
@@ -63,8 +64,13 @@ export async function POST(req: Request) {
     const productId =
       typeof b.product_id === "string" ? b.product_id : null;
 
-    const comment =
-      typeof b.comment === "string" ? b.comment : "";
+    const rawComment =
+  typeof b.comment === "string" ? b.comment.trim() : "";
+
+const comment =
+  rawComment.length > 0
+    ? rawComment
+    : "Default review";
 
     /* ⭐ rating hỗ trợ number hoặc string */
     const ratingRaw = b.rating;
