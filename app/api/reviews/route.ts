@@ -4,7 +4,7 @@ import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { resolveRole } from "@/lib/auth/resolveRole";
 
 /* =========================
-   TYPES
+   Types
 ========================= */
 
 type ReviewRow = {
@@ -28,24 +28,52 @@ type OrderCheckRow = {
 
 export async function POST(req: Request) {
   try {
+    /* 🔐 AUTH (Network-First) */
     const user = await getUserFromBearer();
     if (!user) {
-      return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+      return NextResponse.json(
+        { error: "UNAUTHORIZED" },
+        { status: 401 }
+      );
     }
 
     const role = await resolveRole(user);
+    
     if (role !== "customer") {
-      return NextResponse.json({ error: "FORBIDDEN_ROLE" }, { status: 403 });
+  return NextResponse.json(
+    { error: "FORBIDDEN_ROLE" },
+    { status: 403 }
+  );
+}
+
+    /* 📦 BODY */
+    const body: unknown = await req.json().catch(() => null);
+
+    if (typeof body !== "object" || body === null) {
+      return NextResponse.json(
+        { error: "INVALID_BODY" },
+        { status: 400 }
+      );
     }
 
-    const body = await req.json().catch(() => null);
-    if (!body || typeof body !== "object") {
-      return NextResponse.json({ error: "INVALID_BODY" }, { status: 400 });
-    }
+    const b = body as Record<string, unknown>;
 
-    const orderId = typeof body.order_id === "string" ? body.order_id : null;
-    const productId = typeof body.product_id === "string" ? body.product_id : null;
-    const ratingRaw = body.rating;
+    const orderId =
+      typeof b.order_id === "string" ? b.order_id : null;
+
+    const productId =
+      typeof b.product_id === "string" ? b.product_id : null;
+
+    const rawComment =
+  typeof b.comment === "string" ? b.comment.trim() : "";
+
+const comment =
+  rawComment.length > 0
+    ? rawComment
+    : "Default review";
+
+    /* ⭐ rating hỗ trợ number hoặc string */
+    const ratingRaw = b.rating;
 
     const rating =
       typeof ratingRaw === "number"
@@ -53,11 +81,6 @@ export async function POST(req: Request) {
         : typeof ratingRaw === "string"
         ? Number(ratingRaw)
         : null;
-
-    const rawComment =
-      typeof body.comment === "string" ? body.comment.trim() : "";
-
-    const comment = rawComment.length > 0 ? rawComment : "Default review";
 
     if (
       !orderId ||
@@ -67,8 +90,15 @@ export async function POST(req: Request) {
       rating < 1 ||
       rating > 5
     ) {
-      return NextResponse.json({ error: "INVALID_REVIEW_DATA" }, { status: 400 });
+      return NextResponse.json(
+        { error: "INVALID_REVIEW_DATA" },
+        { status: 400 }
+      );
     }
+
+    /* =========================
+       CHECK ORDER + PRODUCT
+    ========================== */
 
     const orderCheck = await query<OrderCheckRow>(
       `
@@ -83,19 +113,33 @@ export async function POST(req: Request) {
     );
 
     if (orderCheck.rows.length === 0) {
-      return NextResponse.json({ error: "PRODUCT_NOT_IN_ORDER" }, { status: 404 });
+      return NextResponse.json(
+        { error: "PRODUCT_NOT_IN_ORDER" },
+        { status: 404 }
+      );
     }
 
     const order = orderCheck.rows[0];
 
     if (order.buyer_id !== user.pi_uid) {
-      return NextResponse.json({ error: "FORBIDDEN_ORDER" }, { status: 403 });
+      return NextResponse.json(
+        { error: "FORBIDDEN_ORDER" },
+        { status: 403 }
+      );
     }
 
     const status = order.status.toLowerCase();
+
     if (status !== "completed" && status !== "received") {
-      return NextResponse.json({ error: "ORDER_NOT_REVIEWABLE" }, { status: 400 });
+      return NextResponse.json(
+        { error: "ORDER_NOT_REVIEWABLE" },
+        { status: 400 }
+      );
     }
+
+    /* =========================
+       CHECK REVIEW EXISTS
+    ========================== */
 
     const existing = await query(
       `
@@ -110,8 +154,15 @@ export async function POST(req: Request) {
     );
 
     if (existing.rows.length > 0) {
-      return NextResponse.json({ error: "ALREADY_REVIEWED" }, { status: 400 });
+      return NextResponse.json(
+        { error: "ALREADY_REVIEWED" },
+        { status: 400 }
+      );
     }
+
+    /* =========================
+       INSERT REVIEW
+    ========================== */
 
     const insertResult = await query<ReviewRow>(
       `
@@ -125,8 +176,20 @@ export async function POST(req: Request) {
       values ($1, $2, $3, $4, $5)
       returning *
       `,
-      [orderId, productId, user.pi_uid, rating, comment]
+      [
+        orderId,
+        productId,
+        user.pi_uid,
+        rating,
+        comment,
+      ]
     );
+
+    const review = insertResult.rows[0];
+
+    /* =========================
+       UPDATE PRODUCT AVG RATING
+    ========================== */
 
     await query(
       `
@@ -143,42 +206,15 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      review: insertResult.rows[0],
+      review,
     });
 
   } catch (error) {
     console.error("REVIEW ERROR:", error);
-    return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
-  }
-}
 
-/* =========================
-   GET /api/reviews
-========================= */
-
-export async function GET() {
-  try {
-    const user = await getUserFromBearer();
-    if (!user) {
-      return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
-    }
-
-    const result = await query<{
-      order_id: string;
-      product_id: string;
-    }>(
-      `
-      select order_id, product_id
-      from reviews
-      where user_pi_uid = $1
-      `,
-      [user.pi_uid]
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR" },
+      { status: 500 }
     );
-
-    return NextResponse.json(result.rows);
-
-  } catch (error) {
-    console.error("GET REVIEWS ERROR:", error);
-    return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
