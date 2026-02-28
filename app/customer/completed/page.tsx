@@ -39,10 +39,10 @@ interface Order {
   order_items: OrderItem[];
 }
 
-
 interface ReviewMap {
   [productId: string]: boolean;
 }
+
 /* =========================
    PAGE
 ========================= */
@@ -52,11 +52,7 @@ export default function CompletedOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewedMap, setReviewedMap] = useState<ReviewMap>({});
-  const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
-  const [rating, setRating] = useState<number>(5);
-  const [comment, setComment] = useState<string>("");
-const [reviewError, setReviewError] = useState<string | null>(null);
-   
+
   function formatPi(value: number | string): string {
     return Number(value).toFixed(6);
   }
@@ -88,16 +84,17 @@ const [reviewError, setReviewError] = useState<string | null>(null);
       const productIds = Array.from(
         new Set(
           completed.flatMap((o) =>
-            (o.order_items ?? []).map((i) => i.product_id) ?? []
+            (o.order_items ?? []).map((i) => i.product_id)
           )
         )
       );
 
       if (productIds.length === 0) {
-        setOrders(completed);
+        setOrders([]);
         return;
       }
 
+      /* FETCH PRODUCTS */
       const productRes = await fetch(
         `/api/products?ids=${productIds.join(",")}`,
         { cache: "no-store" }
@@ -113,15 +110,45 @@ const [reviewError, setReviewError] = useState<string | null>(null);
           products.map((p) => [p.id, p])
         );
 
+      /* FETCH REVIEWS */
+      const reviewRes = await fetch(
+        `/api/reviews?product_ids=${productIds.join(",")}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        }
+      );
+
+      if (!reviewRes.ok)
+        throw new Error("FETCH_REVIEWS_FAILED");
+
+      const reviews: { product_id: string }[] =
+        await reviewRes.json();
+
+      const reviewMap: ReviewMap = {};
+      reviews.forEach((r) => {
+        reviewMap[r.product_id] = true;
+      });
+
+      setReviewedMap(reviewMap);
+
+      /* ENRICH + FILTER ONLY REVIEWED */
       const enriched = completed.map((o) => ({
         ...o,
-        order_items: (o.order_items ?? []).map((i) => ({
-          ...i,
-          product: productMap[i.product_id],
-        })),
+        order_items: (o.order_items ?? [])
+          .map((i) => ({
+            ...i,
+            product: productMap[i.product_id],
+          }))
+          .filter((i) => reviewMap[i.product_id]), // ✅ CHỈ HIỂN THỊ ĐÃ REVIEW
       }));
 
-      setOrders(enriched);
+      /* Remove orders with no reviewed items */
+      const filteredOrders = enriched.filter(
+        (o) => o.order_items.length > 0
+      );
+
+      setOrders(filteredOrders);
     } catch (err) {
       console.error("Load completed error:", err);
       setOrders([]);
@@ -129,56 +156,6 @@ const [reviewError, setReviewError] = useState<string | null>(null);
       setLoading(false);
     }
   }
-
-  /* =========================
-     SUBMIT REVIEW
-  ========================== */
-  async function submitReview(
-  orderId: string,
-  productId: string
-) {
-  try {
-    setReviewError(null);
-
-    const token = await getPiAccessToken();
-
-    const res = await fetch("/api/reviews", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-  order_id: orderId,
-  product_id: productId,
-  rating,
-  comment: comment.trim() || t.default_review_comment,
-}),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      if (data?.error === "ALREADY_REVIEWED") {
-        setReviewError(t.already_reviewed ?? "Already reviewed");
-      } else {
-        setReviewError(t.review_failed ?? "Review failed");
-      }
-      return;
-    }
-
-    setReviewedMap((prev) => ({
-  ...prev,
-  [productId]: true,
-}));
-
-    setActiveReviewId(null);
-    setComment("");
-    setRating(5);
-  } catch (err) {
-    setReviewError(t.review_failed ?? "Review failed");
-  }
-}
 
   const totalPi = orders.reduce(
     (sum, o) => sum + Number(o.total),
@@ -194,7 +171,8 @@ const [reviewError, setReviewError] = useState<string | null>(null);
             {t.order_info}
           </p>
           <p className="text-xs opacity-80 mt-1">
-            {t.orders}: {orders.length} · π{formatPi(totalPi)}
+            {t.orders}: {orders.length} · π
+            {formatPi(totalPi)}
           </p>
         </div>
       </header>
@@ -217,115 +195,65 @@ const [reviewError, setReviewError] = useState<string | null>(null);
                 key={o.id}
                 className="bg-white rounded-xl shadow-sm overflow-hidden"
               >
-                {/* CARD HEADER */}
                 <div className="flex justify-between items-center px-4 py-3 border-b">
                   <span className="font-semibold text-sm">
                     #{o.id}
                   </span>
-                  <span className="text-orange-500 text-sm font-medium">
-                    {t.status_completed}
+                  <span className="text-green-600 text-sm font-medium">
+                    {t.order_review}
                   </span>
                 </div>
 
-                {/* PRODUCTS */}
                 <div className="px-4 py-3 space-y-3">
-                  {o.order_items.map((item, idx) => (
-  <div key={idx} className="border-t pt-3 mt-3">
-    <div className="flex gap-3 items-center">
-      <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden">
-        {item.product?.images?.[0] && (
-          <img
-            src={item.product.images[0]}
-            alt={item.product.name}
-            className="w-full h-full object-cover"
-          />
-        )}
-      </div>
+                  {o.order_items.map((item) => (
+                    <div
+                      key={item.product_id}
+                      className="border-t pt-3 mt-3"
+                    >
+                      <div className="flex gap-3 items-center">
+                        <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden">
+                          {item.product?.images?.[0] && (
+                            <img
+                              src={item.product.images[0]}
+                              alt={
+                                item.product?.name ?? ""
+                              }
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                        </div>
 
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium line-clamp-1">
-          {item.product?.name ?? t.no_name}
-        </p>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium line-clamp-1">
+                            {item.product?.name ??
+                              t.no_name}
+                          </p>
 
-        <p className="text-xs text-gray-500">
-          x{item.quantity} · π{formatPi(item.price)}
-        </p>
+                          <p className="text-xs text-gray-500">
+                            x{item.quantity} · π
+                            {formatPi(item.price)}
+                          </p>
 
-        {item.seller_message && (
-          <p className="text-xs text-blue-600 mt-1">
-            {t.seller_message}: {item.seller_message}
-          </p>
-        )}
+                          {item.seller_message && (
+                            <p className="text-xs text-blue-600 mt-1">
+                              {t.seller_message}:{" "}
+                              {item.seller_message}
+                            </p>
+                          )}
 
-        {item.seller_cancel_reason && (
-          <p className="text-xs text-red-500 mt-1">
-            {t.seller_cancel_reason}: {item.seller_cancel_reason}
-          </p>
-        )}
-      </div>
-    </div>
-
-    {/* REVIEW SECTION */}
-    <div className="mt-3">
-      {reviewedMap[item.product_id] ? (
-        <span className="text-sm text-green-600 font-medium">
-          {t.order_review}
-        </span>
-      ) : activeReviewId === item.product_id ? (
-        <div className="space-y-2">
-          {/* STARS */}
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                onClick={() => setRating(star)}
-                className={`text-lg ${
-                  star <= rating
-                    ? "text-yellow-500"
-                    : "text-gray-300"
-                }`}
-              >
-                ★
-              </button>
+                          {item.seller_cancel_reason && (
+                            <p className="text-xs text-red-500 mt-1">
+                              {t.seller_cancel_reason}:{" "}
+                              {item.seller_cancel_reason}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))}
-          </div>
-
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder={t.default_review_comment}
-            className="w-full border rounded-md p-2 text-sm"
-          />
-
-          {reviewError && (
-            <p className="text-sm text-red-500">
-              {reviewError}
-            </p>
-          )}
-
-          <button
-            onClick={() =>
-              submitReview(o.id, item.product_id)
-            }
-            className="px-3 py-1 text-sm bg-orange-500 text-white rounded-md"
-          >
-            {t.submit_review}
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={() => {
-            setActiveReviewId(item.product_id);
-            setComment(t.default_review_comment);
-          }}
-          className="px-3 py-1 text-sm border border-orange-500 text-orange-500 rounded-md"
-        >
-          {t.review_orders}
-        </button>
-      )}
-    </div>
-  </div>
-))}
           </div>
         )}
       </section>
