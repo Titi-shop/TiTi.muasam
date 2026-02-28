@@ -37,14 +37,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const role = await resolveRole(user);
-    
-    if (role !== "customer" && role !== "seller") {
-  return NextResponse.json(
-    { error: "FORBIDDEN_ROLE" },
-    { status: 403 }
-  );
-}
 
     /* 📦 BODY */
     const body: unknown = await req.json().catch(() => null);
