@@ -25,74 +25,34 @@ type OrderCheckRow = {
 /* =========================
    POST /api/reviews
 ========================= */
-
 export async function POST(req: Request) {
   try {
-    /* 🔐 AUTH (Network-First) */
     const user = await getUserFromBearer();
     if (!user) {
-      return NextResponse.json(
-        { error: "UNAUTHORIZED" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
     }
 
-
-    /* 📦 BODY */
     const body: unknown = await req.json().catch(() => null);
-
     if (typeof body !== "object" || body === null) {
-      return NextResponse.json(
-        { error: "INVALID_BODY" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "INVALID_BODY" }, { status: 400 });
     }
 
-    const b = body as Record<string, unknown>;
+    // ... toàn bộ logic POST của bạn ở đây ...
 
-    const orderId =
-      typeof b.order_id === "string" ? b.order_id : null;
+    return NextResponse.json({
+      success: true,
+      review,
+    });
 
-    const productId =
-      typeof b.product_id === "string" ? b.product_id : null;
+  } catch (error) {
+    console.error("REVIEW ERROR:", error);
+    return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+  }
+}
 
-    const rawComment =
-  typeof b.comment === "string" ? b.comment.trim() : "";
-
-const comment =
-  rawComment.length > 0
-    ? rawComment
-    : "Default review";
-
-    /* ⭐ rating hỗ trợ number hoặc string */
-    const ratingRaw = b.rating;
-
-    const rating =
-      typeof ratingRaw === "number"
-        ? ratingRaw
-        : typeof ratingRaw === "string"
-        ? Number(ratingRaw)
-        : null;
-
-    if (
-      !orderId ||
-      !productId ||
-      rating === null ||
-      Number.isNaN(rating) ||
-      rating < 1 ||
-      rating > 5
-    ) {
-      return NextResponse.json(
-        { error: "INVALID_REVIEW_DATA" },
-        { status: 400 }
-      );
-    }
-
-
-     /* =========================
+/* =========================
    GET /api/reviews
 ========================= */
-
 export async function GET() {
   try {
     const user = await getUserFromBearer();
@@ -119,6 +79,7 @@ export async function GET() {
     return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
+
     /* ========================
        CHECK ORDER + PRODUCT
     ========================== */
