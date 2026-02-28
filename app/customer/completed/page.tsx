@@ -127,64 +127,24 @@ const [reviewError, setReviewError] = useState<string | null>(null);
    LOAD EXISTING REVIEWS
 ========================= */
 
-  try {
-  const reviewRes = await fetch("/api/reviews", {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-  });
+const reviews: {
+  order_id: string;
+  product_id: string;
+}[] = await reviewRes.json();
 
-  if (reviewRes.ok) {
-    const data = await reviewRes.json();
+const map: ReviewMap = {};
 
-    const reviews: {
-      order_id: string;
-      product_id: string;
-    }[] = data.reviews ?? [];
+reviews.forEach((r) => {
+  map[`${r.order_id}_${r.product_id}`] = true;
+});
 
-    const map: ReviewMap = {};
-
-    reviews.forEach((r) => {
-      map[`${r.order_id}_${r.product_id}`] = true;
-    });
-
-    setReviewedMap(map);
+setReviewedMap(map);
   }
 } catch (err) {
   console.error("Load reviews error:", err);
 }
 
-       /* =========================
-   LOAD EXISTING REVIEWS
-========================= */
-try {
-  const reviewRes = await fetch("/api/reviews", {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-  });
-
-  if (reviewRes.ok) {
-    const reviews: { order_id: string }[] =
-      await reviewRes.json();
-
-    const map: ReviewMap = {};
-
-    reviews.forEach((r) => {
-      map[r.order_id] = true;
-    });
-
-    setReviewedMap(map);
-  }
-} catch (err) {
-  console.error("Load reviews error:", err);
-}
-    } catch (err) {
-      console.error("Load completed error:", err);
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
+       
   /* =========================
      SUBMIT REVIEW
   ========================== */
@@ -321,90 +281,7 @@ try {
                             {item.seller_cancel_reason}
                           </p>
                         )}
-                         {(() => {
-  const reviewKey = `${o.id}_${item.product_id}`;
-
-  return reviewedMap[reviewKey] ? (
-    <div className="relative inline-block mt-2">
-      <button
-        disabled
-        className="px-3 py-1 text-xs bg-green-100 text-green-600 rounded-md"
-      >
-        {t.order_review}
-      </button>
-
-      <span className="absolute -bottom-1 -right-1 bg-green-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
-        ✓
-      </span>
-    </div>
-  ) : activeReviewKey === reviewKey ? (
-    <div className="mt-2 space-y-2">
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            onClick={() => setRating(star)}
-            className={`text-lg ${
-              star <= rating
-                ? "text-yellow-500"
-                : "text-gray-300"
-            }`}
-          >
-            ★
-          </button>
-        ))}
-      </div>
-
-      <textarea
-        value={comment}
-        onChange={(e) =>
-          setComment(e.target.value)
-        }
-        placeholder={t.default_review_comment}
-        className="w-full border rounded-md p-2 text-sm"
-      />
-
-      {reviewError && (
-        <p className="text-sm text-red-500">
-          {reviewError}
-        </p>
-      )}
-
-      <button
-        onClick={() =>
-          submitReview(o.id, item.product_id)
-        }
-        className="px-3 py-1 text-xs bg-orange-500 text-white rounded-md"
-      >
-        {t.submit_review}
-      </button>
-    </div>
-  ) : (
-    <button
-      onClick={() => {
-        setActiveReviewKey(reviewKey);
-        setComment("");
-        setRating(5);
-      }}
-      className="mt-2 px-3 py-1 text-xs border border-orange-500 text-orange-500 rounded-md"
-    >
-      {t.review_orders}
-    </button>
-  );
-})()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* FOOTER */}
-                <div className="px-4 py-3 border-t">
-                  <p className="text-sm font-semibold mb-3">
-                    {t.total}: π{formatPi(o.total)}
-                  </p>
-                   </div>
-                      {/* STARS */}
-                      <div className="flex gap-1">
+                                               <div className="flex gap-1">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <button
                             key={star}
@@ -422,45 +299,81 @@ try {
 
                       {/* COMMENT */}
                       
-<textarea
-  value={comment}
-  onChange={(e) =>
-    setComment(e.target.value)
-  }
-  placeholder={t.default_review_comment}
-  className="w-full border rounded-md p-2 text-sm"
-/>
+{(() => {
+  const reviewKey = `${o.id}_${item.product_id}`;
 
-{/* 🔴 ERROR MESSAGE HERE */}
-{reviewError && (
-  <p className="text-sm text-red-500">
-    {reviewError}
-  </p>
-)}
+  return (
+    <div className="mt-2 relative">
+      {reviewedMap[reviewKey] ? (
+        <div className="relative inline-block">
+          <button
+            disabled
+            className="px-3 py-1 text-xs bg-green-100 text-green-600 rounded-md"
+          >
+            {t.order_review}
+          </button>
 
-<button 
-  onClick={() =>
-  submitReview(o.id, o.order_items?.[0]?.product_id)
-}
-  className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
->
-  {t.submit_review}
-</button>
-                    </div>
-                  ) : (
-                    <button
-  onClick={() => {
-    setActiveReviewId(o.id);
-    setComment(t.default_review_comment);
-  }}
-  className="px-4 py-1.5 text-sm border border-orange-500 text-orange-500 rounded-md hover:bg-orange-500 hover:text-white transition"
->
-  {t.review_orders}
-</button>
-                  )}
-                </div>
-              </div>
+          <span className="absolute -bottom-1 -right-1 bg-green-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+            ✓
+          </span>
+        </div>
+      ) : activeReviewId === reviewKey ? (
+        <div className="space-y-2">
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => setRating(star)}
+                className={`text-lg ${
+                  star <= rating
+                    ? "text-yellow-500"
+                    : "text-gray-300"
+                }`}
+              >
+                ★
+              </button>
             ))}
+          </div>
+
+          <textarea
+            value={comment}
+            onChange={(e) =>
+              setComment(e.target.value)
+            }
+            placeholder={t.default_review_comment}
+            className="w-full border rounded-md p-2 text-sm"
+          />
+
+          {reviewError && (
+            <p className="text-sm text-red-500">
+              {reviewError}
+            </p>
+          )}
+
+          <button
+            onClick={() =>
+              submitReview(o.id, item.product_id)
+            }
+            className="px-3 py-1 text-xs bg-orange-500 text-white rounded-md"
+          >
+            {t.submit_review}
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => {
+            setActiveReviewId(reviewKey);
+            setComment("");
+            setRating(5);
+          }}
+          className="px-3 py-1 text-xs border border-orange-500 text-orange-500 rounded-md"
+        >
+          {t.review_orders}
+        </button>
+      )}
+    </div>
+  );
+})()}
           </div>
         )}
       </section>
