@@ -230,109 +230,102 @@ const [reviewError, setReviewError] = useState<string | null>(null);
                 {/* PRODUCTS */}
                 <div className="px-4 py-3 space-y-3">
                   {o.order_items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex gap-3 items-center"
-                    >
-                      <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden">
-                        {item.product?.images?.[0] && (
-                          <img
-                            src={item.product?.images?.[0]}
-                            alt={item.product.name}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium line-clamp-1">
-                          {item.product?.name ?? t.no_name}
-                        </p>
-
-                        <p className="text-xs text-gray-500">
-                          x{item.quantity} · π
-                          {formatPi(item.price)}
-                        </p>
-
-                        {item.seller_message && (
-                          <p className="text-xs text-blue-600 mt-1">
-                            {t.seller_message}: {item.seller_message}
-                          </p>
-                        )}
-
-                        {item.seller_cancel_reason && (
-                          <p className="text-xs text-red-500 mt-1">
-                            {t.seller_cancel_reason}:{" "}
-                            {item.seller_cancel_reason}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* FOOTER */}
-                <div className="mt-2">
-  {reviewedMap[item.product_id] ? (
-    <span className="text-sm text-green-600 font-medium">
-      {t.order_review}
-    </span>
-  ) : activeReviewId === item.product_id ? (
-    <div className="space-y-2">
-      {/* STARS */}
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            onClick={() => setRating(star)}
-            className={`text-lg ${
-              star <= rating
-                ? "text-yellow-500"
-                : "text-gray-300"
-            }`}
-          >
-            ★
-          </button>
-        ))}
+  <div key={idx} className="border-t pt-3 mt-3">
+    <div className="flex gap-3 items-center">
+      <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden">
+        {item.product?.images?.[0] && (
+          <img
+            src={item.product.images[0]}
+            alt={item.product.name}
+            className="w-full h-full object-cover"
+          />
+        )}
       </div>
 
-      <textarea
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        placeholder={t.default_review_comment}
-        className="w-full border rounded-md p-2 text-sm"
-      />
-
-      {reviewError && (
-        <p className="text-sm text-red-500">
-          {reviewError}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium line-clamp-1">
+          {item.product?.name ?? t.no_name}
         </p>
-      )}
 
-      <button
-        onClick={() =>
-          submitReview(o.id, item.product_id)
-        }
-        className="px-3 py-1 text-sm bg-orange-500 text-white rounded-md"
-      >
-        {t.submit_review}
-      </button>
+        <p className="text-xs text-gray-500">
+          x{item.quantity} · π{formatPi(item.price)}
+        </p>
+
+        {item.seller_message && (
+          <p className="text-xs text-blue-600 mt-1">
+            {t.seller_message}: {item.seller_message}
+          </p>
+        )}
+
+        {item.seller_cancel_reason && (
+          <p className="text-xs text-red-500 mt-1">
+            {t.seller_cancel_reason}: {item.seller_cancel_reason}
+          </p>
+        )}
+      </div>
     </div>
-  ) : (
-    <button
-      onClick={() => {
-        setActiveReviewId(item.product_id);
-        setComment(t.default_review_comment);
-      }}
-      className="px-3 py-1 text-sm border border-orange-500 text-orange-500 rounded-md"
-    >
-      {t.review_orders}
-    </button>
-  
-                  )}
-                </div>
-              </div>
+
+    {/* REVIEW SECTION */}
+    <div className="mt-3">
+      {reviewedMap[item.product_id] ? (
+        <span className="text-sm text-green-600 font-medium">
+          {t.order_review}
+        </span>
+      ) : activeReviewId === item.product_id ? (
+        <div className="space-y-2">
+          {/* STARS */}
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => setRating(star)}
+                className={`text-lg ${
+                  star <= rating
+                    ? "text-yellow-500"
+                    : "text-gray-300"
+                }`}
+              >
+                ★
+              </button>
             ))}
+          </div>
+
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder={t.default_review_comment}
+            className="w-full border rounded-md p-2 text-sm"
+          />
+
+          {reviewError && (
+            <p className="text-sm text-red-500">
+              {reviewError}
+            </p>
+          )}
+
+          <button
+            onClick={() =>
+              submitReview(o.id, item.product_id)
+            }
+            className="px-3 py-1 text-sm bg-orange-500 text-white rounded-md"
+          >
+            {t.submit_review}
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => {
+            setActiveReviewId(item.product_id);
+            setComment(t.default_review_comment);
+          }}
+          className="px-3 py-1 text-sm border border-orange-500 text-orange-500 rounded-md"
+        >
+          {t.review_orders}
+        </button>
+      )}
+    </div>
+  </div>
+))}
           </div>
         )}
       </section>
