@@ -123,32 +123,6 @@ const res = await fetch("/api/orders", {
 
   setOrders(enriched);  
 
-   /* =========================
-
-LOAD EXISTING REVIEWS
-========================= */
-try {
-const reviewRes = await fetch("/api/reviews", {
-headers: { Authorization: Bearer ${token} },
-cache: "no-store",
-});
-
-if (reviewRes.ok) {
-const reviews: { order_id: string }[] =
-await reviewRes.json();
-
-const map: ReviewMap = {};  
-
-reviews.forEach((r) => {  
-  map[r.order_id] = true;  
-});  
-
-setReviewedMap(map);
-
-}
-} catch (err) {
-console.error("Load reviews error:", err);
-}
 
 /* =========================
 
