@@ -1,5 +1,3 @@
-app/api/reviews/route.ts
-
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
