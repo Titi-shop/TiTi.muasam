@@ -39,10 +39,10 @@ interface Order {
   order_items: OrderItem[];
 }
 
-interface ReviewMap {
-  [orderId: string]: boolean;
-}
 
+interface ReviewMap {
+  [productId: string]: boolean;
+}
 /* =========================
    PAGE
 ========================= */
@@ -168,9 +168,9 @@ const [reviewError, setReviewError] = useState<string | null>(null);
     }
 
     setReviewedMap((prev) => ({
-      ...prev,
-      [orderId]: true,
-    }));
+  ...prev,
+  [productId]: true,
+}));
 
     setActiveReviewId(null);
     setComment("");
@@ -272,74 +272,63 @@ const [reviewError, setReviewError] = useState<string | null>(null);
                 </div>
 
                 {/* FOOTER */}
-                <div className="px-4 py-3 border-t">
-                  <p className="text-sm font-semibold mb-3">
-                    {t.total}: π{formatPi(o.total)}
-                  </p>
+                <div className="mt-2">
+  {reviewedMap[item.product_id] ? (
+    <span className="text-sm text-green-600 font-medium">
+      {t.order_review}
+    </span>
+  ) : activeReviewId === item.product_id ? (
+    <div className="space-y-2">
+      {/* STARS */}
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            onClick={() => setRating(star)}
+            className={`text-lg ${
+              star <= rating
+                ? "text-yellow-500"
+                : "text-gray-300"
+            }`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
 
-                  {reviewedMap[o.id] ? (
-                    <button
-                      disabled
-                      className="px-4 py-1.5 text-sm bg-orange-100 text-orange-500 rounded-md"
-                    >
-                      {t.order_review}
-                    </button>
-                  ) : activeReviewId === o.id ? (
-                    <div className="space-y-3">
-                      {/* STARS */}
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            onClick={() => setRating(star)}
-                            className={`text-lg ${
-                              star <= rating
-                                ? "text-yellow-500"
-                                : "text-gray-300"
-                            }`}
-                          >
-                            ★
-                          </button>
-                        ))}
-                      </div>
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder={t.default_review_comment}
+        className="w-full border rounded-md p-2 text-sm"
+      />
 
-                      {/* COMMENT */}
-                      
-<textarea
-  value={comment}
-  onChange={(e) =>
-    setComment(e.target.value)
-  }
-  placeholder={t.default_review_comment}
-  className="w-full border rounded-md p-2 text-sm"
-/>
+      {reviewError && (
+        <p className="text-sm text-red-500">
+          {reviewError}
+        </p>
+      )}
 
-{/* 🔴 ERROR MESSAGE HERE */}
-{reviewError && (
-  <p className="text-sm text-red-500">
-    {reviewError}
-  </p>
-)}
-
-<button 
-  onClick={() =>
-  submitReview(o.id, o.order_items?.[0]?.product_id)
-}
-  className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
->
-  {t.submit_review}
-</button>
-                    </div>
-                  ) : (
-                    <button
-  onClick={() => {
-    setActiveReviewId(o.id);
-    setComment(t.default_review_comment);
-  }}
-  className="px-4 py-1.5 text-sm border border-orange-500 text-orange-500 rounded-md hover:bg-orange-500 hover:text-white transition"
->
-  {t.review_orders}
-</button>
+      <button
+        onClick={() =>
+          submitReview(o.id, item.product_id)
+        }
+        className="px-3 py-1 text-sm bg-orange-500 text-white rounded-md"
+      >
+        {t.submit_review}
+      </button>
+    </div>
+  ) : (
+    <button
+      onClick={() => {
+        setActiveReviewId(item.product_id);
+        setComment(t.default_review_comment);
+      }}
+      className="px-3 py-1 text-sm border border-orange-500 text-orange-500 rounded-md"
+    >
+      {t.review_orders}
+    </button>
+  
                   )}
                 </div>
               </div>
