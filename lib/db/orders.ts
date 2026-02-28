@@ -45,6 +45,7 @@ export type OrderRecord = {
   status: string;
   total: number;
   created_at: string;
+   is_reviewed?: boolean; 
   buyer?: {
     name: string;
     phone: string;
