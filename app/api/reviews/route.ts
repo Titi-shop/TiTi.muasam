@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     const role = await resolveRole(user);
     
-    if (role !== "customer") {
+    if (role !== "customer" && role !== "seller") {
   return NextResponse.json(
     { error: "FORBIDDEN_ROLE" },
     { status: 403 }
