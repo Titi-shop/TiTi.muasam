@@ -152,7 +152,7 @@ const [reviewError, setReviewError] = useState<string | null>(null);
   order_id: orderId,
   product_id: productId,
   rating,
-  comment,
+  comment: comment.trim() || t.default_review_comment,
 }),
     });
 
@@ -332,13 +332,14 @@ const [reviewError, setReviewError] = useState<string | null>(null);
                     </div>
                   ) : (
                     <button
-                      onClick={() =>
-                        setActiveReviewId(o.id)
-                      }
-                      className="px-4 py-1.5 text-sm border border-orange-500 text-orange-500 rounded-md hover:bg-orange-500 hover:text-white transition"
-                    >
-                      {t.review_orders}
-                    </button>
+  onClick={() => {
+    setActiveReviewId(o.id);
+    setComment(t.default_review_comment);
+  }}
+  className="px-4 py-1.5 text-sm border border-orange-500 text-orange-500 rounded-md hover:bg-orange-500 hover:text-white transition"
+>
+  {t.review_orders}
+</button>
                   )}
                 </div>
               </div>
