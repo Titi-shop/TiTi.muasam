@@ -49,11 +49,12 @@ export default function CustomerMenu() {
     }
 
     const res = await fetch("/api/seller/register", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+});
 
     const data: unknown = await res.json().catch(() => null);
 
