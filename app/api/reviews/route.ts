@@ -96,6 +96,44 @@ const comment =
       );
     }
 
+     /* =========================
+   GET /api/reviews
+========================= */
+
+export async function GET() {
+  try {
+    const user = await getUserFromBearer();
+    if (!user) {
+      return NextResponse.json(
+        { error: "UNAUTHORIZED" },
+        { status: 401 }
+      );
+    }
+
+    const result = await query<{
+      order_id: string;
+      product_id: string;
+    }>(
+      `
+      select order_id, product_id
+      from reviews
+      where user_pi_uid = $1
+      `,
+      [user.pi_uid]
+    );
+
+    return NextResponse.json(result.rows);
+
+  } catch (error) {
+    console.error("GET REVIEWS ERROR:", error);
+
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR" },
+      { status: 500 }
+    );
+  }
+}
+
     /* =========================
        CHECK ORDER + PRODUCT
     ========================== */
