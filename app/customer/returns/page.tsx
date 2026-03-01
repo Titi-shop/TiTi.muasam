@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 type ReturnRecord = {
   id: string;
@@ -18,14 +24,34 @@ export default function ReturnsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/returns", {
-  headers: {
-    Authorization: `Bearer ${token}`
-  }
-})
-      .then((res) => res.json())
-      .then((data) => setReturns(data))
-      .finally(() => setLoading(false));
+    const load = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const token = session?.access_token;
+
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/returns", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setReturns(data);
+      }
+
+      setLoading(false);
+    };
+
+    load();
   }, []);
 
   function getStatusColor(status: string) {
@@ -52,7 +78,6 @@ export default function ReturnsPage() {
   return (
     <main className="min-h-screen bg-gray-50 pb-16">
       <div className="max-w-xl mx-auto p-4 space-y-4">
-
         <h1 className="text-lg font-semibold">My Returns</h1>
 
         {returns.length === 0 && (
@@ -84,7 +109,6 @@ export default function ReturnsPage() {
               </span>
             </div>
 
-            {/* Mini timeline */}
             <div className="flex items-center gap-2 text-[10px] text-gray-400">
               <span>Pending</span>
               <span>→</span>
