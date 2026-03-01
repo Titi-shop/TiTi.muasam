@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrderByIdForBuyer } from "@/lib/db/orders";
-import { getPiUserFromRequest } from "../lib/auth"; // nếu bạn có
+import { getPiUserFromRequest } from "@/lib/auth"; // nếu bạn có
 
 export async function GET(
   req: NextRequest,
