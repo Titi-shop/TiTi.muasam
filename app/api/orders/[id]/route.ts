@@ -1,64 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
-import { query } from "@/lib/db";
+import { getOrderByIdForBuyer } from "@/lib/db/orders";
+import { getPiUserFromRequest } from "@/lib/auth"; // nếu bạn có
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
-/* =========================
-   PATCH /api/orders/[id]
-========================= */
-export async function PATCH(
+export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const user = await getUserFromBearer();
+  const user = await getPiUserFromRequest(req);
 
   if (!user) {
-    return NextResponse.json(
-      { error: "UNAUTHORIZED" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
 
-  const orderId = params.id;
-  const body = await req.json();
-  const { status, cancel_reason } = body;
+  const order = await getOrderByIdForBuyer(
+    params.id,
+    user.pi_uid
+  );
 
-  if (typeof status !== "string") {
-    return NextResponse.json(
-      { error: "INVALID_STATUS" },
-      { status: 400 }
-    );
+  if (!order) {
+    return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }
 
-  try {
-    // chỉ cho phép buyer của đơn được cập nhật
-    const result = await query(
-  `
-  UPDATE orders
-  SET status = $1,
-      cancel_reason = $2
-  WHERE id = $3
-    AND buyer_id = $4
-  RETURNING *
-  `,
-  [status, cancel_reason ?? null, orderId, user.pi_uid]
-);
-
-    if (!result.rows.length) {
-      return NextResponse.json(
-        { error: "ORDER_NOT_FOUND" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(result.rows[0]);
-  } catch (err) {
-    console.error("PATCH ORDER ERROR:", err);
-    return NextResponse.json(
-      { error: "UPDATE_FAILED" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(order);
 }
