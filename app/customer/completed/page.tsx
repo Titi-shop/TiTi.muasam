@@ -206,10 +206,11 @@ export default function CompletedOrdersPage() {
         ) : (
           <div className="space-y-4">
             {orders.map((o) => (
-              <div
-                key={o.id}
-                className="bg-white rounded-xl shadow-sm overflow-hidden"
-              >
+  <div
+    key={o.id}
+    onClick={() => router.push(`/customer/orders/${o.id}`)}
+    className="bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition"
+  >
                 {/* HEADER */}
                 <div className="flex justify-between items-center px-4 py-3 border-b">
                   <span className="font-semibold text-sm">
