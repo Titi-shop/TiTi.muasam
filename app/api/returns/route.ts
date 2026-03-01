@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
-import { resolveRole } from "@/lib/auth/resolveRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 /* =========================
@@ -8,9 +7,10 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 ========================= */
 
 type ReturnPayload = {
-  orderId: string;
-  reason: string;
-  images?: string[];
+  orderId?: unknown;
+  order_id?: unknown;
+  reason?: unknown;
+  images?: unknown;
 };
 
 type OrderRow = {
@@ -36,30 +36,40 @@ export async function POST(req: Request) {
       );
     }
 
+    /* 2️⃣ PARSE BODY SAFELY */
+    const raw = (await req.json()) as ReturnPayload;
 
-    /* 3️⃣ VALIDATE BODY */
-    const body = (await req.json()) as ReturnPayload;
+    const orderId =
+      typeof raw.orderId === "string"
+        ? raw.orderId
+        : typeof raw.order_id === "string"
+        ? raw.order_id
+        : null;
 
-    if (
-      typeof body.orderId !== "string" ||
-      typeof body.reason !== "string" ||
-      body.reason.trim().length === 0 ||
-      (body.images &&
-        (!Array.isArray(body.images) ||
-          body.images.some((i) => typeof i !== "string")))
-    ) {
+    const reason =
+      typeof raw.reason === "string"
+        ? raw.reason.trim()
+        : null;
+
+    const images =
+      Array.isArray(raw.images) &&
+      raw.images.every((i) => typeof i === "string")
+        ? raw.images
+        : [];
+
+    if (!orderId || !reason || reason.length === 0) {
       return NextResponse.json(
         { error: "Invalid payload" },
         { status: 400 }
       );
     }
 
-    /* 4️⃣ CHECK ORDER OWNERSHIP */
+    /* 3️⃣ CHECK ORDER OWNERSHIP */
     const { data: order, error: orderError } =
       await supabaseAdmin
         .from("orders")
         .select("id,status,buyer_id,seller_id")
-        .eq("id", body.orderId)
+        .eq("id", orderId)
         .eq("buyer_id", user.pi_uid)
         .single<OrderRow>();
 
@@ -70,7 +80,7 @@ export async function POST(req: Request) {
       );
     }
 
-    /* 5️⃣ CHECK RETURNABLE STATUS */
+    /* 4️⃣ CHECK RETURNABLE STATUS */
     if (!["completed", "delivered"].includes(order.status)) {
       return NextResponse.json(
         { error: "Not returnable" },
@@ -78,12 +88,13 @@ export async function POST(req: Request) {
       );
     }
 
-    /* 6️⃣ CHECK ALREADY REQUESTED */
-    const { data: existing } = await supabaseAdmin
-      .from("returns")
-      .select("id")
-      .eq("order_id", body.orderId)
-      .maybeSingle();
+    /* 5️⃣ CHECK ALREADY REQUESTED */
+    const { data: existing } =
+      await supabaseAdmin
+        .from("returns")
+        .select("id")
+        .eq("order_id", orderId)
+        .maybeSingle();
 
     if (existing) {
       return NextResponse.json(
@@ -92,16 +103,18 @@ export async function POST(req: Request) {
       );
     }
 
-    /* 7️⃣ INSERT RETURN */
+    /* 6️⃣ INSERT RETURN */
     const { error: insertError } =
-      await supabaseAdmin.from("returns").insert({
-        order_id: body.orderId,
-        user_pi_uid: user.pi_uid,
-        seller_pi_uid: order.seller_id,
-        reason: body.reason.trim(),
-        images: body.images ?? [],
-        status: "pending",
-      });
+      await supabaseAdmin
+        .from("returns")
+        .insert({
+          order_id: orderId,
+          user_pi_uid: user.pi_uid,
+          seller_pi_uid: order.seller_id,
+          reason,
+          images,
+          status: "pending",
+        });
 
     if (insertError) {
       console.error("INSERT RETURN ERROR:", insertError);
@@ -111,12 +124,12 @@ export async function POST(req: Request) {
       );
     }
 
-    /* 8️⃣ UPDATE ORDER STATUS */
+    /* 7️⃣ UPDATE ORDER STATUS */
     const { error: updateError } =
       await supabaseAdmin
         .from("orders")
         .update({ status: "return_requested" })
-        .eq("id", body.orderId);
+        .eq("id", orderId);
 
     if (updateError) {
       console.error("ORDER UPDATE ERROR:", updateError);
@@ -124,7 +137,7 @@ export async function POST(req: Request) {
       await supabaseAdmin
         .from("returns")
         .delete()
-        .eq("order_id", body.orderId);
+        .eq("order_id", orderId);
 
       return NextResponse.json(
         { error: "Failed to update order" },
@@ -144,7 +157,7 @@ export async function POST(req: Request) {
 }
 
 /* =========================
-   GET – LIST RETURNS (CUSTOMER)
+   GET – LIST RETURNS
 ========================= */
 
 export async function GET() {
@@ -158,22 +171,21 @@ export async function GET() {
       );
     }
 
-   
-
-    const { data, error } = await supabaseAdmin
-      .from("returns")
-      .select(`
-        id,
-        order_id,
-        status,
-        reason,
-        images,
-        return_tracking_code,
-        refunded_at,
-        created_at
-      `)
-      .eq("user_pi_uid", user.pi_uid)
-      .order("created_at", { ascending: false });
+    const { data, error } =
+      await supabaseAdmin
+        .from("returns")
+        .select(`
+          id,
+          order_id,
+          status,
+          reason,
+          images,
+          return_tracking_code,
+          refunded_at,
+          created_at
+        `)
+        .eq("user_pi_uid", user.pi_uid)
+        .order("created_at", { ascending: false });
 
     if (error) {
       return NextResponse.json(
