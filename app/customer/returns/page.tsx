@@ -1,251 +1,109 @@
 "use client";
-export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Upload, Send } from "lucide-react";
-import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
-/* =========================
-   TYPES
-========================= */
-interface Order {
+type ReturnRecord = {
   id: string;
+  order_id: string;
   status: string;
-}
+  created_at: string;
+  return_tracking_code: string | null;
+  refunded_at: string | null;
+};
 
-const RETURN_REASON_KEYS = [
-  "return_reason_defective",
-  "return_reason_wrong_item",
-  "return_reason_missing_item",
-  "return_reason_not_as_described",
-  "return_reason_late_delivery",
-  "return_reason_other",
-];
-
-/* =========================
-   PAGE
-========================= */
-export default function ReturnPage() {
+export default function ReturnsPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const [returns, setReturns] = useState<ReturnRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<string>("");
-  const [reason, setReason] = useState<string>("");
-  const [images, setImages] = useState<string[]>([]);
-  const [uploading, setUploading] = useState<boolean>(false);
-  const [submitting, setSubmitting] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  /* =========================
-     LOAD RETURNABLE ORDERS
-  ========================= */
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await apiAuthFetch(
-          "/api/orders?returnable=true",
-          { cache: "no-store" }
-        );
-
-        if (!res.ok) throw new Error("LOAD_FAILED");
-
-        const data = await res.json();
-        setOrders(Array.isArray(data) ? data : []);
-      } catch {
-        setOrders([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
+    fetch("/api/returns/my")
+      .then((res) => res.json())
+      .then((data) => setReturns(data))
+      .finally(() => setLoading(false));
   }, []);
 
-  /* =========================
-     UPLOAD IMAGE
-  ========================= */
-  const handleUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-
-    try {
-      const form = new FormData();
-      form.append("file", file);
-
-      const res = await apiAuthFetch("/api/upload", {
-        method: "POST",
-        body: form,
-      });
-
-      if (!res.ok) throw new Error("UPLOAD_FAILED");
-
-      const data = await res.json();
-      if (data?.url) {
-        setImages((prev) => [...prev, data.url]);
-      }
-    } finally {
-      setUploading(false);
+  function getStatusColor(status: string) {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-700";
+      case "approved":
+        return "bg-green-100 text-green-700";
+      case "shipped":
+        return "bg-blue-100 text-blue-700";
+      case "received":
+        return "bg-purple-100 text-purple-700";
+      case "refunded":
+        return "bg-green-200 text-green-800";
+      case "rejected":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-gray-100 text-gray-600";
     }
-  };
-
-  /* =========================
-     SUBMIT RETURN
-  ========================= */
-  const handleSubmit = async () => {
-    if (!selectedOrder || !reason || images.length === 0) {
-      alert(t.return_validation_error);
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      const res = await apiAuthFetch("/api/returns", {
-        method: "POST",
-        body: JSON.stringify({
-          orderId: selectedOrder,
-          reason,
-          images,
-        }),
-      });
-
-      if (!res.ok) throw new Error("RETURN_FAILED");
-
-      alert(t.return_submitted);
-      router.push("/customer/orders");
-    } catch {
-      alert(t.return_failed);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  /* =========================
-     LOADING
-  ========================= */
-  if (loading) {
-    return (
-      <p className="text-center mt-10">
-        {t.loading}
-      </p>
-    );
   }
 
-  /* =========================
-     UI
-  ========================= */
+  if (loading) return <div className="p-6">Loading...</div>;
+
   return (
-    <main className="min-h-screen bg-gray-50 pb-10">
-      {/* HEADER */}
-      <div className="flex items-center bg-white p-4 shadow-sm">
-        <button onClick={() => router.back()}>
-          <ArrowLeft size={22} />
-        </button>
-        <h1 className="mx-auto font-semibold">
-          {t.return_request}
-        </h1>
-      </div>
+    <main className="min-h-screen bg-gray-50 pb-16">
+      <div className="max-w-xl mx-auto p-4 space-y-4">
 
-      {/* SELECT ORDER */}
-      <div className="p-4">
-        <label className="font-semibold">
-          {t.select_order}
-        </label>
+        <h1 className="text-lg font-semibold">My Returns</h1>
 
-        <select
-          className="w-full border p-2 rounded mt-2"
-          value={selectedOrder}
-          onChange={(e) => setSelectedOrder(e.target.value)}
-        >
-          <option value="">
-            -- {t.select} --
-          </option>
-
-          {orders.map((o) => (
-            <option key={o.id} value={o.id}>
-              #{o.id}
-            </option>
-          ))}
-        </select>
-
-        {orders.length === 0 && (
-          <p className="text-sm text-gray-400 mt-2">
-            {t.no_returnable_orders}
-          </p>
-        )}
-      </div>
-
-      {/* REASON */}
-      <div className="p-4">
-        <label className="font-semibold">
-          {t.reason}
-        </label>
-
-        <select
-          className="w-full border p-2 rounded mt-2"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-        >
-          <option value="">
-            -- {t.select_reason} --
-          </option>
-
-          {RETURN_REASON_KEYS.map((key) => (
-            <option key={key} value={key}>
-              {t[key]}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* IMAGE UPLOAD */}
-      <div className="p-4">
-        <label className="font-semibold">
-          {t.proof_images}
-        </label>
-
-        <label className="flex gap-2 bg-orange-500 text-white px-4 py-2 rounded mt-2 cursor-pointer w-fit">
-          <Upload size={18} />
-          {uploading ? t.uploading : t.upload_image}
-          <input
-            type="file"
-            hidden
-            accept="image/*"
-            onChange={handleUpload}
-          />
-        </label>
-
-        {images.length > 0 && (
-          <div className="flex gap-3 mt-3 flex-wrap">
-            {images.map((url, index) => (
-              <img
-                key={index}
-                src={url}
-                className="w-20 h-20 object-cover rounded border"
-                alt="proof"
-              />
-            ))}
+        {returns.length === 0 && (
+          <div className="bg-white p-6 rounded-xl shadow-sm text-center text-gray-500">
+            No return requests yet
           </div>
         )}
-      </div>
 
-      {/* SUBMIT */}
-      <div className="flex justify-center mt-6">
-        <button
-          onClick={handleSubmit}
-          disabled={submitting}
-          className="bg-green-600 text-white px-6 py-2 rounded disabled:opacity-60"
-        >
-          <Send size={18} className="inline mr-2" />
-          {submitting ? t.sending : t.submit_request}
-        </button>
+        {returns.map((r) => (
+          <div
+            key={r.id}
+            onClick={() => router.push(`/customer/returns/${r.id}`)}
+            className="bg-white rounded-xl shadow-sm p-4 cursor-pointer hover:shadow-md transition space-y-3"
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="font-medium">Return #{r.id}</p>
+                <p className="text-xs text-gray-400">
+                  Order: {r.order_id}
+                </p>
+              </div>
+
+              <span
+                className={`px-3 py-1 text-xs rounded-full ${getStatusColor(
+                  r.status
+                )}`}
+              >
+                {r.status}
+              </span>
+            </div>
+
+            {/* Mini timeline */}
+            <div className="flex items-center gap-2 text-[10px] text-gray-400">
+              <span>Pending</span>
+              <span>→</span>
+              <span>Approved</span>
+              <span>→</span>
+              <span>Shipped</span>
+              <span>→</span>
+              <span>Refunded</span>
+            </div>
+
+            {r.return_tracking_code && (
+              <div className="text-xs text-blue-600">
+                Tracking: {r.return_tracking_code}
+              </div>
+            )}
+
+            {r.refunded_at && (
+              <div className="text-xs text-green-600">
+                Refunded at: {new Date(r.refunded_at).toLocaleString()}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </main>
   );
