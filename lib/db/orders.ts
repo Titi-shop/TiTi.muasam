@@ -678,37 +678,68 @@ export async function getSellerOrdersCount(
   return empty;
 }
 
+type RawOrderItem = {
+  quantity: number;
+  price: number;
+  product_id: string;
+  status: string;
+  seller_cancel_reason: string | null;
+  seller_message: string | null;
+};
+
+type RawOrder = {
+  id: string;
+  status: string;
+  total: number;
+  created_at: string;
+  buyer_name: string | null;
+  buyer_phone: string | null;
+  buyer_address: string | null;
+  order_items: RawOrderItem[];
+};
+
 export async function getOrderByIdForBuyer(
   orderId: string,
   buyerPiUid: string
 ): Promise<OrderRecord | null> {
+  const select =
+    "id,status,total,created_at,buyer_name,buyer_phone,buyer_address," +
+    "order_items(quantity,price,product_id,status,seller_cancel_reason,seller_message)";
 
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&buyer_id=eq.${buyerPiUid}&select=
-      id,
-      status,
-      total,
-      created_at,
-      buyer_name,
-      buyer_phone,
-      buyer_address,
-      order_items(quantity,price,product_id,status,seller_cancel_reason,seller_message)
-    `,
-    { headers: headers(), cache: "no-store" }
-  );
+  const url =
+    `${SUPABASE_URL}/rest/v1/orders` +
+    `?id=eq.${encodeURIComponent(orderId)}` +
+    `&buyer_id=eq.${encodeURIComponent(buyerPiUid)}` +
+    `&select=${select}`;
 
-  if (!res.ok) return null;
+  const res = await fetch(url, {
+    headers: headers(),
+    cache: "no-store",
+  });
 
-  const [raw] = await res.json() as any[];
+  if (!res.ok) {
+    console.error("SUPABASE ERROR:", await res.text());
+    return null;
+  }
 
-  if (!raw) return null;
+  const data: RawOrder[] = await res.json();
 
-  const productIds = Array.from(
-    new Set(raw.order_items.map((i: any) => i.product_id))
-  );
+  if (!data.length) return null;
+
+  const raw = data[0];
+
+  /* =========================
+     FETCH PRODUCTS
+  ========================= */
+  const productIds = [
+    ...new Set(raw.order_items.map((i) => i.product_id)),
+  ];
 
   const productsMap = await fetchProductsMap(productIds);
 
+  /* =========================
+     RETURN MAPPED DATA
+  ========================= */
   return {
     id: raw.id,
     status: raw.status,
@@ -719,13 +750,13 @@ export async function getOrderByIdForBuyer(
       phone: raw.buyer_phone ?? "",
       address: raw.buyer_address ?? "",
     },
-    order_items: raw.order_items.map((i: any) => ({
+    order_items: raw.order_items.map((i) => ({
       product_id: i.product_id,
       quantity: i.quantity,
       price: fromMicroPi(i.price),
       status: i.status,
-      seller_cancel_reason: i.seller_cancel_reason ?? null,
-      seller_message: i.seller_message ?? null,
+      seller_cancel_reason: i.seller_cancel_reason,
+      seller_message: i.seller_message,
       product: productsMap[i.product_id],
     })),
   };
