@@ -167,14 +167,7 @@ export async function GET() {
       );
     }
 
-    const role = await resolveRole(user);
-
-    if (role !== "customer") {
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      );
-    }
+   
 
     const { data, error } = await supabaseAdmin
       .from("returns")
