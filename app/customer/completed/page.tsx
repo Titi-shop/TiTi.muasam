@@ -293,6 +293,7 @@ const router = useRouter();
 
                       <textarea
                         value={comment}
+                        onClick={(e) => e.stopPropagation()}
                         onChange={(e) =>
                           setComment(e.target.value)
                         }
