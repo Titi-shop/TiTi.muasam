@@ -275,18 +275,18 @@ const router = useRouter();
                       <div className="flex gap-1">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <button
-                            key={star}
-                            onClick={() => {
-                             e.stopPropagation();
-                              setRating(star)
-                            }
-                            className={`text-lg ${
-                              star <= rating
-                                ? "text-yellow-500"
-                                : "text-gray-300"
-                            }`}
-                          >
-                            ★
+  key={star}
+  onClick={(e) => {
+    e.stopPropagation();
+    setRating(star);
+  }}
+  className={`text-lg ${
+    star <= rating
+      ? "text-yellow-500"
+      : "text-gray-300"
+  }`}
+>
+  ★
                           </button>
                         ))}
                       </div>
@@ -310,14 +310,13 @@ const router = useRouter();
                       )}
 
                       <button
-                        onClick={() => {
-                           e.stopPropagation();
-                          submitReview(
-                            o.id,
-                            o.order_items?.[0]
-                              ?.product_id
-                          )
-                        }
+                        onClick={(e) => {
+  e.stopPropagation();
+  submitReview(
+    o.id,
+    o.order_items?.[0]?.product_id
+  );
+}}
                         className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition"
                       >
                         {t.submit_review}
@@ -325,13 +324,11 @@ const router = useRouter();
                     </div>
                   ) : (
                     <button
-                      onClick={() => {
-                        e.stopPropagation();
-                        setActiveReviewId(o.id);
-                        setComment(
-                          t.default_review_comment
-                        );
-                      }}
+                      onClick={(e) => {
+  e.stopPropagation();
+  setActiveReviewId(o.id);
+  setComment(t.default_review_comment);
+}}
                       className="px-4 py-1.5 text-sm border border-orange-500 text-orange-500 rounded-md hover:bg-orange-500 hover:text-white transition"
                     >
                       {t.review_orders}
