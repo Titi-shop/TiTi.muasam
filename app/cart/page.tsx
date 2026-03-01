@@ -197,65 +197,53 @@ if (!shipping) {
            COMPLETE
         ========================= */
         onReadyForServerCompletion: async (
-  paymentId: string,
-  txid: string
-) => {
-  try {
-    /* =========================
-       COMPLETE PI
-    ========================= */
-    const completeRes = await fetch("/api/pi/complete", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ paymentId, txid }),
-    });
+          paymentId: string,
+          txid: string
+        ) => {
+          const completeRes = await fetch("/api/pi/complete", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ paymentId, txid }),
+          });
 
-    if (!completeRes.ok) {
-      throw new Error("COMPLETE_FAILED");
-    }
+          if (!completeRes.ok) {
+            throw new Error("COMPLETE_FAILED");
+          }
 
-    /* =========================
-       CREATE ORDER
-    ========================= */
-    const orderRes = await apiAuthFetch("/api/orders", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        items: selectedItems.map((i) => ({
-          product_id: i.id,
-          quantity: i.quantity,
-          price:
-            typeof i.sale_price === "number"
-              ? i.sale_price
-              : i.price,
-        })),
-        total,
-        shipping,
-      }),
-    });
+          const orderRes = await apiAuthFetch("/api/orders", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    items: selectedItems.map((i) => ({
+      product_id: i.id,
+      quantity: i.quantity,
+      price:
+        typeof i.sale_price === "number"
+          ? i.sale_price
+          : i.price,
+    })),
+    total,
+    shipping,
+  }),
+});
 
-    if (!orderRes.ok) {
-      throw new Error("ORDER_CREATE_FAILED");
-    }
+          if (!orderRes.ok) {
+            throw new Error("ORDER_CREATE_FAILED");
+          }
 
-    /* =========================
-       SUCCESS FLOW
-    ========================= */
-    clearCart();
-    setSelectedIds([]);
-    setProcessing(false);
+          clearCart();
+          setSelectedIds([]);
+          setProcessing(false);
+          router.push("/customer/pending");
+        },
 
-    router.push("/customer/pending");
-  } catch (err) {
-    console.error("Cart payment error:", err);
-    alert("Thanh toán thành công nhưng tạo đơn thất bại");
-    setProcessing(false);
-  }
-},
+        onCancel: () => {
+          setProcessing(false);
+        },
 
         onError: () => {
           setProcessing(false);
