@@ -48,7 +48,7 @@ PAGE
 ========================= */
 export default function CompletedOrdersPage() {
   const { t } = useTranslation();
-
+const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewedMap, setReviewedMap] = useState<ReviewMap>({});
@@ -276,7 +276,8 @@ export default function CompletedOrdersPage() {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <button
                             key={star}
-                            onClick={() =>
+                            onClick={() => {
+                             e.stopPropagation();
                               setRating(star)
                             }
                             className={`text-lg ${
@@ -308,7 +309,8 @@ export default function CompletedOrdersPage() {
                       )}
 
                       <button
-                        onClick={() =>
+                        onClick={() => {
+                           e.stopPropagation();
                           submitReview(
                             o.id,
                             o.order_items?.[0]
@@ -323,6 +325,7 @@ export default function CompletedOrdersPage() {
                   ) : (
                     <button
                       onClick={() => {
+                        e.stopPropagation();
                         setActiveReviewId(o.id);
                         setComment(
                           t.default_review_comment
