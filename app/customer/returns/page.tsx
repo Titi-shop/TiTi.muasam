@@ -18,7 +18,11 @@ export default function ReturnsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/returns/my")
+    fetch("/api/returns", {
+  headers: {
+    Authorization: `Bearer ${token}`
+  }
+})
       .then((res) => res.json())
       .then((data) => setReturns(data))
       .finally(() => setLoading(false));
