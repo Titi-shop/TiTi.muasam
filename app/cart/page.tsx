@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -23,6 +23,13 @@ interface CartItem {
   images?: string[];
 }
 
+interface ShippingInfo {
+  name: string;
+  phone: string;
+  address: string;
+  country?: string;
+}
+
 /* =========================
    PAGE
 ========================= */
@@ -35,7 +42,9 @@ export default function CartPage() {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
+const [shipping, setShipping] = useState<ShippingInfo | null>(null);
 
+   
   /**
    * qtyDraft: giữ giá trị người đang gõ
    * key = productId
@@ -79,6 +88,43 @@ export default function CartPage() {
     }, 0);
   }, [selectedItems]);
 
+
+   useEffect(() => {
+  async function loadAddress() {
+    try {
+      const token = await getPiAccessToken();
+      if (!token) return;
+
+      const res = await fetch("/api/address", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      const def = data.items?.find(
+        (a: { is_default?: boolean }) => a.is_default
+      );
+
+      if (def) {
+        setShipping({
+          name: def.name,
+          phone: def.phone,
+          address: def.address,
+          country: def.country,
+        });
+      }
+    } catch (err) {
+      console.error("Load address error", err);
+    }
+  }
+
+  if (user) loadAddress();
+}, [user]);
+
   /* =========================
      PAY WITH PI
   ========================= */
@@ -94,6 +140,11 @@ const handlePay = async () => {
     return;
   }
 
+if (!shipping) {
+  alert("Vui lòng thêm địa chỉ giao hàng");
+  return;
+}
+   
   if (selectedItems.length === 0) {
     alert(t.please_select_item);
     return;
@@ -162,22 +213,23 @@ const handlePay = async () => {
           }
 
           const orderRes = await apiAuthFetch("/api/orders", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              items: selectedItems.map((i) => ({
-                product_id: i.id,
-                quantity: i.quantity,
-                price:
-                  typeof i.sale_price === "number"
-                    ? i.sale_price
-                    : i.price,
-              })),
-              total,
-            }),
-          });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    items: selectedItems.map((i) => ({
+      product_id: i.id,
+      quantity: i.quantity,
+      price:
+        typeof i.sale_price === "number"
+          ? i.sale_price
+          : i.price,
+    })),
+    total,
+    shipping,
+  }),
+});
 
           if (!orderRes.ok) {
             throw new Error("ORDER_CREATE_FAILED");
