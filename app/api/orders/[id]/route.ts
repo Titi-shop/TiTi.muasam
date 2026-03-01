@@ -1,63 +1,39 @@
-import { NextResponse } from "next/server";
-import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
-import { resolveRole } from "@/lib/auth/resolveRole";
+import { NextRequest, NextResponse } from "next/server";
 import { getOrderByIdForBuyer } from "@/lib/db/orders";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 export async function GET(
-  _req: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // 1️⃣ Auth
-    const user = await getUserFromBearer();
-    if (!user) {
+    // Lấy buyer id từ header Authorization
+    const authHeader = req.headers.get("authorization");
+
+    if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
-        { error: "UNAUTHENTICATED" },
+        { error: "UNAUTHORIZED" },
         { status: 401 }
       );
     }
 
-    const orderId = params.id;
+    const buyerPiUid = authHeader.replace("Bearer ", "");
 
-    if (!orderId) {
-      return NextResponse.json(
-        { error: "INVALID_ORDER_ID" },
-        { status: 400 }
-      );
-    }
-
-    // 2️⃣ Role check
-    const role = await resolveRole(user);
-
-    if (role !== "buyer") {
-      return NextResponse.json(
-        { error: "FORBIDDEN" },
-        { status: 403 }
-      );
-    }
-
-    // 3️⃣ Ownership check
     const order = await getOrderByIdForBuyer(
-      orderId,
-      user.pi_uid
+      params.id,
+      buyerPiUid
     );
 
     if (!order) {
       return NextResponse.json(
-        { error: "ORDER_NOT_FOUND" },
+        { error: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
     return NextResponse.json(order);
-
-  } catch (error) {
-    console.error("❌ GET ORDER ERROR:", error);
+  } catch (err) {
     return NextResponse.json(
-      { error: "INTERNAL_SERVER_ERROR" },
+      { error: "SERVER_ERROR" },
       { status: 500 }
     );
   }
