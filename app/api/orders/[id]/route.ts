@@ -1,39 +1,39 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { getOrderByIdForBuyer } from "@/lib/db/orders";
 
 export async function GET(
-  req: NextRequest,
+  _req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    // Lấy buyer id từ header Authorization
-    const authHeader = req.headers.get("authorization");
+    const user = await getUserFromBearer();
 
-    if (!authHeader?.startsWith("Bearer ")) {
+    if (!user) {
       return NextResponse.json(
-        { error: "UNAUTHORIZED" },
+        { error: "UNAUTHENTICATED" },
         { status: 401 }
       );
     }
 
-    const buyerPiUid = authHeader.replace("Bearer ", "");
-
     const order = await getOrderByIdForBuyer(
       params.id,
-      buyerPiUid
+      user.pi_uid // 👈 ĐÚNG buyer_id
     );
 
     if (!order) {
       return NextResponse.json(
-        { error: "NOT_FOUND" },
+        { error: "ORDER_NOT_FOUND" },
         { status: 404 }
       );
     }
 
     return NextResponse.json(order);
-  } catch (err) {
+
+  } catch (error) {
+    console.error("GET ORDER ERROR:", error);
     return NextResponse.json(
-      { error: "SERVER_ERROR" },
+      { error: "INTERNAL_SERVER_ERROR" },
       { status: 500 }
     );
   }
