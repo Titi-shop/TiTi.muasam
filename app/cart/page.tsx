@@ -82,91 +82,130 @@ export default function CartPage() {
   /* =========================
      PAY WITH PI
   ========================= */
-  const handlePay = async () => {
-    if (!window.Pi || !piReady) {
-      alert(t.pi_not_ready);
-      return;
-    }
 
-    if (!user) {
-      router.push("/pilogin");
-      return;
-    }
+const handlePay = async () => {
+  if (!window.Pi || !piReady) {
+    alert(t.pi_not_ready);
+    return;
+  }
 
-    if (selectedItems.length === 0) {
-      alert(t.please_select_item);
-      return;
-    }
+  if (!user) {
+    router.push("/pilogin");
+    return;
+  }
 
-    if (processing) return;
-    setProcessing(true);
+  if (selectedItems.length === 0) {
+    alert(t.please_select_item);
+    return;
+  }
 
-    try {
-      const token = await getPiAccessToken();
-      if (!token) throw new Error("NO_TOKEN");
-   
-       if (total < 0.0000001) {
-  alert("Số Pi quá nhỏ để thanh toán");
-  setProcessing(false);
-  return;
-}
-      await window.Pi.createPayment(
-        {
-          amount: Number(total),
-          memo: `${t.paying_order} (${selectedItems.length})`,
-          metadata: { items: selectedItems },
-        },
-        {
-          onReadyForServerApproval: async (paymentId: string) => {
-            await fetch("/api/pi/approve", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ paymentId }),
-            });
-          },
+  if (processing) return;
+  setProcessing(true);
 
-          onReadyForServerCompletion: async (
-            paymentId: string,
-            txid: string
-          ) => {
-            await fetch("/api/pi/complete", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ paymentId, txid }),
-            });
-
-            await apiAuthFetch("/api/orders", {
-              method: "POST",
-              body: JSON.stringify({
-                items: selectedItems.map((i) => ({
-                  product_id: i.id,
-                  quantity: i.quantity,
-                  price:
-                    typeof i.sale_price === "number"
-                      ? i.sale_price
-                      : i.price,
-                })),
-                total,
-              }),
-            });
-
-            clearCart();
-            router.push("/customer/pending");
-          },
-
-          onCancel: () => setProcessing(false),
-          onError: () => setProcessing(false),
-        }
-      );
-    } catch {
-      alert(t.payment_failed);
+  try {
+    if (total < 0.0000001) {
+      alert("Số Pi quá nhỏ để thanh toán");
       setProcessing(false);
+      return;
     }
-  };
 
+    await window.Pi.createPayment(
+      {
+        amount: Number(total),
+        memo: `${t.paying_order} (${selectedItems.length})`,
+        metadata: {
+          items: selectedItems.map((i) => ({
+            product_id: i.id,
+            quantity: i.quantity,
+            price:
+              typeof i.sale_price === "number"
+                ? i.sale_price
+                : i.price,
+          })),
+        },
+      },
+      {
+        /* =========================
+           APPROVE
+        ========================= */
+        onReadyForServerApproval: async (paymentId: string) => {
+          const approveRes = await fetch("/api/pi/approve", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ paymentId }),
+          });
+
+          if (!approveRes.ok) {
+            throw new Error("APPROVE_FAILED");
+          }
+        },
+
+        /* =========================
+           COMPLETE
+        ========================= */
+        onReadyForServerCompletion: async (
+          paymentId: string,
+          txid: string
+        ) => {
+          const completeRes = await fetch("/api/pi/complete", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ paymentId, txid }),
+          });
+
+          if (!completeRes.ok) {
+            throw new Error("COMPLETE_FAILED");
+          }
+
+          const orderRes = await apiAuthFetch("/api/orders", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              items: selectedItems.map((i) => ({
+                product_id: i.id,
+                quantity: i.quantity,
+                price:
+                  typeof i.sale_price === "number"
+                    ? i.sale_price
+                    : i.price,
+              })),
+              total,
+            }),
+          });
+
+          if (!orderRes.ok) {
+            throw new Error("ORDER_CREATE_FAILED");
+          }
+
+          clearCart();
+          setSelectedIds([]);
+          setProcessing(false);
+          router.push("/customer/pending");
+        },
+
+        onCancel: () => {
+          setProcessing(false);
+        },
+
+        onError: () => {
+          setProcessing(false);
+          alert(t.payment_failed);
+        },
+      }
+    );
+  } catch (err) {
+    console.error("PAY ERROR:", err);
+    alert(t.payment_failed);
+    setProcessing(false);
+  }
+};
+   
   /* =========================
      UI
   ========================= */
