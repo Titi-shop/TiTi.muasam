@@ -64,22 +64,36 @@ export async function POST(req: Request) {
       );
     }
 
-    /* 3️⃣ CHECK ORDER OWNERSHIP */
-    const { data: order, error: orderError } =
-      await supabaseAdmin
-        .from("orders")
-        .select("id,status,buyer_id,seller_id")
-        .eq("id", orderId)
-        .eq("buyer_id", user.pi_uid)
-        .single<OrderRow>();
+    /* 3️⃣ GET INTERNAL USER ID */
+const { data: dbUser, error: userError } =
+  await supabaseAdmin
+    .from("users")
+    .select("id")
+    .eq("pi_uid", user.pi_uid)
+    .single();
 
-    if (orderError || !order) {
-      return NextResponse.json(
-        { error: "Order not found" },
-        { status: 404 }
-      );
-    }
+if (userError || !dbUser) {
+  return NextResponse.json(
+    { error: "User not found in DB" },
+    { status: 401 }
+  );
+}
 
+/* 4️⃣ CHECK ORDER OWNERSHIP */
+const { data: order, error: orderError } =
+  await supabaseAdmin
+    .from("orders")
+    .select("id,status,buyer_id,seller_id")
+    .eq("id", orderId)
+    .eq("buyer_id", dbUser.id) // 🔥 SỬA CHỖ NÀY
+    .single<OrderRow>();
+
+if (orderError || !order) {
+  return NextResponse.json(
+    { error: "Order not found" },
+    { status: 404 }
+  );
+}
     /* 4️⃣ CHECK RETURNABLE STATUS */
     if (!["completed", "delivered"].includes(order.status)) {
       return NextResponse.json(
