@@ -36,15 +36,6 @@ export async function POST(req: Request) {
       );
     }
 
-    /* 2️⃣ RBAC */
-    const role = await resolveRole(user);
-
-    if (role !== "customer") {
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      );
-    }
 
     /* 3️⃣ VALIDATE BODY */
     const body = (await req.json()) as ReturnPayload;
