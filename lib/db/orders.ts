@@ -677,3 +677,56 @@ export async function getSellerOrdersCount(
 
   return empty;
 }
+
+export async function getOrderByIdForBuyer(
+  orderId: string,
+  buyerPiUid: string
+): Promise<OrderRecord | null> {
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&buyer_id=eq.${buyerPiUid}&select=
+      id,
+      status,
+      total,
+      created_at,
+      buyer_name,
+      buyer_phone,
+      buyer_address,
+      order_items(quantity,price,product_id,status,seller_cancel_reason,seller_message)
+    `,
+    { headers: headers(), cache: "no-store" }
+  );
+
+  if (!res.ok) return null;
+
+  const [raw] = await res.json() as any[];
+
+  if (!raw) return null;
+
+  const productIds = Array.from(
+    new Set(raw.order_items.map((i: any) => i.product_id))
+  );
+
+  const productsMap = await fetchProductsMap(productIds);
+
+  return {
+    id: raw.id,
+    status: raw.status,
+    total: fromMicroPi(raw.total),
+    created_at: raw.created_at,
+    buyer: {
+      name: raw.buyer_name ?? "",
+      phone: raw.buyer_phone ?? "",
+      address: raw.buyer_address ?? "",
+    },
+    order_items: raw.order_items.map((i: any) => ({
+      product_id: i.product_id,
+      quantity: i.quantity,
+      price: fromMicroPi(i.price),
+      status: i.status,
+      seller_cancel_reason: i.seller_cancel_reason ?? null,
+      seller_message: i.seller_message ?? null,
+      product: productsMap[i.product_id],
+    })),
+  };
+}
