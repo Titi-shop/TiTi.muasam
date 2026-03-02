@@ -1,14 +1,13 @@
 /* lib/db/products.ts */
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!; // 🔥 BẮT BUỘC
-
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 if (!SUPABASE_URL) {
   throw new Error("❌ NEXT_PUBLIC_SUPABASE_URL is missing");
 }
 
-if (!SERVICE_KEY) {
-  throw new Error("❌ SUPABASE_SERVICE_ROLE_KEY is missing");
+if (!ANON_KEY) {
+  throw new Error("❌ NEXT_PUBLIC_SUPABASE_ANON_KEY is missing");
 }
 
 /* =========================
@@ -67,10 +66,12 @@ export type ProductRecord = {
 /* =========================
    COMMON HEADERS
 ========================= */
-function supabaseHeaders() {
+function supabaseHeaders(accessToken?: string) {
   return {
-    apikey: SERVICE_KEY,
-    Authorization: `Bearer ${SERVICE_KEY}`,
+    apikey: ANON_KEY,
+    Authorization: accessToken
+      ? `Bearer ${accessToken}`
+      : `Bearer ${ANON_KEY}`,
     "Content-Type": "application/json",
   };
 }
@@ -109,12 +110,14 @@ export async function getAllProducts(): Promise<ProductRecord[]> {
    GET — PRODUCTS BY SELLER
 ========================= */
 export async function getSellerProducts(
-  sellerPiUid: string
+  sellerPiUid: string,
+  accessToken: string
+)
 ): Promise<ProductRecord[]> {
   const res = await fetch(
   `?seller_id=eq.${sellerPiUid}&status=eq.active&deleted_at=is.null&select=*`,
   {
-    headers: supabaseHeaders(),
+   headers: supabaseHeaders(accessToken),
     cache: "no-store",
   }
 );
