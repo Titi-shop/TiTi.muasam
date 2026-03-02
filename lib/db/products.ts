@@ -107,7 +107,6 @@ export async function getAllProducts(): Promise<ProductRecord[]> {
 }
 /* =========================
    GET — PRODUCTS BY SELLER
-   sellerPiUid = users.pi_uid
 ========================= */
 export async function getSellerProducts(
   sellerPiUid: string
@@ -126,12 +125,18 @@ export async function getSellerProducts(
     throw new Error("FAILED_TO_FETCH_SELLER_PRODUCTS");
   }
 
-  return (await res.json()) as ProductRecord[];
-}
+ const raw = (await res.json()) as ProductRecord[];
 
+return raw.map((p): ProductRecord => ({
+  ...p,
+  price: Number((p.price / 100).toFixed(2)),
+  sale_price:
+    p.sale_price !== null
+      ? Number((p.sale_price / 100).toFixed(2))
+      : null,
+}));
 /* =========================
    POST — CREATE PRODUCT
-   sellerPiUid = users.pi_uid
 ========================= */
 export async function createProduct(
   sellerPiUid: string,
@@ -184,8 +189,16 @@ export async function createProduct(
   }
 
   const data = await res.json();
-  return data[0];
-}
+const p = data[0];
+
+return {
+  ...p,
+  price: Number((p.price / 100).toFixed(2)),
+  sale_price:
+    p.sale_price !== null
+      ? Number((p.sale_price / 100).toFixed(2))
+      : null,
+};
 /* =========================
    PUT — UPDATE PRODUCT BY SELLER
    sellerPiUid = users.pi_uid
@@ -261,11 +274,10 @@ export async function deleteProductBySeller(
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/products?id=eq.${productId}&seller_id=eq.${sellerPiUid}`,
     {
-      method: "DELETE",
-      headers: {
-        ...supabaseHeaders(),
-        Prefer: "return=representation",
-      },
+     method: "PATCH",
+body: JSON.stringify({
+  deleted_at: new Date().toISOString(),
+}),
     }
   );
 
