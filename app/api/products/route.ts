@@ -171,35 +171,34 @@ export async function POST(req: Request) {
     } = body as Record<string, unknown>;
 
     if (typeof name !== "string" || typeof price !== "number") {
-      return NextResponse.json(
-        { error: "INVALID_PAYLOAD" },
-        { status: 400 }
-      );
-    }
+  return NextResponse.json(
+    { error: "INVALID_PAYLOAD" },
+    { status: 400 }
+  );
+}
 
-    const product = await createProduct(auth.user.pi_uid, {
-      name: name.trim(),
-      price, // Pi decimal nhỏ OK
-      description: typeof description === "string" ? description : "",
-      detail: typeof detail === "string" ? detail : "",
+const baseSlug = slugify(name);
+const uniqueSlug = `${baseSlug}-${Date.now()}`;
 
-      images: Array.isArray(images)
-        ? images.filter((i) => typeof i === "string")
-        : [],
-
-      detail_images: Array.isArray(detailImages)
-        ? detailImages.filter((i) => typeof i === "string")
-        : [],
-
-      category_id: typeof categoryId === "number" ? categoryId : null,
-
-      sale_price: typeof salePrice === "number" ? salePrice : null,
-      sale_start: typeof saleStart === "string" ? saleStart : null,
-      sale_end: typeof saleEnd === "string" ? saleEnd : null,
-
-      views: 0,
-      sold: 0,
-    });
+const product = await createProduct(auth.user.pi_uid, {
+  slug: uniqueSlug,
+  name: name.trim(),
+  price,
+  description: typeof description === "string" ? description : "",
+  detail: typeof detail === "string" ? detail : "",
+  images: Array.isArray(images)
+    ? images.filter((i) => typeof i === "string")
+    : [],
+  detail_images: Array.isArray(detailImages)
+    ? detailImages.filter((i) => typeof i === "string")
+    : [],
+  category_id: typeof categoryId === "number" ? categoryId : null,
+  sale_price: typeof salePrice === "number" ? salePrice : null,
+  sale_start: typeof saleStart === "string" ? saleStart : null,
+  sale_end: typeof saleEnd === "string" ? saleEnd : null,
+  views: 0,
+  sold: 0,
+});
 
     return NextResponse.json({ success: true, product });
   } catch (err) {
