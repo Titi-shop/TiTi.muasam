@@ -14,28 +14,56 @@ if (!SERVICE_KEY) {
 /* =========================
    TYPES
 ========================= */
+
 export type ProductRecord = {
   id: string;
+
   name: string;
-  price: number;
+  slug: string;
 
-  seller_id: string; // 🔥 pi_uid (TEXT)
-
+  short_description: string;
   description: string;
+  detail: string;
+
+  thumbnail: string | null;
   images: string[];
+  detail_images: string[];
+
+  video_url: string | null;
+
+  price: number;
+  sale_price: number | null;
+  currency: string;
+
+  stock: number;
+  is_unlimited: boolean;
+
   category_id: number | null;
+
+  seller_id: string;
 
   views: number;
   sold: number;
 
-  sale_price: number | null;
+  rating_avg: number;
+  rating_count: number;
+
+  status: "draft" | "active" | "inactive" | "archived" | "banned";
+
+  is_featured: boolean;
+  is_digital: boolean;
+
   sale_start: string | null;
   sale_end: string | null;
+
+  meta_title: string | null;
+  meta_description: string | null;
+
+  deleted_at: string | null;
 
   created_at: string;
   updated_at: string | null;
 };
-
 /* =========================
    COMMON HEADERS
 ========================= */
@@ -50,14 +78,15 @@ function supabaseHeaders() {
 /* =========================
    GET — ALL PRODUCTS (PUBLIC)
 ========================= */
+
 export async function getAllProducts(): Promise<ProductRecord[]> {
- const res = await fetch(
-  `${SUPABASE_URL}/rest/v1/products?status=eq.active&select=*`,
-  {
-    headers: supabaseHeaders(),
-    cache: "no-store",
-  }
-);
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/products?status=eq.active&select=*`,
+    {
+      headers: supabaseHeaders(),
+      cache: "no-store",
+    }
+  );
 
   if (!res.ok) {
     const text = await res.text();
@@ -65,9 +94,17 @@ export async function getAllProducts(): Promise<ProductRecord[]> {
     throw new Error("FAILED_TO_FETCH_PRODUCTS");
   }
 
-  return (await res.json()) as ProductRecord[];
-}
+  const raw = (await res.json()) as ProductRecord[];
 
+  return raw.map((p): ProductRecord => ({
+    ...p,
+    price: Number((p.price / 100).toFixed(2)),
+    sale_price:
+      p.sale_price !== null
+        ? Number((p.sale_price / 100).toFixed(2))
+        : null,
+  }));
+}
 /* =========================
    GET — PRODUCTS BY SELLER
    sellerPiUid = users.pi_uid
@@ -103,9 +140,32 @@ export async function createProduct(
     "id" | "seller_id" | "created_at" | "updated_at"
   >
 ): Promise<ProductRecord> {
+
+  const priceNumber = Number(product.price);
+  if (Number.isNaN(priceNumber)) {
+    throw new Error("INVALID_PRICE");
+  }
+
+  const salePriceNumber =
+    product.sale_price !== null && product.sale_price !== undefined
+      ? Number(product.sale_price)
+      : null;
+
+  if (
+    salePriceNumber !== null &&
+    Number.isNaN(salePriceNumber)
+  ) {
+    throw new Error("INVALID_SALE_PRICE");
+  }
+
   const payload = {
     ...product,
-    seller_id: sellerPiUid, // 🔥 FK → users.pi_uid
+    price: Math.round(priceNumber * 100), // 🔥 convert to minor unit
+    sale_price:
+      salePriceNumber !== null
+        ? Math.round(salePriceNumber * 100)
+        : null,
+    seller_id: sellerPiUid,
   };
 
   const res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
@@ -144,8 +204,31 @@ export async function updateProductBySeller(
     sale_end?: string | null;
   }
 ): Promise<boolean> {
+
+  const priceNumber = Number(data.price);
+  if (Number.isNaN(priceNumber)) {
+    throw new Error("INVALID_PRICE");
+  }
+
+  const salePriceNumber =
+    data.sale_price !== null && data.sale_price !== undefined
+      ? Number(data.sale_price)
+      : null;
+
+  if (
+    salePriceNumber !== null &&
+    Number.isNaN(salePriceNumber)
+  ) {
+    throw new Error("INVALID_SALE_PRICE");
+  }
+
   const payload = {
     ...data,
+    price: Math.round(priceNumber * 100),
+    sale_price:
+      salePriceNumber !== null
+        ? Math.round(salePriceNumber * 100)
+        : null,
   };
 
   const res = await fetch(
@@ -166,7 +249,6 @@ export async function updateProductBySeller(
     throw new Error("FAILED_TO_UPDATE_PRODUCT");
   }
 
-  // Supabase REST PATCH không trả row → chỉ cần biết thành công
   return true;
 }
 /* =========================
