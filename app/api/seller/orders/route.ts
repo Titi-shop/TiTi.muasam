@@ -53,40 +53,32 @@ function parseOrderStatus(
    BOOTSTRAP RULE:
    - Not seller yet => return []
 ========================================================= */
-
-export async function GET(req: Request) {
-  /* 1️⃣ AUTH */
-  const user = await getUserFromBearer();
-  if (!user) {
-    return NextResponse.json(
-      { error: "UNAUTHENTICATED" },
-      { status: 401 }
-    );
-  }
-
-  /* 2️⃣ RBAC */
-  const role = await resolveRole(user);
-
-  // BOOTSTRAP: chưa là seller => chưa có đơn
-  if (role !== "seller" && role !== "admin") {
-    return NextResponse.json([], { status: 200 });
-  }
-
-  /* 3️⃣ QUERY PARAMS */
-  const { searchParams } = new URL(req.url);
-  const status = parseOrderStatus(
-    searchParams.get("status")
-  );
-
-  /* 4️⃣ DB */
+export async function GET() {
   try {
-    const orders = await getOrdersBySeller(
-      user.pi_uid,
-      status
+    /* 1️⃣ AUTH */
+    const user = await getUserFromBearer();
+    if (!user) {
+      return NextResponse.json(
+        { error: "UNAUTHENTICATED" },
+        { status: 401 }
+      );
+    }
+
+    /* 2️⃣ RBAC */
+    const role = await resolveRole(user);
+
+    if (role !== "seller" && role !== "admin") {
+      return NextResponse.json([], { status: 200 });
+    }
+
+    /* 3️⃣ FETCH FULL PRODUCT ROW */
+    const products = await getSellerProducts(
+      user.pi_uid
     );
-    return NextResponse.json(orders);
+
+    return NextResponse.json(products);
   } catch (err) {
-    console.warn("SELLER ORDERS WARN:", err);
+    console.warn("SELLER PRODUCTS WARN:", err);
     return NextResponse.json([], { status: 200 });
   }
 }
