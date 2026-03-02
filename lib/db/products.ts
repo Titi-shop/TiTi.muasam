@@ -2,6 +2,7 @@
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
 if (!SUPABASE_URL) {
   throw new Error("❌ NEXT_PUBLIC_SUPABASE_URL is missing");
 }
@@ -10,11 +11,12 @@ if (!ANON_KEY) {
   throw new Error("❌ NEXT_PUBLIC_SUPABASE_ANON_KEY is missing");
 }
 
-/* =========================
+/* =========================================================
    TYPES
-========================= */
+========================================================= */
 
-export type ProductRecord = {
+/** Row đúng theo DB (price lưu minor unit) */
+type ProductRow = {
   id: string;
 
   name: string;
@@ -30,8 +32,8 @@ export type ProductRecord = {
 
   video_url: string | null;
 
-  price: number;
-  sale_price: number | null;
+  price: number; // minor unit (int)
+  sale_price: number | null; // minor unit (int)
   currency: string;
 
   stock: number;
@@ -63,9 +65,17 @@ export type ProductRecord = {
   created_at: string;
   updated_at: string | null;
 };
-/* =========================
-   COMMON HEADERS
-========================= */
+
+/** Type dùng trong app (price dạng decimal) */
+export type ProductRecord = Omit<ProductRow, "price" | "sale_price"> & {
+  price: number;
+  sale_price: number | null;
+};
+
+/* =========================================================
+   INTERNAL HELPERS
+========================================================= */
+
 function supabaseHeaders(accessToken?: string) {
   return {
     apikey: ANON_KEY,
@@ -76,18 +86,32 @@ function supabaseHeaders(accessToken?: string) {
   };
 }
 
-/* =========================
-   GET — ALL PRODUCTS (PUBLIC)
-========================= */
+function toAppProduct(row: ProductRow): ProductRecord {
+  return {
+    ...row,
+    price: Number((row.price / 100).toFixed(2)),
+    sale_price:
+      row.sale_price !== null
+        ? Number((row.sale_price / 100).toFixed(2))
+        : null,
+  };
+}
+
+function toDbPrice(value: number): number {
+  return Math.round(value * 100);
+}
+
+/* =========================================================
+   GET — ALL ACTIVE PRODUCTS (PUBLIC)
+========================================================= */
 
 export async function getAllProducts(): Promise<ProductRecord[]> {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/products?status=eq.active&deleted_at=is.null&select=*`,
-    {
-      headers: supabaseHeaders(),
-      cache: "no-store",
-    }
-  );
+  const url = `${SUPABASE_URL}/rest/v1/products?status=eq.active&deleted_at=is.null&select=*`;
+
+  const res = await fetch(url, {
+    headers: supabaseHeaders(),
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     const text = await res.text();
@@ -95,32 +119,27 @@ export async function getAllProducts(): Promise<ProductRecord[]> {
     throw new Error("FAILED_TO_FETCH_PRODUCTS");
   }
 
-  const raw = (await res.json()) as ProductRecord[];
-
-  return raw.map((p): ProductRecord => ({
-    ...p,
-    price: Number((p.price / 100).toFixed(2)),
-    sale_price:
-      p.sale_price !== null
-        ? Number((p.sale_price / 100).toFixed(2))
-        : null,
-  }));
+  const rows: ProductRow[] = await res.json();
+  return rows.map(toAppProduct);
 }
-/* =========================
+
+/* =========================================================
    GET — PRODUCTS BY SELLER
-========================= */
+========================================================= */
+
 export async function getSellerProducts(
   sellerPiUid: string,
   accessToken: string
-)
 ): Promise<ProductRecord[]> {
-  const res = await fetch(
-  `?seller_id=eq.${sellerPiUid}&status=eq.active&deleted_at=is.null&select=*`,
-  {
-   headers: supabaseHeaders(accessToken),
+  const url =
+    `${SUPABASE_URL}/rest/v1/products` +
+    `?seller_id=eq.${encodeURIComponent(sellerPiUid)}` +
+    `&deleted_at=is.null&select=*`;
+
+  const res = await fetch(url, {
+    headers: supabaseHeaders(accessToken),
     cache: "no-store",
-  }
-);
+  });
 
   if (!res.ok) {
     const text = await res.text();
@@ -128,20 +147,14 @@ export async function getSellerProducts(
     throw new Error("FAILED_TO_FETCH_SELLER_PRODUCTS");
   }
 
- const raw = (await res.json()) as ProductRecord[];
+  const rows: ProductRow[] = await res.json();
+  return rows.map(toAppProduct);
+}
 
-return raw.map((p): ProductRecord => ({
-  ...p,
-  price: Number((p.price / 100).toFixed(2)),
-  sale_price:
-    p.sale_price !== null
-      ? Number((p.sale_price / 100).toFixed(2))
-      : null,
-}));
-  }
-/* =========================
+/* =========================================================
    POST — CREATE PRODUCT
-========================= */
+========================================================= */
+
 export async function createProduct(
   sellerPiUid: string,
   product: Omit<
@@ -149,30 +162,23 @@ export async function createProduct(
     "id" | "seller_id" | "created_at" | "updated_at"
   >
 ): Promise<ProductRecord> {
-
-  const priceNumber = Number(product.price);
-  if (Number.isNaN(priceNumber)) {
+  if (Number.isNaN(product.price)) {
     throw new Error("INVALID_PRICE");
   }
 
-  const salePriceNumber =
-    product.sale_price !== null && product.sale_price !== undefined
-      ? Number(product.sale_price)
-      : null;
-
   if (
-    salePriceNumber !== null &&
-    Number.isNaN(salePriceNumber)
+    product.sale_price !== null &&
+    Number.isNaN(product.sale_price)
   ) {
     throw new Error("INVALID_SALE_PRICE");
   }
 
-  const payload = {
+  const payload: Omit<ProductRow, "id" | "created_at" | "updated_at"> = {
     ...product,
-    price: Math.round(priceNumber * 100), // 🔥 convert to minor unit
+    price: toDbPrice(product.price),
     sale_price:
-      salePriceNumber !== null
-        ? Math.round(salePriceNumber * 100)
+      product.sale_price !== null
+        ? toDbPrice(product.sale_price)
         : null,
     seller_id: sellerPiUid,
   };
@@ -192,73 +198,68 @@ export async function createProduct(
     throw new Error("FAILED_TO_CREATE_PRODUCT");
   }
 
-  const data = await res.json();
-const p = data[0];
+  const rows: ProductRow[] = await res.json();
+  return toAppProduct(rows[0]);
+}
 
-return {
-  ...p,
-  price: Number((p.price / 100).toFixed(2)),
-  sale_price:
-    p.sale_price !== null
-      ? Number((p.sale_price / 100).toFixed(2))
-      : null,
-};
-/* =========================
-   PUT — UPDATE PRODUCT BY SELLER
-   sellerPiUid = users.pi_uid
-========================= */
+/* =========================================================
+   PATCH — UPDATE PRODUCT BY SELLER
+========================================================= */
+
 export async function updateProductBySeller(
   sellerPiUid: string,
   productId: string,
-  data: {
-    name: string;
-    price: number;
-    description?: string;
-    images?: string[];
-    category_id?: number | null;
-    sale_price?: number | null;
-    sale_start?: string | null;
-    sale_end?: string | null;
-  }
+  data: Partial<
+    Pick<
+      ProductRecord,
+      | "name"
+      | "description"
+      | "price"
+      | "sale_price"
+      | "images"
+      | "detail_images"
+      | "category_id"
+      | "sale_start"
+      | "sale_end"
+      | "status"
+    >
+  >
 ): Promise<boolean> {
+  const payload: Partial<ProductRow> = { ...data };
 
-  const priceNumber = Number(data.price);
-  if (Number.isNaN(priceNumber)) {
-    throw new Error("INVALID_PRICE");
-  }
-
-  const salePriceNumber =
-    data.sale_price !== null && data.sale_price !== undefined
-      ? Number(data.sale_price)
-      : null;
-
-  if (
-    salePriceNumber !== null &&
-    Number.isNaN(salePriceNumber)
-  ) {
-    throw new Error("INVALID_SALE_PRICE");
-  }
-
-  const payload = {
-    ...data,
-    price: Math.round(priceNumber * 100),
-    sale_price:
-      salePriceNumber !== null
-        ? Math.round(salePriceNumber * 100)
-        : null,
-  };
-
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/products?id=eq.${productId}&seller_id=eq.${sellerPiUid}`,
-    {
-      method: "PATCH",
-      headers: {
-        ...supabaseHeaders(),
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify(payload),
+  if (data.price !== undefined) {
+    if (Number.isNaN(data.price)) {
+      throw new Error("INVALID_PRICE");
     }
-  );
+    payload.price = toDbPrice(data.price);
+  }
+
+  if (data.sale_price !== undefined) {
+    if (
+      data.sale_price !== null &&
+      Number.isNaN(data.sale_price)
+    ) {
+      throw new Error("INVALID_SALE_PRICE");
+    }
+    payload.sale_price =
+      data.sale_price !== null
+        ? toDbPrice(data.sale_price)
+        : null;
+  }
+
+  const url =
+    `${SUPABASE_URL}/rest/v1/products` +
+    `?id=eq.${encodeURIComponent(productId)}` +
+    `&seller_id=eq.${encodeURIComponent(sellerPiUid)}`;
+
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      ...supabaseHeaders(),
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify(payload),
+  });
 
   if (!res.ok) {
     const text = await res.text();
@@ -268,16 +269,21 @@ export async function updateProductBySeller(
 
   return true;
 }
-/* =========================
-   DELETE — SOFT DELETE BY SELLER
-========================= */
+
+/* =========================================================
+   PATCH — SOFT DELETE
+========================================================= */
+
 export async function deleteProductBySeller(
   sellerPiUid: string,
   productId: string
 ): Promise<boolean> {
-  const res = await fetch(
-  `${SUPABASE_URL}/rest/v1/products?id=eq.${productId}&seller_id=eq.${sellerPiUid}`,
-  {
+  const url =
+    `${SUPABASE_URL}/rest/v1/products` +
+    `?id=eq.${encodeURIComponent(productId)}` +
+    `&seller_id=eq.${encodeURIComponent(sellerPiUid)}`;
+
+  const res = await fetch(url, {
     method: "PATCH",
     headers: {
       ...supabaseHeaders(),
@@ -286,8 +292,7 @@ export async function deleteProductBySeller(
     body: JSON.stringify({
       deleted_at: new Date().toISOString(),
     }),
-  }
-);
+  });
 
   if (!res.ok) {
     const text = await res.text();
@@ -295,9 +300,6 @@ export async function deleteProductBySeller(
     throw new Error("FAILED_TO_DELETE_PRODUCT");
   }
 
-  const deleted = await res.json();
-  console.log("Deleted rows:", deleted);
-
-  return deleted.length > 0;
+  const rows: ProductRow[] = await res.json();
+  return rows.length > 0;
 }
-
