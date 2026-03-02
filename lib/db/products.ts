@@ -81,7 +81,7 @@ function supabaseHeaders() {
 
 export async function getAllProducts(): Promise<ProductRecord[]> {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/products?status=eq.active&select=*`,
+    `${SUPABASE_URL}/rest/v1/products?status=eq.active&deleted_at=is.null&select=*`,
     {
       headers: supabaseHeaders(),
       cache: "no-store",
@@ -112,7 +112,7 @@ export async function getSellerProducts(
   sellerPiUid: string
 ): Promise<ProductRecord[]> {
   const res = await fetch(
-  `${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerPiUid}&status=eq.active&select=*`,
+  `?seller_id=eq.${sellerPiUid}&status=eq.active&deleted_at=is.null&select=*`,
   {
     headers: supabaseHeaders(),
     cache: "no-store",
@@ -135,6 +135,7 @@ return raw.map((p): ProductRecord => ({
       ? Number((p.sale_price / 100).toFixed(2))
       : null,
 }));
+  }
 /* =========================
    POST — CREATE PRODUCT
 ========================= */
@@ -272,14 +273,18 @@ export async function deleteProductBySeller(
   productId: string
 ): Promise<boolean> {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/products?id=eq.${productId}&seller_id=eq.${sellerPiUid}`,
-    {
-     method: "PATCH",
-body: JSON.stringify({
-  deleted_at: new Date().toISOString(),
-}),
-    }
-  );
+  `${SUPABASE_URL}/rest/v1/products?id=eq.${productId}&seller_id=eq.${sellerPiUid}`,
+  {
+    method: "PATCH",
+    headers: {
+      ...supabaseHeaders(),
+      Prefer: "return=representation",
+    },
+    body: JSON.stringify({
+      deleted_at: new Date().toISOString(),
+    }),
+  }
+);
 
   if (!res.ok) {
     const text = await res.text();
