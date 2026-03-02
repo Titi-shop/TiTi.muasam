@@ -1,14 +1,12 @@
-/* lib/db/products.ts */
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const SUPABASE_URL = process.env.SUPABASE_URL!;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 if (!SUPABASE_URL) {
-  throw new Error("❌ NEXT_PUBLIC_SUPABASE_URL is missing");
+  throw new Error("SUPABASE_URL is missing");
 }
 
-if (!ANON_KEY) {
-  throw new Error("❌ NEXT_PUBLIC_SUPABASE_ANON_KEY is missing");
+if (!SERVICE_KEY) {
+  throw new Error("SUPABASE_SERVICE_ROLE_KEY is missing");
 }
 
 /* =========================================================
@@ -76,12 +74,10 @@ export type ProductRecord = Omit<ProductRow, "price" | "sale_price"> & {
    INTERNAL HELPERS
 ========================================================= */
 
-function supabaseHeaders(accessToken?: string) {
+function supabaseHeaders() {
   return {
-    apikey: ANON_KEY,
-    Authorization: accessToken
-      ? `Bearer ${accessToken}`
-      : `Bearer ${ANON_KEY}`,
+    apikey: SERVICE_KEY,
+    Authorization: `Bearer ${SERVICE_KEY}`,
     "Content-Type": "application/json",
   };
 }
@@ -128,8 +124,7 @@ export async function getAllProducts(): Promise<ProductRecord[]> {
 ========================================================= */
 
 export async function getSellerProducts(
-  sellerPiUid: string,
-  accessToken: string
+  sellerPiUid: string
 ): Promise<ProductRecord[]> {
   const url =
     `${SUPABASE_URL}/rest/v1/products` +
