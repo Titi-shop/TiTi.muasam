@@ -123,6 +123,7 @@ export async function getAllProducts(): Promise<ProductRecord[]> {
    GET — PRODUCTS BY SELLER
 ========================================================= */
 
+
 export async function getSellerProducts(
   sellerPiUid: string
 ): Promise<ProductRecord[]> {
@@ -132,7 +133,7 @@ export async function getSellerProducts(
     `&deleted_at=is.null&select=*`;
 
   const res = await fetch(url, {
-    headers: supabaseHeaders(accessToken),
+    headers: supabaseHeaders(),
     cache: "no-store",
   });
 
@@ -145,7 +146,6 @@ export async function getSellerProducts(
   const rows: ProductRow[] = await res.json();
   return rows.map(toAppProduct);
 }
-
 /* =========================================================
    POST — CREATE PRODUCT
 ========================================================= */
