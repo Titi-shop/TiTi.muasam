@@ -362,19 +362,21 @@ export async function createOrder(params: {
   const sellerMap: Record<string, string> =
     Object.fromEntries(products.map(p => [p.id, p.seller_id]));
 
-  /* =========================
-     3️⃣ INSERT ORDER ITEMS
+    /* =========================
+     4️⃣ INSERT ORDER ITEMS
   ========================= */
   for (const item of items) {
 
-    const seller = sellerMap[item.product_id];
+    const product = productMap[item.product_id];
+    if (!product) continue;
 
-    if (!seller) {
-      console.error("SELLER_NOT_FOUND_FOR_PRODUCT", item.product_id);
-      continue;
-    }
+    const fallbackThumbnail =
+      product.thumbnail ??
+      (Array.isArray(product.images) && product.images.length > 0
+        ? product.images[0]
+        : "/placeholder.png");
 
-    const itemRes = await fetch(
+    const insertItemRes = await fetch(
       `${SUPABASE_URL}/rest/v1/order_items`,
       {
         method: "POST",
@@ -382,22 +384,36 @@ export async function createOrder(params: {
         body: JSON.stringify({
           order_id: order.id,
           product_id: item.product_id,
-          seller_pi_uid: seller,
+          seller_id: product.seller_id,
+
+          product_name: product.name,
+          product_slug: product.slug ?? null,
+          thumbnail: fallbackThumbnail,
+          images: product.images ?? [],
+
+          unit_price: toMicroPi(item.price),
           quantity: item.quantity,
-          price: toMicroPi(item.price),
+          total_price: toMicroPi(item.price * item.quantity),
+
           status: "pending",
         }),
       }
     );
 
-    if (!itemRes.ok) {
-      console.error(await itemRes.text());
+    if (!insertItemRes.ok) {
+      console.error("ORDER ITEM INSERT ERROR:", await insertItemRes.text());
+      return null;
     }
   }
 
-  return order as unknown as OrderRecord;
+  return {
+    id: order.id,
+    status: "pending",
+    total: total,
+    created_at: new Date().toISOString(),
+    order_items: [],
+  };
 }
-
 /* =====================================================
    GET ORDER DETAIL FOR SELLER
 ===================================================== */
