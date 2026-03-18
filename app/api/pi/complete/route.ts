@@ -163,6 +163,13 @@ const expectedTotal =
 
     const payment = await piRes.json();
 
+if (!payment || payment.amount == null) {
+  return NextResponse.json(
+    { error: "INVALID_PAYMENT_DATA" },
+    { status: 400 }
+  );
+}
+
     if (!piRes.ok) {
 
       console.error("PI COMPLETE FAIL:", payment);
@@ -288,14 +295,24 @@ const expectedTotal =
    UPDATE PRODUCT SOLD
 ========================= */
 
-await query(
+const result = await query(
   `
   update products
-  set sold = sold + $1
+  set sold = sold + $1,
+      stock = stock - $1
   where id = $2
+  and (is_unlimited = true or stock >= $1)
+  returning id
   `,
   [quantity, product.id]
 );
+
+if (result.rowCount === 0) {
+  return NextResponse.json(
+    { error: "OUT_OF_STOCK" },
+    { status: 400 }
+  );
+}
     /* =========================
        SUCCESS
     ========================= */
