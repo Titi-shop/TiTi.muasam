@@ -143,18 +143,18 @@ export async function POST(req: NextRequest) {
        (NO WAITUNTIL NEEDED)
     ===================================================== */
 
-    void runPaymentSettlement({
-      paymentIntentId,
-      piPaymentId,
-      txid,
-      userId: auth.userId,
-      source: "notify-complete",
-    })
-      .then((result) => {
-        console.log("[PAYMENT][NOTIFY_COMPLETE_DONE]", {
-          requestId,
-          result,
-        });
+    const result = await runPaymentSettlement({
+  paymentIntentId,
+  piPaymentId,
+  txid,
+  userId: auth.userId,
+  source: "notify-complete",
+});
+
+console.log("[PAYMENT][NOTIFY_COMPLETE_DONE]", {
+  requestId,
+  result,
+});
       })
       .catch((err) => {
         console.error("[PAYMENT][NOTIFY_COMPLETE_BG_FAIL]", {
@@ -168,12 +168,13 @@ export async function POST(req: NextRequest) {
     ===================================================== */
 
     return NextResponse.json({
-      ok: true,
-      processing: true,
-      requestId,
-      payment_intent_id: paymentIntentId,
-      status: "verifying",
-    });
+  ok: result.ok,
+  paid: result.ok,
+  order_id: result.orderId ?? null,
+  requestId,
+  payment_intent_id: paymentIntentId,
+  status: result.ok ? "paid" : "failed",
+});
   } catch (err) {
     console.error("[PAYMENT][NOTIFY_COMPLETE_FATAL]", {
       requestId,
