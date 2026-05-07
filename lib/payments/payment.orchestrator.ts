@@ -425,81 +425,75 @@ export async function runPaymentSettlement({
   });
 
   const piVerified = await verifyPiPaymentForReconcile({
-    paymentIntentId,
-    piPaymentId,
-    userId: userId ?? "",
-    txid,
-  });
+  paymentIntentId,
+  piPaymentId,
+  userId: userId ?? "",
+  txid,
+});
 
-  console.log("[PAYMENT][SETTLEMENT] PI_VERIFY_RESULT", {
-    paymentIntentId,
-    ok: piVerified.ok,
-    amount: piVerified.verifiedAmount,
-    receiverWallet: piVerified.receiverWallet,
-  });
-
-  if (!piVerified.ok) {
-    console.error("[PAYMENT][SETTLEMENT] PI_VERIFY_FAILED", {
-      paymentIntentId,
-    });
-
-    await auditManualReview(paymentIntentId, "PI_VERIFY_FAIL", {
-      source,
-      txid,
-      piPaymentId,
-    });
-
-    return failResult(0, false, source);
-  }
-
-  await auditPiVerified(paymentIntentId, {
+if (!piVerified.ok) {
+  await auditManualReview(paymentIntentId, "PI_VERIFY_FAIL", {
     source,
     txid,
-    amount: piVerified.verifiedAmount,
-    receiverWallet: piVerified.receiverWallet,
-  });
-
-  console.log("[PAYMENT][SETTLEMENT] PI_AUDIT_OK", {
-    paymentIntentId,
-  });
-
-  /* =====================================================
-     4. VERIFY RPC
-  ===================================================== */
-
-  const rpcVerified = await safeAuditRpc(
-    paymentIntentId,
-    txid,
-    source
-  );
-
-  /* =====================================================
-     5. COMPLETE PI
-  ===================================================== */
-
-  const piCompleted = await safeCompletePi(
-    paymentIntentId,
     piPaymentId,
-    txid,
-    source
-  );
-
-  console.log("[PAYMENT][SETTLEMENT] PI_COMPLETE_RESULT", {
-    paymentIntentId,
-    piCompleted,
   });
 
-  if (!piCompleted) {
-    console.error("[PAYMENT][SETTLEMENT] STOP_AFTER_PI_COMPLETE_FAIL", {
-      paymentIntentId,
-    });
+  return failResult(0, false, source);
+}
 
-    return failResult(
-      piVerified.verifiedAmount,
-      rpcVerified.ok,
-      source
-    );
-  }
+await auditPiVerified(paymentIntentId, {
+  source,
+  txid,
+  amount: piVerified.verifiedAmount,
+  receiverWallet: piVerified.receiverWallet,
+});
+
+/* =====================================================
+   COMPLETE PI FIRST
+===================================================== */
+
+console.log("[PAYMENT][SETTLEMENT] PI_COMPLETE_START", {
+  paymentIntentId,
+});
+
+const piCompleted = await safeCompletePi(
+  paymentIntentId,
+  piPaymentId,
+  txid,
+  source
+);
+
+console.log("[PAYMENT][SETTLEMENT] PI_COMPLETE_RESULT", {
+  paymentIntentId,
+  piCompleted,
+});
+
+if (!piCompleted) {
+  return failResult(
+    piVerified.verifiedAmount,
+    false,
+    source
+  );
+}
+
+/* =====================================================
+   RPC VERIFY AFTER COMPLETE
+===================================================== */
+
+console.log("[PAYMENT][SETTLEMENT] RPC_VERIFY_START", {
+  paymentIntentId,
+});
+
+const rpcVerified = await safeAuditRpc(
+  paymentIntentId,
+  txid,
+  source
+);
+
+console.log("[PAYMENT][SETTLEMENT] RPC_VERIFY_RESULT", {
+  paymentIntentId,
+  ok: rpcVerified.ok,
+});
 
   /* =====================================================
      6. FINALIZE ORDER
