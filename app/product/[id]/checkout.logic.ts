@@ -308,133 +308,153 @@ export function useCheckoutPay({
         },
         {
           onReadyForServerApproval: async (paymentId, callback) => {
-            try {
-              console.log("🟡 [CHECKOUT] APPROVAL_STAGE", { paymentId });
+  try {
+    console.log("🟡 [CHECKOUT] APPROVAL_STAGE", {
+      paymentId,
+      paymentIntentId,
+    });
 
-              const token = await getPiAccessToken();
+    const token = await getPiAccessToken();
 
-              const res = await fetch("/api/payments/pi/authorize", {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  payment_intent_id: paymentIntentId,
-                  pi_payment_id: paymentId,
-                }),
-              });
+    const res = await fetch("/api/payments/pi/authorize", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        payment_intent_id: paymentIntentId,
+        pi_payment_id: paymentId,
+      }),
+    });
 
-              const data = await res.json().catch(() => null);
+    const data = await res.json().catch(() => null);
 
-              console.log("🟡 [CHECKOUT] AUTHORIZE_RESPONSE", {
-                status: res.status,
-                data,
-              });
+    console.log("🟡 [CHECKOUT] AUTHORIZE_RESPONSE", {
+      status: res.status,
+      data,
+    });
 
-              if (!res.ok) {
-                throw new Error(data?.error || "AUTHORIZE_FAILED");
-              }
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.error || "AUTHORIZE_FAILED");
+    }
 
-              console.log("🟢 [CHECKOUT] AUTHORIZE_OK");
-              callback();
-            } catch (err) {
-              console.error("🔥 [CHECKOUT] APPROVAL_FAIL", err);
-              processingRef.current = false;
-              setProcessing(false);
-              showMessage(t.payment_approve_failed ?? "payment_approve_failed");
-            }
-          },
+    console.log("🟢 [CHECKOUT] AUTHORIZE_OK", {
+      paymentId,
+    });
 
-          onReadyForServerCompletion: async (paymentId, txid, callback) => {
-            if (completionLocked) return;
-            completionLocked = true;
+    callback();
+  } catch (err) {
+    console.error("🔥 [CHECKOUT] APPROVAL_FAIL", err);
 
-            try {
-              console.log("🟡 [CHECKOUT] COMPLETION_STAGE", {
-                paymentId,
-                txid,
-              });
+    processingRef.current = false;
 
-              const token = await getPiAccessToken();
+    setProcessing(false);
 
-              console.log("🟡 [CHECKOUT] SUBMIT_STAGE");
+    showMessage(
+      t.payment_approve_failed ?? "payment_approve_failed"
+    );
+  }
+},
 
-              const submitRes = await fetch("/api/payments/pi/submit", {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  payment_intent_id: paymentIntentId,
-                  pi_payment_id: paymentId,
-                  txid,
-                }),
-              });
+onReadyForServerCompletion: async (
+  paymentId,
+  txid,
+  callback
+) => {
+  if (completionLocked) {
+    console.warn("🟠 [CHECKOUT] COMPLETION_LOCKED");
+    return;
+  }
 
-              const submitData = await submitRes.json().catch(() => null);
+  completionLocked = true;
 
-              console.log("🟡 [CHECKOUT] SUBMIT_RESPONSE", {
-                status: submitRes.status,
-                data: submitData,
-              });
+  try {
+    console.log("🟡 [CHECKOUT] COMPLETION_STAGE", {
+      paymentId,
+      txid,
+      paymentIntentId,
+    });
 
-              if (!submitRes.ok) {
-                throw new Error(submitData?.error || "SUBMIT_FAILED");
-              }
+    const token = await getPiAccessToken();
 
-              console.log("🟢 [CHECKOUT] SUBMIT_OK");
+    console.log("🟡 [CHECKOUT] SUBMIT_STAGE");
 
-              try {
-                callback();
-                console.log("🟢 [CHECKOUT] PI_CALLBACK_OK");
-              } catch (sdkErr) {
-                console.warn("🟠 [CHECKOUT] PI_CALLBACK_WARN", sdkErr);
-              }
+    const submitRes = await fetch("/api/payments/pi/submit", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        payment_intent_id: paymentIntentId,
+        pi_payment_id: paymentId,
+        txid,
+      }),
+    });
 
-              const token2 = await getPiAccessToken();
+    const submitData = await submitRes
+      .json()
+      .catch(() => null);
 
-              console.log("🟡 [CHECKOUT] RECONCILE_STAGE");
+    console.log("🟡 [CHECKOUT] SUBMIT_RESPONSE", {
+      status: submitRes.status,
+      data: submitData,
+    });
 
-              const reconcileRes = await fetch("/api/payments/pi/reconcile", {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token2}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  payment_intent_id: paymentIntentId,
-                  pi_payment_id: paymentId,
-                  txid,
-                }),
-              });
+    if (!submitRes.ok || !submitData?.success) {
+      throw new Error(
+        submitData?.error || "SUBMIT_FAILED"
+      );
+    }
 
-              const reconcileData = await reconcileRes.json().catch(() => null);
+    console.log("🟢 [CHECKOUT] SUBMIT_OK", {
+      orderId: submitData?.order_id,
+      amount: submitData?.amount,
+      piCompleted: submitData?.pi_completed,
+    });
 
-              console.log("🟡 [CHECKOUT] RECONCILE_RESPONSE", {
-                status: reconcileRes.status,
-                data: reconcileData,
-              });
+    /* =====================================================
+       PI SDK CALLBACK
+    ===================================================== */
 
-              if (!reconcileRes.ok) {
-                throw new Error(reconcileData?.error || "RECONCILE_FAILED");
-              }
+    try {
+      callback();
 
-              console.log("🟢 [CHECKOUT] RECONCILE_OK");
+      console.log("🟢 [CHECKOUT] PI_CALLBACK_OK");
+    } catch (sdkErr) {
+      console.warn(
+        "🟠 [CHECKOUT] PI_CALLBACK_WARN",
+        sdkErr
+      );
+    }
 
-              onClose();
-              router.replace("/customer/orders?tab=pending");
-              showMessage(t.payment_success ?? "success", "success");
-            } catch (err) {
-              console.error("🔥 [CHECKOUT] COMPLETION_FAIL", err);
-              const key = getErrorKey((err as Error).message);
-              showMessage(t[key] ?? key);
-            } finally {
-              processingRef.current = false;
-              setProcessing(false);
-            }
-          },
+    /* =====================================================
+       SUCCESS UI
+    ===================================================== */
+
+    onClose();
+
+    router.replace("/customer/orders?tab=pending");
+
+    showMessage(
+      t.payment_success ?? "success",
+      "success"
+    );
+  } catch (err) {
+    console.error("🔥 [CHECKOUT] COMPLETION_FAIL", err);
+
+    const key = getErrorKey(
+      (err as Error).message
+    );
+
+    showMessage(t[key] ?? key);
+  } finally {
+    processingRef.current = false;
+
+    setProcessing(false);
+  }
+},
 
           onCancel: () => {
             console.warn("🟡 [CHECKOUT] USER_CANCELLED");
