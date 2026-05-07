@@ -1,6 +1,5 @@
 
 import crypto from "crypto";
-
 import { query } from "@/lib/db";
 import { getRpcTransaction } from "@/lib/rpc/client";
 
@@ -477,30 +476,22 @@ export async function verifyRpcPaymentForReconcile({
 
   await insertRpcLog({
     paymentIntentId,
-
-    piPaymentId: null,
-
+    piPaymentId,
     txid,
-
     verified,
-
     stage,
     reason,
-
     amount: rpcTx.amount,
     expectedAmount,
-
     sender: rpcTx.sender,
     receiver: rpcTx.receiver,
     expectedReceiver,
-
     amountMatch,
     receiverMatch,
     senderMatch,
 
     mismatchReason,
     fraudReason,
-
     verificationHash,
 
     ledger: rpcTx.ledger,
