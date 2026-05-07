@@ -10,6 +10,7 @@ import { getRpcTransaction } from "@/lib/rpc/client";
 
 type VerifyRpcParams = {
   paymentIntentId: string;
+  piPaymentId: string | null;
   txid: string;
 };
 
@@ -185,35 +186,24 @@ async function insertRpcLog(
     INSERT INTO rpc_verification_logs (
       payment_intent_id,
       pi_payment_id,
-
       txid,
-
       verified,
-
       stage,
       reason,
-
       amount,
       expected_amount,
-
       sender,
       receiver,
       expected_receiver,
-
       amount_match,
       receiver_match,
       sender_match,
-
       mismatch_reason,
       fraud_reason,
-
       verification_hash,
-
       ledger,
-
       tx_status,
       chain_reference,
-
       verify_mode,
       payload
     )
@@ -301,6 +291,7 @@ async function insertRpcLog(
 
 export async function verifyRpcPaymentForReconcile({
   paymentIntentId,
+  piPaymentId,
   txid,
 }: VerifyRpcParams): Promise<RpcVerifyResult> {
   log("START", {
@@ -390,11 +381,8 @@ export async function verifyRpcPaymentForReconcile({
   ===================================================== */
 
   let verified = true;
-
   let stage = "RPC_OK";
-
   let reason: string | null = null;
-
   if (!rpcTx.rpcReachable) {
     verified = false;
     stage = "RPC_UNREACHABLE";
