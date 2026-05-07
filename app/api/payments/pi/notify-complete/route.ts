@@ -1,7 +1,3 @@
-File này có cần gọi không .
-
-app/api/payments/pi/notify-complete/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 import { markPaymentVerifying } from "@/lib/db/payments.submit";
