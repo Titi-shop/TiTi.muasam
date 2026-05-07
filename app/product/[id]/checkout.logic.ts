@@ -96,7 +96,7 @@ async function previewOrderDirect({
     }),
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
 
   if (!res.ok) {
     throw new Error(data?.error || "PREVIEW_FAILED");
@@ -120,7 +120,9 @@ export const getErrorKey = (code?: string) => {
     PI_APPROVE_FAILED: "payment_approve_failed",
     PI_COMPLETE_FAILED: "payment_complete_failed",
     INVALID_TXID: "payment_invalid_txid",
-    NOTIFY_COMPLETE_FAILED: "payment_processing_failed",
+    PAYMENT_INTENT_FAILED: "payment_intent_failed",
+    RECONCILE_FAILED: "reconcile_failed",
+    SUBMIT_FAILED: "payment_submit_failed",
   };
 
   return map[code || ""] || "unknown_error";
@@ -222,23 +224,19 @@ export function useCheckoutPay({
     processingRef.current = true;
     setProcessing(true);
 
+    let completionLocked = false;
+
     try {
       let finalPreview = preview;
 
       if (!finalPreview && shipping && zone && item) {
-        try {
-          finalPreview = await previewOrderDirect({
-            shipping,
-            zone,
-            item,
-            quantity,
-            variant_id: product.variant_id ?? null,
-          });
-        } catch (err) {
-          const key = getErrorKey((err as Error).message);
-          showMessage(t[key] ?? key);
-          throw err;
-        }
+        finalPreview = await previewOrderDirect({
+          shipping,
+          zone,
+          item,
+          quantity,
+          variant_id: product.variant_id ?? null,
+        });
       }
 
       const token = await getPiAccessToken();
@@ -282,12 +280,10 @@ export function useCheckoutPay({
         intentData.payment_intent_id || intentData.paymentIntentId;
 
       if (!paymentIntentId) {
-        showMessage("payment_intent_id_missing");
         throw new Error("PAYMENT_INTENT_ID_MISSING");
       }
 
       const lockedAmount = Number(Number(intentData.amount || 0).toFixed(7));
-
       const lockedMemo =
         typeof intentData.memo === "string" && intentData.memo.trim()
           ? intentData.memo.trim().slice(0, 120)
@@ -299,10 +295,7 @@ export function useCheckoutPay({
       });
 
       if (!window.Pi || typeof window.Pi.createPayment !== "function") {
-        processingRef.current = false;
-        setProcessing(false);
-        showMessage("Pi Wallet SDK not ready");
-        return;
+        throw new Error("PI_SDK_NOT_READY");
       }
 
       window.Pi.createPayment(
@@ -340,8 +333,6 @@ export function useCheckoutPay({
               });
 
               if (!res.ok) {
-                const key = getErrorKey(data?.error);
-                showMessage(t[key] ?? data?.error ?? "approve_failed");
                 throw new Error(data?.error || "AUTHORIZE_FAILED");
               }
 
@@ -351,74 +342,96 @@ export function useCheckoutPay({
               console.error("🔥 [CHECKOUT] APPROVAL_FAIL", err);
               processingRef.current = false;
               setProcessing(false);
-              throw err;
+              showMessage(t.payment_approve_failed ?? "payment_approve_failed");
             }
           },
 
-          onReadyForServerCompletion: (paymentId, txid, callback) => {
-            console.log("🟡 [CHECKOUT] COMPLETION_STAGE", {
-              paymentId,
-              txid,
-            });
+          onReadyForServerCompletion: async (
+  paymentId,
+  txid,
+  callback
+) => {
+  if (completionLocked) return;
+  completionLocked = true;
 
-            try {
-              callback();
-              console.log("🟢 [CHECKOUT] PI_CALLBACK_OK");
-            } catch (sdkErr) {
-              console.warn("🟠 [CHECKOUT] PI_CALLBACK_WARN", sdkErr);
-            }
+  try {
+    console.log("🟡 [CHECKOUT] COMPLETION_STAGE", {
+      paymentId,
+      txid,
+    });
 
-            setTimeout(async () => {
-              try {
-                const token = await getPiAccessToken();
+    const token = await getPiAccessToken();
 
-                console.log("🟡 [CHECKOUT] NOTIFY_COMPLETE_STAGE");
+    console.log("🟡 [CHECKOUT] NOTIFY_COMPLETE_STAGE");
 
-                const res = await fetch("/api/payments/pi/notify-complete", {
-                  method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    payment_intent_id: paymentIntentId,
-                    pi_payment_id: paymentId,
-                    txid,
-                  }),
-                });
+    const notifyRes = await fetch(
+      "/api/payments/pi/notify-complete",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          payment_intent_id: paymentIntentId,
+          pi_payment_id: paymentId,
+          txid,
+        }),
+      }
+    );
 
-                const data = await res.json().catch(() => null);
+    const notifyData = await notifyRes
+      .json()
+      .catch(() => null);
 
-                console.log("🟡 [CHECKOUT] NOTIFY_COMPLETE_RESPONSE", {
-                  status: res.status,
-                  data,
-                });
+    console.log("🟡 [CHECKOUT] NOTIFY_COMPLETE_RESPONSE", {
+      status: notifyRes.status,
+      data: notifyData,
+    });
 
-                if (!res.ok) {
-                  const key = getErrorKey(data?.error);
-                  showMessage(t[key] ?? data?.error ?? "payment_failed");
-                  processingRef.current = false;
-                  setProcessing(false);
-                  return;
-                }
+    if (!notifyRes.ok) {
+      throw new Error(
+        notifyData?.error || "NOTIFY_COMPLETE_FAILED"
+      );
+    }
 
-                console.log("🟢 [CHECKOUT] NOTIFY_COMPLETE_OK");
+    console.log("🟢 [CHECKOUT] PAYMENT_FINALIZED");
 
-                onClose();
-                router.replace("/customer/orders?tab=processing");
-                showMessage(
-                  t.payment_processing ?? "Payment received. Verifying blockchain...",
-                  "success"
-                );
-              } catch (err) {
-                console.error("🔥 [CHECKOUT] NOTIFY_COMPLETE_FAIL", err);
-                showMessage(t.transaction_failed ?? "transaction_failed");
-              } finally {
-                processingRef.current = false;
-                setProcessing(false);
-              }
-            }, 50);
-          },
+    try {
+      callback();
+
+      console.log("🟢 [CHECKOUT] PI_CALLBACK_OK");
+    } catch (sdkErr) {
+      console.warn(
+        "🟠 [CHECKOUT] PI_CALLBACK_WARN",
+        sdkErr
+      );
+    }
+
+    onClose();
+
+    router.replace("/customer/orders?tab=pending");
+
+    showMessage(
+      t.payment_success ?? "success",
+      "success"
+    );
+  } catch (err) {
+    console.error(
+      "🔥 [CHECKOUT] COMPLETION_FAIL",
+      err
+    );
+
+    const key = getErrorKey(
+      (err as Error).message
+    );
+
+    showMessage(t[key] ?? key);
+  } finally {
+    processingRef.current = false;
+    setProcessing(false);
+  }
+},
 
           onCancel: () => {
             console.warn("🟡 [CHECKOUT] USER_CANCELLED");
