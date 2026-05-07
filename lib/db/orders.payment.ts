@@ -204,7 +204,7 @@ export async function finalizePaidOrderFromIntent({
         $3,$4,$5,
         'paid',now(),
         $6,$7,$8,$9,0,$10,$11,
-        'confirmed',
+        'pending',
         $12,$13,$14,$15,$16,
         1,$17,
         now(),now()
