@@ -4,159 +4,60 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 import useSWR from "swr";
-import {
-  Suspense,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/AuthContext";
-
 import { getPiAccessToken } from "@/lib/piAuth";
 import { formatPi } from "@/lib/pi";
-
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 import CustomerOrdersList from "@/components/CustomerOrdersList";
 
-/* =======================================================
+/* =====================================================
    TYPES
-======================================================= */
+===================================================== */
 
-type FulfillmentStatus =
-  | "pending"
-  | "pending_fulfillment"
-  | "processing"
-  | "shipped"
-  | "delivered"
-  | "completed"
-  | "cancelled"
-  | "refunded";
+const FULFILLMENT_STATUS = [
+  "pending",
+  "pending_fulfillment",
+  "processing",
+  "shipped",
+  "delivered",
+  "completed",
+  "cancelled",
+  "refunded",
+] as const;
 
-type PaymentStatus =
-  | "pending"
-  | "paid"
-  | "failed"
-  | "refunded";
+type FulfillmentStatus = typeof FULFILLMENT_STATUS[number];
+
+type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
 type OrderItem = {
-  id?: string;
-
   product_id: string;
-
   product_name?: string | null;
-
-  product_slug?: string | null;
-
   thumbnail?: string | null;
-
-  images?: string[] | null;
-
-  variant_name?: string | null;
-
-  variant_value?: string | null;
-
   quantity?: number;
-
-  unit_price?: number | string;
-
-  total_price?: number | string;
-
-  currency?: string;
-
-  seller_message?: string | null;
-
-  seller_cancel_reason?: string | null;
-
-  tracking_code?: string | null;
-
-  shipping_provider?: string | null;
-
-  shipped_at?: string | null;
-
-  delivered_at?: string | null;
-
-  snapshot?: unknown;
 };
 
 type Order = {
   id: string;
-
   order_number: string;
-
-  status?: string;
-
   payment_status: PaymentStatus;
-
   fulfillment_status: FulfillmentStatus;
 
   total: number | string;
-
-  subtotal?: number | string;
-
-  shipping_fee?: number | string;
-
-  discount?: number | string;
-
-  tax?: number | string;
-
   currency: string;
-
-  total_items?: number;
-
-  total_quantity?: number;
-
   created_at: string;
-
-  paid_at?: string | null;
-
-  shipped_at?: string | null;
-
-  delivered_at?: string | null;
-
-  completed_at?: string | null;
-
-  cancelled_at?: string | null;
-
-  cancel_reason?: string | null;
-
-  shipping_name?: string;
-
-  shipping_phone?: string;
-
-  shipping_address_line?: string;
-
-  shipping_ward?: string | null;
-
-  shipping_district?: string | null;
-
-  shipping_region?: string | null;
-
-  shipping_country?: string;
-
-  shipping_postal_code?: string | null;
-
-  shipping_provider?: string | null;
-
-  shipping_zone?: string | null;
-
-  buyer_note?: string;
-
-  admin_note?: string;
 
   order_items?: OrderItem[];
 };
 
-type OrdersResponse = {
-  orders?: Order[];
-};
+type OrdersResponse = { orders?: Order[] };
 
-/* =======================================================
+/* =====================================================
    CANCEL REASONS
-======================================================= */
+===================================================== */
 
 const CANCEL_REASON_KEYS = [
   "cancel_reason_change_mind",
@@ -168,733 +69,297 @@ const CANCEL_REASON_KEYS = [
   "cancel_reason_other",
 ] as const;
 
-/* =======================================================
-   HELPERS
-======================================================= */
+type CancelReasonKey = typeof CANCEL_REASON_KEYS[number];
 
-function normalizeOrder(
-  order: Order
-): Order {
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function normalizeOrder(order: Order): Order {
   return {
     ...order,
-
-    status:
-      order.fulfillment_status ??
-      order.payment_status ??
-      "pending_fulfillment",
+    fulfillment_status:
+      order.fulfillment_status ?? "pending_fulfillment",
   };
 }
 
-/* =======================================================
+async function safeJson<T>(res: Response): Promise<T | null> {
+  try {
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+/* =====================================================
    FETCHER
-======================================================= */
+===================================================== */
 
 const fetcher = async (): Promise<Order[]> => {
-  try {
-    const token =
-      await getPiAccessToken();
+  const token = await getPiAccessToken();
+  if (!token) return [];
 
-    if (!token) {
-      return [];
-    }
+  const res = await fetch("/api/orders", {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
 
-    const res = await fetch(
-      "/api/orders",
-      {
-        method: "GET",
+  if (!res.ok) return [];
 
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  const data = await safeJson<unknown>(res);
+  if (!data || typeof data !== "object") return [];
 
-        cache: "no-store",
-      }
-    );
-
-    if (!res.ok) {
-      return [];
-    }
-
-    const data: unknown =
-      await res.json();
-
-    /* ================= ARRAY ================= */
-
-    if (Array.isArray(data)) {
-      return data.map(
-        (order) =>
-          normalizeOrder(
-            order as Order
-          )
-      );
-    }
-
-    /* ================= OBJECT ================= */
-
-    if (
-      typeof data === "object" &&
-      data !== null &&
-      "orders" in data
-    ) {
-      const typed =
-        data as OrdersResponse;
-
-      const orders =
-        typed.orders ?? [];
-
-      if (!Array.isArray(orders)) {
-        return [];
-      }
-
-      return orders.map(
-        (order) =>
-          normalizeOrder(order)
-      );
-    }
-
-    return [];
-  } catch {
-    return [];
+  if (Array.isArray(data)) {
+    return (data as Order[]).map(normalizeOrder);
   }
+
+  const typed = data as OrdersResponse;
+  const orders = Array.isArray(typed.orders) ? typed.orders : [];
+
+  return orders.map(normalizeOrder);
 };
 
-/* =======================================================
+/* =====================================================
    PAGE
-======================================================= */
+===================================================== */
 
 export default function CustomerOrdersPage() {
-  const { t } =
-    useTranslation();
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { user, loading } = useAuth();
 
-  const router =
-    useRouter();
+  const [optimisticOrder, setOptimisticOrder] = useState<Order | null>(null);
 
-  const {
-    user,
-    loading,
-  } = useAuth();
-
-  /* ================= OPTIMISTIC ================= */
-
-  const [
-    optimisticOrder,
-    setOptimisticOrder,
-  ] =
-    useState<Order | null>(
-      null
-    );
-
-  /* ================= SWR ================= */
-
-  const {
-    data: orders = [],
-    isLoading,
-    mutate,
-  } = useSWR<Order[]>(
-    user
-      ? "/api/orders"
-      : null,
-
+  const { data: orders = [], isLoading, mutate } = useSWR<Order[]>(
+    user ? "/api/orders" : null,
     fetcher,
-
     {
-      revalidateOnFocus:
-        false,
-
-      revalidateIfStale:
-        true,
-
-      revalidateOnReconnect:
-        true,
-
+      revalidateOnFocus: false,
+      revalidateIfStale: true,
+      revalidateOnReconnect: true,
       dedupingInterval: 3000,
     }
   );
 
-  /* =======================================================
-     REFRESH
-  ======================================================= */
+  /* ================= OPTIMISTIC ================= */
 
   useEffect(() => {
-    if (!user) {
-      return;
-    }
-
     void mutate();
   }, [user, mutate]);
 
-  /* =======================================================
-     LOAD OPTIMISTIC
-  ======================================================= */
-
   useEffect(() => {
-    if (
-      typeof window ===
-      "undefined"
-    ) {
-      return;
-    }
+    if (typeof window === "undefined") return;
 
-    const raw =
-      localStorage.getItem(
-        "optimistic_order"
-      );
-
-    if (!raw) {
-      return;
-    }
+    const raw = localStorage.getItem("optimistic_order");
+    if (!raw) return;
 
     try {
-      const parsed: unknown =
-        JSON.parse(raw);
-
-      if (
-        parsed &&
-        typeof parsed ===
-          "object"
-      ) {
-        setOptimisticOrder(
-          parsed as Order
-        );
-      }
-    } catch {
-      //
-    }
+      setOptimisticOrder(JSON.parse(raw) as Order);
+    } catch {}
   }, []);
 
-  /* =======================================================
-     MERGED ORDERS
-  ======================================================= */
+  const mergedOrders = useMemo(() => {
+    if (!optimisticOrder) return orders;
 
-  const mergedOrders =
-    useMemo(() => {
-      if (!optimisticOrder) {
-        return orders;
-      }
-
-      const exists =
-        orders.some(
-          (order) =>
-            order.id ===
-            optimisticOrder.id
-        );
-
-      if (exists) {
-        return orders;
-      }
-
-      return [
-        optimisticOrder,
-        ...orders,
-      ];
-    }, [
-      orders,
-      optimisticOrder,
-    ]);
-
-  /* =======================================================
-     CLEANUP OPTIMISTIC
-  ======================================================= */
+    const exists = orders.some(o => o.id === optimisticOrder.id);
+    return exists ? orders : [optimisticOrder, ...orders];
+  }, [orders, optimisticOrder]);
 
   useEffect(() => {
-    if (!optimisticOrder) {
-      return;
-    }
+    if (!optimisticOrder) return;
 
-    const exists =
-      orders.some(
-        (order) =>
-          order.id ===
-          optimisticOrder.id
-      );
+    const exists = orders.some(o => o.id === optimisticOrder.id);
+    if (!exists) return;
 
-    if (!exists) {
-      return;
-    }
+    localStorage.removeItem("optimistic_order");
+    setOptimisticOrder(null);
+  }, [orders, optimisticOrder]);
 
-    localStorage.removeItem(
-      "optimistic_order"
-    );
-
-    setOptimisticOrder(
-      null
-    );
-  }, [
-    orders,
-    optimisticOrder,
-  ]);
-
-  /* =======================================================
-     TOTAL
-  ======================================================= */
-
-  const totalPi =
-    useMemo(() => {
-      return mergedOrders.reduce(
-        (
-          sum,
-          order
-        ) =>
-          sum +
-          Number(
-            order.total ?? 0
-          ),
-
+  const totalPi = useMemo(
+    () =>
+      mergedOrders.reduce(
+        (s, o) => s + Number(o.total ?? 0),
         0
-      );
-    }, [mergedOrders]);
-
-  /* =======================================================
-     STATE
-  ======================================================= */
-
-  const [toast, setToast] =
-    useState<string>("");
-
-  const [
-    processingId,
-    setProcessingId,
-  ] = useState<
-    string | null
-  >(null);
-
-  /* cancel */
-
-  const [
-    showCancelFor,
-    setShowCancelFor,
-  ] = useState<
-    string | null
-  >(null);
-
-  const [
-    selectedReason,
-    setSelectedReason,
-  ] = useState<string>(
-    ""
+      ),
+    [mergedOrders]
   );
 
-  const [
-    customReason,
-    setCustomReason,
-  ] = useState<string>(
-    ""
-  );
+  /* ================= STATE ================= */
 
-  /* review */
+  const [toast, setToast] = useState("");
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const [
-    activeReviewId,
-    setActiveReviewId,
-  ] = useState<
-    string | null
-  >(null);
+  const [showCancelFor, setShowCancelFor] = useState<string | null>(null);
+  const [selectedReason, setSelectedReason] = useState<CancelReasonKey | "">("");
+  const [customReason, setCustomReason] = useState("");
 
-  const [rating, setRating] =
-    useState<number>(5);
+  const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
 
-  const [comment, setComment] =
-    useState<string>("");
+  const [reviewedMap, setReviewedMap] = useState<Record<string, boolean>>({});
 
-  const [
-    reviewedMap,
-    setReviewedMap,
-  ] = useState<
-    Record<
-      string,
-      boolean
-    >
-  >({});
+  const [confirmReceivedFor, setConfirmReceivedFor] = useState<string | null>(null);
 
-  /* received */
+  /* ================= HELPERS ================= */
 
-  const [
-    confirmReceivedFor,
-    setConfirmReceivedFor,
-  ] = useState<
-    string | null
-  >(null);
+  const showToast = (msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast(""), 2400);
+  };
 
-  /* =======================================================
-     HELPERS
-  ======================================================= */
-
-  function showToastMessage(
-    text: string
-  ) {
-    setToast(text);
-
-    window.setTimeout(() => {
-      setToast("");
-    }, 2400);
-  }
-
-  function resetCancel() {
+  const resetCancel = () => {
     setShowCancelFor(null);
-
     setSelectedReason("");
-
     setCustomReason("");
-  }
+  };
 
-  function resetReview() {
+  const resetReview = () => {
     setActiveReviewId(null);
-
     setRating(5);
-
     setComment("");
-  }
+  };
 
-  /* =======================================================
-     CANCEL ORDER
-  ======================================================= */
+  /* ================= ACTIONS ================= */
 
-  async function handleCancel(
-    orderId: string
-  ) {
+  async function handleCancel(orderId: string) {
     const reason =
-      selectedReason ===
-      "cancel_reason_other"
+      selectedReason === "cancel_reason_other"
         ? customReason.trim()
         : selectedReason;
 
-    if (!reason) {
-      showToastMessage(
-        t.select_cancel_reason ??
-          "Select reason"
-      );
+    if (!reason) return showToast(t.select_cancel_reason ?? "Select reason");
 
-      return;
-    }
+    setProcessingId(orderId);
 
     try {
-      setProcessingId(
-        orderId
-      );
+      const token = await getPiAccessToken();
+      if (!token) return showToast(t.login_required ?? "Login required");
 
-      const token =
-        await getPiAccessToken();
+      const res = await fetch(`/api/orders/${orderId}/cancel`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ cancel_reason: reason }),
+      });
 
-      if (!token) {
-        showToastMessage(
-          t.login_required ??
-            "Login required"
-        );
-
-        return;
-      }
-
-      const res =
-        await fetch(
-          `/api/orders/${orderId}/cancel`,
-          {
-            method:
-              "PATCH",
-
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify(
-              {
-                cancel_reason:
-                  reason,
-              }
-            ),
-          }
-        );
-
-      if (!res.ok) {
-        throw new Error();
-      }
+      if (!res.ok) throw new Error();
 
       await mutate();
-
       resetCancel();
-
-      showToastMessage(
-        t.cancel_success ??
-          "Cancelled"
-      );
+      showToast(t.cancel_success ?? "Cancelled");
     } catch {
-      showToastMessage(
-        t.cancel_failed ??
-          "Cancel failed"
-      );
+      showToast(t.cancel_failed ?? "Cancel failed");
     } finally {
-      setProcessingId(
-        null
-      );
+      setProcessingId(null);
     }
   }
 
-  /* =======================================================
-     RECEIVED
-  ======================================================= */
+  async function handleReceived(orderId: string) {
+    setProcessingId(orderId);
 
-  async function handleReceived(
-    orderId: string
-  ) {
     try {
-      setProcessingId(
-        orderId
-      );
+      const token = await getPiAccessToken();
+      if (!token) return showToast(t.login_required ?? "Login required");
 
-      const token =
-        await getPiAccessToken();
+      const res = await fetch(`/api/orders/${orderId}/complete`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      if (!token) {
-        showToastMessage(
-          t.login_required ??
-            "Login required"
-        );
-
-        return;
-      }
-
-      const res =
-        await fetch(
-          `/api/orders/${orderId}/complete`,
-          {
-            method:
-              "PATCH",
-
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-          }
-        );
-
-      if (!res.ok) {
-        throw new Error();
-      }
+      if (!res.ok) throw new Error();
 
       await mutate();
-
-      showToastMessage(
-        t.received_success ??
-          "Completed"
-      );
+      showToast(t.received_success ?? "Completed");
     } catch {
-      showToastMessage(
-        t.action_failed ??
-          "Failed"
-      );
+      showToast(t.action_failed ?? "Failed");
     } finally {
-      setProcessingId(
-        null
-      );
+      setProcessingId(null);
     }
   }
 
-  /* =======================================================
-     REVIEW
-  ======================================================= */
+  async function handleReview(order: Order) {
+    setProcessingId(order.id);
 
-  async function handleReview(
-    order: Order
-  ) {
     try {
-      setProcessingId(
-        order.id
-      );
+      const token = await getPiAccessToken();
+      if (!token) return showToast(t.login_required ?? "Login required");
 
-      const token =
-        await getPiAccessToken();
+      const productId = order.order_items?.[0]?.product_id;
+      if (!productId) return showToast(t.review_failed ?? "Review failed");
 
-      if (!token) {
-        showToastMessage(
-          t.login_required ??
-            "Login required"
-        );
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          order_id: order.id,
+          product_id: productId,
+          rating,
+          comment: comment.trim() || "Good product",
+        }),
+      });
 
-        return;
-      }
+      if (!res.ok) throw new Error();
 
-      const productId =
-        order.order_items?.[0]
-          ?.product_id;
-
-      if (!productId) {
-        showToastMessage(
-          t.review_failed ??
-            "Review failed"
-        );
-
-        return;
-      }
-
-      const res =
-        await fetch(
-          "/api/reviews",
-          {
-            method:
-              "POST",
-
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify(
-              {
-                order_id:
-                  order.id,
-
-                product_id:
-                  productId,
-
-                rating,
-
-                comment:
-                  comment.trim() ||
-                  t.default_review_comment ||
-                  "Good product",
-              }
-            ),
-          }
-        );
-
-      if (!res.ok) {
-        throw new Error();
-      }
-
-      setReviewedMap(
-        (prev) => ({
-          ...prev,
-
-          [order.id]:
-            true,
-        })
-      );
-
+      setReviewedMap(prev => ({ ...prev, [order.id]: true }));
       resetReview();
-
-      showToastMessage(
-        t.review_success ??
-          "Review success"
-      );
+      showToast(t.review_success ?? "Review success");
     } catch {
-      showToastMessage(
-        t.review_failed ??
-          "Review failed"
-      );
+      showToast(t.review_failed ?? "Review failed");
     } finally {
-      setProcessingId(
-        null
-      );
+      setProcessingId(null);
     }
   }
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+  /* ================= LOADING ================= */
 
-  if (
-    loading ||
-    isLoading
-  ) {
+  if (loading || isLoading) {
     return (
       <main className="min-h-screen bg-gray-100 p-4 space-y-4">
-        {Array.from({
-          length: 4,
-        }).map((_, i) => (
-          <div
-            key={i}
-            className="h-28 bg-white rounded-xl animate-pulse"
-          />
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-28 bg-white rounded-xl animate-pulse" />
         ))}
       </main>
     );
   }
 
-  /* =======================================================
-     UI
-  ======================================================= */
+  /* ================= UI ================= */
 
   return (
     <main className="min-h-screen bg-gray-100 pb-32">
-      {/* TOAST */}
 
       {toast && (
-        <div className="fixed top-16 left-1/2 z-50 -translate-x-1/2 rounded-full bg-black px-4 py-2 text-sm text-white shadow-xl">
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-black text-white px-4 py-2 rounded-full text-sm">
           {toast}
         </div>
       )}
 
-      {/* HEADER */}
-
-      <header className="bg-primary px-4 py-4 text-white shadow">
+      <header className="bg-primary px-4 py-4 text-white">
         <div className="rounded-xl bg-primary-dark p-4">
-          <p className="text-sm">
-            {t.orders ??
-              "Orders"}
-          </p>
-
-          <p className="mt-1 text-xs">
-            {
-              mergedOrders.length
-            }{" "}
-            · π
-            {formatPi(
-              totalPi
-            )}
+          <p className="text-sm">{t.orders ?? "Orders"}</p>
+          <p className="text-xs mt-1">
+            {mergedOrders.length} · π{formatPi(totalPi)}
           </p>
         </div>
       </header>
 
-      {/* LIST */}
-
-      <Suspense
-        fallback={
-          <div className="p-4 text-center text-sm text-gray-400">
-            Loading...
-          </div>
-        }
-      >
+      <Suspense fallback={<div className="p-4 text-sm text-center">Loading...</div>}>
         <CustomerOrdersList
           initialTab="all"
-          orders={
-            mergedOrders
-          }
-          reviewedMap={
-            reviewedMap
-          }
-          onDetail={(id) =>
-            router.push(
-              `/customer/orders/${id}`
-            )
-          }
-          onCancel={(id) =>
-            setShowCancelFor(
-              id
-            )
-          }
-          onReceived={(
-            id
-          ) =>
-            setConfirmReceivedFor(
-              id
-            )
-          }
-          onReview={(id) =>
-            setActiveReviewId(
-              id
-            )
-          }
+          orders={mergedOrders}
+          reviewedMap={reviewedMap}
+          onDetail={(id) => router.push(`/customer/orders/${id}`)}
+          onCancel={setShowCancelFor}
+          onReceived={setConfirmReceivedFor}
+          onReview={setActiveReviewId}
         />
       </Suspense>
-
       {/* CANCEL POPUP */}
-
       {showCancelFor && (
         <div className="fixed inset-0 z-50">
           <div
@@ -903,15 +368,12 @@ export default function CustomerOrdersPage() {
             }
             className="absolute inset-0 bg-black/40"
           />
-
           <div className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+80px)]">
             <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-300" />
-
             <h3 className="text-center text-lg font-semibold">
               {t.cancel_order ??
                 "Cancel Order"}
             </h3>
-
             <div className="mt-5 space-y-2">
               {CANCEL_REASON_KEYS.map(
                 (
@@ -940,7 +402,6 @@ export default function CustomerOrdersPage() {
                 )
               )}
             </div>
-
             {selectedReason ===
               "cancel_reason_other" && (
               <textarea
