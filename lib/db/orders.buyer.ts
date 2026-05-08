@@ -1,4 +1,6 @@
-import { syncOrderStatus } from "@/lib/db/orders";
+import {
+  syncOrderFulfillmentStatus,
+} from "@/lib/db/orders";
 
 /* =========================================================
    TYPES
