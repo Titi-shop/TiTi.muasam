@@ -11,8 +11,13 @@ import { useSearchParams } from "next/navigation";
 import CustomerOrderCard from "./CustomerOrderCard";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
+import {
+  ORDER_STATUS,
+  type OrderStatus,
+} from "@/constants/order-status";
+
 /* =======================================================
-   TYPES (SOURCE OF TRUTH = fulfillment_status)
+   TYPES
 ======================================================= */
 
 type OrderTab =
@@ -23,15 +28,7 @@ type OrderTab =
   | "completed"
   | "cancelled";
 
-type FulfillmentStatus =
-  | "pending"
-  | "pending_fulfillment"
-  | "processing"
-  | "shipped"
-  | "delivered"
-  | "completed"
-  | "cancelled"
-  | "refunded";
+type FulfillmentStatus = OrderStatus;
 
 type PaymentStatus =
   | "pending"
@@ -48,29 +45,62 @@ type Order = {
 };
 
 /* =======================================================
-   STATE MACHINE (FIXED)
+   STATE MACHINE (V7 - SINGLE SOURCE OF TRUTH)
 ======================================================= */
 
 function normalizeStatus(order: Order): OrderStatus {
   const f = order.fulfillment_status;
   const p = order.payment_status;
   const legacy = order.status;
-  // 🟡 CHỜ XÁC NHẬN (QUAN TRỌNG)
-  if (f === "pending_fulfillment") return "pending";
-  if (p === "pending") return "pending";
-  if (f === "processing") return "confirmed";
-  if (f === "shipped" || f === "delivered") return "shipping";
-  if (f === "completed") return "completed";
+
+  // 🟡 PENDING FLOW
+  if (f === ORDER_STATUS.PENDING_FULFILLMENT) {
+    return ORDER_STATUS.PENDING;
+  }
+
+  if (p === "pending") {
+    return ORDER_STATUS.PENDING;
+  }
+
+  // 🟠 PROCESSING
+  if (f === ORDER_STATUS.PROCESSING) {
+    return ORDER_STATUS.PROCESSING;
+  }
+
+  // 🚚 SHIPPING FLOW
   if (
-    f === "cancelled" ||
-    f === "refunded" ||
+    f === ORDER_STATUS.SHIPPED ||
+    f === ORDER_STATUS.DELIVERED
+  ) {
+    return ORDER_STATUS.SHIPPED;
+  }
+
+  // ✅ COMPLETED
+  if (f === ORDER_STATUS.COMPLETED) {
+    return ORDER_STATUS.COMPLETED;
+  }
+
+  // ❌ CANCELLED FLOW
+  if (
+    f === ORDER_STATUS.CANCELLED ||
+    f === ORDER_STATUS.REFUNDED ||
     p === "failed" ||
     p === "refunded"
   ) {
-    return "cancelled";
+    return ORDER_STATUS.CANCELLED;
   }
-  return (legacy as OrderStatus) ?? "pending";
+
+  // fallback legacy safety
+  if (
+    legacy &&
+    Object.values(ORDER_STATUS).includes(legacy as OrderStatus)
+  ) {
+    return legacy as OrderStatus;
+  }
+
+  return ORDER_STATUS.PENDING;
 }
+
 /* =======================================================
    COMPONENT
 ======================================================= */
@@ -88,28 +118,10 @@ type Props = {
   reviewedMap?: Record<string, boolean>;
 };
 
-export default function CustomerOrdersList({
-  orders,
-  initialTab = "all",
-  onDetail,
-  onCancel,
-  onReceived,
-  onBuyAgain,
-  onReview,
-  reviewedMap,
-}: Props) {
+export default function CustomerOrdersList(props: Props) {
   return (
     <Suspense fallback={<div className="p-4 h-12 bg-white animate-pulse rounded-xl" />}>
-      <Inner {...{
-        orders,
-        initialTab,
-        onDetail,
-        onCancel,
-        onReceived,
-        onBuyAgain,
-        onReview,
-        reviewedMap,
-      }} />
+      <Inner {...props} />
     </Suspense>
   );
 }
@@ -120,7 +132,7 @@ export default function CustomerOrdersList({
 
 function Inner({
   orders,
-  initialTab,
+  initialTab = "all",
   onDetail,
   onCancel,
   onReceived,
@@ -170,7 +182,24 @@ function Inner({
 
     for (const o of orders) {
       const s = normalizeStatus(o);
-      map[s]++;
+
+      switch (s) {
+        case ORDER_STATUS.PENDING:
+          map.pending++;
+          break;
+        case ORDER_STATUS.PROCESSING:
+          map.processing++;
+          break;
+        case ORDER_STATUS.SHIPPED:
+          map.shipping++;
+          break;
+        case ORDER_STATUS.COMPLETED:
+          map.completed++;
+          break;
+        case ORDER_STATUS.CANCELLED:
+          map.cancelled++;
+          break;
+      }
     }
 
     return map;
@@ -180,7 +209,19 @@ function Inner({
 
   const filtered = useMemo(() => {
     if (tab === "all") return orders;
-    return orders.filter(o => normalizeStatus(o) === tab);
+
+    return orders.filter((o) => {
+      const s = normalizeStatus(o);
+
+      if (tab === "shipping") {
+        return (
+          s === ORDER_STATUS.SHIPPED ||
+          s === ORDER_STATUS.DELIVERED
+        );
+      }
+
+      return s === tab;
+    });
   }, [orders, tab]);
 
   /* ================= UI ================= */
@@ -213,7 +254,7 @@ function Inner({
             {t.no_orders ?? "No orders"}
           </div>
         ) : (
-          filtered.map(order => (
+          filtered.map((order) => (
             <CustomerOrderCard
               key={order.id}
               order={order}
