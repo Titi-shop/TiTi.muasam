@@ -108,6 +108,22 @@ export type BuyerOrderRow = {
 
   order_items: BuyerOrderItemRow[];
 };
+export type BuyerOrderCounts = {
+
+  pending_fulfillment: number;
+
+  processing: number;
+
+  shipped: number;
+
+  completed: number;
+
+  cancelled: number;
+
+  refunded: number;
+
+};
+
 
 /* =========================================================
    BUYER — ORDERS LIST
