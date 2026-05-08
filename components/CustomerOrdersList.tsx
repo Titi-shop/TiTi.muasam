@@ -51,42 +51,26 @@ type Order = {
    STATE MACHINE (FIXED)
 ======================================================= */
 
-function normalizeStatus(order: Order): OrderTab {
+function normalizeStatus(order: Order): OrderStatus {
   const f = order.fulfillment_status;
   const p = order.payment_status;
-
-  if (!f) return "pending";
-
-  switch (f) {
-    case "pending":
-    case "pending_fulfillment":
-      return "pending";
-
-    case "processing":
-      return "processing";
-
-    case "shipped":
-    case "delivered":
-      return "shipping";
-
-    case "completed":
-      return "completed";
-
-    case "cancelled":
-    case "refunded":
-      return "cancelled";
-
-    default:
-      break;
-  }
-
-  // fallback legacy
+  const legacy = order.status;
+  // 🟡 CHỜ XÁC NHẬN (QUAN TRỌNG)
+  if (f === "pending_fulfillment") return "pending";
   if (p === "pending") return "pending";
-  if (p === "failed" || p === "refunded") return "cancelled";
-
-  return "pending";
+  if (f === "processing") return "confirmed";
+  if (f === "shipped" || f === "delivered") return "shipping";
+  if (f === "completed") return "completed";
+  if (
+    f === "cancelled" ||
+    f === "refunded" ||
+    p === "failed" ||
+    p === "refunded"
+  ) {
+    return "cancelled";
+  }
+  return (legacy as OrderStatus) ?? "pending";
 }
-
 /* =======================================================
    COMPONENT
 ======================================================= */
