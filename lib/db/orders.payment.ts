@@ -38,8 +38,6 @@ type PaymentIntentRow = {
   zone: string;
 
   merchant_wallet: string;
-
-  status: string;
   settlement_state: string;
 };
 
