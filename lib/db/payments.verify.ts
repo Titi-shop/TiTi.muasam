@@ -16,6 +16,8 @@ type VerifyReconcileResult = {
   ok: boolean;
   verifiedAmount: number;
   receiverWallet: string;
+  senderWallet: string | null;
+  txid: string;
   piUid: string | null;
   piPayload: unknown;
 };
