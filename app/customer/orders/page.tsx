@@ -6,15 +6,18 @@ export const fetchCache = "force-no-store";
 import useSWR from "swr";
 import {
   Suspense,
+  useEffect,
   useMemo,
   useState,
-  useEffect, 
 } from "react";
+
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/AuthContext";
+
 import { getPiAccessToken } from "@/lib/piAuth";
 import { formatPi } from "@/lib/pi";
+
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 import CustomerOrdersList from "@/components/CustomerOrdersList";
@@ -41,59 +44,114 @@ type PaymentStatus =
 
 type OrderItem = {
   id?: string;
+
   product_id: string;
+
   product_name?: string | null;
+
   product_slug?: string | null;
+
   thumbnail?: string | null;
+
   images?: string[] | null;
+
   variant_name?: string | null;
+
   variant_value?: string | null;
+
   quantity?: number;
+
   unit_price?: number | string;
+
   total_price?: number | string;
+
   currency?: string;
+
   seller_message?: string | null;
+
   seller_cancel_reason?: string | null;
+
   tracking_code?: string | null;
+
   shipping_provider?: string | null;
+
   shipped_at?: string | null;
+
   delivered_at?: string | null;
+
   snapshot?: unknown;
 };
+
 type Order = {
   id: string;
+
   order_number: string;
+
   status?: string;
+
   payment_status: PaymentStatus;
+
   fulfillment_status: FulfillmentStatus;
+
   total: number | string;
+
   subtotal?: number | string;
+
   shipping_fee?: number | string;
+
   discount?: number | string;
+
   tax?: number | string;
+
   currency: string;
+
   total_items?: number;
+
   total_quantity?: number;
+
   created_at: string;
+
   paid_at?: string | null;
+
   shipped_at?: string | null;
+
   delivered_at?: string | null;
+
   completed_at?: string | null;
+
   cancelled_at?: string | null;
+
   cancel_reason?: string | null;
+
   shipping_name?: string;
+
   shipping_phone?: string;
+
   shipping_address_line?: string;
+
   shipping_ward?: string | null;
+
   shipping_district?: string | null;
+
   shipping_region?: string | null;
+
   shipping_country?: string;
+
   shipping_postal_code?: string | null;
+
   shipping_provider?: string | null;
+
   shipping_zone?: string | null;
+
   buyer_note?: string;
+
   admin_note?: string;
+
   order_items?: OrderItem[];
+};
+
+type OrdersResponse = {
+  orders?: Order[];
 };
 
 /* =======================================================
@@ -111,59 +169,87 @@ const CANCEL_REASON_KEYS = [
 ] as const;
 
 /* =======================================================
+   HELPERS
+======================================================= */
+
+function normalizeOrder(
+  order: Order
+): Order {
+  return {
+    ...order,
+
+    status:
+      order.fulfillment_status ??
+      order.payment_status ??
+      "pending_fulfillment",
+  };
+}
+
+/* =======================================================
    FETCHER
 ======================================================= */
 
 const fetcher = async (): Promise<Order[]> => {
   try {
-    const token = await getPiAccessToken();
+    const token =
+      await getPiAccessToken();
 
-    if (!token) return [];
+    if (!token) {
+      return [];
+    }
 
-    const res = await fetch("/api/orders", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      cache: "no-store",
-    });
+    const res = await fetch(
+      "/api/orders",
+      {
+        method: "GET",
 
-    if (!res.ok) return [];
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
 
-    const data: unknown = await res.json();
+        cache: "no-store",
+      }
+    );
 
-   if (Array.isArray(data)) {
-  return data.map((order: any) => ({
-    ...order,
-    status:
-      order.fulfillment_status ??
-      order.payment_status ??
-      "pending",
-  })) as Order[];
-}
+    if (!res.ok) {
+      return [];
+    }
+
+    const data: unknown =
+      await res.json();
+
+    /* ================= ARRAY ================= */
+
+    if (Array.isArray(data)) {
+      return data.map(
+        (order) =>
+          normalizeOrder(
+            order as Order
+          )
+      );
+    }
+
+    /* ================= OBJECT ================= */
 
     if (
       typeof data === "object" &&
       data !== null &&
       "orders" in data
     ) {
+      const typed =
+        data as OrdersResponse;
+
       const orders =
-        (
-          data as {
-            orders?: Order[];
-          }
-        ).orders ?? [];
+        typed.orders ?? [];
 
-      return Array.isArray(orders)
-  ? orders.map((order: any) => ({
-      ...order,
+      if (!Array.isArray(orders)) {
+        return [];
+      }
 
-      status:
-        order.fulfillment_status ??
-        order.payment_status ??
-        "pending",
-    }))
-  : [];
+      return orders.map(
+        (order) =>
+          normalizeOrder(order)
+      );
     }
 
     return [];
@@ -177,48 +263,232 @@ const fetcher = async (): Promise<Order[]> => {
 ======================================================= */
 
 export default function CustomerOrdersPage() {
-  const { t } = useTranslation();
-  const router = useRouter();
-  const { user, loading } = useAuth();
-const [optimisticOrder, setOptimisticOrder] =
-  useState<Order | null>(null);
+  const { t } =
+    useTranslation();
+
+  const router =
+    useRouter();
+
   const {
-  data: orders = [],
-  isLoading,
-  mutate,
-} = useSWR<Order[]>(
-  user ? "/api/orders" : null,
-  fetcher,
-  {
-    revalidateOnFocus: true, 
-    dedupingInterval: 2000,   
-  }
-);
-useEffect(() => {
-  if (!user) return;
-  mutate(); 
-}, [user]);
-  /* ================= STATE ================= */
+    user,
+    loading,
+  } = useAuth();
+
+  /* ================= OPTIMISTIC ================= */
+
+  const [
+    optimisticOrder,
+    setOptimisticOrder,
+  ] =
+    useState<Order | null>(
+      null
+    );
+
+  /* ================= SWR ================= */
+
+  const {
+    data: orders = [],
+    isLoading,
+    mutate,
+  } = useSWR<Order[]>(
+    user
+      ? "/api/orders"
+      : null,
+
+    fetcher,
+
+    {
+      revalidateOnFocus:
+        false,
+
+      revalidateIfStale:
+        true,
+
+      revalidateOnReconnect:
+        true,
+
+      dedupingInterval: 3000,
+    }
+  );
+
+  /* =======================================================
+     REFRESH
+  ======================================================= */
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    void mutate();
+  }, [user, mutate]);
+
+  /* =======================================================
+     LOAD OPTIMISTIC
+  ======================================================= */
+
+  useEffect(() => {
+    if (
+      typeof window ===
+      "undefined"
+    ) {
+      return;
+    }
+
+    const raw =
+      localStorage.getItem(
+        "optimistic_order"
+      );
+
+    if (!raw) {
+      return;
+    }
+
+    try {
+      const parsed: unknown =
+        JSON.parse(raw);
+
+      if (
+        parsed &&
+        typeof parsed ===
+          "object"
+      ) {
+        setOptimisticOrder(
+          parsed as Order
+        );
+      }
+    } catch {
+      //
+    }
+  }, []);
+
+  /* =======================================================
+     MERGED ORDERS
+  ======================================================= */
+
+  const mergedOrders =
+    useMemo(() => {
+      if (!optimisticOrder) {
+        return orders;
+      }
+
+      const exists =
+        orders.some(
+          (order) =>
+            order.id ===
+            optimisticOrder.id
+        );
+
+      if (exists) {
+        return orders;
+      }
+
+      return [
+        optimisticOrder,
+        ...orders,
+      ];
+    }, [
+      orders,
+      optimisticOrder,
+    ]);
+
+  /* =======================================================
+     CLEANUP OPTIMISTIC
+  ======================================================= */
+
+  useEffect(() => {
+    if (!optimisticOrder) {
+      return;
+    }
+
+    const exists =
+      orders.some(
+        (order) =>
+          order.id ===
+          optimisticOrder.id
+      );
+
+    if (!exists) {
+      return;
+    }
+
+    localStorage.removeItem(
+      "optimistic_order"
+    );
+
+    setOptimisticOrder(
+      null
+    );
+  }, [
+    orders,
+    optimisticOrder,
+  ]);
+
+  /* =======================================================
+     TOTAL
+  ======================================================= */
+
+  const totalPi =
+    useMemo(() => {
+      return mergedOrders.reduce(
+        (
+          sum,
+          order
+        ) =>
+          sum +
+          Number(
+            order.total ?? 0
+          ),
+
+        0
+      );
+    }, [mergedOrders]);
+
+  /* =======================================================
+     STATE
+  ======================================================= */
 
   const [toast, setToast] =
     useState<string>("");
 
-  const [processingId, setProcessingId] =
-    useState<string | null>(null);
+  const [
+    processingId,
+    setProcessingId,
+  ] = useState<
+    string | null
+  >(null);
 
   /* cancel */
-  const [showCancelFor, setShowCancelFor] =
-    useState<string | null>(null);
 
-  const [selectedReason, setSelectedReason] =
-    useState<string>("");
+  const [
+    showCancelFor,
+    setShowCancelFor,
+  ] = useState<
+    string | null
+  >(null);
 
-  const [customReason, setCustomReason] =
-    useState<string>("");
+  const [
+    selectedReason,
+    setSelectedReason,
+  ] = useState<string>(
+    ""
+  );
+
+  const [
+    customReason,
+    setCustomReason,
+  ] = useState<string>(
+    ""
+  );
 
   /* review */
-  const [activeReviewId, setActiveReviewId] =
-    useState<string | null>(null);
+
+  const [
+    activeReviewId,
+    setActiveReviewId,
+  ] = useState<
+    string | null
+  >(null);
 
   const [rating, setRating] =
     useState<number>(5);
@@ -226,72 +496,52 @@ useEffect(() => {
   const [comment, setComment] =
     useState<string>("");
 
-  const [reviewedMap, setReviewedMap] =
-    useState<Record<string, boolean>>(
-      {}
-    );
+  const [
+    reviewedMap,
+    setReviewedMap,
+  ] = useState<
+    Record<
+      string,
+      boolean
+    >
+  >({});
 
   /* received */
+
   const [
     confirmReceivedFor,
     setConfirmReceivedFor,
-  ] = useState<string | null>(null);
-  useEffect(() => {
-  if (typeof window === "undefined") return;
+  ] = useState<
+    string | null
+  >(null);
 
-  const raw = localStorage.getItem("optimistic_order");
-  if (!raw) return;
-
-  try {
-    const parsed = JSON.parse(raw);
-    setOptimisticOrder(parsed);
-  } catch {}
-}, []);
-  
-  /* ================= TOTAL ================= */
-
-  const mergedOrders = useMemo(() => {
-  if (!optimisticOrder) return orders;
-
-  const hasRealPending =
-    orders.length > 0;
-
-  if (hasRealPending) {
-    localStorage.removeItem(
-      "optimistic_order"
-    );
-
-    setOptimisticOrder(null);
-
-    return orders;
-  }
-
-  return [
-    optimisticOrder,
-    ...orders,
-  ];
-}, [orders, optimisticOrder]);
-
-  /* ================= HELPERS ================= */
+  /* =======================================================
+     HELPERS
+  ======================================================= */
 
   function showToastMessage(
     text: string
   ) {
     setToast(text);
-    setTimeout(() => {
+
+    window.setTimeout(() => {
       setToast("");
     }, 2400);
   }
 
   function resetCancel() {
     setShowCancelFor(null);
+
     setSelectedReason("");
+
     setCustomReason("");
   }
 
   function resetReview() {
     setActiveReviewId(null);
+
     setRating(5);
+
     setComment("");
   }
 
@@ -313,11 +563,15 @@ useEffect(() => {
         t.select_cancel_reason ??
           "Select reason"
       );
+
       return;
     }
 
     try {
-      setProcessingId(orderId);
+      setProcessingId(
+        orderId
+      );
+
       const token =
         await getPiAccessToken();
 
@@ -326,25 +580,33 @@ useEffect(() => {
           t.login_required ??
             "Login required"
         );
+
         return;
       }
 
-      const res = await fetch(
-        `/api/orders/${orderId}/cancel`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            cancel_reason:
-              reason,
-          }),
-        }
-      );
+      const res =
+        await fetch(
+          `/api/orders/${orderId}/cancel`,
+          {
+            method:
+              "PATCH",
+
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify(
+              {
+                cancel_reason:
+                  reason,
+              }
+            ),
+          }
+        );
 
       if (!res.ok) {
         throw new Error();
@@ -364,7 +626,9 @@ useEffect(() => {
           "Cancel failed"
       );
     } finally {
-      setProcessingId(null);
+      setProcessingId(
+        null
+      );
     }
   }
 
@@ -376,7 +640,9 @@ useEffect(() => {
     orderId: string
   ) {
     try {
-      setProcessingId(orderId);
+      setProcessingId(
+        orderId
+      );
 
       const token =
         await getPiAccessToken();
@@ -386,19 +652,23 @@ useEffect(() => {
           t.login_required ??
             "Login required"
         );
+
         return;
       }
 
-      const res = await fetch(
-        `/api/orders/${orderId}/complete`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-          },
-        }
-      );
+      const res =
+        await fetch(
+          `/api/orders/${orderId}/complete`,
+          {
+            method:
+              "PATCH",
+
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+          }
+        );
 
       if (!res.ok) {
         throw new Error();
@@ -416,7 +686,9 @@ useEffect(() => {
           "Failed"
       );
     } finally {
-      setProcessingId(null);
+      setProcessingId(
+        null
+      );
     }
   }
 
@@ -428,7 +700,9 @@ useEffect(() => {
     order: Order
   ) {
     try {
-      setProcessingId(order.id);
+      setProcessingId(
+        order.id
+      );
 
       const token =
         await getPiAccessToken();
@@ -438,6 +712,7 @@ useEffect(() => {
           t.login_required ??
             "Login required"
         );
+
         return;
       }
 
@@ -450,32 +725,43 @@ useEffect(() => {
           t.review_failed ??
             "Review failed"
         );
+
         return;
       }
 
-      const res = await fetch(
-        "/api/reviews",
-        {
-          method: "POST",
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            order_id:
-              order.id,
-            product_id:
-              productId,
-            rating,
-            comment:
-              comment.trim() ||
-              t.default_review_comment ||
-              "Good product",
-          }),
-        }
-      );
+      const res =
+        await fetch(
+          "/api/reviews",
+          {
+            method:
+              "POST",
+
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify(
+              {
+                order_id:
+                  order.id,
+
+                product_id:
+                  productId,
+
+                rating,
+
+                comment:
+                  comment.trim() ||
+                  t.default_review_comment ||
+                  "Good product",
+              }
+            ),
+          }
+        );
 
       if (!res.ok) {
         throw new Error();
@@ -484,7 +770,9 @@ useEffect(() => {
       setReviewedMap(
         (prev) => ({
           ...prev,
-          [order.id]: true,
+
+          [order.id]:
+            true,
         })
       );
 
@@ -500,7 +788,9 @@ useEffect(() => {
           "Review failed"
       );
     } finally {
-      setProcessingId(null);
+      setProcessingId(
+        null
+      );
     }
   }
 
@@ -508,7 +798,10 @@ useEffect(() => {
      LOADING
   ======================================================= */
 
-  if (loading || isLoading) {
+  if (
+    loading ||
+    isLoading
+  ) {
     return (
       <main className="min-h-screen bg-gray-100 p-4 space-y-4">
         {Array.from({
@@ -530,6 +823,7 @@ useEffect(() => {
   return (
     <main className="min-h-screen bg-gray-100 pb-32">
       {/* TOAST */}
+
       {toast && (
         <div className="fixed top-16 left-1/2 z-50 -translate-x-1/2 rounded-full bg-black px-4 py-2 text-sm text-white shadow-xl">
           {toast}
@@ -537,6 +831,7 @@ useEffect(() => {
       )}
 
       {/* HEADER */}
+
       <header className="bg-primary px-4 py-4 text-white shadow">
         <div className="rounded-xl bg-primary-dark p-4">
           <p className="text-sm">
@@ -545,12 +840,19 @@ useEffect(() => {
           </p>
 
           <p className="mt-1 text-xs">
-            {mergedOrders.length} · π{formatPi(totalPi)}
+            {
+              mergedOrders.length
+            }{" "}
+            · π
+            {formatPi(
+              totalPi
+            )}
           </p>
         </div>
       </header>
 
       {/* LIST */}
+
       <Suspense
         fallback={
           <div className="p-4 text-center text-sm text-gray-400">
@@ -560,7 +862,9 @@ useEffect(() => {
       >
         <CustomerOrdersList
           initialTab="all"
-          orders={mergedOrders}
+          orders={
+            mergedOrders
+          }
           reviewedMap={
             reviewedMap
           }
@@ -574,7 +878,9 @@ useEffect(() => {
               id
             )
           }
-          onReceived={(id) =>
+          onReceived={(
+            id
+          ) =>
             setConfirmReceivedFor(
               id
             )
@@ -588,6 +894,7 @@ useEffect(() => {
       </Suspense>
 
       {/* CANCEL POPUP */}
+
       {showCancelFor && (
         <div className="fixed inset-0 z-50">
           <div
@@ -597,14 +904,7 @@ useEffect(() => {
             className="absolute inset-0 bg-black/40"
           />
 
-          <div
-      className="
-    absolute bottom-0 left-0 right-0
-    bg-white rounded-t-3xl
-    p-5
-    pb-[calc(env(safe-area-inset-bottom)+80px)]
-       "
-        >
+          <div className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+80px)]">
             <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-300" />
 
             <h3 className="text-center text-lg font-semibold">
@@ -630,7 +930,7 @@ useEffect(() => {
                     className={`w-full rounded-xl border px-4 py-3 text-left ${
                       selectedReason ===
                       key
-                        ?"border-primary bg-primary/10 text-primary"
+                        ? "border-primary bg-primary/10 text-primary"
                         : "border-gray-200"
                     }`}
                   >
@@ -698,6 +998,7 @@ useEffect(() => {
       )}
 
       {/* REVIEW POPUP */}
+
       {activeReviewId && (
         <div className="fixed inset-0 z-50">
           <div
@@ -707,12 +1008,7 @@ useEffect(() => {
             className="absolute inset-0 bg-black/40"
           />
 
-          <div className="
-absolute bottom-0 left-0 right-0
-max-h-[88vh] overflow-y-auto
-rounded-t-3xl bg-white p-5
-pb-[calc(env(safe-area-inset-bottom)+80px)]
-">
+          <div className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-y-auto rounded-t-3xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+80px)]">
             <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-300" />
 
             <h3 className="text-center text-lg font-semibold">
@@ -751,7 +1047,9 @@ pb-[calc(env(safe-area-inset-bottom)+80px)]
             <textarea
               rows={4}
               value={comment}
-              onChange={(e) =>
+              onChange={(
+                e
+              ) =>
                 setComment(
                   e.target
                     .value
@@ -783,7 +1081,8 @@ pb-[calc(env(safe-area-inset-bottom)+80px)]
                   activeReviewId
                 }
                 onClick={() => {
-                  const order = mergedOrders.find(
+                  const order =
+                    mergedOrders.find(
                       (
                         item
                       ) =>
@@ -792,7 +1091,7 @@ pb-[calc(env(safe-area-inset-bottom)+80px)]
                     );
 
                   if (order) {
-                    handleReview(
+                    void handleReview(
                       order
                     );
                   }
@@ -808,6 +1107,7 @@ pb-[calc(env(safe-area-inset-bottom)+80px)]
       )}
 
       {/* RECEIVED POPUP */}
+
       {confirmReceivedFor && (
         <div className="fixed inset-0 z-50">
           <div
@@ -819,11 +1119,7 @@ pb-[calc(env(safe-area-inset-bottom)+80px)]
             className="absolute inset-0 bg-black/40"
           />
 
-          <div className="
-absolute bottom-0 left-0 right-0
-rounded-t-3xl bg-white p-5
-pb-[calc(env(safe-area-inset-bottom)+80px)]
-">
+          <div className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+80px)]">
             <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-300" />
 
             <h3 className="text-center text-lg font-semibold">
