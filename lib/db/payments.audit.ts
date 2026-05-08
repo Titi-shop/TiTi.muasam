@@ -1,3 +1,4 @@
+
 import { query } from "@/lib/db";
 import { createHash, randomUUID } from "crypto";
 
@@ -5,7 +6,7 @@ import { createHash, randomUUID } from "crypto";
    TYPES
 ========================================================= */
 
-export type JsonValue =
+type JsonValue =
   | string
   | number
   | boolean
@@ -13,58 +14,52 @@ export type JsonValue =
   | { [key: string]: JsonValue }
   | JsonValue[];
 
-/* =========================================================
-   CONTEXT (🔥 CORE FIX V7)
-========================================================= */
-
-export type PaymentAuditContext = {
-  requestId: string;
-
-  paymentIntentId: string;
-
-  orderId?: string | null;
-  escrowId?: string | null;
-
-  piPaymentId?: string | null;
-  txid?: string | null;
-
-  actorId?: string | null;
-  source?: string | null;
-};
-
-/* =========================================================
-   ENUMS
-========================================================= */
-
-export type AuditSeverity = "info" | "warn" | "error" | "critical";
+export type AuditSeverity =
+  | "info"
+  | "warn"
+  | "error"
+  | "critical";
 
 export type AuditStage =
   | "INTENT"
+  | "AUTHORIZE"
   | "SUBMIT"
   | "PI_VERIFY"
   | "RPC_VERIFY"
   | "PI_COMPLETE"
   | "FINALIZE"
   | "LEDGER"
+  | "WEBHOOK"
   | "MANUAL";
 
 export type AuditActorType =
   | "system"
   | "api"
+  | "cron"
+  | "admin"
   | "pi_api"
   | "rpc"
   | "ledger";
 
-/* =========================================================
-   INPUT
-========================================================= */
+type WriteAuditParams = {
+  paymentIntentId: string;
 
-export type WriteAuditParams = {
   eventCode: string;
   stage: AuditStage;
 
   severity?: AuditSeverity;
+
   actorType?: AuditActorType;
+  actorId?: string | null;
+
+  source?: string | null;
+  requestId?: string | null;
+
+  orderId?: string | null;
+  escrowId?: string | null;
+
+  piPaymentId?: string | null;
+  txid?: string | null;
 
   oldPaymentStatus?: string | null;
   newPaymentStatus?: string | null;
@@ -79,23 +74,28 @@ export type WriteAuditParams = {
 };
 
 /* =========================================================
-   NORMALIZE
+   NORMALIZERS
 ========================================================= */
 
-function normalize(v: unknown): string | null {
+function normalizeText(v: string | null | undefined): string | null {
   if (typeof v !== "string") return null;
   const x = v.trim();
   return x.length ? x : null;
 }
 
-function makeHash(input: unknown): string {
+function normalizePayload(v: JsonValue | null | undefined): JsonValue {
+  if (typeof v === "undefined" || v === null) return {};
+  return v;
+}
+
+function makeHash(payload: unknown): string {
   return createHash("sha256")
-    .update(JSON.stringify(input))
+    .update(JSON.stringify(payload))
     .digest("hex");
 }
 
 /* =========================================================
-   PREVIOUS HASH
+   GET PREVIOUS HASH
 ========================================================= */
 
 async function getPreviousHash(paymentIntentId: string): Promise<string | null> {
@@ -104,7 +104,7 @@ async function getPreviousHash(paymentIntentId: string): Promise<string | null> 
     SELECT event_hash
     FROM payment_audit_logs
     WHERE payment_intent_id = $1
-    ORDER BY created_at DESC
+    ORDER BY event_index DESC
     LIMIT 1
     `,
     [paymentIntentId]
@@ -114,21 +114,63 @@ async function getPreviousHash(paymentIntentId: string): Promise<string | null> 
 }
 
 /* =========================================================
-   MAIN WRITER (V7 CORE)
+   MAIN IMMUTABLE AUDIT WRITER
 ========================================================= */
 
-export async function writePaymentAudit(
-  ctx: PaymentAuditContext,
-  params: WriteAuditParams
-): Promise<void> {
-  const prevHash = await getPreviousHash(ctx.paymentIntentId);
+export async function writePaymentAudit({
+  paymentIntentId,
 
-  const payload = params.payload ?? {};
+  eventCode,
+  stage,
+  severity = "info",
+
+  actorType = "system",
+  actorId,
+
+  source,
+  requestId,
+
+  orderId,
+  escrowId,
+
+  piPaymentId,
+  txid,
+
+  oldPaymentStatus,
+  newPaymentStatus,
+
+  oldSettlementState,
+  newSettlementState,
+
+  reconcileAttempt = 0,
+
+  note,
+  payload,
+}: WriteAuditParams): Promise<void> {
+  const prevHash = await getPreviousHash(paymentIntentId);
+
+  const normalizedPayload = normalizePayload(payload);
 
   const eventHash = makeHash({
-    ctx,
-    ...params,
-    payload,
+    paymentIntentId,
+    eventCode,
+    stage,
+    severity,
+    actorType,
+    actorId,
+    source,
+    requestId,
+    orderId,
+    escrowId,
+    piPaymentId,
+    txid,
+    oldPaymentStatus,
+    newPaymentStatus,
+    oldSettlementState,
+    newSettlementState,
+    reconcileAttempt,
+    note,
+    payload: normalizedPayload,
     prevHash,
     nonce: randomUUID(),
   });
@@ -136,11 +178,9 @@ export async function writePaymentAudit(
   await query(
     `
     INSERT INTO payment_audit_logs (
-      request_id,
       payment_intent_id,
       order_id,
       escrow_id,
-
       pi_payment_id,
       txid,
 
@@ -148,10 +188,10 @@ export async function writePaymentAudit(
       stage,
       severity,
 
+      actor_type,
       actor_id,
       source,
-
-      actor_type,
+      request_id,
 
       old_payment_status,
       new_payment_status,
@@ -165,68 +205,62 @@ export async function writePaymentAudit(
       payload,
 
       prev_hash,
-      event_hash,
-
-      created_at
+      event_hash
     )
     VALUES (
-      $1,$2,$3,$4,
-      $5,$6,
-      $7,$8,$9,
-      $10,$11,
-      $12,
+      $1,$2,$3,$4,$5,
+      $6,$7,$8,
+      $9,$10,$11,$12,
       $13,$14,
       $15,$16,
       $17,
       $18,$19,
-      $20,$21,
-      now()
+      $20,$21
     )
     `,
     [
-      ctx.requestId,
-      ctx.paymentIntentId,
-      ctx.orderId ?? null,
-      ctx.escrowId ?? null,
+      paymentIntentId,
+      orderId ?? null,
+      escrowId ?? null,
+      normalizeText(piPaymentId),
+      normalizeText(txid),
 
-      normalize(ctx.piPaymentId),
-      normalize(ctx.txid),
+      eventCode,
+      stage,
+      severity,
 
-      params.eventCode,
-      params.stage,
-      params.severity ?? "info",
+      actorType,
+      actorId ?? null,
+      normalizeText(source),
+      normalizeText(requestId),
 
-      ctx.actorId ?? null,
-      normalize(ctx.source),
+      normalizeText(oldPaymentStatus),
+      normalizeText(newPaymentStatus),
 
-      params.actorType ?? "system",
+      normalizeText(oldSettlementState),
+      normalizeText(newSettlementState),
 
-      normalize(params.oldPaymentStatus),
-      normalize(params.newPaymentStatus),
+      reconcileAttempt,
 
-      normalize(params.oldSettlementState),
-      normalize(params.newSettlementState),
-
-      params.reconcileAttempt ?? 0,
-
-      normalize(params.note),
-      JSON.stringify(payload),
+      normalizeText(note),
+      JSON.stringify(normalizedPayload),
 
       prevHash,
-      eventHash
+      eventHash,
     ]
   );
 }
 
 /* =========================================================
-   PRESET HELPERS (V7)
+   PRESET HELPERS
 ========================================================= */
 
 export const auditIntentCreated = (
-  ctx: PaymentAuditContext,
+  paymentIntentId: string,
   payload?: JsonValue
 ) =>
-  writePaymentAudit(ctx, {
+  writePaymentAudit({
+    paymentIntentId,
     eventCode: "INTENT_CREATED",
     stage: "INTENT",
     actorType: "api",
@@ -236,59 +270,82 @@ export const auditIntentCreated = (
   });
 
 export const auditPiVerified = (
-  ctx: PaymentAuditContext,
+  paymentIntentId: string,
   payload?: JsonValue
 ) =>
-  writePaymentAudit(ctx, {
+  writePaymentAudit({
+    paymentIntentId,
     eventCode: "PI_VERIFIED",
     stage: "PI_VERIFY",
     actorType: "pi_api",
+    oldSettlementState: "UNSETTLED",
     newSettlementState: "PI_VERIFIED",
     payload,
   });
 
 export const auditRpcVerified = (
-  ctx: PaymentAuditContext,
+  paymentIntentId: string,
   payload?: JsonValue
 ) =>
-  writePaymentAudit(ctx, {
+  writePaymentAudit({
+    paymentIntentId,
     eventCode: "RPC_VERIFIED",
     stage: "RPC_VERIFY",
     actorType: "rpc",
+    oldSettlementState: "PI_VERIFIED",
     newSettlementState: "RPC_AUDITED",
     payload,
   });
 
-export const auditPiCompleted = (
-  ctx: PaymentAuditContext,
+export const auditRpcFailed = (
+  paymentIntentId: string,
   payload?: JsonValue
 ) =>
-  writePaymentAudit(ctx, {
+  writePaymentAudit({
+    paymentIntentId,
+    eventCode: "RPC_FAILED",
+    stage: "RPC_VERIFY",
+    severity: "warn",
+    actorType: "rpc",
+    payload,
+  });
+
+export const auditPiCompleted = (
+  paymentIntentId: string,
+  payload?: JsonValue
+) =>
+  writePaymentAudit({
+    paymentIntentId,
     eventCode: "PI_COMPLETED",
     stage: "PI_COMPLETE",
     actorType: "pi_api",
+    oldSettlementState: "RPC_AUDITED",
     newSettlementState: "PI_COMPLETED",
     payload,
   });
 
 export const auditFinalizeDone = (
-  ctx: PaymentAuditContext,
+  paymentIntentId: string,
   payload?: JsonValue
 ) =>
-  writePaymentAudit(ctx, {
+  writePaymentAudit({
+    paymentIntentId,
     eventCode: "ORDER_FINALIZED",
     stage: "FINALIZE",
     actorType: "system",
+    oldPaymentStatus: "verifying",
     newPaymentStatus: "paid",
+    oldSettlementState: "PI_COMPLETED",
     newSettlementState: "ORDER_FINALIZED",
     payload,
   });
 
 export const auditDuplicateSubmit = (
-  ctx: PaymentAuditContext,
+  paymentIntentId: string,
   payload?: JsonValue
 ) =>
-  writePaymentAudit(ctx, {
+  writePaymentAudit({
+    paymentIntentId,
     eventCode: "DUPLICATE_SUBMIT",
     stage: "SUBMIT",
     severity: "warn",
@@ -297,11 +354,12 @@ export const auditDuplicateSubmit = (
   });
 
 export const auditManualReview = (
-  ctx: PaymentAuditContext,
+  paymentIntentId: string,
   reason: string,
   payload?: JsonValue
 ) =>
-  writePaymentAudit(ctx, {
+  writePaymentAudit({
+    paymentIntentId,
     eventCode: "MANUAL_REVIEW",
     stage: "MANUAL",
     severity: "critical",
