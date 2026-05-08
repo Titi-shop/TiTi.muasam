@@ -1,11 +1,10 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
-import useSWR from "swr";
 
-import { getPiAccessToken } from "@/lib/piAuth";
-import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
+import { useRouter } from "next/navigation";
+
+import useSWR from "swr";
 
 import {
   Clock3,
@@ -17,25 +16,79 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+import { getPiAccessToken } from "@/lib/piAuth";
+
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
+
+/* =====================================================
+   TYPES
+===================================================== */
+
+type OrderCountResponse = {
+  pending?: number;
+
+  pending_fulfillment?: number;
+
+  confirmed?: number;
+
+  processing?: number;
+
+  shipping?: number;
+
+  shipped?: number;
+
+  delivered?: number;
+
+  completed?: number;
+
+  cancelled?: number;
+
+  refunded?: number;
+
+  returns?: number;
+};
+
 /* =====================================================
    FETCHER
 ===================================================== */
 
-const fetcher = async (url: string) => {
+const fetcher = async (
+  url: string
+): Promise<OrderCountResponse | null> => {
   try {
-    const token = await getPiAccessToken();
-    if (!token) return null;
+    const token =
+      await getPiAccessToken();
 
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      cache: "no-store",
-    });
+    if (!token) {
+      return null;
+    }
 
-    if (!res.ok) return null;
+    const res = await fetch(
+      url,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      }
+    );
 
-    return await res.json();
+    if (!res.ok) {
+      return null;
+    }
+
+    const data: unknown =
+      await res.json();
+
+    if (
+      typeof data !==
+        "object" ||
+      data === null
+    ) {
+      return null;
+    }
+
+    return data as OrderCountResponse;
   } catch {
     return null;
   }
@@ -46,48 +99,130 @@ const fetcher = async (url: string) => {
 ===================================================== */
 
 export default function OrderSummary() {
-  const router = useRouter();
-  const { t } = useTranslation();
+  const router =
+    useRouter();
 
-  const { data, isLoading } = useSWR(
+  const { t } =
+    useTranslation();
+
+  const {
+    data,
+    isLoading,
+  } = useSWR<
+    OrderCountResponse | null
+  >(
     "/api/orders/count",
     fetcher,
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 5000,
-      keepPreviousData: true,
+      revalidateOnFocus:
+        false,
+
+      dedupingInterval:
+        5000,
+
+      keepPreviousData:
+        true,
     }
   );
 
+  /* =====================================================
+     NORMALIZED COUNTS
+  ===================================================== */
+
   const counts = {
-    pending: Number(data?.pending ?? 0),
-    confirmed: Number(data?.confirmed ?? 0),
-    shipping: Number(data?.shipping ?? 0),
-    completed: Number(data?.completed ?? 0),
-    cancelled: Number(data?.cancelled ?? 0),
-    returns: Number(data?.returns ?? 0),
+    /* pending */
+    pending:
+      Number(
+        data?.pending ?? 0
+      ) +
+      Number(
+        data?.pending_fulfillment ??
+          0
+      ),
+
+    /* confirmed */
+    confirmed:
+      Number(
+        data?.confirmed ?? 0
+      ) +
+      Number(
+        data?.processing ??
+          0
+      ),
+
+    /* shipping */
+    shipping:
+      Number(
+        data?.shipping ?? 0
+      ) +
+      Number(
+        data?.shipped ?? 0
+      ) +
+      Number(
+        data?.delivered ??
+          0
+      ),
+
+    /* completed */
+    completed:
+      Number(
+        data?.completed ??
+          0
+      ),
+
+    /* cancelled */
+    cancelled:
+      Number(
+        data?.cancelled ??
+          0
+      ) +
+      Number(
+        data?.refunded ??
+          0
+      ),
+
+    /* returns */
+    returns:
+      Number(
+        data?.returns ?? 0
+      ),
   };
 
-  const go = (tab: string) => {
-    router.push(`/customer/orders?tab=${tab}`);
-  };
+  /* =====================================================
+     NAVIGATION
+  ===================================================== */
+
+  function go(
+    tab: string
+  ) {
+    router.push(
+      `/customer/orders?tab=${tab}`
+    );
+  }
+
+  /* =====================================================
+     UI
+  ===================================================== */
 
   return (
-    <section className="mx-4 mt-4 overflow-hidden rounded-3xl bg-white border border-gray-100 shadow-sm">
+    <section className="mx-4 mt-4 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
       {/* HEADER */}
       <button
         type="button"
         onClick={() =>
-          router.push("/customer/orders")
+          router.push(
+            "/customer/orders"
+          )
         }
-        className="w-full px-5 py-4 flex items-center justify-between active:bg-gray-50 transition"
+        className="flex w-full items-center justify-between px-5 py-4 transition active:bg-gray-50"
       >
         <div className="text-left">
           <h2 className="text-[17px] font-semibold text-gray-900">
-            {t.orders ?? "Orders"}
+            {t.orders ??
+              "Orders"}
           </h2>
 
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="mt-0.5 text-xs text-gray-500">
             {t.track_orders ??
               "Track, manage and review purchases"}
           </p>
@@ -103,19 +238,27 @@ export default function OrderSummary() {
 
       {/* GRID */}
       <div className="grid grid-cols-4 gap-y-5 px-3 py-5">
+        {/* PENDING */}
         <Item
-          icon={<Clock3 size={20} />}
+          icon={
+            <Clock3 size={20} />
+          }
           label={
             t.pending_orders ??
             "Pending"
           }
-          count={counts.pending}
-          loading={isLoading}
+          count={
+            counts.pending
+          }
+          loading={
+            isLoading
+          }
           onClick={() =>
             go("pending")
           }
         />
 
+        {/* CONFIRMED */}
         <Item
           icon={
             <PackageCheck size={20} />
@@ -124,26 +267,38 @@ export default function OrderSummary() {
             t.confirmed_orders ??
             "Confirmed"
           }
-          count={counts.confirmed}
-          loading={isLoading}
+          count={
+            counts.confirmed
+          }
+          loading={
+            isLoading
+          }
           onClick={() =>
             go("confirmed")
           }
         />
 
+        {/* SHIPPING */}
         <Item
-          icon={<Truck size={20} />}
+          icon={
+            <Truck size={20} />
+          }
           label={
             t.shipping_orders ??
             "Shipping"
           }
-          count={counts.shipping}
-          loading={isLoading}
+          count={
+            counts.shipping
+          }
+          loading={
+            isLoading
+          }
           onClick={() =>
             go("shipping")
           }
         />
 
+        {/* COMPLETED */}
         <Item
           icon={
             <CheckCircle2 size={20} />
@@ -152,27 +307,38 @@ export default function OrderSummary() {
             t.completed_orders ??
             "Completed"
           }
-          count={counts.completed}
-          loading={isLoading}
+          count={
+            counts.completed
+          }
+          loading={
+            isLoading
+          }
           onClick={() =>
             go("completed")
           }
         />
 
+        {/* CANCELLED */}
         <Item
-          icon={<XCircle size={20} />}
+          icon={
+            <XCircle size={20} />
+          }
           label={
             t.cancelled_orders ??
             "Cancelled"
           }
-          count={counts.cancelled}
-          loading={isLoading}
+          count={
+            counts.cancelled
+          }
+          loading={
+            isLoading
+          }
           onClick={() =>
             go("cancelled")
           }
         />
 
-        {/* RETURNS => PAGE RIÊNG */}
+        {/* RETURNS */}
         <Item
           icon={
             <RotateCcw size={20} />
@@ -181,8 +347,12 @@ export default function OrderSummary() {
             t.returns_orders ??
             "Returns"
           }
-          count={counts.returns}
-          loading={isLoading}
+          count={
+            counts.returns
+          }
+          loading={
+            isLoading
+          }
           onClick={() =>
             router.push(
               "/customer/returns"
@@ -198,24 +368,30 @@ export default function OrderSummary() {
    ITEM
 ===================================================== */
 
+type ItemProps = {
+  icon: React.ReactNode;
+
+  label: string;
+
+  count?: number;
+
+  loading?: boolean;
+
+  onClick: () => void;
+};
+
 function Item({
   icon,
   label,
   count,
   loading,
   onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  count?: number;
-  loading?: boolean;
-  onClick: () => void;
-}) {
+}: ItemProps) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex flex-col items-center px-1 active:scale-95 transition-transform"
+      className="group flex flex-col items-center px-1 transition-transform active:scale-95"
     >
       {/* ICON */}
       <div className="relative mb-2 flex h-12 w-12 items-center justify-center rounded-full border border-gray-100 bg-gray-50 text-gray-700 shadow-sm transition group-active:bg-orange-50">
@@ -223,11 +399,11 @@ function Item({
 
         {/* BADGE */}
         {loading ? (
-          <span className="absolute -right-1 -top-1 h-[18px] w-[18px] rounded-full bg-gray-300 animate-pulse" />
+          <span className="absolute -right-1 -top-1 h-[18px] w-[18px] animate-pulse rounded-full bg-gray-300" />
         ) : typeof count ===
             "number" &&
           count > 0 ? (
-          <span className="absolute -right-1 -top-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center">
+          <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
             {count > 99
               ? "99+"
               : count}
@@ -236,7 +412,7 @@ function Item({
       </div>
 
       {/* TEXT */}
-      <span className="text-[11px] leading-tight text-center text-gray-700 font-medium line-clamp-2">
+      <span className="line-clamp-2 text-center text-[11px] font-medium leading-tight text-gray-700">
         {label}
       </span>
     </button>
