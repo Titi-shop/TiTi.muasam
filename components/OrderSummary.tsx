@@ -1,9 +1,7 @@
 "use client";
 
-import React from "react";
-
+import React, { useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-
 import useSWR from "swr";
 
 import {
@@ -17,7 +15,6 @@ import {
 } from "lucide-react";
 
 import { getPiAccessToken } from "@/lib/piAuth";
-
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 /* =====================================================
@@ -26,7 +23,6 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 type OrderCountResponse = {
   pending?: number;
-
   pending_fulfillment?: number;
   processing?: number;
   shipped?: number;
@@ -41,286 +37,145 @@ type OrderCountResponse = {
    FETCHER
 ===================================================== */
 
-const fetcher = async (
-  url: string
-): Promise<OrderCountResponse | null> => {
+async function fetcher(url: string): Promise<OrderCountResponse | null> {
   try {
-    const token =
-      await getPiAccessToken();
+    const token = await getPiAccessToken();
+    if (!token) return null;
 
-    if (!token) {
-      return null;
-    }
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
 
-    const res = await fetch(
-      url,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
-      }
-    );
+    if (!res.ok) return null;
 
-    if (!res.ok) {
-      return null;
-    }
+    const data: unknown = await res.json();
 
-    const data: unknown =
-      await res.json();
-
-    if (
-      typeof data !==
-        "object" ||
-      data === null
-    ) {
-      return null;
-    }
+    if (!data || typeof data !== "object") return null;
 
     return data as OrderCountResponse;
   } catch {
     return null;
   }
-};
+}
 
 /* =====================================================
    COMPONENT
 ===================================================== */
 
 export default function OrderSummary() {
-  const router =
-    useRouter();
+  const router = useRouter();
+  const { t } = useTranslation();
 
-  const { t } =
-    useTranslation();
+  const { data, isLoading } = useSWR("/api/orders/count", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 5000,
+    keepPreviousData: true,
+  });
 
-  const {
-    data,
-    isLoading,
-  } = useSWR<
-    OrderCountResponse | null
-  >(
-    "/api/orders/count",
-    fetcher,
-    {
-      revalidateOnFocus:
-        false,
-
-      dedupingInterval:
-        5000,
-
-      keepPreviousData:
-        true,
-    }
+  const go = useCallback(
+    (tab: string) => router.push(`/customer/orders?tab=${tab}`),
+    [router]
   );
 
   /* =====================================================
-     NORMALIZED COUNTS
+     NORMALIZED COUNTS (SAFE + CONSISTENT)
   ===================================================== */
 
-  const counts = {
-  pending_fulfillment:
-    Number(
-      data?.pending_fulfillment ?? 0
-    ),
+  const counts = useMemo(
+    () => ({
+      pending: data?.pending ?? 0,
+      processing: data?.processing ?? 0,
+      shipped: data?.shipped ?? 0,
+      completed: data?.completed ?? 0,
+      cancelled: data?.cancelled ?? 0,
+      returns: data?.returns ?? 0,
+    }),
+    [data]
+  );
 
-  processing:
-    Number(
-      data?.processing ?? 0
-    ),
-
-  shipped:
-    Number(
-      data?.shipped ?? 0
-    ),
-
-  completed:
-    Number(
-      data?.completed ?? 0
-    ),
-
-  cancelled:
-    Number(
-      data?.cancelled ?? 0
-    ),
-    /* returns */
-    returns:
-      Number(
-        data?.returns ?? 0
-      ),
-  };
-
-  /* =====================================================
-     NAVIGATION
-  ===================================================== */
-
-  function go(
-    tab: string
-  ) {
-    router.push(
-      `/customer/orders?tab=${tab}`
-    );
-  }
-
-  /* =====================================================
-     UI
-  ===================================================== */
+  const items = useMemo(
+    () => [
+      {
+        key: "pending",
+        icon: <Clock3 size={20} />,
+        label: t.pending_orders ?? "Pending",
+        count: counts.pending,
+        onClick: () => go("pending"),
+      },
+      {
+        key: "processing",
+        icon: <PackageCheck size={20} />,
+        label: t.processing_orders ?? "Processing",
+        count: counts.processing,
+        onClick: () => go("processing"),
+      },
+      {
+        key: "shipped",
+        icon: <Truck size={20} />,
+        label: t.shipping_orders ?? "Shipping",
+        count: counts.shipped,
+        onClick: () => go("shipping"),
+      },
+      {
+        key: "completed",
+        icon: <CheckCircle2 size={20} />,
+        label: t.completed_orders ?? "Completed",
+        count: counts.completed,
+        onClick: () => go("completed"),
+      },
+      {
+        key: "cancelled",
+        icon: <XCircle size={20} />,
+        label: t.cancelled_orders ?? "Cancelled",
+        count: counts.cancelled,
+        onClick: () => go("cancelled"),
+      },
+      {
+        key: "returns",
+        icon: <RotateCcw size={20} />,
+        label: t.returns_orders ?? "Returns",
+        count: counts.returns,
+        onClick: () => router.push("/customer/returns"),
+      },
+    ],
+    [counts, t, go, router]
+  );
 
   return (
     <section className="mx-4 mt-4 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
       {/* HEADER */}
       <button
         type="button"
-        onClick={() =>
-          router.push(
-            "/customer/orders"
-          )
-        }
+        onClick={() => router.push("/customer/orders")}
         className="flex w-full items-center justify-between px-5 py-4 transition active:bg-gray-50"
       >
         <div className="text-left">
           <h2 className="text-[17px] font-semibold text-gray-900">
-            {t.orders ??
-              "Orders"}
+            {t.orders ?? "Orders"}
           </h2>
-
           <p className="mt-0.5 text-xs text-gray-500">
-            {t.track_orders ??
-              "Track, manage and review purchases"}
+            {t.track_orders ?? "Track, manage and review purchases"}
           </p>
         </div>
 
-        <ChevronRight
-          size={18}
-          className="text-gray-400"
-        />
+        <ChevronRight size={18} className="text-gray-400" />
       </button>
 
       <div className="h-px bg-gray-100" />
 
       {/* GRID */}
       <div className="grid grid-cols-4 gap-y-5 px-3 py-5">
-        {/* PENDING */}
-        <Item
-          icon={
-            <Clock3 size={20} />
-          }
-          label={
-            t.pending_orders ??
-            "Pending"
-          }
-          count={
-            counts.pending
-          }
-          loading={
-            isLoading
-          }
-          onClick={() =>
-            go("pending")
-          }
-        />
-
-        {/* CONFIRMED */}
-        <Item
-          icon={
-            <PackageCheck size={20} />
-          }
-          label={
-            t.confirmed_orders ??
-            "Confirmed"
-          }
-          count={
-            counts.confirmed
-          }
-          loading={
-            isLoading
-          }
-          onClick={() =>
-            go("confirmed")
-          }
-        />
-
-        {/* SHIPPING */}
-        <Item
-          icon={
-            <Truck size={20} />
-          }
-          label={
-            t.shipping_orders ??
-            "Shipping"
-          }
-          count={
-            counts.shipping
-          }
-          loading={
-            isLoading
-          }
-          onClick={() =>
-            go("shipping")
-          }
-        />
-
-        {/* COMPLETED */}
-        <Item
-          icon={
-            <CheckCircle2 size={20} />
-          }
-          label={
-            t.completed_orders ??
-            "Completed"
-          }
-          count={
-            counts.completed
-          }
-          loading={
-            isLoading
-          }
-          onClick={() =>
-            go("completed")
-          }
-        />
-
-        {/* CANCELLED */}
-        <Item
-          icon={
-            <XCircle size={20} />
-          }
-          label={
-            t.cancelled_orders ??
-            "Cancelled"
-          }
-          count={
-            counts.cancelled
-          }
-          loading={
-            isLoading
-          }
-          onClick={() =>
-            go("cancelled")
-          }
-        />
-
-        {/* RETURNS */}
-        <Item
-          icon={
-            <RotateCcw size={20} />
-          }
-          label={
-            t.returns_orders ??
-            "Returns"
-          }
-          count={
-            counts.returns
-          }
-          loading={
-            isLoading
-          }
-          onClick={() =>
-            router.push(
-              "/customer/returns"
-            )
-          }
-        />
+        {items.map((item) => (
+          <OrderItem
+            key={item.key}
+            icon={item.icon}
+            label={item.label}
+            count={item.count}
+            loading={isLoading}
+            onClick={item.onClick}
+          />
+        ))}
       </div>
     </section>
   );
@@ -330,50 +185,50 @@ export default function OrderSummary() {
    ITEM
 ===================================================== */
 
-type ItemProps = {
+type OrderItemProps = {
   icon: React.ReactNode;
-
   label: string;
-
-  count?: number;
-
-  loading?: boolean;
-
+  count: number;
+  loading: boolean;
   onClick: () => void;
 };
 
-function Item({
+function OrderItem({
   icon,
   label,
   count,
   loading,
   onClick,
-}: ItemProps) {
+}: OrderItemProps) {
+  const badge = useMemo(() => {
+    if (loading) {
+      return (
+        <span className="absolute -right-1 -top-1 h-[18px] w-[18px] animate-pulse rounded-full bg-gray-300" />
+      );
+    }
+
+    if (count > 0) {
+      return (
+        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+          {count > 99 ? "99+" : count}
+        </span>
+      );
+    }
+
+    return null;
+  }, [count, loading]);
+
   return (
     <button
       type="button"
       onClick={onClick}
       className="group flex flex-col items-center px-1 transition-transform active:scale-95"
     >
-      {/* ICON */}
       <div className="relative mb-2 flex h-12 w-12 items-center justify-center rounded-full border border-gray-100 bg-gray-50 text-gray-700 shadow-sm transition group-active:bg-orange-50">
         {icon}
-
-        {/* BADGE */}
-        {loading ? (
-          <span className="absolute -right-1 -top-1 h-[18px] w-[18px] animate-pulse rounded-full bg-gray-300" />
-        ) : typeof count ===
-            "number" &&
-          count > 0 ? (
-          <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-            {count > 99
-              ? "99+"
-              : count}
-          </span>
-        ) : null}
+        {badge}
       </div>
 
-      {/* TEXT */}
       <span className="line-clamp-2 text-center text-[11px] font-medium leading-tight text-gray-700">
         {label}
       </span>
