@@ -1,4 +1,3 @@
-import { query, withTransaction } from "@/lib/db";
 import { syncOrderStatus } from "@/lib/db/orders";
 
 /* =========================================================
@@ -240,17 +239,19 @@ export type BuyerOrderCounts = {
 export async function getBuyerOrderCounts(
   userId: string
 ): Promise<BuyerOrderCounts> {
-  const sql = `
+  const { rows } = await query<{
+    fulfillment_status: string;
+    total: number;
+  }>(
+    `
     SELECT
       fulfillment_status,
       COUNT(*)::int AS total
     FROM orders
     WHERE buyer_id = $1
+      AND deleted_at IS NULL
     GROUP BY fulfillment_status
-  `;
-
-  const result = await db.query(
-    sql,
+    `,
     [userId]
   );
 
@@ -263,11 +264,9 @@ export async function getBuyerOrderCounts(
     refunded: 0,
   };
 
-  for (const row of result.rows) {
+  for (const row of rows) {
     const status =
-      String(
-        row.fulfillment_status
-      );
+      row.fulfillment_status;
 
     const total = Number(
       row.total ?? 0
