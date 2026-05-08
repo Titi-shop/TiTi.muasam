@@ -74,8 +74,6 @@ export async function getOrdersByBuyer(userId: string) {
    BUYER — COUNTS
 ========================================================= */
 export async function getBuyerOrderCounts(userId: string) {
-  const { rows } = await query(
-    `
     const rs = await query(
   `
   SELECT
