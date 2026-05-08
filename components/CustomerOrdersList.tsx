@@ -8,19 +8,17 @@ import {
 } from "react";
 
 import { useSearchParams } from "next/navigation";
-
 import CustomerOrderCard from "./CustomerOrderCard";
-
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 /* =======================================================
-   TYPES
+   TYPES (SOURCE OF TRUTH = fulfillment_status)
 ======================================================= */
 
-type OrderStatus =
+type OrderTab =
   | "all"
   | "pending"
-  | "confirmed"
+  | "processing"
   | "shipping"
   | "completed"
   | "cancelled";
@@ -41,144 +39,72 @@ type PaymentStatus =
   | "failed"
   | "refunded";
 
-type OrderItem = {
-  id?: string;
-  product_id?: string;
-  product_name?: string;
-};
-
 type Order = {
   id: string;
-
-  status?: string;
-
   fulfillment_status?: FulfillmentStatus;
-
   payment_status?: PaymentStatus;
-
-  order_items?: OrderItem[];
-};
-
-type Props = {
-  orders: Order[];
-
-  initialTab?: OrderStatus;
-
-  onDetail: (id: string) => void;
-
-  onCancel?: (id: string) => void;
-
-  onReceived?: (id: string) => void;
-
-  onBuyAgain?: (id: string) => void;
-
-  onReview?: (id: string) => void;
-
-  reviewedMap?: Record<string, boolean>;
+  status?: string;
+  order_items?: unknown[];
 };
 
 /* =======================================================
-   STATUS NORMALIZER
+   STATE MACHINE (FIXED)
 ======================================================= */
 
-function normalizeStatus(
-  order: Order
-): OrderStatus {
-  const fulfillment =
-    order.fulfillment_status;
+function normalizeStatus(order: Order): OrderTab {
+  const f = order.fulfillment_status;
+  const p = order.payment_status;
 
-  const payment =
-    order.payment_status;
+  if (!f) return "pending";
 
-  const legacy =
-    order.status;
+  switch (f) {
+    case "pending":
+    case "pending_fulfillment":
+      return "pending";
 
-  /* ================= NEW SCHEMA ================= */
+    case "processing":
+      return "processing";
 
-  if (
-    fulfillment ===
-      "pending_fulfillment" ||
-    payment === "pending"
-  ) {
-    return "pending";
+    case "shipped":
+    case "delivered":
+      return "shipping";
+
+    case "completed":
+      return "completed";
+
+    case "cancelled":
+    case "refunded":
+      return "cancelled";
+
+    default:
+      break;
   }
 
-  if (
-    fulfillment ===
-      "processing"
-  ) {
-    return "confirmed";
-  }
-
-  if (
-    fulfillment ===
-      "shipped" ||
-    fulfillment ===
-      "delivered"
-  ) {
-    return "shipping";
-  }
-
-  if (
-    fulfillment ===
-    "completed"
-  ) {
-    return "completed";
-  }
-
-  if (
-    fulfillment ===
-      "cancelled" ||
-    fulfillment ===
-      "refunded" ||
-    payment === "failed" ||
-    payment === "refunded"
-  ) {
-    return "cancelled";
-  }
-
-  /* ================= LEGACY FALLBACK ================= */
-
-  if (
-    legacy === "pending" ||
-    legacy === "confirmed" ||
-    legacy === "shipping" ||
-    legacy === "completed" ||
-    legacy === "cancelled"
-  ) {
-    return legacy;
-  }
+  // fallback legacy
+  if (p === "pending") return "pending";
+  if (p === "failed" || p === "refunded") return "cancelled";
 
   return "pending";
 }
 
 /* =======================================================
-   WRAPPER
+   COMPONENT
 ======================================================= */
 
-export default function CustomerOrdersList(
-  props: Props
-) {
-  return (
-    <Suspense
-      fallback={
-        <div className="p-4">
-          <div className="h-12 rounded-xl bg-white animate-pulse" />
-        </div>
-      }
-    >
-      <CustomerOrdersListInner
-        {...props}
-      />
-    </Suspense>
-  );
-}
+type Props = {
+  orders: Order[];
+  initialTab?: OrderTab;
 
-/* =======================================================
-   INNER
-======================================================= */
+  onDetail: (id: string) => void;
+  onCancel?: (id: string) => void;
+  onReceived?: (id: string) => void;
+  onBuyAgain?: (id: string) => void;
+  onReview?: (id: string) => void;
 
-function CustomerOrdersListInner({
+  reviewedMap?: Record<string, boolean>;
+};
+
+export default function CustomerOrdersList({
   orders,
   initialTab = "all",
   onDetail,
@@ -188,34 +114,48 @@ function CustomerOrdersListInner({
   onReview,
   reviewedMap,
 }: Props) {
-  const { t } =
-    useTranslation();
+  return (
+    <Suspense fallback={<div className="p-4 h-12 bg-white animate-pulse rounded-xl" />}>
+      <Inner {...{
+        orders,
+        initialTab,
+        onDetail,
+        onCancel,
+        onReceived,
+        onBuyAgain,
+        onReview,
+        reviewedMap,
+      }} />
+    </Suspense>
+  );
+}
 
-  const searchParams =
-    useSearchParams();
+/* =======================================================
+   INNER
+======================================================= */
 
-  /* ================= URL TAB ================= */
+function Inner({
+  orders,
+  initialTab,
+  onDetail,
+  onCancel,
+  onReceived,
+  onBuyAgain,
+  onReview,
+  reviewedMap,
+}: Props) {
+  const { t } = useTranslation();
+  const searchParams = useSearchParams();
 
-  const rawTab =
-    searchParams.get("tab") ??
-    initialTab;
+  const urlTab = searchParams.get("tab") as OrderTab | null;
 
-  const safeTab: OrderStatus =
-    rawTab === "pending" ||
-    rawTab === "confirmed" ||
-    rawTab === "shipping" ||
-    rawTab === "completed" ||
-    rawTab === "cancelled" ||
-    rawTab === "all"
-      ? rawTab
-      : "all";
+  const safeTab: OrderTab =
+    urlTab &&
+    ["all", "pending", "processing", "shipping", "completed", "cancelled"].includes(urlTab)
+      ? urlTab
+      : initialTab;
 
-  /* ================= TAB ================= */
-
-  const [tab, setTab] =
-    useState<OrderStatus>(
-      safeTab
-    );
+  const [tab, setTab] = useState<OrderTab>(safeTab);
 
   useEffect(() => {
     setTab(safeTab);
@@ -223,62 +163,30 @@ function CustomerOrdersListInner({
 
   /* ================= TABS ================= */
 
-  const tabs: Array<
-    [OrderStatus, string]
-  > = [
-    [
-      "all",
-      t.all ?? "All",
-    ],
-    [
-      "pending",
-      t.order_pending ??
-        "Pending",
-    ],
-    [
-      "confirmed",
-      t.order_confirmed ??
-        "Confirmed",
-    ],
-    [
-      "shipping",
-      t.order_shipping ??
-        "Shipping",
-    ],
-    [
-      "completed",
-      t.order_completed ??
-        "Completed",
-    ],
-    [
-      "cancelled",
-      t.order_cancelled ??
-        "Cancelled",
-    ],
+  const tabs: Array<[OrderTab, string]> = [
+    ["all", t.all ?? "All"],
+    ["pending", t.order_pending ?? "Pending"],
+    ["processing", t.order_processing ?? "Processing"],
+    ["shipping", t.order_shipping ?? "Shipping"],
+    ["completed", t.order_completed ?? "Completed"],
+    ["cancelled", t.order_cancelled ?? "Cancelled"],
   ];
 
   /* ================= COUNTS ================= */
 
   const counts = useMemo(() => {
-    const map: Record<
-      OrderStatus,
-      number
-    > = {
+    const map: Record<OrderTab, number> = {
       all: orders.length,
       pending: 0,
-      confirmed: 0,
+      processing: 0,
       shipping: 0,
       completed: 0,
       cancelled: 0,
     };
 
-    for (const order of orders) {
-      const status =
-        normalizeStatus(
-          order
-        );
-
-      map[status] += 1;
+    for (const o of orders) {
+      const s = normalizeStatus(o);
+      map[s]++;
     }
 
     return map;
@@ -286,111 +194,53 @@ function CustomerOrdersListInner({
 
   /* ================= FILTER ================= */
 
-  const filtered =
-    useMemo(() => {
-      if (tab === "all") {
-        return orders;
-      }
-
-      return orders.filter(
-        (order) =>
-          normalizeStatus(
-            order
-          ) === tab
-      );
-    }, [orders, tab]);
+  const filtered = useMemo(() => {
+    if (tab === "all") return orders;
+    return orders.filter(o => normalizeStatus(o) === tab);
+  }, [orders, tab]);
 
   /* ================= UI ================= */
 
   return (
     <>
       {/* TABS */}
-      <div className="sticky top-0 z-10 overflow-x-auto border-b bg-white whitespace-nowrap">
+      <div className="sticky top-0 z-10 bg-white border-b overflow-x-auto whitespace-nowrap">
         <div className="flex min-w-max px-2">
-          {tabs.map(
-            ([
-              key,
-              label,
-            ]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() =>
-                  setTab(
-                    key
-                  )
-                }
-                className={`border-b-2 px-4 py-3 text-sm transition ${
-                  tab ===
-                  key
-                    ? "border-orange-500 font-semibold text-orange-500"
-                    : "border-transparent text-gray-500"
-                }`}
-              >
-                {label} (
-                {counts[
-                  key
-                ] ?? 0}
-                )
-              </button>
-            )
-          )}
+          {tabs.map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`px-4 py-3 text-sm border-b-2 ${
+                tab === key
+                  ? "border-orange-500 text-orange-500 font-semibold"
+                  : "border-transparent text-gray-500"
+              }`}
+            >
+              {label} ({counts[key]})
+            </button>
+          ))}
         </div>
       </div>
 
       {/* LIST */}
-      <div className="space-y-4 p-4">
-        {filtered.length ===
-        0 ? (
-          <div className="rounded-xl bg-white p-8 text-center text-sm text-gray-400">
-            {t.no_orders ??
-              "No orders"}
+      <div className="p-4 space-y-4">
+        {filtered.length === 0 ? (
+          <div className="text-center text-sm text-gray-400 bg-white p-8 rounded-xl">
+            {t.no_orders ?? "No orders"}
           </div>
         ) : (
-          filtered.map(
-            (
-              order
-            ) => (
-              <CustomerOrderCard
-                key={
-                  order.id
-                }
-                order={
-                  order
-                }
-                reviewed={
-                  reviewedMap?.[
-                    order.id
-                  ] ?? false
-                }
-                onDetail={() =>
-                  onDetail(
-                    order.id
-                  )
-                }
-                onCancel={() =>
-                  onCancel?.(
-                    order.id
-                  )
-                }
-                onReceived={() =>
-                  onReceived?.(
-                    order.id
-                  )
-                }
-                onBuyAgain={() =>
-                  onBuyAgain?.(
-                    order.id
-                  )
-                }
-                onReview={() =>
-                  onReview?.(
-                    order.id
-                  )
-                }
-              />
-            )
-          )
+          filtered.map(order => (
+            <CustomerOrderCard
+              key={order.id}
+              order={order}
+              reviewed={reviewedMap?.[order.id] ?? false}
+              onDetail={() => onDetail(order.id)}
+              onCancel={() => onCancel?.(order.id)}
+              onReceived={() => onReceived?.(order.id)}
+              onBuyAgain={() => onBuyAgain?.(order.id)}
+              onReview={() => onReview?.(order.id)}
+            />
+          ))
         )}
       </div>
     </>
