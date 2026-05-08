@@ -108,21 +108,6 @@ export type BuyerOrderRow = {
 
   order_items: BuyerOrderItemRow[];
 };
-export type BuyerOrderCounts = {
-
-  pending_fulfillment: number;
-
-  processing: number;
-
-  shipped: number;
-
-  completed: number;
-
-  cancelled: number;
-
-  refunded: number;
-
-};
 
 
 /* =========================================================
@@ -244,61 +229,60 @@ export async function getOrdersByBuyer(
 ========================================================= */
 
 export type BuyerOrderCounts = {
-  pending: number;
-  confirmed: number;
-  shipping: number;
+  pending_fulfillment: number;
+  processing: number;
+  shipped: number;
   completed: number;
   cancelled: number;
+  refunded: number;
 };
 
 export async function getBuyerOrderCounts(
   userId: string
 ): Promise<BuyerOrderCounts> {
-  const { rows } = await query<BuyerOrderCounts>(
-    `
+  const sql = `
     SELECT
-      COUNT(*) FILTER (
-        WHERE fulfillment_status = 'pending_fulfillment'
-      )::int AS pending,
-
-      COUNT(*) FILTER (
-        WHERE fulfillment_status IN (
-          'processing',
-          'shipped'
-        )
-      )::int AS shipping,
-
-      COUNT(*) FILTER (
-        WHERE fulfillment_status IN (
-          'delivered',
-          'completed'
-        )
-      )::int AS completed,
-
-      COUNT(*) FILTER (
-        WHERE fulfillment_status = 'cancelled'
-      )::int AS cancelled,
-
-      COUNT(*) FILTER (
-        WHERE payment_status = 'paid'
-      )::int AS confirmed
-
+      fulfillment_status,
+      COUNT(*)::int AS total
     FROM orders
     WHERE buyer_id = $1
-      AND deleted_at IS NULL
-    `,
+    GROUP BY fulfillment_status
+  `;
+
+  const result = await db.query(
+    sql,
     [userId]
   );
 
-  return (
-    rows[0] ?? {
-      pending: 0,
-      confirmed: 0,
-      shipping: 0,
-      completed: 0,
-      cancelled: 0,
+  const counts: BuyerOrderCounts = {
+    pending_fulfillment: 0,
+    processing: 0,
+    shipped: 0,
+    completed: 0,
+    cancelled: 0,
+    refunded: 0,
+  };
+
+  for (const row of result.rows) {
+    const status =
+      String(
+        row.fulfillment_status
+      );
+
+    const total = Number(
+      row.total ?? 0
+    );
+
+    if (
+      status in counts
+    ) {
+      counts[
+        status as keyof BuyerOrderCounts
+      ] = total;
     }
-  );
+  }
+
+  return counts;
 }
 
 /* =========================================================
