@@ -16,26 +16,17 @@ import {
 
 import { getPiAccessToken } from "@/lib/piAuth";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-import { ORDER_STATUS } from "@/constants/order-status";
-/* =====================================================
+import { ORDER_STATUS, type OrderStatus } from "@/constants/order-status";
+
+/* =========================
    TYPES
-===================================================== */
+========================= */
 
-type OrderCountResponse = {
-  pending?: number;
-  pending_fulfillment?: number;
-  processing?: number;
-  shipped?: number;
-  delivered?: number;
-  completed?: number;
-  cancelled?: number;
-  refunded?: number;
-  returns?: number;
-};
+type OrderCountResponse = Partial<Record<OrderStatus, number>>;
 
-/* =====================================================
+/* =========================
    FETCHER
-===================================================== */
+========================= */
 
 async function fetcher(url: string): Promise<OrderCountResponse | null> {
   try {
@@ -59,9 +50,63 @@ async function fetcher(url: string): Promise<OrderCountResponse | null> {
   }
 }
 
-/* =====================================================
+/* =========================
+   META CONFIG (single source UI mapping)
+========================= */
+
+type ItemConfig = {
+  key: OrderStatus;
+  icon: React.ReactNode;
+  label: string;
+  route?: string;
+};
+
+function getItems(
+  t: Record<string, string>
+): ItemConfig[] {
+  return [
+    {
+      key: ORDER_STATUS.PENDING_FULFILLMENT,
+      icon: <Clock3 size={20} />,
+      label: t.pending_orders ?? "Chờ xác nhận",
+      route: ORDER_STATUS.PENDING_FULFILLMENT,
+    },
+    {
+      key: ORDER_STATUS.PROCESSING,
+      icon: <PackageCheck size={20} />,
+      label: t.processing_orders ?? "Processing",
+      route: ORDER_STATUS.PROCESSING,
+    },
+    {
+      key: ORDER_STATUS.SHIPPED,
+      icon: <Truck size={20} />,
+      label: t.shipping_orders ?? "Shipping",
+      route: ORDER_STATUS.SHIPPED,
+    },
+    {
+      key: ORDER_STATUS.COMPLETED,
+      icon: <CheckCircle2 size={20} />,
+      label: t.completed_orders ?? "Completed",
+      route: ORDER_STATUS.COMPLETED,
+    },
+    {
+      key: ORDER_STATUS.CANCELLED,
+      icon: <XCircle size={20} />,
+      label: t.cancelled_orders ?? "Cancelled",
+      route: ORDER_STATUS.CANCELLED,
+    },
+    {
+      key: ORDER_STATUS.RETURNS,
+      icon: <RotateCcw size={20} />,
+      label: t.returns_orders ?? "Returns",
+      route: "returns",
+    },
+  ];
+}
+
+/* =========================
    COMPONENT
-===================================================== */
+========================= */
 
 export default function OrderSummary() {
   const router = useRouter();
@@ -74,73 +119,44 @@ export default function OrderSummary() {
   });
 
   const go = useCallback(
-    (tab: string) => router.push(`/customer/orders?tab=${tab}`),
+    (tab: string) => {
+      if (tab === "returns") {
+        router.push("/customer/returns");
+      } else {
+        router.push(`/customer/orders?tab=${tab}`);
+      }
+    },
     [router]
   );
 
-  /* =====================================================
-     NORMALIZED COUNTS (SAFE + CONSISTENT)
-  ===================================================== */
+  /* =========================
+     COUNTS (SAFE MAP)
+  ========================= */
 
-  const counts = useMemo(
-  () => ({
-    [ORDER_STATUS.PENDING]: data?.pending_fulfillment ?? 0,
-    [ORDER_STATUS.PROCESSING]: data?.processing ?? 0,
-    [ORDER_STATUS.SHIPPED]: data?.shipped ?? 0,
-    [ORDER_STATUS.COMPLETED]: data?.completed ?? 0,
-    [ORDER_STATUS.CANCELLED]: data?.cancelled ?? 0,
-    [ORDER_STATUS.RETURNS]: data?.returns ?? 0,
-  }),
-  [data]
-);
+  const counts = useMemo(() => {
+    const base: Record<OrderStatus, number> = {
+      [ORDER_STATUS.PENDING]: data?.pending ?? 0,
+      [ORDER_STATUS.PENDING_FULFILLMENT]:
+        data?.pending_fulfillment ?? 0,
+      [ORDER_STATUS.PROCESSING]:
+        data?.processing ?? 0,
+      [ORDER_STATUS.SHIPPED]: data?.shipped ?? 0,
+      [ORDER_STATUS.COMPLETED]:
+        data?.completed ?? 0,
+      [ORDER_STATUS.CANCELLED]:
+        data?.cancelled ?? 0,
+      [ORDER_STATUS.RETURNS]:
+        data?.returns ?? 0,
+      [ORDER_STATUS.DELIVERED]:
+        data?.delivered ?? 0,
+      [ORDER_STATUS.REFUNDED]:
+        data?.refunded ?? 0,
+    };
 
-  const items = useMemo(
-  () => [
-    {
-      key: ORDER_STATUS.PENDING,
-      icon: <Clock3 size={20} />,
-      label: t.pending_orders ?? "Chờ xác nhận",
-      count: counts[ORDER_STATUS.PENDING],
-      onClick: () => go(ORDER_STATUS.PENDING),
-    },
-    {
-      key: ORDER_STATUS.PROCESSING,
-      icon: <PackageCheck size={20} />,
-      label: t.processing_orders ?? "Processing",
-      count: counts[ORDER_STATUS.PROCESSING],
-      onClick: () => go(ORDER_STATUS.PROCESSING),
-    },
-    {
-      key: ORDER_STATUS.SHIPPED,
-      icon: <Truck size={20} />,
-      label: t.shipping_orders ?? "Shipping",
-      count: counts[ORDER_STATUS.SHIPPED],
-      onClick: () => go(ORDER_STATUS.SHIPPED),
-    },
-    {
-      key: ORDER_STATUS.COMPLETED,
-      icon: <CheckCircle2 size={20} />,
-      label: t.completed_orders ?? "Completed",
-      count: counts[ORDER_STATUS.COMPLETED],
-      onClick: () => go(ORDER_STATUS.COMPLETED),
-    },
-    {
-      key: ORDER_STATUS.CANCELLED,
-      icon: <XCircle size={20} />,
-      label: t.cancelled_orders ?? "Cancelled",
-      count: counts[ORDER_STATUS.CANCELLED],
-      onClick: () => go(ORDER_STATUS.CANCELLED),
-    },
-    {
-      key: ORDER_STATUS.RETURNS,
-      icon: <RotateCcw size={20} />,
-      label: t.returns_orders ?? "Returns",
-      count: counts[ORDER_STATUS.RETURNS],
-      onClick: () => router.push("/customer/returns"),
-    },
-  ],
-  [counts, t, go, router]
-);
+    return base;
+  }, [data]);
+
+  const items = useMemo(() => getItems(t), [t]);
 
   return (
     <section className="mx-4 mt-4 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
@@ -155,7 +171,8 @@ export default function OrderSummary() {
             {t.orders ?? "Orders"}
           </h2>
           <p className="mt-0.5 text-xs text-gray-500">
-            {t.track_orders ?? "Track, manage and review purchases"}
+            {t.track_orders ??
+              "Track, manage and review purchases"}
           </p>
         </div>
 
@@ -171,9 +188,9 @@ export default function OrderSummary() {
             key={item.key}
             icon={item.icon}
             label={item.label}
-            count={item.count}
+            count={counts[item.key] ?? 0}
             loading={isLoading}
-            onClick={item.onClick}
+            onClick={() => go(item.route ?? item.key)}
           />
         ))}
       </div>
@@ -181,9 +198,9 @@ export default function OrderSummary() {
   );
 }
 
-/* =====================================================
-   ITEM
-===================================================== */
+/* =========================
+   ITEM COMPONENT
+========================= */
 
 type OrderItemProps = {
   icon: React.ReactNode;
