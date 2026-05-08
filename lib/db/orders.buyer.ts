@@ -31,9 +31,9 @@ export async function getOrdersByBuyer(userId: string) {
       o.shipping_postal_code,
 
       /* TIMELINE */
-      o.confirmed_at,
-      o.shipped_at,
-      o.delivered_at,
+       o.paid_at,
+       o.shipped_at,
+       o.delivered_at,
 
       COALESCE(
         json_agg(
@@ -74,35 +74,35 @@ export async function getOrdersByBuyer(userId: string) {
    BUYER — COUNTS
 ========================================================= */
 export async function getBuyerOrderCounts(userId: string) {
-    const rs = await query(
-  `
-  SELECT
-    COUNT(*) FILTER (
-      WHERE fulfillment_status = 'pending_fulfillment'
-    ) AS pending,
+  const { rows } = await query(
+    `
+    SELECT
+      COUNT(*) FILTER (
+        WHERE fulfillment_status = 'pending_fulfillment'
+      ) AS pending,
 
-    COUNT(*) FILTER (
-      WHERE fulfillment_status IN ('processing', 'shipped')
-    ) AS shipping,
+      COUNT(*) FILTER (
+        WHERE fulfillment_status IN ('processing', 'shipped')
+      ) AS shipping,
 
-    COUNT(*) FILTER (
-      WHERE fulfillment_status = 'completed'
-    ) AS completed,
+      COUNT(*) FILTER (
+        WHERE fulfillment_status = 'completed'
+      ) AS completed,
 
-    COUNT(*) FILTER (
-      WHERE fulfillment_status = 'cancelled'
-    ) AS cancelled,
+      COUNT(*) FILTER (
+        WHERE fulfillment_status = 'cancelled'
+      ) AS cancelled,
 
-    COUNT(*) FILTER (
-      WHERE payment_status = 'paid'
-    ) AS confirmed
+      COUNT(*) FILTER (
+        WHERE payment_status = 'paid'
+      ) AS confirmed
 
-  FROM orders
-  WHERE buyer_id = $1
-    AND deleted_at IS NULL
-  `,
-  [userId]
-);
+    FROM orders
+    WHERE buyer_id = $1
+      AND deleted_at IS NULL
+    `,
+    [userId]
+  );
 
   return rows[0] ?? {
     pending: 0,
@@ -126,7 +126,7 @@ export async function getOrderByBuyerId(
       o.id,
       o.order_number,
       o.payment_status,
-      o.fulfillment_status
+      o.fulfillment_status,
       o.payment_status,
 
       o.total,
@@ -153,7 +153,7 @@ export async function getOrderByBuyerId(
       o.shipping_zone,
 
       /* TIMELINE */
-      o.confirmed_at,
+      o.paid_at,
       o.shipped_at,
       o.delivered_at,
       o.cancelled_at,
@@ -228,11 +228,11 @@ export async function completeOrderByBuyer(
 
       /* ================= CHECK ORDER ================= */
       const { rows } = await client.query<{
-        buyer_id: string;
-        status: string;
+      buyer_id: string;
+      fulfillment_status: string;
       }>(
         `
-        SELECT buyer_id, status
+        SELECT buyer_id, fulfillment_status
         FROM orders
         WHERE id = $1
         LIMIT 1
@@ -275,7 +275,7 @@ export async function completeOrderByBuyer(
     delivered_at = NOW(),
     updated_at = NOW()
   WHERE order_id = $1
-    AND status = 'shipping'
+    AND status = 'shipped'
   `,
   [orderId]
 );
@@ -311,11 +311,11 @@ export async function cancelOrderByBuyer(
 
       /* ================= CHECK ORDER ================= */
       const { rows } = await client.query<{
-        buyer_id: string;
-        status: string;
+       buyer_id: string;
+      payment_status: string;
       }>(
         `
-        SELECT buyer_id, status
+        SELECT buyer_id, payment_status
         FROM orders
         WHERE id = $1
         LIMIT 1
