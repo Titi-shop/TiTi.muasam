@@ -476,33 +476,6 @@ export async function runPaymentSettlement({
   source
 );
 
-  /* =====================================================
-     5. COMPLETE PI
-  ===================================================== */
-
-  const piCompleted = await safeCompletePi(
-    paymentIntentId,
-    piPaymentId,
-    txid,
-    source
-  );
-
-  console.log("[PAYMENT][SETTLEMENT] PI_COMPLETE_RESULT", {
-    paymentIntentId,
-    piCompleted,
-  });
-
-  if (!piCompleted) {
-    console.error("[PAYMENT][SETTLEMENT] STOP_AFTER_PI_COMPLETE_FAIL", {
-      paymentIntentId,
-    });
-
-    return failResult(
-      piVerified.verifiedAmount,
-      rpcVerified.ok,
-      source
-    );
-  }
 
   /* =====================================================
      6. FINALIZE ORDER
@@ -540,7 +513,33 @@ export async function runPaymentSettlement({
   throw new Error("FINALIZE_ORDER_FAILED");
 }
   
+/* =====================================================
+     5. COMPLETE PI
+  ===================================================== */
 
+  const piCompleted = await safeCompletePi(
+    paymentIntentId,
+    piPaymentId,
+    txid,
+    source
+  );
+
+  console.log("[PAYMENT][SETTLEMENT] PI_COMPLETE_RESULT", {
+    paymentIntentId,
+    piCompleted,
+  });
+
+  if (!piCompleted) {
+    console.error("[PAYMENT][SETTLEMENT] STOP_AFTER_PI_COMPLETE_FAIL", {
+      paymentIntentId,
+    });
+
+    return failResult(
+      piVerified.verifiedAmount,
+      rpcVerified.ok,
+      source
+    );
+  }
 
   /* =====================================================
      7. LEDGER
