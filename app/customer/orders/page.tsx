@@ -14,22 +14,14 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 import CustomerOrdersList from "@/components/CustomerOrdersList";
 
+import {
+  ORDER_STATUS,
+  type OrderStatus,
+} from "@/constants/order-status";
+
 /* =====================================================
    TYPES
 ===================================================== */
-
-const FULFILLMENT_STATUS = [
-  "pending",
-  "pending_fulfillment",
-  "processing",
-  "shipped",
-  "delivered",
-  "completed",
-  "cancelled",
-  "refunded",
-] as const;
-
-type FulfillmentStatus = typeof FULFILLMENT_STATUS[number];
 
 type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
@@ -44,7 +36,7 @@ type Order = {
   id: string;
   order_number: string;
   payment_status: PaymentStatus;
-  fulfillment_status: FulfillmentStatus;
+  fulfillment_status: OrderStatus;
 
   total: number | string;
   currency: string;
@@ -53,7 +45,9 @@ type Order = {
   order_items?: OrderItem[];
 };
 
-type OrdersResponse = { orders?: Order[] };
+type OrdersResponse = {
+  orders?: Order[];
+};
 
 /* =====================================================
    CANCEL REASONS
@@ -69,7 +63,7 @@ const CANCEL_REASON_KEYS = [
   "cancel_reason_other",
 ] as const;
 
-type CancelReasonKey = typeof CANCEL_REASON_KEYS[number];
+type CancelReasonKey = (typeof CANCEL_REASON_KEYS)[number];
 
 /* =====================================================
    HELPERS
@@ -79,7 +73,7 @@ function normalizeOrder(order: Order): Order {
   return {
     ...order,
     fulfillment_status:
-      order.fulfillment_status ?? "pending_fulfillment",
+      order.fulfillment_status ?? ORDER_STATUS.PENDING_FULFILLMENT,
   };
 }
 
@@ -107,6 +101,7 @@ const fetcher = async (): Promise<Order[]> => {
   if (!res.ok) return [];
 
   const data = await safeJson<unknown>(res);
+
   if (!data || typeof data !== "object") return [];
 
   if (Array.isArray(data)) {
@@ -176,11 +171,7 @@ export default function CustomerOrdersPage() {
   }, [orders, optimisticOrder]);
 
   const totalPi = useMemo(
-    () =>
-      mergedOrders.reduce(
-        (s, o) => s + Number(o.total ?? 0),
-        0
-      ),
+    () => mergedOrders.reduce((s, o) => s + Number(o.total ?? 0), 0),
     [mergedOrders]
   );
 
@@ -359,104 +350,64 @@ export default function CustomerOrdersPage() {
           onReview={setActiveReviewId}
         />
       </Suspense>
+
       {/* CANCEL POPUP */}
       {showCancelFor && (
         <div className="fixed inset-0 z-50">
-          <div
-            onClick={
-              resetCancel
-            }
-            className="absolute inset-0 bg-black/40"
-          />
+          <div onClick={resetCancel} className="absolute inset-0 bg-black/40" />
+
           <div className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+80px)]">
             <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-300" />
+
             <h3 className="text-center text-lg font-semibold">
-              {t.cancel_order ??
-                "Cancel Order"}
+              {t.cancel_order ?? "Cancel Order"}
             </h3>
+
             <div className="mt-5 space-y-2">
-              {CANCEL_REASON_KEYS.map(
-                (
-                  key
-                ) => (
-                  <button
-                    key={
-                      key
-                    }
-                    type="button"
-                    onClick={() =>
-                      setSelectedReason(
-                        key
-                      )
-                    }
-                    className={`w-full rounded-xl border px-4 py-3 text-left ${
-                      selectedReason ===
-                      key
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-gray-200"
-                    }`}
-                  >
-                    {t[key] ??
-                      key}
-                  </button>
-                )
-              )}
+              {CANCEL_REASON_KEYS.map(key => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setSelectedReason(key)}
+                  className={`w-full rounded-xl border px-4 py-3 text-left ${
+                    selectedReason === key
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-gray-200"
+                  }`}
+                >
+                  {t[key] ?? key}
+                </button>
+              ))}
             </div>
-            {selectedReason ===
-              "cancel_reason_other" && (
+
+            {selectedReason === "cancel_reason_other" && (
               <textarea
                 rows={3}
-                value={
-                  customReason
-                }
-                onChange={(
-                  e
-                ) =>
-                  setCustomReason(
-                    e.target
-                      .value
-                  )
-                }
+                value={customReason}
+                onChange={e => setCustomReason(e.target.value)}
                 className="mt-3 w-full rounded-xl border p-3"
-                placeholder={
-                  t.enter_cancel_reason ??
-                  "Enter reason"
-                }
+                placeholder={t.enter_cancel_reason ?? "Enter reason"}
               />
             )}
 
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={
-                  resetCancel
-                }
-                className="rounded-xl border py-3"
-              >
-                {t.close ??
-                  "Close"}
+              <button type="button" onClick={resetCancel} className="rounded-xl border py-3">
+                {t.close ?? "Close"}
               </button>
 
               <button
                 type="button"
-                disabled={
-                  processingId ===
-                  showCancelFor
-                }
-                onClick={() =>
-                  handleCancel(
-                    showCancelFor
-                  )
-                }
+                disabled={processingId === showCancelFor}
+                onClick={() => handleCancel(showCancelFor)}
                 className="rounded-xl bg-primary py-3 text-white"
               >
-                {t.confirm ??
-                  "Confirm"}
+                {t.confirm ?? "Confirm"}
               </button>
             </div>
           </div>
         </div>
       )}
+
 
       {/* REVIEW POPUP */}
 
