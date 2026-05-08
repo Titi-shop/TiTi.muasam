@@ -48,29 +48,32 @@ type WriteAuditParams = {
   stage: AuditStage;
 
   severity?: AuditSeverity;
-
   actorType?: AuditActorType;
   actorId?: string | null;
-
   source?: string | null;
   requestId?: string | null;
-
   orderId?: string | null;
   escrowId?: string | null;
 
   piPaymentId?: string | null;
   txid?: string | null;
-
   oldPaymentStatus?: string | null;
   newPaymentStatus?: string | null;
-
   oldSettlementState?: string | null;
   newSettlementState?: string | null;
-
   reconcileAttempt?: number;
-
   note?: string | null;
   payload?: JsonValue | null;
+};
+
+type AuditPiVerifiedParams = {
+  source?: string;
+  txid?: string;
+  piPaymentId?: string;
+  actorId?: string;
+  amount?: number;
+  receiverWallet?: string;
+  senderWallet?: string;
 };
 
 /* =========================================================
@@ -263,14 +266,25 @@ export const auditIntentCreated = (paymentIntentId: string, payload?: JsonValue)
     payload,
   });
 
-export const auditPiVerified = (paymentIntentId: string, payload?: JsonValue) =>
+export const auditPiVerified = (
+  paymentIntentId: string,
+  params: AuditPiVerifiedParams
+) =>
   writePaymentAudit({
     paymentIntentId,
     eventCode: "PI_VERIFIED",
     stage: "PI_VERIFY",
     actorType: "pi_api",
+    source: params.source,
+    actorId: params.actorId,
+    txid: params.txid,
+    piPaymentId: params.piPaymentId,
     newSettlementState: "PI_VERIFIED",
-    payload,
+    payload: {
+      amount: params.amount,
+      receiverWallet: params.receiverWallet,
+      senderWallet: params.senderWallet,
+    },
   });
 
 export const auditRpcVerified = (paymentIntentId: string, payload?: JsonValue) =>
