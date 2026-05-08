@@ -28,23 +28,12 @@ type OrderCountResponse = {
   pending?: number;
 
   pending_fulfillment?: number;
-
-  confirmed?: number;
-
   processing?: number;
-
-  shipping?: number;
-
   shipped?: number;
-
   delivered?: number;
-
   completed?: number;
-
   cancelled?: number;
-
   refunded?: number;
-
   returns?: number;
 };
 
@@ -130,57 +119,30 @@ export default function OrderSummary() {
   ===================================================== */
 
   const counts = {
-    /* pending */
-    pending:
-      Number(
-        data?.pending ?? 0
-      ) +
-      Number(
-        data?.pending_fulfillment ??
-          0
-      ),
+  pending_fulfillment:
+    Number(
+      data?.pending_fulfillment ?? 0
+    ),
 
-    /* confirmed */
-    confirmed:
-      Number(
-        data?.confirmed ?? 0
-      ) +
-      Number(
-        data?.processing ??
-          0
-      ),
+  processing:
+    Number(
+      data?.processing ?? 0
+    ),
 
-    /* shipping */
-    shipping:
-      Number(
-        data?.shipping ?? 0
-      ) +
-      Number(
-        data?.shipped ?? 0
-      ) +
-      Number(
-        data?.delivered ??
-          0
-      ),
+  shipped:
+    Number(
+      data?.shipped ?? 0
+    ),
 
-    /* completed */
-    completed:
-      Number(
-        data?.completed ??
-          0
-      ),
+  completed:
+    Number(
+      data?.completed ?? 0
+    ),
 
-    /* cancelled */
-    cancelled:
-      Number(
-        data?.cancelled ??
-          0
-      ) +
-      Number(
-        data?.refunded ??
-          0
-      ),
-
+  cancelled:
+    Number(
+      data?.cancelled ?? 0
+    ),
     /* returns */
     returns:
       Number(
