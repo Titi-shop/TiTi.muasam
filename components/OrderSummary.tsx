@@ -84,7 +84,7 @@ export default function OrderSummary() {
 
   const counts = useMemo(
     () => ({
-      pending: data?.pending ?? 0,
+      pending_fulfillment: data?.pending_fulfillment ?? 0,
       processing: data?.processing ?? 0,
       shipped: data?.shipped ?? 0,
       completed: data?.completed ?? 0,
