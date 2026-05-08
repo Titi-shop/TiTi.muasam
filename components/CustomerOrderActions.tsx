@@ -1,29 +1,95 @@
 "use client";
 
 import type { MouseEvent } from "react";
+
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 /* =======================================================
    TYPES
 ======================================================= */
 
-type OrderStatus =
+type FulfillmentStatus =
   | "pending"
-  | "confirmed"
-  | "shipping"
+  | "pending_fulfillment"
+  | "processing"
+  | "shipped"
+  | "delivered"
   | "completed"
   | "cancelled"
+  | "refunded";
+
+type LegacyStatus =
+  | "confirmed"
+  | "shipping";
+
+type OrderStatus =
+  | FulfillmentStatus
+  | LegacyStatus
   | string;
 
 type Props = {
   status: OrderStatus;
+
   reviewed?: boolean;
 
   onDetail: () => void;
+
   onCancel?: () => void;
+
   onReceived?: () => void;
+
   onReview?: () => void;
 };
+
+/* =======================================================
+   STATUS HELPERS
+======================================================= */
+
+function isPending(
+  status: OrderStatus
+): boolean {
+  return (
+    status === "pending" ||
+    status ===
+      "pending_fulfillment"
+  );
+}
+
+function isConfirmed(
+  status: OrderStatus
+): boolean {
+  return (
+    status === "confirmed" ||
+    status === "processing"
+  );
+}
+
+function isShipping(
+  status: OrderStatus
+): boolean {
+  return (
+    status === "shipping" ||
+    status === "shipped" ||
+    status === "delivered"
+  );
+}
+
+function isCompleted(
+  status: OrderStatus
+): boolean {
+  return (
+    status === "completed"
+  );
+}
+
+function isCancelled(
+  status: OrderStatus
+): boolean {
+  return (
+    status === "cancelled" ||
+    status === "refunded"
+  );
+}
 
 /* =======================================================
    COMPONENT
@@ -37,7 +103,8 @@ export default function CustomerOrderActions({
   onReceived,
   onReview,
 }: Props) {
-  const { t } = useTranslation();
+  const { t } =
+    useTranslation();
 
   function stopAndRun(
     fn?: () => void
@@ -47,12 +114,28 @@ export default function CustomerOrderActions({
     ) => {
       e.preventDefault();
       e.stopPropagation();
+
       fn?.();
     };
   }
 
   const baseBtn =
     "px-3 py-2 rounded-xl text-sm font-medium transition active:scale-95";
+
+  const pending =
+    isPending(status);
+
+  const confirmed =
+    isConfirmed(status);
+
+  const shipping =
+    isShipping(status);
+
+  const completed =
+    isCompleted(status);
+
+  const cancelled =
+    isCancelled(status);
 
   return (
     <div
@@ -74,8 +157,8 @@ export default function CustomerOrderActions({
       </button>
 
       {/* PENDING -> CANCEL */}
-      {status ===
-        "pending" &&
+      {pending &&
+        !cancelled &&
         onCancel && (
           <button
             type="button"
@@ -90,8 +173,7 @@ export default function CustomerOrderActions({
         )}
 
       {/* SHIPPING -> RECEIVED */}
-      {status ===
-        "shipping" &&
+      {shipping &&
         onReceived && (
           <button
             type="button"
@@ -106,8 +188,7 @@ export default function CustomerOrderActions({
         )}
 
       {/* COMPLETED -> REVIEW */}
-      {status ===
-        "completed" &&
+      {completed &&
         !reviewed &&
         onReview && (
           <button
@@ -123,8 +204,7 @@ export default function CustomerOrderActions({
         )}
 
       {/* COMPLETED -> REVIEWED */}
-      {status ===
-        "completed" &&
+      {completed &&
         reviewed && (
           <button
             type="button"
