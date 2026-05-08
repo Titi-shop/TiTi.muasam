@@ -7,7 +7,6 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import {
   ORDER_STATUS,
   type OrderStatus,
-  ORDER_FINISHED_STATUSES,
 } from "@/constants/order-status";
 
 /* =======================================================
@@ -20,23 +19,17 @@ type Props = {
   reviewed?: boolean;
 
   onDetail: () => void;
-
   onCancel?: () => void;
-
   onReceived?: () => void;
-
   onReview?: () => void;
 };
 
 /* =======================================================
-   STATUS HELPERS (V7 - CONSTANT DRIVEN)
+   STATE CHECKERS (V7 - SINGLE SOURCE OF TRUTH)
 ======================================================= */
 
 function isPending(status: OrderStatus): boolean {
-  return (
-    status === ORDER_STATUS.PENDING ||
-    status === ORDER_STATUS.PENDING_FULFILLMENT
-  );
+  return status === ORDER_STATUS.PENDING;
 }
 
 function isProcessing(status: OrderStatus): boolean {
@@ -44,10 +37,7 @@ function isProcessing(status: OrderStatus): boolean {
 }
 
 function isShipping(status: OrderStatus): boolean {
-  return (
-    status === ORDER_STATUS.SHIPPED ||
-    status === ORDER_STATUS.DELIVERED
-  );
+  return status === ORDER_STATUS.SHIPPED;
 }
 
 function isCompleted(status: OrderStatus): boolean {
@@ -55,10 +45,7 @@ function isCompleted(status: OrderStatus): boolean {
 }
 
 function isCancelled(status: OrderStatus): boolean {
-  return (
-    status === ORDER_STATUS.CANCELLED ||
-    status === ORDER_STATUS.REFUNDED
-  );
+  return status === ORDER_STATUS.CANCELLED;
 }
 
 /* =======================================================
@@ -106,7 +93,7 @@ export default function CustomerOrderActions({
         {t.detail ?? "Detail"}
       </button>
 
-      {/* CANCEL - CHỈ PENDING + PENDING_FULFILLMENT */}
+      {/* CANCEL */}
       {pending && !cancelled && onCancel && (
         <button
           type="button"
@@ -117,7 +104,7 @@ export default function CustomerOrderActions({
         </button>
       )}
 
-      {/* RECEIVED - SHIPPING FLOW */}
+      {/* RECEIVED */}
       {shipping && onReceived && (
         <button
           type="button"
@@ -128,7 +115,7 @@ export default function CustomerOrderActions({
         </button>
       )}
 
-      {/* REVIEW - ONLY COMPLETED */}
+      {/* REVIEW */}
       {completed && !reviewed && onReview && (
         <button
           type="button"
@@ -139,7 +126,7 @@ export default function CustomerOrderActions({
         </button>
       )}
 
-      {/* REVIEWED STATE */}
+      {/* REVIEWED */}
       {completed && reviewed && (
         <button
           type="button"
