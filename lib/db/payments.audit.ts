@@ -318,9 +318,17 @@ export const auditPiCompleted = (paymentIntentId: string, payload?: JsonValue) =
     payload,
   });
 
-export const auditFinalizeDone = (paymentIntentId: string, payload?: JsonValue) =>
+export const auditFinalizeDone = (
+  paymentIntentId: string,
+  payload?: any
+) =>
   writePaymentAudit({
     paymentIntentId,
+
+    orderId: payload?.orderId ?? null,
+    escrowId: payload?.escrowId ?? null,
+    piPaymentId: payload?.piPaymentId ?? null,
+    txid: payload?.txid ?? null,
     eventCode: "ORDER_FINALIZED",
     stage: "FINALIZE",
     actorType: "system",
