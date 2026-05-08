@@ -177,10 +177,8 @@ export default function CustomerOrderCard({
           </b>
         </span>
 
-        <CustomerOrderActions
-          status={
-            order.status
-          }
+        <CustomerOrderActions status={order.fulfillment_status} 
+          
           reviewed={
             reviewed
           }
