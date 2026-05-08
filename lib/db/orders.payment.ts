@@ -1,3 +1,5 @@
+
+
 import { withTransaction } from "@/lib/db";
 import { auditManualReview } from "@/lib/db/payments.audit";
 
@@ -11,8 +13,8 @@ type FinalizePaidOrderParams = {
   txid: string;
   verifiedAmount: number;
   receiverWallet: string;
-  piPayload: PiPayload;
-rpcPayload: RpcPayload;
+  piPayload: unknown;
+  rpcPayload: unknown;
 };
 
 type PaymentIntentRow = {
@@ -38,6 +40,8 @@ type PaymentIntentRow = {
   zone: string;
 
   merchant_wallet: string;
+
+  status: string;
   settlement_state: string;
 };
 
@@ -49,25 +53,7 @@ export type FinalizePaidOrderResult = {
   sellerId: string;
   amount: number;
 };
-type RpcPayload = {
-  ok: boolean;
-  ledger?: number | null;
-  chainReference?: string | null;
-  stage?: string | null;
-  sender?: string | null;
-  receiver?: string | null;
-  reason?: string | null;
-};
 
-type PiPayload = {
-  user_uid?: string | null;
-  from_address?: string | null;
-  to_address?: string | null;
-  amount?: number | string | null;
-  status?: {
-    developer_approved?: boolean;
-  };
-};
 /* =========================================================
    HELPERS
 ========================================================= */
@@ -183,49 +169,48 @@ export async function finalizePaidOrderFromIntent({
     const orderRes = await client.query<{ id: string }>(
       `
       INSERT INTO orders (
-  buyer_id,
-  seller_id,
+        buyer_id,
+        seller_id,
 
-  pi_payment_id,
-  pi_txid,
-  idempotency_key,
+        pi_payment_id,
+        pi_txid,
+        idempotency_key,
 
-  payment_status,
-  paid_at,
+        payment_status,
+        paid_at,
 
-  items_total,
-  subtotal,
-  discount,
-  shipping_fee,
-  tax,
-  total,
-  currency,
+        items_total,
+        subtotal,
+        discount,
+        shipping_fee,
+        tax,
+        total,
+        currency,
 
-  status,
+        status,
 
-  shipping_name,
-  shipping_phone,
-  shipping_address_line,
-  shipping_country,
-  shipping_zone,
+        shipping_name,
+        shipping_phone,
+        shipping_address_line,
+        shipping_country,
+        shipping_zone,
 
-  total_items,
-  total_quantity,
+        total_items,
+        total_quantity,
 
-  created_at,
-  updated_at
-)
-VALUES (
-  $1,$2,
-  $3,$4,$5,
-
-  'paid', now(),
-  $6,$7,$8,$9,0,$10,$11,
-  'pending_fulfillment',
-  $12,$13,$14,$15,$16,
-  1,$17,
-  now(),now()
-)
+        created_at,
+        updated_at
+      )
+      VALUES (
+        $1,$2,
+        $3,$4,$5,
+        'paid',now(),
+        $6,$7,$8,$9,0,$10,$11,
+        'pending',
+        $12,$13,$14,$15,$16,
+        1,$17,
+        now(),now()
+      )
       RETURNING id
       `,
       [
@@ -297,163 +282,118 @@ VALUES (
     ===================================================== */
 
     await client.query(
-  `
-  INSERT INTO payment_receipts (
-    payment_intent_id,
-    user_id,
-    order_id,
-    escrow_id,
+      `
+      INSERT INTO payment_receipts (
+        payment_intent_id,
+        user_id,
+        order_id,
 
-    pi_payment_id,
-    pi_uid,
-    txid,
+        pi_payment_id,
+        txid,
 
-    expected_amount,
-    verified_amount,
-    currency,
+        expected_amount,
+        verified_amount,
+        currency,
 
-    sender_wallet,
-    receiver_wallet,
+        receiver_wallet,
 
-    verification_status,
-    verify_source,
+        verification_status,
+        verify_source,
 
-    rpc_confirmed,
-    rpc_ledger,
-    chain_reference,
-    tx_status,
+        rpc_confirmed,
+        rpc_ledger,
+        chain_reference,
 
-    pi_payload,
-    rpc_payload,
-    merged_payload,
+        pi_payload,
+        rpc_payload,
+        merged_payload,
 
-    forensic_hash,
-    idempotency_key,
+        verified_at,
+        completed_at,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        $1,$2,$3,
+        $4,$5,
+        $6,$7,'PI',
+        $8,
+        'completed',
+        'DUAL_AUDIT',
+        $9,$10,$11,
+        $12,$13,$14,
+        now(),now(),now(),now()
+      )
+      ON CONFLICT (pi_payment_id) DO NOTHING
+      `,
+      [
+        paymentIntentId,
+        intent.buyer_id,
+        orderId,
 
-    failure_reason,
-    manual_note,
+        piPaymentId,
+        txid,
 
-    verified_at,
-    completed_at,
-    created_at,
-    updated_at
-  )
-  VALUES (
-    $1,$2,$3,$4,
-    $5,$6,$7,
-    $8,$9,'PI',
-    $10,$11,
-    'completed',
-    'DUAL_AUDIT',
-    $12,$13,$14,$15,
-    $16,$17,$18,
-    $19,$20,
-    NULL,NULL,
-    now(),now(),now(),now()
-  )
-  ON CONFLICT (pi_payment_id)
-  DO UPDATE SET
-    order_id = EXCLUDED.order_id,
-    escrow_id = EXCLUDED.escrow_id,
-    pi_uid = EXCLUDED.pi_uid,
-    sender_wallet = EXCLUDED.sender_wallet,
-    receiver_wallet = EXCLUDED.receiver_wallet,
+        expectedAmount,
+        verifiedAmount,
 
-    rpc_confirmed = EXCLUDED.rpc_confirmed,
-    rpc_ledger = EXCLUDED.rpc_ledger,
-    chain_reference = EXCLUDED.chain_reference,
-    tx_status = EXCLUDED.tx_status,
+        receiverWallet,
 
-    pi_payload = EXCLUDED.pi_payload,
-    rpc_payload = EXCLUDED.rpc_payload,
-    merged_payload = EXCLUDED.merged_payload,
+        (rpcPayload as any)?.ok === true,
+        (rpcPayload as any)?.ledger ?? null,
+        (rpcPayload as any)?.chainReference ?? null,
 
-    verification_status = 'completed',
-    verify_source = 'DUAL_AUDIT',
+        JSON.stringify(piPayload),
+        JSON.stringify(rpcPayload),
+        JSON.stringify({
+          pi: piPayload,
+          rpc: rpcPayload,
+        }),
+      ]
+    );
 
-    verified_at = now(),
-    completed_at = now(),
-    updated_at = now()
-  `,
-  [
-    paymentIntentId,
-    intent.buyer_id,
-    orderId,
-    null, // escrow_id (ledger stage sau)
-
-    piPaymentId,
-    piPayload.user_uid ?? null,
-    txid,
-
-    expectedAmount,
-    verifiedAmount,
-
-    piPayload.from_address ?? null,
-    piPayload.to_address ?? receiverWallet,
-
-    rpcPayload.ok === true,
-    rpcPayload.ledger ?? null,
-    rpcPayload.chainReference ?? null,
-    rpcPayload.stage ?? null,
-
-    JSON.stringify(piPayload),
-    JSON.stringify(rpcPayload),
-    JSON.stringify({
-      pi: piPayload,
-      rpc: rpcPayload,
-    }),
-
-    null,
-    paymentIntentId
-  ]
-);
     /* =====================================================
        7. UPSERT PI PAYMENTS (FULL SCHEMA FIX)
     ===================================================== */
 
-    INSERT INTO orders (
-  buyer_id,
-  seller_id,
+    await client.query(
+      `
+      INSERT INTO pi_payments (
+        payment_intent_id,
+        order_id,
+        user_id,
 
-  pi_payment_id,
-  pi_txid,
-  idempotency_key,
+        pi_payment_id,
+        txid,
+        receiver_wallet,
 
-  payment_status,
-  fulfillment_status,
-  paid_at,
+        amount,
+        expected_amount,
+        verified_amount,
+        currency,
 
-  items_total,
-  subtotal,
-  discount,
-  shipping_fee,
-  tax,
-  total,
-  currency,
+        status,
 
-  shipping_name,
-  shipping_phone,
-  shipping_address_line,
-  shipping_country,
-  shipping_zone,
+        reconcile_attempts,
+        last_reconcile_at,
 
-  total_items,
-  total_quantity,
+        pi_raw_payload,
+        rpc_raw_payload,
+        complete_raw_payload,
 
-  created_at,
-  updated_at
-)
-VALUES (
-  $1,$2,
-  $3,$4,$5,
-  'paid',
-  'pending_fulfillment',
-  now(),
-  $6,$7,$8,$9,0,$10,$11,
-  $12,$13,$14,$15,$16,
-  1,$17,
-  now(),now()
-)
+        completed_at,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        $1,$2,$3,
+        $4,$5,$6,
+        $7,$8,$9,'PI',
+        'SETTLED',
+        1,now(),
+        $10,$11,$12,
+        now(),now(),now()
+      )
       ON CONFLICT (pi_payment_id)
       DO UPDATE SET
         txid = EXCLUDED.txid,
