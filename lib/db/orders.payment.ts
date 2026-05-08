@@ -185,48 +185,49 @@ export async function finalizePaidOrderFromIntent({
     const orderRes = await client.query<{ id: string }>(
       `
       INSERT INTO orders (
-        buyer_id,
-        seller_id,
+  buyer_id,
+  seller_id,
 
-        pi_payment_id,
-        pi_txid,
-        idempotency_key,
+  pi_payment_id,
+  pi_txid,
+  idempotency_key,
 
-        payment_status,
-        paid_at,
+  payment_status,
+  paid_at,
 
-        items_total,
-        subtotal,
-        discount,
-        shipping_fee,
-        tax,
-        total,
-        currency,
+  items_total,
+  subtotal,
+  discount,
+  shipping_fee,
+  tax,
+  total,
+  currency,
 
-        status,
+  status,
 
-        shipping_name,
-        shipping_phone,
-        shipping_address_line,
-        shipping_country,
-        shipping_zone,
+  shipping_name,
+  shipping_phone,
+  shipping_address_line,
+  shipping_country,
+  shipping_zone,
 
-        total_items,
-        total_quantity,
+  total_items,
+  total_quantity,
 
-        created_at,
-        updated_at
-      )
-      VALUES (
-        $1,$2,
-        $3,$4,$5,
-        'paid',now(),
-        $6,$7,$8,$9,0,$10,$11,
-        'pending',
-        $12,$13,$14,$15,$16,
-        1,$17,
-        now(),now()
-      )
+  created_at,
+  updated_at
+)
+VALUES (
+  $1,$2,
+  $3,$4,$5,
+
+  'paid', now(),
+  $6,$7,$8,$9,0,$10,$11,
+  'pending_fulfillment',
+  $12,$13,$14,$15,$16,
+  1,$17,
+  now(),now()
+)
       RETURNING id
       `,
       [
