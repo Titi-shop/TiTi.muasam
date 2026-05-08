@@ -513,15 +513,14 @@ export async function runPaymentSettlement({
   });
 
   const paid = await finalizePaidOrderFromIntent({
-    paymentIntentId,
-    piPaymentId,
-    txid,
-    verifiedAmount: piVerified.verifiedAmount,
-    receiverWallet: piVerified.receiverWallet,
-    piPayload: piVerified.piPayload,
-    rpcPayload: rpcVerified,
-  });
-
+  paymentIntentId,
+  piPaymentId,
+  txid,
+  verifiedAmount: piVerified.verifiedAmount,
+  receiverWallet: piVerified.receiverWallet,
+  piPayload: piVerified.piPayload ?? {},
+  rpcPayload: rpcVerified?.ok ? rpcVerified : { ok: false },
+});
   console.log("[PAYMENT][SETTLEMENT] FINALIZE_ORDER_RESULT", {
     paymentIntentId,
     orderId: paid.orderId,
@@ -529,6 +528,24 @@ export async function runPaymentSettlement({
     buyerId: paid.buyerId,
     sellerId: paid.sellerId,
   });
+  if (!paid?.orderId) {
+  console.error("[PAYMENT][SETTLEMENT] FINALIZE_ORDER_FAILED", {
+    paymentIntentId,
+    paid,
+  });
+
+  throw new Error("FINALIZE_ORDER_FAILED");
+}
+  await safeLedger(
+  paid,
+  paymentIntentId,
+  piPaymentId,
+  txid,
+  rpcVerified
+);
+
+  
+  
 
   /* =====================================================
      7. LEDGER
