@@ -455,11 +455,13 @@ export async function runPaymentSettlement({
   }
 
   await auditPiVerified(paymentIntentId, {
-    source,
-    txid,
-    amount: piVerified.verifiedAmount,
-    receiverWallet: piVerified.receiverWallet,
-  });
+  source,
+  txid,
+  piPaymentId,
+  actorId: userId,
+  amount: piVerified.verifiedAmount,
+  receiverWallet: piVerified.receiverWallet,
+});
 
   console.log("[PAYMENT][SETTLEMENT] PI_AUDIT_OK", {
     paymentIntentId,
