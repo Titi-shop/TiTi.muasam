@@ -95,52 +95,52 @@ export default function OrderSummary() {
   );
 
   const items = useMemo(
-    () => [
-      {
-        key: "pending",
-        icon: <Clock3 size={20} />,
-        label: t.pending_orders ?? "Pending",
-        count: counts.pending,
-        onClick: () => go("pending"),
-      },
-      {
-        key: "processing",
-        icon: <PackageCheck size={20} />,
-        label: t.processing_orders ?? "Processing",
-        count: counts.processing,
-        onClick: () => go("processing"),
-      },
-      {
-        key: "shipped",
-        icon: <Truck size={20} />,
-        label: t.shipping_orders ?? "Shipping",
-        count: counts.shipped,
-        onClick: () => go("shipping"),
-      },
-      {
-        key: "completed",
-        icon: <CheckCircle2 size={20} />,
-        label: t.completed_orders ?? "Completed",
-        count: counts.completed,
-        onClick: () => go("completed"),
-      },
-      {
-        key: "cancelled",
-        icon: <XCircle size={20} />,
-        label: t.cancelled_orders ?? "Cancelled",
-        count: counts.cancelled,
-        onClick: () => go("cancelled"),
-      },
-      {
-        key: "returns",
-        icon: <RotateCcw size={20} />,
-        label: t.returns_orders ?? "Returns",
-        count: counts.returns,
-        onClick: () => router.push("/customer/returns"),
-      },
-    ],
-    [counts, t, go, router]
-  );
+  () => [
+    {
+      key: "pending_fulfillment",
+      icon: <Clock3 size={20} />,
+      label: t.pending_orders ?? "Chờ xác nhận",
+      count: counts.pending_fulfillment,
+      onClick: () => go("pending_fulfillment"),
+    },
+    {
+      key: "processing",
+      icon: <PackageCheck size={20} />,
+      label: t.processing_orders ?? "Processing",
+      count: counts.processing,
+      onClick: () => go("processing"),
+    },
+    {
+      key: "shipped",
+      icon: <Truck size={20} />,
+      label: t.shipping_orders ?? "Shipping",
+      count: counts.shipped,
+      onClick: () => go("shipping"),
+    },
+    {
+      key: "completed",
+      icon: <CheckCircle2 size={20} />,
+      label: t.completed_orders ?? "Completed",
+      count: counts.completed,
+      onClick: () => go("completed"),
+    },
+    {
+      key: "cancelled",
+      icon: <XCircle size={20} />,
+      label: t.cancelled_orders ?? "Cancelled",
+      count: counts.cancelled,
+      onClick: () => go("cancelled"),
+    },
+    {
+      key: "returns",
+      icon: <RotateCcw size={20} />,
+      label: t.returns_orders ?? "Returns",
+      count: counts.returns,
+      onClick: () => router.push("/customer/returns"),
+    },
+  ],
+  [counts, t, go, router]
+);
 
   return (
     <section className="mx-4 mt-4 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
