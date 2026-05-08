@@ -6,9 +6,11 @@ import {
   useMemo,
   useState,
 } from "react";
+
 import { useSearchParams } from "next/navigation";
 
 import CustomerOrderCard from "./CustomerOrderCard";
+
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 /* =======================================================
@@ -23,6 +25,22 @@ type OrderStatus =
   | "completed"
   | "cancelled";
 
+type FulfillmentStatus =
+  | "pending"
+  | "pending_fulfillment"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "completed"
+  | "cancelled"
+  | "refunded";
+
+type PaymentStatus =
+  | "pending"
+  | "paid"
+  | "failed"
+  | "refunded";
+
 type OrderItem = {
   id?: string;
   product_id?: string;
@@ -31,22 +49,108 @@ type OrderItem = {
 
 type Order = {
   id: string;
-  status: string;
+
+  status?: string;
+
+  fulfillment_status?: FulfillmentStatus;
+
+  payment_status?: PaymentStatus;
+
   order_items?: OrderItem[];
 };
 
 type Props = {
   orders: Order[];
+
   initialTab?: OrderStatus;
 
   onDetail: (id: string) => void;
+
   onCancel?: (id: string) => void;
+
   onReceived?: (id: string) => void;
+
   onBuyAgain?: (id: string) => void;
+
   onReview?: (id: string) => void;
 
   reviewedMap?: Record<string, boolean>;
 };
+
+/* =======================================================
+   STATUS NORMALIZER
+======================================================= */
+
+function normalizeStatus(
+  order: Order
+): OrderStatus {
+  const fulfillment =
+    order.fulfillment_status;
+
+  const payment =
+    order.payment_status;
+
+  const legacy =
+    order.status;
+
+  /* ================= NEW SCHEMA ================= */
+
+  if (
+    fulfillment ===
+      "pending_fulfillment" ||
+    payment === "pending"
+  ) {
+    return "pending";
+  }
+
+  if (
+    fulfillment ===
+      "processing"
+  ) {
+    return "confirmed";
+  }
+
+  if (
+    fulfillment ===
+      "shipped" ||
+    fulfillment ===
+      "delivered"
+  ) {
+    return "shipping";
+  }
+
+  if (
+    fulfillment ===
+    "completed"
+  ) {
+    return "completed";
+  }
+
+  if (
+    fulfillment ===
+      "cancelled" ||
+    fulfillment ===
+      "refunded" ||
+    payment === "failed" ||
+    payment === "refunded"
+  ) {
+    return "cancelled";
+  }
+
+  /* ================= LEGACY FALLBACK ================= */
+
+  if (
+    legacy === "pending" ||
+    legacy === "confirmed" ||
+    legacy === "shipping" ||
+    legacy === "completed" ||
+    legacy === "cancelled"
+  ) {
+    return legacy;
+  }
+
+  return "pending";
+}
 
 /* =======================================================
    WRAPPER
@@ -106,7 +210,7 @@ function CustomerOrdersListInner({
       ? rawTab
       : "all";
 
-  /* ================= TAB STATE ================= */
+  /* ================= TAB ================= */
 
   const [tab, setTab] =
     useState<OrderStatus>(
@@ -170,28 +274,17 @@ function CustomerOrdersListInner({
 
     for (const order of orders) {
       const status =
-        order.status;
+        normalizeStatus(
+          order
+        );
 
-      if (
-        status ===
-          "pending" ||
-        status ===
-          "confirmed" ||
-        status ===
-          "shipping" ||
-        status ===
-          "completed" ||
-        status ===
-          "cancelled"
-      ) {
-        map[status] += 1;
-      }
+      map[status] += 1;
     }
 
     return map;
   }, [orders]);
 
-  /* ================= FILTERED ================= */
+  /* ================= FILTER ================= */
 
   const filtered =
     useMemo(() => {
@@ -201,8 +294,9 @@ function CustomerOrdersListInner({
 
       return orders.filter(
         (order) =>
-          order.status ===
-          tab
+          normalizeStatus(
+            order
+          ) === tab
       );
     }, [orders, tab]);
 
@@ -266,10 +360,8 @@ function CustomerOrdersListInner({
                 }
                 reviewed={
                   reviewedMap?.[
-                    order
-                      .id
-                  ] ??
-                  false
+                    order.id
+                  ] ?? false
                 }
                 onDetail={() =>
                   onDetail(
