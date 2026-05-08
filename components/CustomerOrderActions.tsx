@@ -28,7 +28,7 @@ type OrderStatus =
   | string;
 
 type Props = {
-  status: OrderStatus;
+  status: FulfillmentStatus;
 
   reviewed?: boolean;
 
@@ -157,9 +157,7 @@ export default function CustomerOrderActions({
       </button>
 
       {/* PENDING -> CANCEL */}
-      {pending &&
-        !cancelled &&
-        onCancel && (
+      {status === "pending_fulfillment" && onCancel && (
           <button
             type="button"
             onClick={stopAndRun(
