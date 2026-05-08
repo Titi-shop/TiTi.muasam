@@ -22,14 +22,14 @@ export type AuditSeverity =
 
 export type AuditStage =
   | "INTENT"
-  | "AUTHORIZE"
-  | "SUBMIT"
   | "PI_VERIFY"
   | "RPC_VERIFY"
   | "PI_COMPLETE"
-  | "FINALIZE"
+  | "ORDER"
+  | "FULFILLMENT"
+  | "SHIPMENT"
   | "LEDGER"
-  | "WEBHOOK"
+  | "FINALIZE"
   | "MANUAL";
 
 export type AuditActorType =
@@ -264,8 +264,10 @@ export const auditIntentCreated = (
     eventCode: "INTENT_CREATED",
     stage: "INTENT",
     actorType: "api",
-    newPaymentStatus: "created",
+
+    newPaymentStatus: "pending",
     newSettlementState: "UNSETTLED",
+
     payload,
   });
 
@@ -278,8 +280,9 @@ export const auditPiVerified = (
     eventCode: "PI_VERIFIED",
     stage: "PI_VERIFY",
     actorType: "pi_api",
-    oldSettlementState: "UNSETTLED",
+
     newSettlementState: "PI_VERIFIED",
+
     payload,
   });
 
@@ -292,8 +295,9 @@ export const auditRpcVerified = (
     eventCode: "RPC_VERIFIED",
     stage: "RPC_VERIFY",
     actorType: "rpc",
-    oldSettlementState: "PI_VERIFIED",
-    newSettlementState: "RPC_AUDITED",
+
+    newSettlementState: "RPC_VERIFIED",
+
     payload,
   });
 
@@ -319,8 +323,10 @@ export const auditPiCompleted = (
     eventCode: "PI_COMPLETED",
     stage: "PI_COMPLETE",
     actorType: "pi_api",
-    oldSettlementState: "RPC_AUDITED",
+
+    newPaymentStatus: "paid",
     newSettlementState: "PI_COMPLETED",
+
     payload,
   });
 
@@ -333,13 +339,47 @@ export const auditFinalizeDone = (
     eventCode: "ORDER_FINALIZED",
     stage: "FINALIZE",
     actorType: "system",
-    oldPaymentStatus: "verifying",
+
+    oldPaymentStatus: "pending",
     newPaymentStatus: "paid",
+
     oldSettlementState: "PI_COMPLETED",
     newSettlementState: "ORDER_FINALIZED",
+
     payload,
   });
+export const auditOrderFulfillment = (
+  paymentIntentId: string,
+  orderId: string,
+  payload?: JsonValue
+) =>
+  writePaymentAudit({
+    paymentIntentId,
+    orderId,
+    eventCode: "ORDER_FULFILLMENT",
+    stage: "FULFILLMENT",
+    actorType: "system",
 
+    newSettlementState: "PENDING_FULFILLMENT",
+
+    payload,
+  });
+export const auditOrderShipped = (
+  paymentIntentId: string,
+  orderId: string,
+  payload?: JsonValue
+) =>
+  writePaymentAudit({
+    paymentIntentId,
+    orderId,
+    eventCode: "ORDER_SHIPPED",
+    stage: "SHIPMENT",
+    actorType: "system",
+
+    newSettlementState: "SHIPPED",
+
+    payload,
+  });
 export const auditDuplicateSubmit = (
   paymentIntentId: string,
   payload?: JsonValue
