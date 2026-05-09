@@ -19,8 +19,8 @@ export async function getSellerOrderCounts(sellerId: string) {
 
   const result = {
     pending: 0,
-    confirmed: 0,
-    shipping: 0,
+    processing: 0,
+    shipped: 0,
     completed: 0,
     cancelled: 0,
     refunded: 0,
@@ -236,7 +236,7 @@ export async function startShippingBySeller(
         `
         UPDATE order_items
         SET
-          status = 'shipping',
+          status = 'shipped',
           shipped_at = NOW(),
           updated_at = NOW()
         WHERE order_id = $1
