@@ -15,16 +15,13 @@ import {
 } from "@/lib/db/payments.audit";
 
 import { verifyPiPaymentForReconcile } from "@/lib/db/payments.verify";
-
 import { verifyRpcPaymentForReconcile } from "@/lib/db/payments.rpc";
-
 import {
   finalizePaidOrderFromIntent,
   FinalizePaidOrderResult,
 } from "@/lib/db/orders.payment";
 
 import { SettlementLedgerV3 as SettlementLedger } from "@/lib/db/settlement.ledger";
-
 import { piCompletePayment } from "@/lib/pi/client";
 
 import type {
@@ -542,7 +539,12 @@ if (!rpcVerified.ok) {
   source,
   txid,
   piPaymentId,
-  });
+  newSettlementState: "FINALIZING",
+  newPaymentStatus: "processing",
+  payload: {
+    step: "order_creation_start",
+  },
+});
   const paid = await finalizePaidOrderFromIntent({
   paymentIntentId,
   piPaymentId,
@@ -561,12 +563,21 @@ if (!rpcVerified.ok) {
   });
   
   if (!paid?.orderId) {
-  await auditManualReview(paymentIntentId, "FINALIZE_ORDER_FAILED", {
-    source,
-    piPaymentId,
-    txid,
-    amount: piVerified.verifiedAmount,
-  });
+  await writePaymentAudit({
+  paymentIntentId,
+  eventCode: "SETTLEMENT_FATAL",
+  stage: "MANUAL",
+  severity: "critical",
+  actorType: "system",
+  source,
+  txid,
+  piPaymentId,
+  newSettlementState: "FAILED",
+  payload: {
+    error: String(e),
+    step: "runPaymentSettlement",
+  },
+});
 
   throw new Error("FINALIZE_ORDER_FAILED");
 }
