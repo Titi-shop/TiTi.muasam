@@ -224,18 +224,19 @@ async function safeLedger(
 ): Promise<boolean> {
   try {
     if (!paid.orderId) {
-      console.warn("[PAYMENT][LEDGER] SKIPPED_NO_ORDER", {
+      console.error("[PAYMENT][LEDGER] BLOCKED_NO_ORDER", {
         paymentIntentId,
+        piPaymentId,
+        txid,
       });
 
-      return;
-    }
+      await auditManualReview(paymentIntentId, "ORDER_MISSING_IN_LEDGER", {
+        piPaymentId,
+        txid,
+      });
 
-    console.log("[PAYMENT][LEDGER] CREATE_ESCROW", {
-      paymentIntentId,
-      orderId: paid.orderId,
-      amount: paid.amount,
-    });
+      return false;
+    }
 
     const escrowId = await SettlementLedger.createEscrow({
       paymentIntentId,
@@ -247,30 +248,13 @@ async function safeLedger(
       piPaymentId,
     });
 
-    console.log("[PAYMENT][LEDGER] ESCROW_CREATED", {
-      escrowId,
-    });
-
     await SettlementLedger.markPiVerified(escrowId);
-
-    console.log("[PAYMENT][LEDGER] PI_VERIFIED", {
-      escrowId,
-    });
 
     if (rpcVerified.ok) {
       await SettlementLedger.markRpcVerified(escrowId);
-
-      console.log("[PAYMENT][LEDGER] RPC_VERIFIED", {
-        escrowId,
-      });
     }
 
     await SettlementLedger.linkOrder(escrowId, paid.orderId);
-
-    console.log("[PAYMENT][LEDGER] ORDER_LINKED", {
-      escrowId,
-      orderId: paid.orderId,
-    });
 
     await SettlementLedger.creditSeller({
       escrowId,
@@ -279,16 +263,7 @@ async function safeLedger(
       piPaymentId,
     });
 
-    console.log("[PAYMENT][LEDGER] SELLER_CREDITED", {
-      escrowId,
-      sellerId: paid.sellerId,
-    });
-
     await SettlementLedger.releaseEscrow(escrowId);
-
-    console.log("[PAYMENT][LEDGER] ESCROW_RELEASED", {
-      escrowId,
-    });
 
     await auditFinalizeDone(paymentIntentId, {
       source: "ledger",
@@ -298,20 +273,15 @@ async function safeLedger(
       txid,
     });
 
-    console.log("[PAYMENT][LEDGER] FINALIZE_AUDITED", {
-      paymentIntentId,
-      orderId: paid.orderId,
-    });
+    return true;
   } catch (e) {
-    console.error("[PAYMENT][LEDGER] FAIL", {
-      paymentIntentId,
-      error: e,
-    });
-
     await auditManualReview(paymentIntentId, "LEDGER_PIPELINE_FAILED", {
       txid,
       piPaymentId,
+      error: String(e),
     });
+
+    return false;
   }
 }
 
@@ -539,9 +509,11 @@ if (!rpcVerified.ok) {
   source,
   txid,
   piPaymentId,
-  orderId: null,
   newSettlementState: "FINALIZING",
-  newPaymentStatus: "processing",
+  newPaymentStatus: "PROCESSING",
+  payload: {
+    step: "FINALIZE_ORDER_FROM_INTENT",
+  },
 });
   const paid = await finalizePaidOrderFromIntent({
   paymentIntentId,
@@ -560,20 +532,23 @@ if (!rpcVerified.ok) {
     sellerId: paid.sellerId,
   });
   
-  if (!paid?.orderId) {
+  if (!paid.orderId) {
   await writePaymentAudit({
-  paymentIntentId,
-  eventCode: "SETTLEMENT_FATAL",
-  stage: "MANUAL",
-  severity: "critical",
-  actorType: "system",
-  source,
-  txid: txid ?? null,
-  piPaymentId: piPaymentId ?? null,
-  orderId: null,
-});
+    paymentIntentId,
+    eventCode: "FINALIZE_FAILED",
+    stage: "MANUAL",
+    severity: "critical",
+    actorType: "system",
+    source,
+    txid,
+    piPaymentId,
+    newSettlementState: "FAILED",
+    payload: {
+      reason: "ORDER_NULL_AFTER_FINALIZE",
+    },
+  });
 
-  throw new Error("FINALIZE_ORDER_FAILED");
+  throw new Error("ORDER_MISSING_AFTER_FINALIZE");
 }
   
 
@@ -615,15 +590,12 @@ if (!rpcVerified.ok) {
       error: e,
     });
 
-    await auditManualReview(
-      paymentIntentId,
-      "SETTLEMENT_FATAL",
-      {
-        source,
-        txid,
-        piPaymentId,
-      }
-    );
+    await auditManualReview(paymentIntentId, "SETTLEMENT_FATAL", {
+  source,
+  txid: txid ?? null,
+  piPaymentId: piPaymentId ?? null,
+  reason: String(e),
+});
 
     return failResult(0, false, source);
   }
