@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSeller } from "@/lib/auth/guard";
-import { getSellerOrderById } from "@/lib/db/orders";
+import { getSellerOrderById } from "@/lib/db/orders.seller";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
