@@ -178,10 +178,16 @@ export async function finalizePaidOrderFromIntent({
     /* =====================================================
        4. CREATE ORDER
     ===================================================== */
-
-    const orderRes = await client.query<{ id: string }>(
-      `
-      INSERT INTO orders (
+    const shipping = intent.shipping_snapshot?.buyer_shipping;
+if (!shipping) {
+  await auditManualReview(paymentIntentId, "INVALID_SHIPPING_SNAPSHOT", 
+    intent,
+  });
+  throw new Error("INVALID_SHIPPING_SNAPSHOT");
+}
+const orderRes = await client.query<{ id: string }>(
+  `
+  INSERT INTO orders (
   buyer_id,
   seller_id,
 
@@ -240,11 +246,11 @@ RETURNING id
   intent.total_amount,
   intent.currency,
 
-  intent.shipping_snapshot?.name ?? "",
-  intent.shipping_snapshot?.phone ?? "",
-  intent.shipping_snapshot?.address_line ?? "",
-  intent.shipping_snapshot?.country ?? "",
-  intent.shipping_snapshot?.zone ?? "",
+  shipping_name: shipping?.name ?? "",
+shipping_phone: shipping?.phone ?? "",
+shipping_address_line: shipping?.address_line ?? "",
+shipping_country: shipping?.country ?? "",
+shipping_zone: intent.zone ?? "",
 
   intent.quantity,
   intent.quantity,
