@@ -75,6 +75,20 @@ type AuditPiVerifiedParams = {
   receiverWallet?: string;
   senderWallet?: string;
 };
+type AuditRpcVerifiedParams = {
+  source?: string;
+  txid?: string;
+  amount?: number;
+  ledger?: number | null;
+  receiver?: string | null;
+  sender?: string | null;
+  chainReference?: string | null;
+};
+type AuditPiCompletedParams = {
+  source?: string;
+  txid?: string;
+  piPaymentId?: string;
+};
 
 /* =========================================================
    HELPERS (IMPORTANT FIX)
@@ -134,14 +148,16 @@ export async function writePaymentAudit(params: WriteAuditParams): Promise<void>
     actorType: params.actorType ?? "system",
     actorId: params.actorId ?? null,
 
-    source: params.source ?? "unknown",
-    requestId: params.requestId ?? params.paymentIntentId,
+    source: safeString(params.source) ?? "unknown",
+    requestId:
+    safeString(params.requestId) ??
+    safeString(params.paymentIntentId),
 
-    orderId: params.orderId ?? null,
-    escrowId: params.escrowId ?? null,
+    orderId: safeString(params.orderId),
+    escrowId: safeString(params.escrowId),
 
-    piPaymentId: params.piPaymentId ?? null,
-    txid: params.txid ?? null,
+    piPaymentId: safeString(params.piPaymentId),
+    txid: safeString(params.txid),
 
     oldPaymentStatus: params.oldPaymentStatus ?? null,
     newPaymentStatus: params.newPaymentStatus ?? null,
@@ -287,16 +303,26 @@ export const auditPiVerified = (
     },
   });
 
-export const auditRpcVerified = (paymentIntentId: string, payload?: JsonValue) =>
+export const auditRpcVerified = (
+  paymentIntentId: string,
+  params: AuditRpcVerifiedParams
+) =>
   writePaymentAudit({
     paymentIntentId,
     eventCode: "RPC_VERIFIED",
     stage: "RPC_VERIFY",
     actorType: "rpc",
+    source: params.source,
+    txid: params.txid,
     newSettlementState: "RPC_VERIFIED",
-    payload,
+    payload: {
+      amount: params.amount,
+      ledger: params.ledger,
+      receiver: params.receiver,
+      sender: params.sender,
+      chainReference: params.chainReference,
+    },
   });
-
 export const auditRpcFailed = (paymentIntentId: string, payload?: JsonValue) =>
   writePaymentAudit({
     paymentIntentId,
@@ -306,16 +332,23 @@ export const auditRpcFailed = (paymentIntentId: string, payload?: JsonValue) =>
     actorType: "rpc",
     payload,
   });
-
-export const auditPiCompleted = (paymentIntentId: string, payload?: JsonValue) =>
+export const auditPiCompleted = (
+  paymentIntentId: string,
+  params: AuditPiCompletedParams
+) =>
   writePaymentAudit({
     paymentIntentId,
     eventCode: "PI_COMPLETED",
     stage: "PI_COMPLETE",
     actorType: "pi_api",
+    source: params.source,
+    txid: params.txid,
+    piPaymentId: params.piPaymentId,
     newPaymentStatus: "paid",
     newSettlementState: "PI_COMPLETED",
-    payload,
+    payload: {
+      source: params.source,
+    },
   });
 
 export const auditFinalizeDone = (
