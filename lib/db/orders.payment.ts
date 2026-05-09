@@ -210,22 +210,17 @@ export async function finalizePaidOrderFromIntent({
 
   total_items,
   total_quantity,
-
   created_at,
   updated_at
 )
 VALUES (
   $1,$2,
   $3,$4,$5,
-
   'paid',now(),
-
   $6,$7,$8,$9,0,$10,$11,
   'pending_fulfillment',
   $12,$13,$14,$15,$16,
-
-  1,$17,
-
+  $17,$18,
   now(),now()
 )
 RETURNING id
@@ -246,15 +241,12 @@ RETURNING id
   intent.currency,
 
   intent.shipping_snapshot?.name ?? "",
-intent.shipping_snapshot?.phone ?? "",
-intent.shipping_snapshot?.address_line ?? "",
-intent.shipping_snapshot?.country ?? "",
-intent.shipping_snapshot?.zone ?? "",
-intent.shipping_snapshot?.ward ?? "",
-intent.shipping_snapshot?.district ?? "",
-intent.shipping_snapshot?.region ?? "",
-intent.shipping_snapshot?.postal_code ?? "",
+  intent.shipping_snapshot?.phone ?? "",
+  intent.shipping_snapshot?.address_line ?? "",
+  intent.shipping_snapshot?.country ?? "",
+  intent.shipping_snapshot?.zone ?? "",
 
+  intent.quantity,
   intent.quantity,
 ]
     );
