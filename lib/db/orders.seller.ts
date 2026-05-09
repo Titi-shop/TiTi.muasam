@@ -1,4 +1,4 @@
-import { query, withTransaction, syncOrderStatus } from "@/lib/db";
+import { query, withTransaction } from "@/lib/db";
 import {
   syncOrderFulfillmentStatus,
 } from "@/lib/db/orders";
