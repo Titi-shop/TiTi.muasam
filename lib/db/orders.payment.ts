@@ -178,82 +178,75 @@ export async function finalizePaidOrderFromIntent({
    /* =====================================================
    4. CREATE ORDER
 ===================================================== */
-
-const shipping = intent.shipping_snapshot?.buyer_shipping;
-if (!shipping) {
-  throw new Error("INVALID_SHIPPING_SNAPSHOT");
-}
-
 const orderRes = await client.query<{ id: string }>(
-  `
-  INSERT INTO orders (
-  buyer_id,
-  seller_id,
+      `
+      INSERT INTO orders (
+        buyer_id,
+        seller_id,
+        pi_payment_id,
+        pi_txid,
+        idempotency_key,
+        payment_status,
+        paid_at,
+        items_total,
+        subtotal,
+        discount,
+        shipping_fee,
+        tax,
+        total,
+        currency,
+        fulfillment_status,
+        shipping_name,
+        shipping_phone,
+        shipping_address_line,
+        shipping_ward,
+        shipping_district,
+        shipping_region,
+        shipping_country,
+        shipping_postal_code,
+        total_items,
+        total_quantity,
+        created_at,
+        updated_at
+      )
 
-  pi_payment_id,
-  pi_txid,
-  idempotency_key,
+      VALUES (
+        $1,$2,
+        $3,$4,$5,
+        'paid',now(),
+        $6,$7,$8,$9,0,$10,$11,
+        'pending_fulfillment',
+        $12,$13,$14,$15,$16,$17,$18,$19,
+        $20,$21,
+        now(),now()
+      )
+      RETURNING id
 
-  payment_status,
-  paid_at,
-
-  items_total,
-  subtotal,
-  discount,
-  shipping_fee,
-  tax,
-  total,
-  currency,
-
-  fulfillment_status,
-
-  shipping_name,
-  shipping_phone,
-  shipping_address_line,
-  shipping_country,
-  shipping_zone,
-
-  total_items,
-  total_quantity,
-  created_at,
-  updated_at
-)
-VALUES (
-  $1,$2,
-  $3,$4,$5,
-  'paid',now(),
-  $6,$7,$8,$9,0,$10,$11,
-  'pending_fulfillment',
-  $12,$13,$14,$15,$16,
-  $17,$18,
-  now(),now()
-)
-RETURNING id
       `,
+
       [
-  intent.buyer_id,
-  intent.seller_id,
-
-  piPaymentId,
-  txid,
-  paymentIntentId,
-
-  intent.subtotal,
-  intent.subtotal,
-  intent.discount,
-  intent.shipping_fee,
-  intent.total_amount,
-  intent.currency,
-
-  shipping_name: shipping?.name ?? "",
-shipping_phone: shipping?.phone ?? "",
-shipping_address_line: shipping?.address_line ?? "",
-shipping_country: shipping?.country ?? "",
-shipping_zone: intent.zone ?? "",
-
-  intent.quantity,
-  intent.quantity,
-]
+        intent.buyer_id,
+        intent.seller_id,
+        piPaymentId,
+        txid,
+        paymentIntentId,
+        intent.subtotal,
+        intent.subtotal,
+        intent.discount,
+        intent.shipping_fee,
+        intent.total_amount,
+        intent.currency,
+        shipping.name,
+        shipping.phone,
+        shipping.address_line,
+        shipping.ward ?? null,
+        shipping.district ?? null,
+        shipping.region ?? null,
+        shipping.country ?? intent.country,
+        shipping.postal_code ?? null,
+        intent.quantity,
+        intent.quantity,
+      ]
     );
 
     const orderId = orderRes.rows[0].id;
