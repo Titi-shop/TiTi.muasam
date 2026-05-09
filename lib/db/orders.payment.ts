@@ -116,7 +116,11 @@ export async function finalizePaidOrderFromIntent({
     }
 
     const intent = rs.rows[0];
+const shipping = intent.shipping_snapshot?.buyer_shipping;
 
+if (!shipping) {
+  throw new Error("INVALID_SHIPPING_SNAPSHOT");
+}
     /* =====================================================
        2. IDEMPOTENT IF ALREADY PAID
     ===================================================== */
