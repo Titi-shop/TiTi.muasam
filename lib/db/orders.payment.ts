@@ -180,12 +180,7 @@ export async function finalizePaidOrderFromIntent({
 ===================================================== */
 
 const shipping = intent.shipping_snapshot?.buyer_shipping;
-
 if (!shipping) {
-  await auditManualReview(paymentIntentId, "INVALID_SHIPPING_SNAPSHOT", {
-    intent,
-  });
-
   throw new Error("INVALID_SHIPPING_SNAPSHOT");
 }
 
