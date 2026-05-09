@@ -21,7 +21,7 @@ function parseOrderStatus(v: string | null): OrderStatus | undefined {
     "pending",
     "processing",
     "shipped",
-    "delivered"
+    "delivered",
     "completed",
     "cancelled",
     "returned",
