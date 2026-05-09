@@ -306,19 +306,22 @@ export async function createPiPaymentIntent({
     const memo = `ORDER-${paymentIntentId.slice(0, 8)}`;
 
     const shippingSnapshot = {
-  name: shipping.name,
-  phone: shipping.phone,
-  address_line: shipping.address_line,
-  ward: shipping.ward,
-  district: shipping.district,
-  region: shipping.region,
-  postal_code: shipping.postal_code,
+  buyer_shipping: shipping,
+  buyer_country: country,
+  buyer_zone: zone,
+  charged_shipping_fee: shippingFee.amount,
 
-  country,
-  zone,
+  commercial_snapshot: {
+    quantity,
+    locked_unit_price: unitPrice.amount,
+    locked_subtotal: subtotal.amount,
+    locked_discount: discount.amount,
+    locked_total: total.amount,
+    product_is_digital: product.is_digital,
+    product_stock_snapshot: product.stock,
+    product_sold_snapshot: product.sold,
+  },
 
-  fee: shippingFee.amount,
-  commercial_snapshot: {...},
   variant_snapshot: variantSnapshot,
 };
 
