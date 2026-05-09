@@ -175,16 +175,20 @@ export async function finalizePaidOrderFromIntent({
       throw new Error("RECEIVER_MISMATCH");
     }
 
-    /* =====================================================
-       4. CREATE ORDER
-    ===================================================== */
-    const shipping = intent.shipping_snapshot?.buyer_shipping;
+   /* =====================================================
+   4. CREATE ORDER
+===================================================== */
+
+const shipping = intent.shipping_snapshot?.buyer_shipping;
+
 if (!shipping) {
-  await auditManualReview(paymentIntentId, "INVALID_SHIPPING_SNAPSHOT", 
+  await auditManualReview(paymentIntentId, "INVALID_SHIPPING_SNAPSHOT", {
     intent,
   });
+
   throw new Error("INVALID_SHIPPING_SNAPSHOT");
 }
+
 const orderRes = await client.query<{ id: string }>(
   `
   INSERT INTO orders (
