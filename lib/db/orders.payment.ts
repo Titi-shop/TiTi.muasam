@@ -226,63 +226,58 @@ await writePaymentAudit({
 });
      
      const orderRes = await client.query<{ id: string }>(
-  `
   INSERT INTO orders (
-    buyer_id,
-    seller_id,
+  buyer_id,
+  seller_id,
+  pi_payment_id,
+  pi_txid,
+  idempotency_key,
 
-    pi_payment_id,
-    pi_txid,
-    idempotency_key,
+  payment_status,
+  fulfillment_status,
+  settlement_status,
+  shipment_status,
+  delivery_status,
 
-    payment_status,
-    paid_at,
+  items_total,
+  subtotal,
+  discount,
+  shipping_fee,
+  tax,
+  total,
+  currency,
 
-    fulfillment_status,
-    settlement_status,
-    shipment_status,
-    delivery_status,
+  shipping_name,
+  shipping_phone,
+  shipping_address_line,
+  shipping_ward,
+  shipping_district,
+  shipping_region,
+  shipping_country,
+  shipping_postal_code,
 
-    items_total,
-    subtotal,
-    discount,
-    shipping_fee,
-    tax,
-    total,
-    currency,
+  total_items,
+  total_quantity,
 
-    shipping_name,
-    shipping_phone,
-    shipping_address_line,
-    shipping_ward,
-    shipping_district,
-    shipping_region,
-    shipping_country,
-    shipping_postal_code,
+  created_at,
+  updated_at
+)
+VALUES (
+  $1,$2,$3,$4,$5,
+  'paid',
+  'pending_fulfillment',
+  'ESCROW_HOLD',
+  'NOT_SHIPPED',
+  'NOT_DELIVERED',
 
-    total_items,
-    total_quantity,
+  $6,$7,$8,$9,$10,$11,$12,
 
-    created_at,
-    updated_at
-  )
-  VALUES (
-    $1,$2,
-    $3,$4,$5,
+  $13,$14,$15,$16,$17,$18,$19,$20,
 
-    'paid',now(),
+  $21,$22,
 
-    'pending_fulfillment',
-    $6,$7,$8,
-
-    $9,$10,$11,$12,$13,$14,$15,
-
-    $16,$17,$18,$19,$20,$21,$22,$23,
-
-    $24,$25,
-
-    now(),now()
-  )
+  now(),now()
+)
   RETURNING id
   `,
   [
