@@ -58,7 +58,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
+
+    if (!auth.ok) {
+      return auth.response;
+    }
 
     const userId = auth.userId;
 
@@ -69,22 +72,7 @@ export async function POST(req: NextRequest) {
     try {
       body = await req.json();
     } catch {
-      // 🔥 REMOVE DUPLICATE ITEMS (QUAN TRỌNG)
-const map = new Map<string, CartItemInput>();
-
-for (const item of items) {
-  const key = `${item.product_id}_${item.variant_id ?? "null"}`;
-
-  if (map.has(key)) {
-    map.get(key)!.quantity! += item.quantity ?? 1;
-  } else {
-    map.set(key, item);
-  }
-}
-
-const finalItems = Array.from(map.values());
-
-console.log("[CART][POST] deduplicated_items:", finalItems);
+      console.warn("[CART][POST] INVALID_BODY_JSON");
 
       return NextResponse.json(
         { error: "INVALID_BODY" },
@@ -92,19 +80,35 @@ console.log("[CART][POST] deduplicated_items:", finalItems);
       );
     }
 
-    console.log("[CART][POST] raw_body:", JSON.stringify(body));
+    console.log(
+      "[CART][POST] raw_body:",
+      JSON.stringify(body)
+    );
 
-    const rawItems: unknown[] = Array.isArray(body) ? body : [body];
+    const rawItems: unknown[] =
+      Array.isArray(body)
+        ? body
+        : [body];
 
     /* ================= VALIDATE ================= */
 
     const items: CartItemInput[] = rawItems
       .map((item) => {
-        if (typeof item !== "object" || item === null) return null;
+        if (
+          typeof item !== "object" ||
+          item === null
+        ) {
+          return null;
+        }
 
-        const row = item as Record<string, unknown>;
+        const row =
+          item as Record<string, unknown>;
 
-        if (typeof row.product_id !== "string") return null;
+        if (
+          typeof row.product_id !== "string"
+        ) {
+          return null;
+        }
 
         const quantity =
           typeof row.quantity === "number" &&
@@ -114,54 +118,93 @@ console.log("[CART][POST] deduplicated_items:", finalItems);
 
         return {
           product_id: row.product_id,
+
           variant_id:
             typeof row.variant_id === "string"
               ? row.variant_id
               : null,
+
           quantity,
         };
       })
-      .filter((i): i is CartItemInput => i !== null);
+      .filter(
+        (i): i is CartItemInput =>
+          i !== null
+      );
 
-    console.log("[CART][POST] validated_items:", items);
+    console.log(
+      "[CART][POST] validated_items:",
+      items
+    );
 
     if (items.length === 0) {
-      console.warn("[CART][POST] INVALID_ITEMS_EMPTY");
-
       return NextResponse.json(
         { error: "INVALID_ITEMS" },
         { status: 400 }
       );
     }
 
-    /* ================= UPSERT ================= */
+    /* ================= DEDUPLICATE ================= */
 
-    console.log("[CART][POST] UPSERT_START");
+    const map = new Map<
+      string,
+      CartItemInput
+    >();
 
-    await upsertCartItems(userId, finalItems);
+    for (const item of items) {
+      const key = `${item.product_id}_${
+        item.variant_id ?? "null"
+      }`;
 
-    console.log("[CART][POST] UPSERT_DONE");
+      if (map.has(key)) {
+        const existed = map.get(key)!;
 
-    /* ================= RETURN UPDATED CART ================= */
+        existed.quantity =
+          (existed.quantity ?? 1) +
+          (item.quantity ?? 1);
+      } else {
+        map.set(key, {
+          ...item,
+        });
+      }
+    }
 
-    const updatedCart = await getCart(userId);
-
-    console.log(
-      "[CART][POST] updated_count:",
-      updatedCart.length
+    const finalItems = Array.from(
+      map.values()
     );
 
-    return NextResponse.json(updatedCart);
-  } catch (err: unknown) {
-    const errorCode =
-      typeof err === "object" && err !== null && "code" in err
-        ? (err as { code?: string }).code
-        : undefined;
+    console.log(
+      "[CART][POST] deduplicated_items:",
+      finalItems
+    );
 
-    console.error("[CART][POST_FAILED]", {
-      message: err instanceof Error ? err.message : "UNKNOWN",
-      code: errorCode,
-    });
+    /* ================= UPSERT ================= */
+
+    await upsertCartItems(
+      userId,
+      finalItems
+    );
+
+    console.log(
+      "[CART][POST] UPSERT_DONE"
+    );
+
+    const updatedCart =
+      await getCart(userId);
+
+    return NextResponse.json(
+      updatedCart
+    );
+  } catch (err) {
+    console.error(
+      "[CART][POST_FAILED]",
+      {
+        message:
+          err instanceof Error
+            ? err.message
+            : "UNKNOWN",
+      }
+    );
 
     return NextResponse.json(
       { error: "UPSERT_CART_FAILED" },
