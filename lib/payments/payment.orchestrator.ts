@@ -5,11 +5,12 @@ import {
 
 import {
   auditDuplicateSubmit,
+  auditFinalizeDone,
   auditManualReview,
+  auditPiCompleted,
   auditPiVerified,
   auditRpcFailed,
   auditRpcVerified,
-  auditFinalizeDone,
   writePaymentAudit,
 } from "@/lib/db/payments.audit";
 
@@ -28,6 +29,7 @@ import type {
   RunPaymentSettlementInput,
   PaymentSettlementResult,
   RpcAuditResult,
+  PaymentIntentRow,
 } from "@/lib/payments/payment.types";
 
 /* =========================================================
@@ -54,34 +56,38 @@ function emptyRpc(): RpcAuditResult {
    RESULT
 ========================================================= */
 
-const fail = (amount: number, source: string): PaymentSettlementResult => ({
-  ok: false,
-  orderId: null,
-  amount,
-  piCompleted: false,
-  rpcAudited: false,
-  source,
-});
+function failResult(amount: number, rpcAudited: boolean, source: string): PaymentSettlementResult {
+  return {
+    ok: false,
+    orderId: null,
+    amount,
+    piCompleted: false,
+    rpcAudited,
+    source,
+  };
+}
 
-const success = (
-  orderId: string,
+function successResult(
+  orderId: string | null,
   amount: number,
   rpcAudited: boolean,
   source: string
-): PaymentSettlementResult => ({
-  ok: true,
-  orderId,
-  amount,
-  piCompleted: true,
-  rpcAudited,
-  source,
-});
+): PaymentSettlementResult {
+  return {
+    ok: true,
+    orderId,
+    amount,
+    piCompleted: true,
+    rpcAudited,
+    source,
+  };
+}
 
 /* =========================================================
-   RPC VERIFY (CORE)
+   RPC VERIFY (SAFE)
 ========================================================= */
 
-async function verifyRpcCore(
+async function safeAuditRpc(
   paymentIntentId: string,
   piPaymentId: string,
   txid: string,
@@ -125,10 +131,10 @@ async function verifyRpcCore(
 }
 
 /* =========================================================
-   PI COMPLETE (CORE)
+   PI COMPLETE
 ========================================================= */
 
-async function completePiCore(
+async function safeCompletePi(
   paymentIntentId: string,
   piPaymentId: string,
   txid: string,
@@ -137,7 +143,7 @@ async function completePiCore(
   try {
     await piCompletePayment(piPaymentId, txid);
 
-    await auditPiVerified(paymentIntentId, {
+    await auditPiCompleted(paymentIntentId, {
       source,
       piPaymentId,
       txid,
@@ -147,8 +153,8 @@ async function completePiCore(
   } catch (e) {
     await auditManualReview(paymentIntentId, "PI_COMPLETE_FAILED", {
       source,
-      txid,
       piPaymentId,
+      txid,
     });
 
     return false;
@@ -156,68 +162,58 @@ async function completePiCore(
 }
 
 /* =========================================================
-   LEDGER (CORE ONLY)
+   LEDGER PIPELINE
 ========================================================= */
 
-async function ledgerCore(
+async function safeLedger(
   paid: FinalizePaidOrderResult,
   paymentIntentId: string,
   piPaymentId: string,
   txid: string,
-  rpc: RpcAuditResult
-): Promise<boolean> {
-  try {
-    if (!paid.orderId) return false;
+  rpcVerified: RpcAuditResult
+) {
+  if (!paid.orderId) return false;
 
-    const escrowId = await SettlementLedger.createEscrow({
-      paymentIntentId,
-      orderId: paid.orderId,
-      buyerId: paid.buyerId,
-      sellerId: paid.sellerId,
-      amount: paid.amount,
-      txid,
-      piPaymentId,
-    });
+  const escrowId = await SettlementLedger.createEscrow({
+    paymentIntentId,
+    orderId: paid.orderId,
+    buyerId: paid.buyerId,
+    sellerId: paid.sellerId,
+    amount: paid.amount,
+    txid,
+    piPaymentId,
+  });
 
-    await SettlementLedger.markPiVerified(escrowId);
+  await SettlementLedger.markPiVerified(escrowId);
 
-    if (rpc.ok) {
-      await SettlementLedger.markRpcVerified(escrowId);
-    }
-
-    await SettlementLedger.linkOrder(escrowId, paid.orderId);
-
-    await SettlementLedger.creditSeller({
-      escrowId,
-      sellerId: paid.sellerId,
-      amount: paid.amount,
-      piPaymentId,
-    });
-
-    await SettlementLedger.releaseEscrow(escrowId);
-
-    await auditFinalizeDone(paymentIntentId, {
-      source: "ledger",
-      orderId: paid.orderId,
-      escrowId,
-      piPaymentId,
-      txid,
-    });
-
-    return true;
-  } catch (e) {
-    await auditManualReview(paymentIntentId, "LEDGER_FAILED", {
-      txid,
-      piPaymentId,
-      error: String(e),
-    });
-
-    return false;
+  if (rpcVerified.ok) {
+    await SettlementLedger.markRpcVerified(escrowId);
   }
+
+  await SettlementLedger.linkOrder(escrowId, paid.orderId);
+
+  await SettlementLedger.creditSeller({
+    escrowId,
+    sellerId: paid.sellerId,
+    amount: paid.amount,
+    piPaymentId,
+  });
+
+  await SettlementLedger.releaseEscrow(escrowId);
+
+  await auditFinalizeDone(paymentIntentId, {
+    source: "ledger",
+    orderId: paid.orderId,
+    escrowId,
+    piPaymentId,
+    txid,
+  });
+
+  return true;
 }
 
 /* =========================================================
-   MAIN ORCHESTRATOR (V7)
+   MAIN ORCHESTRATOR
 ========================================================= */
 
 export async function runPaymentSettlement({
@@ -226,7 +222,8 @@ export async function runPaymentSettlement({
   txid,
   userId,
   source,
-}: RunPaymentSettlementInput): Promise<PaymentSettlementResult> {
+  intent, // 👈 MUST be injected from gateway (NO DB CALL HERE)
+}: RunPaymentSettlementInput & { intent: PaymentIntentRow }): Promise<PaymentSettlementResult> {
   try {
     /* =====================================================
        1. GUARD
@@ -241,19 +238,15 @@ export async function runPaymentSettlement({
       if (guard.code === "PAYMENT_ALREADY_PAID") {
         await auditDuplicateSubmit(paymentIntentId, {
           source,
-          reason: guard.code,
+          reason: "PAYMENT_ALREADY_PAID",
         });
 
-        return success(
-          guard.orderId ?? "",
-          guard.amount ?? 0,
-          true,
-          source
-        );
+        return successResult(guard.orderId ?? null, guard.amount ?? 0, true, source);
       }
 
       await auditManualReview(paymentIntentId, guard.code, { source });
-      return fail(0, source);
+
+      return failResult(0, false, source);
     }
 
     /* =====================================================
@@ -268,109 +261,103 @@ export async function runPaymentSettlement({
         reason: "LOCK_DENIED",
       });
 
-      return fail(guard.amount ?? 0, source);
+      return failResult(guard.amount ?? 0, false, source);
     }
 
     /* =====================================================
-       3. PI VERIFY
+       3. VERIFY PI
     ===================================================== */
 
-    const pi = await verifyPiPaymentForReconcile({
+    const piVerified = await verifyPiPaymentForReconcile({
       paymentIntentId,
       piPaymentId,
       userId: userId ?? "",
       txid,
     });
 
-    if (!pi.ok) {
-      await auditManualReview(paymentIntentId, "PI_VERIFY_FAILED", {
+    if (!piVerified.ok) {
+      await auditManualReview(paymentIntentId, "PI_VERIFY_FAIL", {
         source,
         txid,
+        piPaymentId,
       });
 
-      return fail(0, source);
+      return failResult(0, false, source);
     }
+
+    await auditPiVerified(paymentIntentId, {
+      source,
+      txid,
+      piPaymentId,
+      actorId: userId,
+      amount: piVerified.verifiedAmount,
+      receiverWallet: piVerified.receiverWallet,
+    });
 
     /* =====================================================
        4. RPC VERIFY
     ===================================================== */
 
-    const rpc = await verifyRpcCore(
-      paymentIntentId,
-      piPaymentId,
-      txid,
-      source
-    );
+    const rpcVerified = await safeAuditRpc(paymentIntentId, piPaymentId, txid, source);
 
-    if (!rpc.ok) {
-      return fail(pi.verifiedAmount, source);
+    if (!rpcVerified.ok) {
+      return failResult(piVerified.verifiedAmount, false, source);
     }
 
     /* =====================================================
-       5. COMPLETE PI
+       5. PI COMPLETE
     ===================================================== */
 
-    const piDone = await completePiCore(
-      paymentIntentId,
-      piPaymentId,
-      txid,
-      source
-    );
+    const piCompleted = await safeCompletePi(paymentIntentId, piPaymentId, txid, source);
 
-    if (!piDone) {
-      return fail(pi.verifiedAmount, source);
+    if (!piCompleted) {
+      return failResult(piVerified.verifiedAmount, rpcVerified.ok, source);
     }
 
     /* =====================================================
-       6. FINALIZE ORDER (CALL BUSINESS ENGINE ONLY)
+       6. FINALIZE ORDER
     ===================================================== */
+
+    await writePaymentAudit({
+      paymentIntentId,
+      eventCode: "FINALIZE_STARTED",
+      stage: "FINALIZE",
+      actorType: "system",
+      source,
+      txid,
+      piPaymentId,
+    });
 
     const paid = await finalizePaidOrderFromIntent({
       paymentIntentId,
       piPaymentId,
       txid,
-      verifiedAmount: pi.verifiedAmount,
-      receiverWallet: pi.receiverWallet,
-      piPayload: pi.piPayload ?? {},
-      rpcPayload: rpc,
+      verifiedAmount: piVerified.verifiedAmount,
+      receiverWallet: piVerified.receiverWallet,
+      piPayload: piVerified.piPayload ?? {},
+      rpcPayload: rpcVerified,
+      intent,
     });
 
     if (!paid.orderId) {
-      await writePaymentAudit({
-        paymentIntentId,
-        eventCode: "FINALIZE_FAILED",
-        stage: "FINALIZE",
-        actorType: "system",
-        source,
-        txid,
-        piPaymentId,
-        newSettlementState: "FAILED",
-        payload: { reason: "ORDER_NULL" },
-      });
-
-      throw new Error("FINALIZE_FAILED");
+      throw new Error("ORDER_FINALIZE_FAILED");
     }
 
     /* =====================================================
        7. LEDGER
     ===================================================== */
 
-    await ledgerCore(paid, paymentIntentId, piPaymentId, txid, rpc);
+    await safeLedger(paid, paymentIntentId, piPaymentId, txid, rpcVerified);
 
-    return success(
-      paid.orderId,
-      paid.amount,
-      rpc.ok,
-      source
-    );
+    return successResult(paid.orderId, paid.amount, rpcVerified.ok, source);
   } catch (e) {
-    await auditManualReview(paymentIntentId, "FATAL", {
+    await auditManualReview(paymentIntentId, "SETTLEMENT_FATAL", {
       source,
       txid,
       piPaymentId,
       reason: String(e),
     });
 
-    return fail(0, source);
+    return failResult(0, false, source);
   }
 }
