@@ -118,8 +118,9 @@ export async function finalizePaidOrderFromIntent({
     const rs = await client.query<PaymentIntentRow>(
       `
       SELECT *
-      FROM payment_intents
-      WHERE id = $1
+     FROM payment_intents
+     WHERE id = $1
+     FOR UPDATE
       `,
       [paymentIntentId]
     );
