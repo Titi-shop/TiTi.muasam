@@ -226,92 +226,94 @@ await writePaymentAudit({
 });
      
      const orderRes = await client.query<{ id: string }>(
+  `
   INSERT INTO orders (
-  buyer_id,
-  seller_id,
-  pi_payment_id,
-  pi_txid,
-  idempotency_key,
+    buyer_id,
+    seller_id,
 
-  payment_status,
-  fulfillment_status,
-  settlement_status,
-  shipment_status,
-  delivery_status,
+    pi_payment_id,
+    pi_txid,
+    idempotency_key,
 
-  items_total,
-  subtotal,
-  discount,
-  shipping_fee,
-  tax,
-  total,
-  currency,
+    payment_status,
+    paid_at,
 
-  shipping_name,
-  shipping_phone,
-  shipping_address_line,
-  shipping_ward,
-  shipping_district,
-  shipping_region,
-  shipping_country,
-  shipping_postal_code,
+    items_total,
+    subtotal,
+    discount,
+    shipping_fee,
+    tax,
+    total,
+    currency,
 
-  total_items,
-  total_quantity,
+    fulfillment_status,
+    settlement_status,
+    shipment_status,
+    delivery_status,
 
-  created_at,
-  updated_at
-)
-VALUES (
-  $1,$2,$3,$4,$5,
-  'paid',
-  'pending_fulfillment',
-  'ESCROW_HOLD',
-  'NOT_SHIPPED',
-  'NOT_DELIVERED',
+    shipping_name,
+    shipping_phone,
+    shipping_address_line,
+    shipping_ward,
+    shipping_district,
+    shipping_region,
+    shipping_country,
+    shipping_postal_code,
 
-  $6,$7,$8,$9,$10,$11,$12,
+    total_items,
+    total_quantity,
 
-  $13,$14,$15,$16,$17,$18,$19,$20,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    $1,$2,
+    $3,$4,$5,
 
-  $21,$22,
+    'paid',now(),
 
-  now(),now()
-)
-  RETURNING id
-  `,
-  [
-    intent.buyer_id,
-    intent.seller_id,
+    $6,$7,$8,$9,$10,$11,$12,
 
-    piPaymentId,
-    txid,
-    paymentIntentId,
-
-    // 3 trạng thái mới
+    'pending_fulfillment',
     'ESCROW_HOLD',
     'NOT_SHIPPED',
     'NOT_DELIVERED',
 
-    intent.subtotal,
-    intent.subtotal,
-    intent.discount,
-    intent.shipping_fee,
-    0,
-    intent.total_amount,
-    intent.currency,
+    $13,$14,$15,$16,$17,$18,$19,$20,
 
-    shipping.name,
-    shipping.phone,
-    shipping.address_line,
-    shipping.ward ?? null,
-    shipping.district ?? null,
-    shipping.region ?? null,
-    shipping.country ?? intent.country,
-    shipping.postal_code ?? null,
+    $21,$22,
 
-    intent.quantity,
-    intent.quantity
+    now(),now()
+  )
+  RETURNING id
+  `,
+  [
+    intent.buyer_id,            // $1
+    intent.seller_id,           // $2
+
+    piPaymentId,                // $3
+    txid,                      // $4
+    paymentIntentId,           // $5
+
+    intent.subtotal,           // $6 items_total
+    intent.subtotal,           // $7 subtotal
+    intent.discount,           // $8
+    intent.shipping_fee,       // $9
+    0,                         // $10 tax (fix default an toàn)
+    intent.total_amount,       // $11 total
+    intent.currency,           // $12
+
+    shipping.name,             // $13
+    shipping.phone,            // $14
+    shipping.address_line,     // $15
+    shipping.ward ?? null,     // $16
+    shipping.district ?? null, // $17
+    shipping.region ?? null,   // $18
+    shipping.country ?? intent.country, // $19
+    shipping.postal_code ?? null,      // $20
+
+    intent.quantity,           // $21 total_items
+    intent.quantity            // $22 total_quantity
   ]
 );
 
