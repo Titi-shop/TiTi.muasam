@@ -131,20 +131,21 @@ export async function acquirePaymentSettlementLock(
     return { ok: false, code: "LOCK_DENIED" };
   }
 
-  const rs = await query<{ id: string }>(
-    `
-    UPDATE payment_intents
-    SET
-      settlement_lock_id = gen_random_uuid(),
-      settlement_locked_at = now(),
-      settlement_lock_source = 'orchestrator',
-      updated_at = now()
-    WHERE id = $1
-      AND status IN ('submitted','verifying')
-    RETURNING id
-    `,
-    [paymentIntentId]
-  );
+  const rs = await query(
+  `
+  UPDATE payment_intents
+  SET settlement_lock_id = gen_random_uuid(),
+      settlement_locked_at = now()
+  WHERE id = $1
+    AND status IN ('submitted','verifying')
+    AND (
+      settlement_locked_at IS NULL
+      OR settlement_locked_at < now() - interval '2 minutes'
+    )
+  RETURNING id
+  `,
+  [paymentIntentId]
+);
 
   if (!rs.rows.length) {
     return { ok: false, code: "LOCK_DENIED" };
