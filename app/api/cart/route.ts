@@ -1,4 +1,7 @@
+// app/api/cart/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
+
 import { requireAuth } from "@/lib/auth/guard";
 
 import {
@@ -6,56 +9,36 @@ import {
   upsertCartItems,
   deleteCartItem,
   updateCartItemQuantity,
+  type CartItemInput,
 } from "@/lib/db/cart";
 
 export const runtime = "nodejs";
+
 export const dynamic = "force-dynamic";
 
 /* =========================================================
-   TYPES
+   HELPERS
 ========================================================= */
 
-type CartItemInput = {
-  product_id: string;
-  variant_id?: string | null;
-  quantity?: number;
-};
+function badRequest(code: string) {
+  return NextResponse.json(
+    { error: code },
+    { status: 400 }
+  );
+}
 
-/* =========================================================
-   GET CART
-========================================================= */
-
-export async function GET() {
-  try {
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-
-    const userId = auth.userId;
-
-    console.log("[CART][GET] user:", userId);
-
-    const items = await getCart(userId);
-
-    console.log("[CART][GET] items_count:", items.length);
-
-    return NextResponse.json(items);
-  } catch (err) {
-    console.error("[CART][GET_FAILED]", {
-      message: err instanceof Error ? err.message : "UNKNOWN",
-    });
-
-    return NextResponse.json(
-      { error: "GET_CART_FAILED" },
-      { status: 500 }
-    );
-  }
+function serverError(code: string) {
+  return NextResponse.json(
+    { error: code },
+    { status: 500 }
+  );
 }
 
 /* =========================================================
-   POST (ADD / UPSERT)
+   GET
 ========================================================= */
 
-export async function POST(req: NextRequest) {
+export async function GET() {
   try {
     const auth = await requireAuth();
 
@@ -63,306 +46,233 @@ export async function POST(req: NextRequest) {
       return auth.response;
     }
 
-    const userId = auth.userId;
+    const cart = await getCart(auth.userId);
 
-    console.log("[CART][POST] user:", userId);
+    return NextResponse.json(cart);
+  } catch (err) {
+    console.error("[CART][GET]", err);
 
-    let body: unknown;
+    return serverError("GET_CART_FAILED");
+  }
+}
 
-    try {
-      body = await req.json();
-    } catch {
-      console.warn("[CART][POST] INVALID_BODY_JSON");
+/* =========================================================
+   POST
+========================================================= */
 
-      return NextResponse.json(
-        { error: "INVALID_BODY" },
-        { status: 400 }
-      );
+export async function POST(
+  req: NextRequest
+) {
+  try {
+    const auth = await requireAuth();
+
+    if (!auth.ok) {
+      return auth.response;
     }
 
-    console.log(
-      "[CART][POST] raw_body:",
-      JSON.stringify(body)
-    );
+    const body: unknown = await req.json();
 
     const rawItems: unknown[] =
       Array.isArray(body)
         ? body
         : [body];
 
-    /* ================= VALIDATE ================= */
-
-    const items: CartItemInput[] = rawItems
-      .map((item) => {
-        if (
-          typeof item !== "object" ||
-          item === null
-        ) {
-          return null;
-        }
-
-        const row =
-          item as Record<string, unknown>;
-
-        if (
-          typeof row.product_id !== "string"
-        ) {
-          return null;
-        }
-
-        const quantity =
-          typeof row.quantity === "number" &&
-          !Number.isNaN(row.quantity)
-            ? row.quantity
-            : 1;
-
-        return {
-          product_id: row.product_id,
+    const items: CartItemInput[] =
+      rawItems
+        .filter(
+          (
+            item
+          ): item is Record<
+            string,
+            unknown
+          > =>
+            typeof item === "object" &&
+            item !== null
+        )
+        .map((item) => ({
+          product_id:
+            typeof item.product_id ===
+            "string"
+              ? item.product_id
+              : "",
 
           variant_id:
-            typeof row.variant_id === "string"
-              ? row.variant_id
+            typeof item.variant_id ===
+            "string"
+              ? item.variant_id
               : null,
 
-          quantity,
-        };
-      })
-      .filter(
-        (i): i is CartItemInput =>
-          i !== null
-      );
+          quantity:
+            typeof item.quantity ===
+            "number"
+              ? item.quantity
+              : 1,
+        }));
 
-    console.log(
-      "[CART][POST] validated_items:",
+    if (items.length === 0) {
+      return badRequest(
+        "INVALID_ITEMS"
+      );
+    }
+
+    await upsertCartItems(
+      auth.userId,
       items
     );
 
-    if (items.length === 0) {
-      return NextResponse.json(
-        { error: "INVALID_ITEMS" },
-        { status: 400 }
-      );
-    }
-
-    /* ================= DEDUPLICATE ================= */
-
-    const map = new Map<
-      string,
-      CartItemInput
-    >();
-
-    for (const item of items) {
-      const key = `${item.product_id}_${
-        item.variant_id ?? "null"
-      }`;
-
-      if (map.has(key)) {
-        const existed = map.get(key)!;
-
-        existed.quantity =
-          (existed.quantity ?? 1) +
-          (item.quantity ?? 1);
-      } else {
-        map.set(key, {
-          ...item,
-        });
-      }
-    }
-
-    const finalItems = Array.from(
-      map.values()
+    const updated = await getCart(
+      auth.userId
     );
 
-    console.log(
-      "[CART][POST] deduplicated_items:",
-      finalItems
-    );
-
-    /* ================= UPSERT ================= */
-
-    await upsertCartItems(
-      userId,
-      finalItems
-    );
-
-    console.log(
-      "[CART][POST] UPSERT_DONE"
-    );
-
-    const updatedCart =
-      await getCart(userId);
-
-    return NextResponse.json(
-      updatedCart
-    );
+    return NextResponse.json(updated);
   } catch (err) {
-    console.error(
-      "[CART][POST_FAILED]",
-      {
-        message:
-          err instanceof Error
-            ? err.message
-            : "UNKNOWN",
-      }
-    );
+    console.error("[CART][POST]", err);
 
-    return NextResponse.json(
-      { error: "UPSERT_CART_FAILED" },
-      { status: 500 }
+    return serverError(
+      "UPSERT_CART_FAILED"
     );
   }
 }
 
 /* =========================================================
-   DELETE ITEM
+   PATCH
 ========================================================= */
 
-export async function DELETE(req: NextRequest) {
+export async function PATCH(
+  req: NextRequest
+) {
   try {
     const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
 
-    const userId = auth.userId;
+    if (!auth.ok) {
+      return auth.response;
+    }
 
-    console.log("[CART][DELETE] user:", userId);
+    const body: unknown = await req.json();
 
-    let body: unknown;
-
-    try {
-      body = await req.json();
-    } catch {
-      console.warn("[CART][DELETE] INVALID_BODY_JSON");
-
-      return NextResponse.json(
-        { error: "INVALID_BODY" },
-        { status: 400 }
+    if (
+      typeof body !== "object" ||
+      body === null
+    ) {
+      return badRequest(
+        "INVALID_BODY"
       );
     }
 
-    const data = body as Record<string, unknown>;
+    const data =
+      body as Record<string, unknown>;
 
     const productId =
-      typeof data.product_id === "string"
+      typeof data.product_id ===
+      "string"
         ? data.product_id
         : null;
 
     const variantId =
-      typeof data.variant_id === "string"
-        ? data.variant_id
-        : null;
-
-    console.log("[CART][DELETE] target:", {
-      productId,
-      variantId,
-    });
-
-    if (!productId) {
-      console.warn("[CART][DELETE] INVALID_PRODUCT_ID");
-
-      return NextResponse.json(
-        { error: "INVALID_PRODUCT_ID" },
-        { status: 400 }
-      );
-    }
-
-    await deleteCartItem(userId, productId, variantId);
-
-    console.log("[CART][DELETE] DONE");
-
-    const updatedCart = await getCart(userId);
-
-    return NextResponse.json(updatedCart);
-  } catch (err) {
-    console.error("[CART][DELETE_FAILED]", {
-      message: err instanceof Error ? err.message : "UNKNOWN",
-    });
-
-    return NextResponse.json(
-      { error: "DELETE_CART_FAILED" },
-      { status: 500 }
-    );
-  }
-}
-
-/* =========================================================
-   PATCH (UPDATE QUANTITY)
-========================================================= */
-
-export async function PATCH(req: NextRequest) {
-  try {
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-
-    const userId = auth.userId;
-
-    console.log("[CART][PATCH] user:", userId);
-
-    let body: unknown;
-
-    try {
-      body = await req.json();
-    } catch {
-      console.warn("[CART][PATCH] INVALID_BODY_JSON");
-
-      return NextResponse.json(
-        { error: "INVALID_BODY" },
-        { status: 400 }
-      );
-    }
-
-    const data = body as Record<string, unknown>;
-
-    const productId =
-      typeof data.product_id === "string"
-        ? data.product_id
-        : null;
-
-    const variantId =
-      typeof data.variant_id === "string"
+      typeof data.variant_id ===
+      "string"
         ? data.variant_id
         : null;
 
     const quantity =
-      typeof data.quantity === "number" &&
-      !Number.isNaN(data.quantity)
+      typeof data.quantity ===
+        "number" &&
+      Number.isFinite(data.quantity)
         ? data.quantity
         : null;
 
-    console.log("[CART][PATCH] update:", {
-      productId,
-      variantId,
-      quantity,
-    });
-
-    if (!productId || quantity === null) {
-      console.warn("[CART][PATCH] INVALID_INPUT");
-
-      return NextResponse.json(
-        { error: "INVALID_INPUT" },
-        { status: 400 }
+    if (
+      !productId ||
+      quantity === null
+    ) {
+      return badRequest(
+        "INVALID_INPUT"
       );
     }
 
     await updateCartItemQuantity(
-      userId,
+      auth.userId,
       productId,
       variantId,
       quantity
     );
 
-    console.log("[CART][PATCH] DONE");
+    const updated = await getCart(
+      auth.userId
+    );
 
-    const updatedCart = await getCart(userId);
-
-    return NextResponse.json(updatedCart);
+    return NextResponse.json(updated);
   } catch (err) {
-    console.error("[CART][PATCH_FAILED]", {
-      message: err instanceof Error ? err.message : "UNKNOWN",
-    });
+    console.error("[CART][PATCH]", err);
 
-    return NextResponse.json(
-      { error: "UPDATE_CART_FAILED" },
-      { status: 500 }
+    return serverError(
+      "UPDATE_CART_FAILED"
+    );
+  }
+}
+
+/* =========================================================
+   DELETE
+========================================================= */
+
+export async function DELETE(
+  req: NextRequest
+) {
+  try {
+    const auth = await requireAuth();
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
+    const body: unknown = await req.json();
+
+    if (
+      typeof body !== "object" ||
+      body === null
+    ) {
+      return badRequest(
+        "INVALID_BODY"
+      );
+    }
+
+    const data =
+      body as Record<string, unknown>;
+
+    const productId =
+      typeof data.product_id ===
+      "string"
+        ? data.product_id
+        : null;
+
+    const variantId =
+      typeof data.variant_id ===
+      "string"
+        ? data.variant_id
+        : null;
+
+    if (!productId) {
+      return badRequest(
+        "INVALID_PRODUCT_ID"
+      );
+    }
+
+    await deleteCartItem(
+      auth.userId,
+      productId,
+      variantId
+    );
+
+    const updated = await getCart(
+      auth.userId
+    );
+
+    return NextResponse.json(updated);
+  } catch (err) {
+    console.error("[CART][DELETE]", err);
+
+    return serverError(
+      "DELETE_CART_FAILED"
     );
   }
 }
