@@ -229,6 +229,8 @@ await writePaymentAudit({
      
 const orderRes = await client.query<{ id: string }>(
   `
+  const orderRes = await client.query<{ id: string }>(
+  `
   INSERT INTO orders (
     buyer_id,
     seller_id,
@@ -269,14 +271,13 @@ const orderRes = await client.query<{ id: string }>(
     created_at,
     updated_at
   )
-
   VALUES (
-    $1,
-    $2,
+    $1,  -- buyer_id
+    $2,  -- seller_id
 
-    $3,
-    $4,
-    $5,
+    $3,  -- pi_payment_id
+    $4,  -- pi_txid
+    $5,  -- idempotency_key
 
     'paid',
     now(),
@@ -287,57 +288,96 @@ const orderRes = await client.query<{ id: string }>(
     'PENDING',
     'PENDING',
 
-    $6,
-    $7,
-    $8,
-    $9,
-    0,
-    $10,
-    $11,
+    $6,  -- items_total
+    $7,  -- subtotal
+    $8,  -- discount
+    $9,  -- shipping_fee
+    $10, -- tax
+    $11, -- total
+    $12, -- currency
 
-    $12,
-    $13,
-    $14,
-    $15,
-    $16,
-    $17,
-    $18,
-    $19,
+    $13, -- shipping_name
+    $14, -- shipping_phone
+    $15, -- shipping_address_line
+    $16, -- shipping_ward
+    $17, -- shipping_district
+    $18, -- shipping_region
+    $19, -- shipping_country
+    $20, -- shipping_postal_code
 
-    $20,
-    $21,
+    $21, -- total_items
+    $22, -- total_quantity
 
     now(),
     now()
   )
-
   RETURNING id
   `,
   [
+    // $1
     intent.buyer_id,
+
+    // $2
     intent.seller_id,
 
+    // $3
     piPaymentId,
+
+    // $4
     txid,
+
+    // $5
     paymentIntentId,
 
+    // $6 items_total
     intent.subtotal,
+
+    // $7 subtotal
     intent.subtotal,
+
+    // $8 discount
     intent.discount,
+
+    // $9 shipping_fee
     intent.shipping_fee,
+
+    // $10 tax
+    0,
+
+    // $11 total
     intent.total_amount,
+
+    // $12 currency
     intent.currency,
 
+    // $13 shipping_name
     shipping.name ?? "",
+
+    // $14 shipping_phone
     shipping.phone ?? "",
+
+    // $15 shipping_address_line
     shipping.address_line ?? "",
+
+    // $16 shipping_ward
     shipping.ward ?? null,
+
+    // $17 shipping_district
     shipping.district ?? null,
+
+    // $18 shipping_region
     shipping.region ?? null,
+
+    // $19 shipping_country
     shipping.country ?? intent.country,
+
+    // $20 shipping_postal_code
     shipping.postal_code ?? null,
 
+    // $21 total_items
     intent.quantity,
+
+    // $22 total_quantity
     intent.quantity,
   ]
 );
