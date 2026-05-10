@@ -515,6 +515,7 @@ if (!rpcVerified.ok) {
     step: "FINALIZE_ORDER_FROM_INTENT",
   },
 });
+    const intentRow = await getPaymentIntent(paymentIntentId);
   const paid = await finalizePaidOrderFromIntent({
   paymentIntentId,
   piPaymentId,
@@ -523,6 +524,7 @@ if (!rpcVerified.ok) {
   receiverWallet: piVerified.receiverWallet,
   piPayload: piVerified.piPayload ?? {},
   rpcPayload: rpcVerified?.ok ? rpcVerified : { ok: false },
+  intent: intentRow,
 });
   console.log("[PAYMENT][SETTLEMENT] FINALIZE_ORDER_RESULT", {
     paymentIntentId,
