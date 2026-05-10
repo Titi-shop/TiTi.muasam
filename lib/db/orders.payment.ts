@@ -109,29 +109,18 @@ export async function finalizePaidOrderFromIntent({
   receiverWallet,
   piPayload,
   rpcPayload,
-}: FinalizePaidOrderParams): Promise<FinalizePaidOrderResult> {
+  intent, 
+}: FinalizePaidOrderParams & { intent: PaymentIntentRow }) {
   return withTransaction(async (client) => {
     /* =====================================================
        1. LOCK PAYMENT INTENT
     ===================================================== */
 
-    const rs = await client.query<PaymentIntentRow>(
-      `
-      SELECT *
-     FROM payment_intents
-     WHERE id = $1
-     FOR UPDATE
-      `,
-      [paymentIntentId]
-    );
-
     if (!rs.rows.length) {
       throw new Error("INTENT_NOT_FOUND");
     }
 
-    const intent = rs.rows[0];
-
-     
+    const intent = params.intent;
 const shipping: ShippingSnapshot =
   intent.shipping_snapshot?.buyer_shipping ?? {};
 
