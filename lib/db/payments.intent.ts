@@ -157,7 +157,7 @@ export async function createPiPaymentIntent({
       SELECT id, seller_id, stock, sold, is_unlimited, is_digital, price
       FROM products
       WHERE id = $1
-      FOR UPDATE
+
       `,
       [productId]
     );
@@ -196,7 +196,6 @@ export async function createPiPaymentIntent({
         SELECT id, product_id, stock, sold, is_unlimited, price
         FROM product_variants
         WHERE id = $1
-        FOR UPDATE
         `,
         [variantId]
       );
