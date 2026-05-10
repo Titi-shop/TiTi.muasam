@@ -229,8 +229,6 @@ await writePaymentAudit({
      
 const orderRes = await client.query<{ id: string }>(
   `
-  const orderRes = await client.query<{ id: string }>(
-  `
   INSERT INTO orders (
     buyer_id,
     seller_id,
