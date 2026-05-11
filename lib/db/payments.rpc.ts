@@ -43,11 +43,18 @@ type PaymentIntentRow = {
 type InsertRpcLogInput = {
   paymentIntentId: string;
   piPaymentId: string | null;
+rpcReachable: boolean;
 
+parseLayer: string | null;
+
+hasMeta: boolean;
+hasEvents: boolean;
+
+senderFound: boolean;
+receiverFound: boolean;
+  amountFound: boolean;
   txid: string;
-
   verified: boolean;
-
   stage: string;
   reason: string | null;
 
@@ -207,7 +214,15 @@ async function insertRpcLog(
     payload,
     verified_at,
     created_at,
-    updated_at
+    updated_at,
+    rpc_reachable,
+confirmed,
+parse_layer,
+has_meta,
+has_events,
+sender_found,
+receiver_found,
+amount_found
   )
   VALUES (
     $1,$2,
@@ -223,7 +238,7 @@ async function insertRpcLog(
     $19,$20,
     'raw_tx',
     $21::jsonb,
-
+$22,$23,$24,$25,$26,$27,$28,$29
     CASE WHEN $4 = true THEN now() ELSE NULL END,
     now(),
     now()
@@ -279,6 +294,14 @@ async function insertRpcLog(
     input.ledger,
     input.txStatus,
     input.chainReference,
+     input.rpcReachable,
+input.confirmed,
+input.parseLayer,
+input.hasMeta,
+input.hasEvents,
+input.senderFound,
+input.receiverFound,
+input.amountFound,
     JSON.stringify(input.payload ?? {}),
   ]
 );
@@ -505,7 +528,14 @@ if (!rpcTx.rpcReachable) {
     txStatus,
 
     chainReference: rpcTx.hash,
-
+rpcReachable: rpcTx.rpcReachable,
+confirmed: rpcTx.confirmed,
+parseLayer: rpcTx.debug.parseLayer ?? null,
+hasMeta: rpcTx.debug.hasMeta,
+hasEvents: rpcTx.debug.hasEvents,
+senderFound: rpcTx.debug.senderFound,
+receiverFound: rpcTx.debug.receiverFound,
+amountFound: rpcTx.debug.amountFound,
     payload: rpcTx.raw,
   });
 
