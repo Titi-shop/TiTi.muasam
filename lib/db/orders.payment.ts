@@ -53,12 +53,21 @@ export type FinalizePaidOrderResult = {
 };
 type RpcPayload = {
   ok: boolean;
+
+  amount?: number | null;
   ledger?: number | null;
   chainReference?: string | null;
   stage?: string | null;
   sender?: string | null;
   receiver?: string | null;
   reason?: string | null;
+  confirmed?: boolean;
+  txStatus?: string | null;
+  memo?: string | null;
+
+  createdAt?: string | null;
+
+  payload?: unknown;
 };
 
 type PiPayload = {
@@ -66,8 +75,20 @@ type PiPayload = {
   from_address?: string | null;
   to_address?: string | null;
   amount?: number | string | null;
+  identifier?: string | null;
+  memo?: string | null;
+  network?: string | null;
+  created_at?: string | null;
+  transaction?: {
+    txid?: string | null;
+    verified?: boolean;
+  };
   status?: {
     developer_approved?: boolean;
+    developer_completed?: boolean;
+    transaction_verified?: boolean;
+    cancelled?: boolean;
+    user_cancelled?: boolean;
   };
 };
    type ShippingSnapshot = {
@@ -221,7 +242,6 @@ const orderRes = await client.query<{ id: string }>(
   INSERT INTO orders (
     buyer_id,
     seller_id,
-
     pi_payment_id,
     pi_txid,
     idempotency_key,
@@ -451,12 +471,13 @@ if (!orderId) {
     rpc_confirmed,
     rpc_ledger,
     chain_reference,
-
-    pi_payload,
-    rpc_payload,
-    merged_payload,
-
-    idempotency_key,
+tx_status,
+developer_completed,
+rpc_reason,
+pi_payload,
+rpc_payload,
+merged_payload,
+idempotency_key,
 
     verified_at,
     completed_at,
@@ -470,9 +491,10 @@ if (!orderId) {
     $11,$12,
     $13,$14,$15,
     $16,$17,$18,
-    $19,$20,$21,
-    $22,
-    now(),now(),now(),now()
+$19,$20,$21,
+$22,$23,$24,
+$25,$26,$27,
+now(),now(),now(),now()
   )
   ON CONFLICT (pi_payment_id)
   DO UPDATE SET
@@ -485,7 +507,9 @@ if (!orderId) {
     rpc_confirmed = EXCLUDED.rpc_confirmed,
     rpc_ledger = EXCLUDED.rpc_ledger,
     chain_reference = EXCLUDED.chain_reference,
-
+     tx_status = EXCLUDED.tx_status,
+   developer_completed = EXCLUDED.developer_completed,
+rpc_reason = EXCLUDED.rpc_reason,
     pi_payload = EXCLUDED.pi_payload,
     rpc_payload = EXCLUDED.rpc_payload,
     merged_payload = EXCLUDED.merged_payload,
@@ -519,18 +543,62 @@ if (!orderId) {
     /* $14 */ "DUAL_AUDIT",
     /* $15 */ "ORDER_FINALIZED",
 
-    /* $16 */ rpcPayload?.ok ?? false,
-    /* $17 */ rpcPayload?.ledger ?? null,
-    /* $18 */ rpcPayload?.chainReference ?? null,
+   /* $16 */ rpcPayload?.confirmed ?? rpcPayload?.ok ?? false,
 
-    /* $19 */ JSON.stringify(piPayload),
-    /* $20 */ JSON.stringify(rpcPayload),
-    /* $21 */ JSON.stringify({
-      pi: piPayload,
-      rpc: rpcPayload,
-    }),
+/* $17 */ rpcPayload?.ledger ?? null,
 
-    /* $22 */ paymentIntentId,
+/* $18 */ rpcPayload?.chainReference ?? txid,
+
+/* $19 */ rpcPayload?.txStatus ?? "CONFIRMED",
+
+/* $20 */
+piPayload?.status?.developer_completed ?? false,
+
+/* $21 */
+rpcPayload?.reason ?? "NONE",
+
+/* $22 */
+JSON.stringify({
+  memo: piPayload?.memo ?? null,
+  amount: piPayload?.amount ?? verifiedAmount,
+  network: piPayload?.network ?? null,
+  identifier: piPayload?.identifier ?? null,
+  txid: piPayload?.transaction?.txid ?? txid,
+  verified: piPayload?.transaction?.verified ?? true,
+  created_at: piPayload?.created_at ?? null,
+}),
+
+/* $23 */
+JSON.stringify({
+  ok: rpcPayload?.ok ?? false,
+  amount: rpcPayload?.amount ?? verifiedAmount,
+  ledger: rpcPayload?.ledger ?? null,
+  sender: rpcPayload?.sender ?? null,
+  receiver: rpcPayload?.receiver ?? null,
+  confirmed: rpcPayload?.confirmed ?? true,
+  txStatus: rpcPayload?.txStatus ?? "CONFIRMED",
+  reason: rpcPayload?.reason ?? "NONE",
+}),
+
+/* $24 */
+JSON.stringify({
+  pi_summary: {
+    amount: piPayload?.amount ?? verifiedAmount,
+    memo: piPayload?.memo ?? null,
+    developer_completed:
+      piPayload?.status?.developer_completed ?? false,
+  },
+
+  rpc_summary: {
+    ok: rpcPayload?.ok ?? false,
+    ledger: rpcPayload?.ledger ?? null,
+    txStatus: rpcPayload?.txStatus ?? "CONFIRMED",
+  },
+}),
+
+/* $25 */ paymentIntentId,
+/* $26 */ new Date(),
+/* $27 */ new Date(),
   ]
 );
     /* =====================================================
