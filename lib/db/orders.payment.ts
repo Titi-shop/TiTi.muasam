@@ -473,17 +473,20 @@ if (!orderId) {
     chain_reference,
 
     tx_status,
-    rpc_reason,
-
     developer_completed,
-    developer_completed_at,
-
-    created_at_chain,
-    memo,
+    rpc_reason,
 
     pi_payload,
     rpc_payload,
     merged_payload,
+
+    developer_completed_at,
+
+    pi_created_at,
+    pi_memo,
+
+    rpc_tx_status,
+    rpc_stage,
 
     idempotency_key,
 
@@ -499,17 +502,14 @@ if (!orderId) {
     $11,$12,
     $13,$14,$15,
     $16,$17,$18,
-    $19,$20,
-    $21,$22,
-    $23,$24,
-    $25,$26,$27,
-    $28,
-    now(),
-    now(),
-    now(),
-    now()
+    $19,$20,$21,
+    $22,$23,$24,
+    $25,
+    $26,$27,
+    $28,$29,
+    $30,
+    now(),now(),now(),now()
   )
-
   ON CONFLICT (pi_payment_id)
   DO UPDATE SET
     order_id = EXCLUDED.order_id,
@@ -525,46 +525,75 @@ if (!orderId) {
     chain_reference = EXCLUDED.chain_reference,
 
     tx_status = EXCLUDED.tx_status,
-    rpc_reason = EXCLUDED.rpc_reason,
-
     developer_completed = EXCLUDED.developer_completed,
-    developer_completed_at = EXCLUDED.developer_completed_at,
-
-    created_at_chain = EXCLUDED.created_at_chain,
-    memo = EXCLUDED.memo,
+    rpc_reason = EXCLUDED.rpc_reason,
 
     pi_payload = EXCLUDED.pi_payload,
     rpc_payload = EXCLUDED.rpc_payload,
     merged_payload = EXCLUDED.merged_payload,
 
+    pi_created_at = EXCLUDED.pi_created_at,
+    pi_memo = EXCLUDED.pi_memo,
+
+    rpc_tx_status = EXCLUDED.rpc_tx_status,
+    rpc_stage = EXCLUDED.rpc_stage,
+
     verification_status = EXCLUDED.verification_status,
     verify_source = EXCLUDED.verify_source,
     settlement_state = EXCLUDED.settlement_state,
+
+    developer_completed_at =
+      EXCLUDED.developer_completed_at,
 
     verified_at = now(),
     completed_at = now(),
     updated_at = now()
   `,
   [
-    /* $1 */ paymentIntentId,
-    /* $2 */ intent.buyer_id,
-    /* $3 */ orderId,
-    /* $4 */ null,
+    /* $1 */
+    paymentIntentId,
 
-    /* $5 */ piPaymentId,
-    /* $6 */ piPayload?.user_uid ?? null,
-    /* $7 */ txid,
+    /* $2 */
+    intent.buyer_id,
 
-    /* $8 */ expectedAmount,
-    /* $9 */ verifiedAmount,
-    /* $10 */ "PI",
+    /* $3 */
+    orderId,
 
-    /* $11 */ piPayload?.from_address ?? null,
-    /* $12 */ piPayload?.to_address ?? receiverWallet,
+    /* $4 */
+    null,
 
-    /* $13 */ "completed",
-    /* $14 */ "DUAL_AUDIT",
-    /* $15 */ "ORDER_FINALIZED",
+    /* $5 */
+    piPaymentId,
+
+    /* $6 */
+    piPayload?.user_uid ?? null,
+
+    /* $7 */
+    txid,
+
+    /* $8 */
+    expectedAmount,
+
+    /* $9 */
+    verifiedAmount,
+
+    /* $10 */
+    "PI",
+
+    /* $11 */
+    piPayload?.from_address ?? null,
+
+    /* $12 */
+    piPayload?.to_address ?? receiverWallet,
+
+    /* $13 */
+    "completed",
+
+    /* $14 */
+    "DUAL_AUDIT",
+
+    /* $15 */
+    "ORDER_FINALIZED",
 
     /* $16 */
     rpcPayload?.confirmed ?? rpcPayload?.ok ?? false,
@@ -576,39 +605,84 @@ if (!orderId) {
     rpcPayload?.chainReference ?? txid,
 
     /* $19 */
-    rpcPayload?.txStatus ?? "CONFIRMED",
+    rpcPayload?.txStatus ??
+(rpcPayload?.confirmed ? "CONFIRMED" : "UNCONFIRMED"),
 
     /* $20 */
-    rpcPayload?.reason ?? null,
-
-    /* $21 */
     piPayload?.status?.developer_completed ?? false,
 
+    /* $21 */
+    rpcPayload?.reason ?? "NONE",
+
     /* $22 */
+    JSON.stringify({
+      memo: piPayload?.memo ?? null,
+      amount: piPayload?.amount ?? verifiedAmount,
+      network: piPayload?.network ?? null,
+      identifier: piPayload?.identifier ?? null,
+      txid: piPayload?.transaction?.txid ?? txid,
+      verified: piPayload?.transaction?.verified ?? true,
+      created_at: piPayload?.created_at ?? null,
+    }),
+
+    /* $23 */
+    JSON.stringify({
+      ok: rpcPayload?.ok ?? false,
+      amount: rpcPayload?.amount ?? verifiedAmount,
+      ledger: rpcPayload?.ledger ?? null,
+      sender: rpcPayload?.sender ?? null,
+      receiver: rpcPayload?.receiver ?? null,
+      confirmed: rpcPayload?.confirmed ?? true,
+      txStatus: rpcPayload?.txStatus ?? "CONFIRMED",
+      reason: rpcPayload?.reason ?? "NONE",
+    }),
+
+    /* $24 */
+    JSON.stringify({
+      pi_summary: {
+        amount:
+          piPayload?.amount ?? verifiedAmount,
+
+        memo:
+          piPayload?.memo ?? null,
+
+        developer_completed:
+          piPayload?.status
+            ?.developer_completed ?? false,
+      },
+
+      rpc_summary: {
+        ok: rpcPayload?.ok ?? false,
+
+        ledger:
+          rpcPayload?.ledger ?? null,
+
+        txStatus:
+          rpcPayload?.txStatus ??
+          "CONFIRMED",
+      },
+    }),
+
+    /* $25 */
     piPayload?.status?.developer_completed
       ? new Date()
       : null,
 
-    /* $23 */
-    piPayload?.created_at ?? null,
-
-    /* $24 */
-    piPayload?.memo ?? null,
-
-    /* $25 */
-    JSON.stringify(piPayload ?? {}),
-
     /* $26 */
-    JSON.stringify(rpcPayload ?? {}),
+    piPayload?.created_at
+  ? new Date(piPayload.created_at)
+  : null,
 
     /* $27 */
-    JSON.stringify({
-      pi: piPayload ?? {},
-      rpc: rpcPayload ?? {},
-      finalized: true,
-    }),
+    piPayload?.memo ?? null,
 
     /* $28 */
+    rpcPayload?.txStatus ?? "CONFIRMED",
+
+    /* $29 */
+    rpcPayload?.stage ?? null,
+
+    /* $30 */
     paymentIntentId,
   ]
 );
