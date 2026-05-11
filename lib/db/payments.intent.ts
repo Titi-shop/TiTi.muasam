@@ -421,12 +421,12 @@ export async function getPaymentIntent(id: string) {
     [id]
   );
   
-
-  return res.rows[0] ?? null;
-}
-
 export {
   createPiPaymentIntent,
   getPaymentIntent,
 };
+
+
+  return res.rows[0] ?? null;
 }
+
