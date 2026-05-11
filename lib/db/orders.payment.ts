@@ -477,12 +477,20 @@ rpc_reason,
 pi_payload,
 rpc_payload,
 merged_payload,
-idempotency_key,
 
-    verified_at,
-    completed_at,
-    created_at,
-    updated_at
+developer_completed,
+developer_completed_at,
+
+pi_created_at,
+pi_memo,
+rpc_tx_status,
+rpc_stage,
+rpc_reason,
+idempotency_key,
+verified_at,
+completed_at,
+created_at,
+updated_at
   )
   VALUES (
     $1,$2,$3,$4,
@@ -492,8 +500,10 @@ idempotency_key,
     $13,$14,$15,
     $16,$17,$18,
 $19,$20,$21,
-$22,$23,$24,
-$25,$26,$27,
+$22,$23,
+$24,$25,
+$26,$27,$28,
+$29,
 now(),now(),now(),now()
   )
   ON CONFLICT (pi_payment_id)
@@ -599,6 +609,8 @@ JSON.stringify({
 /* $25 */ paymentIntentId,
 /* $26 */ new Date(),
 /* $27 */ new Date(),
+/* $28 */ rpcPayload?.reason ?? null,
+/* $29 */ paymentIntentId,
   ]
 );
     /* =====================================================
