@@ -589,6 +589,8 @@ senderFound,
 receiverFound,
 amountFound,
     payload: rpcTx.raw,
+createdAt: rpcTx.createdAt ?? null,
+memo: rpcTx.memo ?? null,
   });
 
   /* =====================================================
