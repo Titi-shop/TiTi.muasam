@@ -415,3 +415,9 @@ export async function createPiPaymentIntent({
     };
   });
 }
+export async function getPaymentIntent(id: string) {
+  return await client.query(
+    `SELECT * FROM payment_intents WHERE id = $1`,
+    [id]
+  );
+}
