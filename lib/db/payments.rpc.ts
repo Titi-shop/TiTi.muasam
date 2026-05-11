@@ -505,13 +505,25 @@ if (!rpcTx.rpcReachable) {
   });
 
   log("FINAL_RESULT", {
-    verified,
-    stage,
-    reason,
-    amount: rpcTx.amount,
-    ledger: rpcTx.ledger,
-    parseLayer: rpcTx.debug.parseLayer,
-  });
+  verified,
+  stage,
+  reason,
+  amount: rpcTx.amount,
+  expectedAmount,
+  amountMatch,
+
+  sender: rpcTx.sender,
+  senderFound,
+  receiver: rpcTx.receiver,
+  expectedReceiver,
+  receiverMatch,
+  ledger: rpcTx.ledger,
+  rpcReachable: rpcTx.rpcReachable,
+  confirmed: rpcTx.confirmed,
+  parseLayer: rpcTx.debug.parseLayer,
+  hasMeta: rpcTx.debug.hasMeta,
+  hasEvents: rpcTx.debug.hasEvents,
+});
 
   /* =====================================================
      INSERT FORENSIC LOG
