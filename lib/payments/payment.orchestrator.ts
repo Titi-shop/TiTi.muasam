@@ -44,25 +44,38 @@ function emptyRpc(): RpcAuditResult {
     receiver: null,
     ledger: null,
     confirmed: false,
+    txStatus: "UNKNOWN",
     chainReference: null,
     stage: "UNSET",
     reason: "NOT_EXECUTED",
     payload: {},
+    createdAt: null,
+    memo: null,
   };
 }
 function emptyRpcPayload(): RpcAuditResult {
   return {
     ok: false,
     audited: false,
+
     amount: null,
+
     sender: null,
     receiver: null,
+
     ledger: null,
+
     confirmed: false,
+
+    txStatus: "EMPTY",
+
     chainReference: null,
+
     stage: "EMPTY",
     reason: "EMPTY_RPC",
     payload: {},
+    createdAt: null,
+    memo: null,
   };
 }
 /* =========================================================
@@ -124,24 +137,50 @@ async function safeAuditRpc(
 });
 
     console.log("[PAYMENT][RPC_VERIFY] RESULT", {
-      paymentIntentId,
-      ok: rpc.ok,
-      reason: rpc.reason,
-      amount: rpc.amount,
-      confirmed: rpc.confirmed,
-      ledger: rpc.ledger,
-    });
+  paymentIntentId,
+
+  ok: rpc.ok,
+
+  reason: rpc.reason,
+
+  amount: rpc.amount,
+
+  confirmed: rpc.confirmed,
+
+  ledger: rpc.ledger,
+
+  sender: rpc.sender,
+
+  receiver: rpc.receiver,
+
+  txStatus: rpc.txStatus,
+
+  chainReference: rpc.chainReference,
+});
 
     if (rpc.ok) {
       await auditRpcVerified(paymentIntentId, {
-        source,
-        txid,
-        amount: rpc.amount,
-        ledger: rpc.ledger,
-        receiver: rpc.receiver,
-        sender: rpc.sender,
-        chainReference: rpc.chainReference,
-      });
+  source,
+
+  txid,
+
+  amount: rpc.amount,
+
+  ledger: rpc.ledger,
+
+  receiver: rpc.receiver,
+
+  sender: rpc.sender,
+
+  chainReference: rpc.chainReference,
+
+  payload: {
+    confirmed: rpc.confirmed,
+    txStatus: rpc.txStatus,
+    reason: rpc.reason,
+    createdAt: rpc.createdAt,
+  },
+});
 
       console.log("[PAYMENT][RPC_VERIFY] AUDIT_OK", {
         paymentIntentId,
@@ -440,13 +479,34 @@ export async function runPaymentSettlement({
 
   await auditPiVerified(paymentIntentId, {
   source,
-  txid,
-  piPaymentId,
-  actorId: userId,
-  amount: piVerified.verifiedAmount,
-  receiverWallet: piVerified.receiverWallet,
-});
 
+  txid,
+
+  piPaymentId,
+
+  actorId: userId,
+
+  amount: piVerified.verifiedAmount,
+
+  receiverWallet: piVerified.receiverWallet,
+
+  payload: {
+    memo: piVerified.piPayload?.memo ?? null,
+
+    identifier:
+      piVerified.piPayload?.identifier ?? null,
+
+    from_address:
+      piVerified.piPayload?.from_address ?? null,
+
+    to_address:
+      piVerified.piPayload?.to_address ?? null,
+
+    developer_completed:
+      piVerified.piPayload?.status?.developer_completed ??
+      false,
+  },
+});
   console.log("[PAYMENT][SETTLEMENT] PI_AUDIT_OK", {
     paymentIntentId,
   });
@@ -542,7 +602,18 @@ if (!intentRow) {
   verifiedAmount: piVerified.verifiedAmount,
   receiverWallet: piVerified.receiverWallet,
   piPayload: piVerified.piPayload ?? {},
-  rpcPayload: rpcVerified?.ok  ? rpcVerified  : emptyRpcPayload(),
+  rpcPayload:
+  rpcVerified?.ok
+    ? {
+        ...rpcVerified,
+        confirmed:
+          rpcVerified.confirmed ?? true,
+        txStatus:
+          rpcVerified.txStatus ?? "CONFIRMED",
+        chainReference:
+          rpcVerified.chainReference ?? txid,
+      }
+    : emptyRpcPayload(),
   intent: intentRow,
 });
   console.log("[PAYMENT][SETTLEMENT] FINALIZE_ORDER_RESULT", {
