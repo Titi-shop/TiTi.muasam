@@ -422,7 +422,7 @@ export async function verifyRpcPaymentForReconcile({
 
   let verified = true;
   let stage = "RPC_OK";
-  let reason: string | null = null;
+  let reason = "NONE";
   if (!rpcTx.rpcReachable) {
     verified = false;
     stage = "RPC_UNREACHABLE";
@@ -475,16 +475,13 @@ export async function verifyRpcPaymentForReconcile({
      FORENSIC SNAPSHOT
   ===================================================== */
 
-  let mismatchReason: string | null = null;
-
+  let mismatchReason = "NONE";
   if (!amountMatch) {
     mismatchReason = "AMOUNT_MISMATCH";
   } else if (!receiverMatch) {
     mismatchReason = "RECEIVER_MISMATCH";
   }
-
-  let fraudReason: string | null = null;
-
+  let fraudReason = "NONE";
 if (!rpcTx.rpcReachable) {
   fraudReason = "RPC_UNREACHABLE";
 } else if (!rpcTx.confirmed) {
