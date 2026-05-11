@@ -116,12 +116,13 @@ export async function finalizePaidOrderFromIntent({
        1. LOCK PAYMENT INTENT
     ===================================================== */
 
+const rawShipping =
+  typeof intent.shipping_snapshot === "string"
+    ? JSON.parse(intent.shipping_snapshot)
+    : intent.shipping_snapshot;
 
-if (!intent) {
-  throw new Error("INTENT_NOT_FOUND");
-}
 const shipping: ShippingSnapshot =
-  intent.shipping_snapshot?.buyer_shipping ?? {};
+  rawShipping?.buyer_shipping ?? rawShipping ?? {};
 
 if (
   !shipping.name ||
@@ -517,14 +518,14 @@ if (!orderId) {
     expectedAmount,
     verifiedAmount,
 
-    piPayload.from_address ?? null,
-    piPayload.to_address ?? receiverWallet,
+    (piPayload?.from_address ?? null) as string | null,
+   (piPayload?.to_address ?? receiverWallet) as string | null,
 
     rpcPayload.ok,
-    rpcPayload.ledger,
-    rpcPayload.chainReference,
-    rpcPayload.sender,
-    rpcPayload.receiver,
+rpcPayload.ledger ?? null,
+rpcPayload.chainReference ?? null,
+rpcPayload.stage ?? null,
+rpcPayload.reason ?? null,
 
     JSON.stringify(piPayload),
     JSON.stringify(rpcPayload),
