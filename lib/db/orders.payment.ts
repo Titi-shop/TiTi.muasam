@@ -116,7 +116,6 @@ export async function finalizePaidOrderFromIntent({
        1. LOCK PAYMENT INTENT
     ===================================================== */
 
-    const intent = params.intent;
 
 if (!intent) {
   throw new Error("INTENT_NOT_FOUND");
