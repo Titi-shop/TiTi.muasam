@@ -542,7 +542,7 @@ if (!intentRow) {
   verifiedAmount: piVerified.verifiedAmount,
   receiverWallet: piVerified.receiverWallet,
   piPayload: piVerified.piPayload ?? {},
-  rpcPayload: rpcVerified?.ok ? rpcVerified : { ok: false },
+  rpcPayload: rpcVerified?.ok  ? rpcVerified  : emptyRpcPayload(),
   intent: intentRow,
 });
   console.log("[PAYMENT][SETTLEMENT] FINALIZE_ORDER_RESULT", {
