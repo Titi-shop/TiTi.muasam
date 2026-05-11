@@ -447,20 +447,16 @@ if (!orderId) {
     verification_status,
     verify_source,
     settlement_state,
+
     rpc_confirmed,
     rpc_ledger,
     chain_reference,
-    tx_status,
 
     pi_payload,
     rpc_payload,
     merged_payload,
 
-    forensic_hash,
     idempotency_key,
-
-    failure_reason,
-    manual_note,
 
     verified_at,
     completed_at,
@@ -470,15 +466,12 @@ if (!orderId) {
   VALUES (
     $1,$2,$3,$4,
     $5,$6,$7,
-    $8,$9,'PI',
-    $10,$11,
-    'completed',
-    'DUAL_AUDIT',
-    'ORDER_FINALIZED',
-    $12,$13,$14,$15,
+    $8,$9,$10,
+    $11,$12,
+    $13,$14,$15,
     $16,$17,$18,
-    $19,
-    NULL,NULL,
+    $19,$20,$21,
+    $22,
     now(),now(),now(),now()
   )
   ON CONFLICT (pi_payment_id)
@@ -492,49 +485,52 @@ if (!orderId) {
     rpc_confirmed = EXCLUDED.rpc_confirmed,
     rpc_ledger = EXCLUDED.rpc_ledger,
     chain_reference = EXCLUDED.chain_reference,
-    tx_status = EXCLUDED.tx_status,
 
     pi_payload = EXCLUDED.pi_payload,
     rpc_payload = EXCLUDED.rpc_payload,
     merged_payload = EXCLUDED.merged_payload,
 
-    verification_status = 'completed',
-    verify_source = 'DUAL_AUDIT',
-    settlement_state = 'ORDER_FINALIZED',
+    verification_status = EXCLUDED.verification_status,
+    verify_source = EXCLUDED.verify_source,
+    settlement_state = EXCLUDED.settlement_state,
+
     verified_at = now(),
     completed_at = now(),
     updated_at = now()
   `,
   [
-    paymentIntentId,
-    intent.buyer_id,
-    orderId,
-    null,
+    /* $1 */ paymentIntentId,
+    /* $2 */ intent.buyer_id,
+    /* $3 */ orderId,
+    /* $4 */ null,
 
-    piPaymentId,
-    piPayload.user_uid ?? null,
-    txid,
+    /* $5 */ piPaymentId,
+    /* $6 */ piPayload?.user_uid ?? null,
+    /* $7 */ txid,
 
-    expectedAmount,
-    verifiedAmount,
+    /* $8 */ expectedAmount,
+    /* $9 */ verifiedAmount,
+    /* $10 */ "PI",
 
-    (piPayload?.from_address ?? null) as string | null,
-   (piPayload?.to_address ?? receiverWallet) as string | null,
+    /* $11 */ piPayload?.from_address ?? null,
+    /* $12 */ piPayload?.to_address ?? receiverWallet,
 
-    rpcPayload.ok,
-rpcPayload.ledger ?? null,
-rpcPayload.chainReference ?? null,
-rpcPayload.stage ?? null,
-rpcPayload.reason ?? null,
+    /* $13 */ "completed",
+    /* $14 */ "DUAL_AUDIT",
+    /* $15 */ "ORDER_FINALIZED",
 
-    JSON.stringify(piPayload),
-    JSON.stringify(rpcPayload),
-    JSON.stringify({
+    /* $16 */ rpcPayload?.ok ?? false,
+    /* $17 */ rpcPayload?.ledger ?? null,
+    /* $18 */ rpcPayload?.chainReference ?? null,
+
+    /* $19 */ JSON.stringify(piPayload),
+    /* $20 */ JSON.stringify(rpcPayload),
+    /* $21 */ JSON.stringify({
       pi: piPayload,
       rpc: rpcPayload,
     }),
 
-    paymentIntentId
+    /* $22 */ paymentIntentId,
   ]
 );
     /* =====================================================
