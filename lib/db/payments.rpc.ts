@@ -225,24 +225,39 @@ receiver_found,
 amount_found
   )
   VALUES (
-    $1,$2,
-    $3,
-    $4,
-    $5,$6,
-    $7,$8,
-    $9,$10,$11,
-    $12,$13,$14,
-    $15,$16,
-    $17,
-    $18,
-    $19,$20,
-    'raw_tx',
-    $21::jsonb,
-$22,$23,$24,$25,$26,$27,$28,$29
-    CASE WHEN $4 = true THEN now() ELSE NULL END,
-    now(),
-    now()
-  )
+  $1,$2,
+  $3,
+  $4,
+  $5,$6,
+  $7,$8,
+  $9,$10,$11,
+  $12,$13,$14,
+  $15,$16,
+  $17,
+  $18,
+  $19,$20,
+
+  'raw_tx',
+
+  $21::jsonb,
+
+  CASE
+    WHEN $4 = true THEN now()
+    ELSE NULL
+  END,
+
+  now(),
+  now(),
+
+  $22,
+  $23,
+  $24,
+  $25,
+  $26,
+  $27,
+  $28,
+  $29
+)
   ON CONFLICT (txid)
   DO UPDATE SET
     verified = EXCLUDED.verified,
@@ -274,36 +289,39 @@ $22,$23,$24,$25,$26,$27,$28,$29
     updated_at = now()
   `,
   [
-    input.paymentIntentId,
-    input.piPaymentId,
-    input.txid,
-    input.verified,
-    input.stage,
-    input.reason,
-    input.amount,
-    input.expectedAmount,
-    input.sender,
-    input.receiver,
-    input.expectedReceiver,
-    input.amountMatch,
-    input.receiverMatch,
-    input.senderMatch,
-    input.mismatchReason,
-    input.fraudReason,
-    input.verificationHash,
-    input.ledger,
-    input.txStatus,
-    input.chainReference,
-     input.rpcReachable,
-input.confirmed,
-input.parseLayer,
-input.hasMeta,
-input.hasEvents,
-input.senderFound,
-input.receiverFound,
-input.amountFound,
-    JSON.stringify(input.payload ?? {}),
-  ]
+    
+  input.paymentIntentId,
+  input.piPaymentId,
+  input.txid,
+  input.verified,
+  input.stage,
+  input.reason,
+  input.amount,
+  input.expectedAmount,
+
+  input.sender,
+  input.receiver,
+  input.expectedReceiver,
+  input.amountMatch,
+  input.receiverMatch,
+  input.senderMatch,
+  input.mismatchReason,
+  input.fraudReason,
+
+  input.verificationHash,
+  input.ledger,
+  input.txStatus,
+  input.chainReference,
+  JSON.stringify(input.payload ?? {}),
+  input.rpcReachable,
+  input.confirmed,
+  input.parseLayer,
+  input.hasMeta,
+  input.hasEvents,
+  input.senderFound,
+  input.receiverFound,
+  input.amountFound,
+]
 );
 }
 
