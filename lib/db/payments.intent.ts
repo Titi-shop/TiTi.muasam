@@ -420,6 +420,7 @@ export async function getPaymentIntent(id: string) {
     `SELECT * FROM payment_intents WHERE id = $1`,
     [id]
   );
+  
 
   return res.rows[0] ?? null;
 }
