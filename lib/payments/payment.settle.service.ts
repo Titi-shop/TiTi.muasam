@@ -1,6 +1,6 @@
 import { submitPiPaymentFromRequest } from "./payment.submit.service";
 import { runPaymentSettlement } from "@/lib/payments/payment.orchestrator";
-const { getPaymentIntent } = await import("@/lib/db/payments.intent");
+import { getPaymentIntent } from "@/lib/db/payments.intent";
 
 /* =========================================================
    TYPES
