@@ -593,22 +593,22 @@ if (!intentRow) {
 
   } catch (e) {
 
-    console.error("[PAYMENT][SETTLEMENT][FATAL]", {
-      paymentIntentId,
-      error: e,
-    });
+  console.error("[PAYMENT][SETTLEMENT][FATAL]", {
+    paymentIntentId,
+    error: e,
+  });
 
-    await auditManualReview(paymentIntentId, "SETTLEMENT_FATAL", {
-  source,
-  txid: txid ?? null,
-  piPaymentId: piPaymentId ?? null,
-  reason: String(e),
-  requiresReplay: true,
-  reconcileStage: "FINALIZE_ORDER",
-});
+  await auditManualReview(paymentIntentId, "SETTLEMENT_FATAL", {
+    source: source ?? "submit-api",
+    txid: String(txid || ""),
+    piPaymentId: String(piPaymentId || ""),
+    reason: e instanceof Error ? e.message : String(e),
+    requiresReplay: true,
+    reconcileStage: "FINALIZE_ORDER",
+  });
 
-    return failResult(0, false, source);
-  }
+  return failResult(0, false, source);
+}
 }
 
 /* =========================================================
