@@ -746,6 +746,33 @@ if (!orderId) {
     $24,$25,$26,
     $27,$28,$29
   )
+  ON CONFLICT (pi_payment_id)
+  DO UPDATE SET
+    order_id = COALESCE(EXCLUDED.order_id, pi_payments.order_id),
+    user_id = COALESCE(EXCLUDED.user_id, pi_payments.user_id),
+
+    txid = COALESCE(EXCLUDED.txid, pi_payments.txid),
+    receiver_wallet = COALESCE(EXCLUDED.receiver_wallet, pi_payments.receiver_wallet),
+
+    amount = COALESCE(EXCLUDED.amount, pi_payments.amount),
+    expected_amount = COALESCE(EXCLUDED.expected_amount, pi_payments.expected_amount),
+    verified_amount = COALESCE(EXCLUDED.verified_amount, pi_payments.verified_amount),
+
+    status = COALESCE(EXCLUDED.status, pi_payments.status),
+
+    reconcile_attempts = pi_payments.reconcile_attempts + 1,
+    last_reconcile_at = now(),
+
+    failure_reason = COALESCE(EXCLUDED.failure_reason, pi_payments.failure_reason),
+    manual_review_reason = COALESCE(EXCLUDED.manual_review_reason, pi_payments.manual_review_reason),
+    note = COALESCE(EXCLUDED.note, pi_payments.note),
+
+    pi_raw_payload = COALESCE(EXCLUDED.pi_raw_payload, pi_payments.pi_raw_payload),
+    rpc_raw_payload = COALESCE(EXCLUDED.rpc_raw_payload, pi_payments.rpc_raw_payload),
+    complete_raw_payload = COALESCE(EXCLUDED.complete_raw_payload, pi_payments.complete_raw_payload),
+
+    completed_at = COALESCE(pi_payments.completed_at, now()),
+    updated_at = now()
   `,
   [
     paymentIntentId,
@@ -783,7 +810,6 @@ if (!orderId) {
     JSON.stringify(piPayload),
     JSON.stringify(rpcPayload),
     JSON.stringify({ pi: piPayload, rpc: rpcPayload, finalized: true }),
-
     new Date(),
     new Date(),
     new Date(),
