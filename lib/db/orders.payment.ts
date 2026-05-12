@@ -691,50 +691,132 @@ if (!orderId) {
     ===================================================== */
 
     await client.query(
+
       `
+
       INSERT INTO pi_payments (
+
         payment_intent_id,
+
         order_id,
+
         user_id,
 
         pi_payment_id,
+
         txid,
+
         receiver_wallet,
 
         amount,
+
         expected_amount,
+
         verified_amount,
+
         currency,
 
         status,
 
         reconcile_attempts,
+
         last_reconcile_at,
 
+        payment_nonce,
+
+        verify_token,
+
+        idempotency_key,
+
+        country,
+
+        zone,
+
+        failure_reason,
+
+        manual_review_reason,
+
+        note,
+
+        processing_lock_id,
+
+        processing_locked_at,
+
         pi_raw_payload,
+
         rpc_raw_payload,
+
         complete_raw_payload,
 
         completed_at,
+
         created_at,
+
         updated_at
+
       )
+
       VALUES (
+
         $1,$2,$3,
+
         $4,$5,$6,
-        $7,$8,$9,'PI',
-        'SETTLED',
-        1,now(),
-        $10,$11,$12,
-        now(),now(),now()
+
+        $7,$8,$9,$10,
+
+        $11,
+
+        $12,$13,
+
+        $14,$15,$16,
+
+        $17,$18,
+
+        $19,$20,$21,
+
+        $22,$23,
+
+        $24,$25,$26,
+
+        $27,$28,$29
+
       )
+
       ON CONFLICT (pi_payment_id)
+
       DO UPDATE SET
+
         txid = EXCLUDED.txid,
+
         order_id = EXCLUDED.order_id,
+
         receiver_wallet = EXCLUDED.receiver_wallet,
+
+        amount = EXCLUDED.amount,
+
         verified_amount = EXCLUDED.verified_amount,
+
         status = 'SETTLED',
+
+        payment_nonce = EXCLUDED.payment_nonce,
+
+        verify_token = EXCLUDED.verify_token,
+
+        idempotency_key = EXCLUDED.idempotency_key,
+
+        country = EXCLUDED.country,
+
+        zone = EXCLUDED.zone,
+
+        failure_reason = EXCLUDED.failure_reason,
+
+        manual_review_reason = EXCLUDED.manual_review_reason,
+
+        note = EXCLUDED.note,
+
+        processing_lock_id = EXCLUDED.processing_lock_id,
+
+        processing_locked_at = EXCLUDED.processing_locked_at,
         pi_raw_payload = EXCLUDED.pi_raw_payload,
         rpc_raw_payload = EXCLUDED.rpc_raw_payload,
         complete_raw_payload = EXCLUDED.complete_raw_payload,
@@ -742,28 +824,42 @@ if (!orderId) {
         completed_at = now(),
         updated_at = now()
       `,
+
       [
-        paymentIntentId,
-        orderId,
-        intent.buyer_id,
+        piRow.payment_intent_id,
+        piRow.order_id,
+        piRow.user_id,
+        piRow.pi_payment_id,
+        piRow.txid,
+        piRow.receiver_wallet,
+        piRow.amount,
 
-        piPaymentId,
-        txid,
-        receiverWallet,
+        piRow.expected_amount,
+        piRow.verified_amount,
+        piRow.currency,
+        piRow.status,
+        piRow.reconcile_attempts,
+        piRow.last_reconcile_at,
+        piRow.payment_nonce,
+        piRow.verify_token,
+        piRow.idempotency_key,
+        piRow.country,
+        piRow.zone,
+        piRow.failure_reason,
+        piRow.manual_review_reason,
+        piRow.note,
 
-        verifiedAmount,
-        expectedAmount,
-        verifiedAmount,
-
-        JSON.stringify(piPayload),
-        JSON.stringify(rpcPayload),
-        JSON.stringify({
-          pi: piPayload,
-          rpc: rpcPayload,
-          finalized: true,
-        }),
+        piRow.processing_lock_id,
+        piRow.processing_locked_at,
+        piRow.pi_raw_payload,
+        piRow.rpc_raw_payload,
+        piRow.complete_raw_payload,
+        piRow.completed_at,
+        piRow.created_at,
+        piRow.updated_at,
       ]
     );
+
 
     /* =====================================================
        8. FINALIZE PAYMENT INTENT
