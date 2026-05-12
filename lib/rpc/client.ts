@@ -2,235 +2,614 @@ const PI_RPC_URL =
   process.env.PI_RPC_URL?.trim() ||
   "https://rpc.testnet.minepi.com";
 
-/* =========================
+/* =========================================================
    TYPES
-========================= */
+========================================================= */
 
-type Json = Record<string, unknown>;
+type JsonObj = Record<string, unknown>;
+
+type RpcEnvelope = {
+  jsonrpc?: string;
+  id?: string | number;
+
+  result?: JsonObj;
+
+  error?: {
+    code?: number;
+    message?: string;
+  };
+};
 
 export type ParsedRpcTransaction = {
   hash: string | null;
+
   ledger: number | null;
 
   amount: number | null;
+
   sender: string | null;
+
   receiver: string | null;
 
   memo: string | null;
+
   createdAt: string | null;
 
+  txStatus: string | null;
+
   confirmed: boolean;
+
   rpcReachable: boolean;
 
-  raw: Json;
+  raw: unknown;
 
   debug: {
     amountFound: boolean;
+
     senderFound: boolean;
+
     receiverFound: boolean;
-    parseLayer: "ENVELOPE" | "EVENTS" | "FAILED";
+
+    parseLayer: string;
+
     hasMeta: boolean;
+
     hasEvents: boolean;
   };
 };
 
-/* =========================
-   SAFE HELPERS
-========================= */
+/* =========================================================
+   LOG
+========================================================= */
 
-const asObj = (v: unknown): Json =>
-  v && typeof v === "object" ? (v as Json) : {};
+function log(tag: string, data?: unknown) {
+  console.log(`[RPC CLIENT V6] ${tag}`, data ?? "");
+}
 
-const asArr = (v: unknown): unknown[] =>
-  Array.isArray(v) ? v : [];
+function err(tag: string, data?: unknown) {
+  console.error(`[RPC CLIENT V6] ${tag}`, data ?? "");
+}
 
-const str = (v: unknown): string | null =>
-  typeof v === "string" && v.trim() ? v.trim() : null;
+/* =========================================================
+   HELPERS
+========================================================= */
 
-const num = (v: unknown): number | null => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-};
+function asObj(value: unknown): JsonObj {
+  return typeof value === "object" && value !== null
+    ? (value as JsonObj)
+    : {};
+}
 
-/* =========================
-   DEEP FIND
-========================= */
+function asArr(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
 
-function deepFind(obj: unknown, keys: string[]): string | null {
-  if (!obj || typeof obj !== "object") return null;
+function str(value: unknown): string | null {
+  return typeof value === "string"
+    ? value.trim()
+    : null;
+}
 
-  const o = obj as Json;
+function num(value: unknown): number | null {
+  const n = Number(value);
 
-  for (const k of keys) {
-    if (typeof o[k] === "string") return str(o[k]);
+  return Number.isFinite(n)
+    ? n
+    : null;
+}
+
+function deepFindString(
+  node: unknown,
+  keys: string[]
+): string | null {
+  if (!node || typeof node !== "object") {
+    return null;
   }
 
-  for (const v of Object.values(o)) {
-    const found = deepFind(v, keys);
-    if (found) return found;
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      const found = deepFindString(item, keys);
+
+      if (found) {
+        return found;
+      }
+    }
+
+    return null;
+  }
+
+  const obj = node as JsonObj;
+
+  for (const key of keys) {
+    const value = obj[key];
+
+    if (typeof value === "string") {
+      const cleaned = value.trim();
+
+      if (cleaned) {
+        return cleaned;
+      }
+    }
+  }
+
+  for (const value of Object.values(obj)) {
+    const found = deepFindString(value, keys);
+
+    if (found) {
+      return found;
+    }
   }
 
   return null;
 }
 
-/* =========================
-   RPC CALL
-========================= */
+function deepFindNumber(
+  node: unknown,
+  keys: string[]
+): number | null {
+  if (!node || typeof node !== "object") {
+    return null;
+  }
 
-async function rpcCall(method: string, params: Json): Promise<Json> {
-  const res = await fetch(PI_RPC_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: Date.now(),
-      method,
-      params,
-    }),
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      const found = deepFindNumber(item, keys);
+
+      if (found !== null) {
+        return found;
+      }
+    }
+
+    return null;
+  }
+
+  const obj = node as JsonObj;
+
+  for (const key of keys) {
+    const parsed = num(obj[key]);
+
+    if (parsed !== null) {
+      return parsed;
+    }
+  }
+
+  for (const value of Object.values(obj)) {
+    const found = deepFindNumber(value, keys);
+
+    if (found !== null) {
+      return found;
+    }
+  }
+
+  return null;
+}
+
+function normalizeAmount(
+  amount: number | null
+): number | null {
+  if (amount === null) {
+    return null;
+  }
+
+  if (amount > 10000000) {
+    return amount / 10000000;
+  }
+
+  return amount;
+}
+
+/* =========================================================
+   RPC CALL
+========================================================= */
+
+async function rpcCall(
+  method: string,
+  params: Record<string, unknown>
+): Promise<JsonObj> {
+  log("RPC_CALL_START", {
+    method,
+    params,
   });
 
-  const json = (await res.json()) as {
-    result?: Json;
-    error?: unknown;
-  };
+  let response: Response;
 
-  if (!res.ok || json.error || !json.result) {
-    throw new Error("RPC_FAIL");
+  try {
+    response = await fetch(PI_RPC_URL, {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      cache: "no-store",
+
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: Date.now(),
+        method,
+        params,
+      }),
+    });
+  } catch (e) {
+    err("RPC_NETWORK_FAIL", e);
+
+    throw new Error("RPC_UNREACHABLE");
   }
 
-  return json.result;
+  const rawText = await response.text();
+
+  let parsed: RpcEnvelope;
+
+  try {
+    parsed = JSON.parse(rawText) as RpcEnvelope;
+  } catch {
+    err("RPC_INVALID_JSON", rawText);
+
+    throw new Error("RPC_INVALID_JSON");
+  }
+
+  if (!response.ok) {
+    err("RPC_HTTP_FAIL", {
+      status: response.status,
+    });
+
+    throw new Error(`RPC_HTTP_${response.status}`);
+  }
+
+  if (parsed.error) {
+    err("RPC_METHOD_FAIL", parsed.error);
+
+    throw new Error("RPC_ERROR");
+  }
+
+  if (!parsed.result) {
+    err("RPC_EMPTY_RESULT");
+
+    throw new Error("RPC_EMPTY_RESULT");
+  }
+
+  log("RPC_CALL_OK");
+
+  return parsed.result;
 }
 
-/* =========================
+/* =========================================================
    PARSE ENVELOPE
-========================= */
+========================================================= */
 
-function parseEnvelope(result: Json) {
-  const memo =
-    deepFind(result, ["memo"]) ||
-    deepFind(result, ["text"]);
-
+function parseFromEnvelopeJson(
+  result: JsonObj
+): {
+  amount: number | null;
+  sender: string | null;
+  receiver: string | null;
+} {
   const sender =
-    deepFind(result, ["source_account", "sender"]);
+    deepFindString(result, [
+      "sourceAccount",
+      "source_account",
+      "from",
+      "from_address",
+      "account_id",
+    ]) ?? null;
 
   const receiver =
-    deepFind(result, ["destination", "receiver"]);
+    deepFindString(result, [
+      "destination",
+      "to",
+      "to_address",
+      "toAccount",
+    ]) ?? null;
 
-  let amount = num(
-    deepFind(result, ["amount"])
+  const amount = normalizeAmount(
+    deepFindNumber(result, [
+      "amount",
+      "sendAmount",
+      "value",
+      "i128",
+    ])
   );
 
-  if (amount && amount > 1e7) {
-    amount = amount / 1e7;
-  }
-
-  return { amount, sender, receiver, memo };
+  return {
+    amount,
+    sender,
+    receiver,
+  };
 }
 
-/* =========================
-   PARSE EVENTS (FIXED KEY)
-========================= */
+/* =========================================================
+   PARSE EVENTS
+========================================================= */
 
-function parseEvents(result: Json) {
+function parseFromEvents(
+  result: JsonObj
+): {
+  amount: number | null;
+  sender: string | null;
+  receiver: string | null;
+} {
   const events = asObj(result.events);
 
-  const contract = asArr(events.contractEventsJson);
-  const tx = asArr(events.transactionEventsJson);
+  const txEvents = asArr(
+    events.transactionEventsJson
+  );
+
+  const contractEvents = asArr(
+    events.contractEventsJson
+  );
 
   const sender =
-    deepFind(contract, ["address"]) ||
-    deepFind(tx, ["address"]);
+    deepFindString(txEvents, [
+      "from",
+      "source",
+      "address",
+    ]) ??
+    deepFindString(contractEvents, [
+      "from",
+      "source",
+      "address",
+    ]) ??
+    null;
 
   const receiver =
-    deepFind(contract, ["destination"]);
+    deepFindString(contractEvents, [
+      "destination",
+      "to",
+      "address",
+    ]) ?? null;
 
-  let amount =
-    num(deepFind(contract, ["amount"])) ||
-    num(deepFind(tx, ["amount"]));
+  const amount = normalizeAmount(
+    deepFindNumber(contractEvents, [
+      "amount",
+      "value",
+      "i128",
+    ])
+  );
 
-  if (amount && amount > 1e7) {
-    amount = amount / 1e7;
-  }
-
-  return { amount, sender, receiver };
+  return {
+    amount,
+    sender,
+    receiver,
+  };
 }
 
-/* =========================
+/* =========================================================
    MAIN
-========================= */
+========================================================= */
 
 export async function getRpcTransaction(
   txid: string
 ): Promise<ParsedRpcTransaction> {
   const clean = txid.trim();
 
-  if (!clean) throw new Error("TXID_REQUIRED");
+  log("GET_TX_START", {
+    txid: clean,
+  });
+
+  if (!clean) {
+    throw new Error("RPC_TXID_REQUIRED");
+  }
 
   try {
-    const result = await rpcCall("getTransaction", {
-      hash: clean,
-      xdrFormat: "json",
-    });
+    const result = await rpcCall(
+      "getTransaction",
+      {
+        hash: clean,
+        xdrFormat: "json",
+      }
+    );
 
     const ledger = num(result.ledger);
 
-    const envelope = parseEnvelope(result);
-    const events = parseEvents(result);
+    const status =
+      str(result.status) ??
+      str(result.txStatus) ??
+      null;
 
-    const useEnvelope =
-      envelope.amount || envelope.sender || envelope.receiver;
+    const confirmed =
+      status === "SUCCESS" ||
+      status === "FAILED" ||
+      ledger !== null;
 
-    const data = useEnvelope ? envelope : events;
+    /* =====================================================
+       ENVELOPE
+    ===================================================== */
 
-    return {
-      hash: str(result.txHash) || clean,
+    const envelopeJson = asObj(
+      result.envelopeJson
+    );
+
+    const envelopeTx = asObj(
+      envelopeJson.tx
+    );
+
+    const innerTx = asObj(
+      envelopeTx.tx
+    );
+
+    const memoObj = asObj(
+      innerTx.memo
+    );
+
+    /* =====================================================
+       MEMO
+    ===================================================== */
+
+    const memo =
+      str(memoObj.text) ??
+      str(memoObj.id) ??
+      str(memoObj.hash) ??
+      null;
+
+    /* =====================================================
+       CREATED AT
+    ===================================================== */
+
+    const createdAt =
+      str(result.createdAt) ??
+      str(result.created_at) ??
+      str(result.created) ??
+      null;
+
+    /* =====================================================
+       PARSING
+    ===================================================== */
+
+    let amount: number | null = null;
+
+    let sender: string | null = null;
+
+    let receiver: string | null = null;
+
+    let parseLayer = "NONE";
+
+    /* ===== LAYER A ===== */
+
+    const parsedEnvelope =
+      parseFromEnvelopeJson(result);
+
+    if (
+      parsedEnvelope.amount !== null ||
+      parsedEnvelope.sender ||
+      parsedEnvelope.receiver
+    ) {
+      amount = parsedEnvelope.amount;
+
+      sender = parsedEnvelope.sender;
+
+      receiver = parsedEnvelope.receiver;
+
+      parseLayer = "ENVELOPE_JSON";
+    }
+
+    /* ===== LAYER B ===== */
+
+    if (
+      amount === null &&
+      !sender &&
+      !receiver
+    ) {
+      const parsedEvents =
+        parseFromEvents(result);
+
+      if (
+        parsedEvents.amount !== null ||
+        parsedEvents.sender ||
+        parsedEvents.receiver
+      ) {
+        amount = parsedEvents.amount;
+
+        sender = parsedEvents.sender;
+
+        receiver = parsedEvents.receiver;
+
+        parseLayer = "EVENTS";
+      }
+    }
+
+    log("PARSE_RESULT", {
+      txid: clean,
+
+      amount,
+
+      sender,
+
+      receiver,
+
       ledger,
 
-      amount: data.amount,
-      sender: data.sender,
-      receiver: data.receiver,
+      confirmed,
 
-      memo: data.memo,
-      createdAt:
-        str(result.createdAt) ||
-        str(result.created_at),
+      memo,
 
-      confirmed:
-        str(result.status) === "SUCCESS",
+      parseLayer,
+    });
+
+    return {
+      hash:
+        str(result.txHash) ?? clean,
+
+      ledger,
+
+      amount,
+
+      sender,
+
+      receiver,
+
+      memo,
+
+      createdAt,
+
+      txStatus:
+        status ??
+        (confirmed
+          ? "SUCCESS"
+          : "UNKNOWN"),
+
+      confirmed,
 
       rpcReachable: true,
 
       raw: result,
 
       debug: {
-        amountFound: !!data.amount,
-        senderFound: !!data.sender,
-        receiverFound: !!data.receiver,
-        parseLayer: useEnvelope
-          ? "ENVELOPE"
-          : "EVENTS",
-        hasMeta: !!result.resultMetaJson,
-        hasEvents: !!result.events,
+        amountFound:
+          amount !== null,
+
+        senderFound:
+          !!sender,
+
+        receiverFound:
+          !!receiver,
+
+        parseLayer,
+
+        hasMeta:
+          !!result.resultMetaJson ||
+          !!result.resultMetaXdr,
+
+        hasEvents:
+          !!result.events,
       },
     };
   } catch (e) {
+    err("GET_TX_FAIL", e);
+
     return {
       hash: clean,
+
       ledger: null,
+
       amount: null,
+
       sender: null,
+
       receiver: null,
+
       memo: null,
+
       createdAt: null,
+
+      txStatus: null,
+
       confirmed: false,
+
       rpcReachable: false,
+
       raw: {},
+
       debug: {
         amountFound: false,
+
         senderFound: false,
+
         receiverFound: false,
-        parseLayer: "FAILED",
+
+        parseLayer: "FAIL",
+
         hasMeta: false,
+
         hasEvents: false,
       },
     };
