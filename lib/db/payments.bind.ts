@@ -5,168 +5,216 @@ import { withTransaction } from "@/lib/db";
 ========================================================= */
 
 type BindParams = {
-  userId: string;
   paymentIntentId: string;
+
   piPaymentId: string;
+
   piUid: string;
+
   verifiedAmount: number;
+
   piPayload: unknown;
 };
 
+type LockedIntentRow = {
+  id: string;
+
+  pi_payment_id: string | null;
+
+  status: string | null;
+};
+
 /* =========================================================
-   VALIDATION HELPERS
+   HELPERS
 ========================================================= */
 
-function isUUID(v: string): boolean {
+function vlog(
+  step: string,
+  data?: unknown
+) {
+  console.log(
+    `[PAYMENTS_BIND_V7][${step}]`,
+    data ?? ""
+  );
+}
+
+function isUUID(
+  value: unknown
+): value is string {
   return (
-    typeof v === "string" &&
+    typeof value === "string" &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      v
+      value
     )
   );
 }
 
-function safeNumber(v: unknown): number {
-  const n = Number(v);
-  if (!Number.isFinite(n)) throw new Error("INVALID_AMOUNT");
+function safeAmount(
+  value: unknown
+): number {
+  const n = Number(value);
+
+  if (!Number.isFinite(n)) {
+    throw new Error(
+      "INVALID_AMOUNT"
+    );
+  }
+
   return n;
 }
 
 /* =========================================================
-   MAIN BIND FUNCTION
+   MAIN
 ========================================================= */
 
-export async function bindPiPaymentToIntent(
-  params: BindParams
-): Promise<void> {
-  return withTransaction(async (client) => {
-    const {
-      userId,
-      paymentIntentId,
-      piPaymentId,
-      piUid,
-      verifiedAmount,
-      piPayload,
-    } = params;
+export async function bindPiPaymentToIntent({
+  paymentIntentId,
+  piPaymentId,
+  piUid,
+  verifiedAmount,
+  piPayload,
+}: BindParams): Promise<void> {
+  vlog("START", {
+    paymentIntentId,
+    piPaymentId,
+  });
 
-    console.log("[PAYMENT][BIND] START", {
-      paymentIntentId,
-      piPaymentId,
-      userId,
-    });
+  /* =====================================================
+     FAST FAIL VALIDATION
+  ===================================================== */
 
-    /* =====================================================
-       0. VALIDATION (FAST FAIL)
-    ===================================================== */
+  if (!isUUID(paymentIntentId)) {
+    throw new Error(
+      "INVALID_PAYMENT_INTENT_ID"
+    );
+  }
 
-    if (!isUUID(paymentIntentId) || !isUUID(userId)) {
-      console.error("[PAYMENT][BIND] INVALID_UUID");
-      throw new Error("INVALID_UUID");
-    }
+  if (!piPaymentId) {
+    throw new Error(
+      "INVALID_PI_PAYMENT_ID"
+    );
+  }
 
-    if (!piUid) {
-      console.error("[PAYMENT][BIND] PI_UID_MISSING");
-      throw new Error("PI_UID_NOT_PROVIDED");
-    }
+  if (!piUid) {
+    throw new Error(
+      "INVALID_PI_UID"
+    );
+  }
 
-    const amount = safeNumber(verifiedAmount);
-
-    /* =====================================================
-       1. PRECHECK (NO LOCK)
-    ===================================================== */
-
-    const pre = await client.query<{
-      id: string;
-      buyer_id: string;
-      status: string;
-      pi_payment_id: string | null;
-    }>(
-      `
-      SELECT id, buyer_id, status, pi_payment_id
-      FROM payment_intents
-      WHERE id = $1
-      `,
-      [paymentIntentId]
+  const amount =
+    safeAmount(
+      verifiedAmount
     );
 
-    if (!pre.rows.length) {
-      console.error("[PAYMENT][BIND] INTENT_NOT_FOUND");
-      throw new Error("PAYMENT_INTENT_NOT_FOUND");
-    }
+  /* =====================================================
+     TX
+  ===================================================== */
 
-    const intent = pre.rows[0];
+  return withTransaction(
+    async (client) => {
+      /* =================================================
+         LOCK ROW
+      ================================================= */
 
-    if (intent.buyer_id !== userId) {
-      console.error("[PAYMENT][BIND] FORBIDDEN");
-      throw new Error("FORBIDDEN");
-    }
+      vlog("LOCK_START");
 
-    if (intent.status === "paid") {
-      console.log("[PAYMENT][BIND] ALREADY_PAID_SKIP");
-      return;
-    }
+      const lockRes =
+        await client.query<LockedIntentRow>(
+          `
+          SELECT
+            id,
+            pi_payment_id,
+            status
+          FROM payment_intents
+          WHERE id = $1
+          FOR UPDATE
+          `,
+          [paymentIntentId]
+        );
 
-    if (
-      intent.pi_payment_id &&
-      intent.pi_payment_id !== piPaymentId
-    ) {
-      console.error("[PAYMENT][BIND] ALREADY_BOUND");
-      throw new Error("PI_PAYMENT_ALREADY_BOUND");
-    }
+      if (
+        !lockRes.rows.length
+      ) {
+        throw new Error(
+          "PAYMENT_INTENT_NOT_FOUND"
+        );
+      }
 
-    /* =====================================================
-       2. LOCK (MINIMAL CRITICAL SECTION)
-    ===================================================== */
+      const intent =
+        lockRes.rows[0];
 
-    console.log("[PAYMENT][BIND] LOCKING");
+      vlog("LOCK_OK", {
+        id: intent.id,
+        status:
+          intent.status,
+        existing:
+          intent.pi_payment_id,
+      });
 
-    const lock = await client.query(
-      `
-      SELECT id
-      FROM payment_intents
-      WHERE id = $1
-      FOR UPDATE
-      `,
-      [paymentIntentId]
-    );
+      /* ================================================
+         IDEMPOTENT RE-BIND
+      ================================================ */
 
-    if (!lock.rows.length) {
-      console.error("[PAYMENT][BIND] LOCK_FAILED");
-      throw new Error("LOCK_FAILED");
-    }
+      if (
+        intent.pi_payment_id ===
+        piPaymentId
+      ) {
+        vlog(
+          "ALREADY_BOUND_SAME_PAYMENT"
+        );
 
-    /* =====================================================
-       3. UPDATE (ATOMIC)
-    ===================================================== */
+        return;
+      }
 
-    console.log("[PAYMENT][BIND] UPDATING");
+      /* ================================================
+         CONFLICT GUARD
+      ================================================ */
 
-    await client.query(
-      `
-      UPDATE payment_intents
-      SET
-        pi_payment_id = $2,
-        pi_user_uid = $3,
-        pi_verified_amount = $4,
-        pi_payment_payload = $5,
-        status = 'submitted',
-        updated_at = now()
-      WHERE id = $1
-        AND buyer_id = $6
-      `,
-      [
+      if (
+        intent.pi_payment_id &&
+        intent.pi_payment_id !==
+          piPaymentId
+      ) {
+        throw new Error(
+          "PI_PAYMENT_ALREADY_BOUND"
+        );
+      }
+
+      /* ================================================
+         UPDATE
+      ================================================ */
+
+      vlog("UPDATE_START");
+
+      await client.query(
+        `
+        UPDATE payment_intents
+        SET
+          pi_payment_id = $2,
+          pi_user_uid = $3,
+          pi_verified_amount = $4,
+          pi_payment_payload = $5,
+
+          status = 'authorized',
+
+          updated_at = now()
+        WHERE id = $1
+        `,
+        [
+          paymentIntentId,
+          piPaymentId,
+          piUid,
+          amount,
+          JSON.stringify(
+            piPayload ?? {}
+          ),
+        ]
+      );
+
+      vlog("UPDATE_DONE", {
         paymentIntentId,
         piPaymentId,
-        piUid,
-        amount,
-        JSON.stringify(piPayload ?? {}),
-        userId,
-      ]
-    );
-
-    console.log("[PAYMENT][BIND] SUCCESS", {
-      paymentIntentId,
-      piPaymentId,
-    });
-  });
+      });
+    }
+  );
 }
