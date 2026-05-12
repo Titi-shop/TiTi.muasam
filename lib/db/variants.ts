@@ -4,15 +4,18 @@ import { query, withTransaction } from "@/lib/db";
 /* =========================================================
    FORENSIC LOGGER
 ========================================================= */
+
 function vlog(step: string, data?: unknown) {
-  console.log(`🧪 [DB][VARIANTS] ${step}`, data ?? "");
+  console.log(`🧪 [DB][VARIANTS][V7] ${step}`, data ?? "");
 }
 
 /* =========================================================
-   DB TYPE
+   DB TYPES
 ========================================================= */
+
 export type ProductVariantDB = {
   id?: string;
+
   product_id: string;
 
   option_1: string | null;
@@ -24,6 +27,7 @@ export type ProductVariantDB = {
   option_label_3: string | null;
 
   name: string;
+
   sku: string | null;
 
   price: number;
@@ -31,28 +35,30 @@ export type ProductVariantDB = {
   final_price: number;
 
   sale_enabled: boolean;
+
   sale_stock: number;
   sale_sold: number;
 
   stock: number;
+
   is_unlimited: boolean;
 
   image: string;
 
   is_active: boolean;
+
   sort_order: number;
 
   sold: number;
+
   currency: string;
 
   created_at?: string;
   updated_at?: string;
+
   deleted_at?: string | null;
 };
 
-/* =========================================================
-   APP TYPE
-========================================================= */
 export type ProductVariant = {
   id?: string;
 
@@ -68,6 +74,7 @@ export type ProductVariant = {
   optionValue?: string;
 
   name?: string;
+
   sku?: string | null;
 
   price?: number;
@@ -75,47 +82,106 @@ export type ProductVariant = {
   finalPrice?: number;
 
   saleEnabled?: boolean;
+
   saleStock?: number;
   saleSold?: number;
 
   stock: number;
+
   isUnlimited?: boolean;
 
   image?: string;
 
   isActive?: boolean;
+
   sortOrder?: number;
 
   sold?: number;
 };
 
+export type ProductVariantRow = {
+  id: string;
+
+  product_id: string;
+
+  price: number;
+
+  sale_price: number | null;
+
+  final_price: number;
+
+  stock: number;
+
+  is_unlimited: boolean;
+
+  is_active: boolean;
+};
+
 /* =========================================================
    SAFE HELPERS
 ========================================================= */
+
 function safeNumber(value: unknown, fallback = 0): number {
-  if (value === "" || value === null || value === undefined) return fallback;
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return fallback;
+  }
 
-  const n = Number(value);
-  return Number.isNaN(n) ? fallback : n;
+  const parsed = Number(value);
+
+  if (Number.isNaN(parsed)) {
+    return fallback;
+  }
+
+  return parsed;
 }
 
-function safeNullableNumber(value: unknown): number | null {
-  if (value === "" || value === null || value === undefined) return null;
+function safeNullableNumber(
+  value: unknown
+): number | null {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return null;
+  }
 
-  const n = Number(value);
-  return Number.isNaN(n) ? null : n;
+  const parsed = Number(value);
+
+  if (Number.isNaN(parsed)) {
+    return null;
+  }
+
+  return parsed;
 }
 
-function buildVariantName(v: ProductVariant): string {
-  return [v.option1, v.option2, v.option3].filter(Boolean).join(" - ");
+function buildVariantName(
+  variant: ProductVariant
+): string {
+  return [
+    variant.option1,
+    variant.option2,
+    variant.option3,
+  ]
+    .filter(Boolean)
+    .join(" - ");
 }
 
-function calcFinalPrice(v: ProductVariant): number {
-  const price = safeNumber(v.price, 0);
-  const salePrice = safeNullableNumber(v.salePrice);
+function calcFinalPrice(
+  variant: ProductVariant
+): number {
+  const price = safeNumber(variant.price);
+
+  const salePrice = safeNullableNumber(
+    variant.salePrice
+  );
 
   if (
-    Boolean(v.saleEnabled) &&
+    Boolean(variant.saleEnabled) &&
     salePrice !== null &&
     salePrice > 0 &&
     salePrice < price
@@ -129,104 +195,169 @@ function calcFinalPrice(v: ProductVariant): number {
 /* =========================================================
    MAP DB -> APP
 ========================================================= */
-export function mapVariantToApp(v: ProductVariantDB): ProductVariant {
+
+export function mapVariantToApp(
+  variant: ProductVariantDB
+): ProductVariant {
   const mapped: ProductVariant = {
-    id: v.id,
+    id: variant.id,
 
-    option1: v.option_1 ?? "",
-    option2: v.option_2 ?? null,
-    option3: v.option_3 ?? null,
+    option1: variant.option_1 ?? "",
+    option2: variant.option_2 ?? null,
+    option3: variant.option_3 ?? null,
 
-    optionLabel1: v.option_label_1 ?? null,
-    optionLabel2: v.option_label_2 ?? null,
-    optionLabel3: v.option_label_3 ?? null,
+    optionLabel1:
+      variant.option_label_1 ?? null,
 
-    optionName: v.option_label_1 ?? "option",
-    optionValue: v.option_1 ?? "",
+    optionLabel2:
+      variant.option_label_2 ?? null,
 
-    name: v.name,
-    sku: v.sku ?? null,
+    optionLabel3:
+      variant.option_label_3 ?? null,
 
-    price: safeNumber(v.price),
-    salePrice: safeNullableNumber(v.sale_price),
-    finalPrice: safeNumber(v.final_price),
+    optionName:
+      variant.option_label_1 ?? "option",
 
-    saleEnabled: Boolean(v.sale_enabled),
-    saleStock: safeNumber(v.sale_stock),
-    saleSold: safeNumber(v.sale_sold),
+    optionValue: variant.option_1 ?? "",
 
-    stock: safeNumber(v.stock),
-    isUnlimited: Boolean(v.is_unlimited),
+    name: variant.name,
 
-    image: v.image ?? "",
+    sku: variant.sku ?? null,
 
-    isActive: Boolean(v.is_active),
-    sortOrder: safeNumber(v.sort_order),
+    price: safeNumber(variant.price),
 
-    sold: safeNumber(v.sold),
+    salePrice: safeNullableNumber(
+      variant.sale_price
+    ),
+
+    finalPrice: safeNumber(
+      variant.final_price
+    ),
+
+    saleEnabled: Boolean(
+      variant.sale_enabled
+    ),
+
+    saleStock: safeNumber(
+      variant.sale_stock
+    ),
+
+    saleSold: safeNumber(
+      variant.sale_sold
+    ),
+
+    stock: safeNumber(variant.stock),
+
+    isUnlimited: Boolean(
+      variant.is_unlimited
+    ),
+
+    image: variant.image ?? "",
+
+    isActive: Boolean(variant.is_active),
+
+    sortOrder: safeNumber(
+      variant.sort_order
+    ),
+
+    sold: safeNumber(variant.sold),
   };
 
   vlog("MAP_DB_TO_APP", mapped);
+
   return mapped;
 }
 
 /* =========================================================
    MAP APP -> DB
 ========================================================= */
+
 export function mapVariantToDB(
-  v: ProductVariant,
+  variant: ProductVariant,
   productId: string,
   sortOrder: number
 ): ProductVariantDB {
   const mapped: ProductVariantDB = {
-    id: v.id,
+    id: variant.id,
+
     product_id: productId,
 
-    option_1: v.option1?.trim() || null,
-    option_2: v.option2?.trim() || null,
-    option_3: v.option3?.trim() || null,
+    option_1:
+      variant.option1?.trim() || null,
 
-    option_label_1: v.optionLabel1?.trim() || null,
-    option_label_2: v.optionLabel2?.trim() || null,
-    option_label_3: v.optionLabel3?.trim() || null,
+    option_2:
+      variant.option2?.trim() || null,
 
-    name: v.name?.trim() || buildVariantName(v),
+    option_3:
+      variant.option3?.trim() || null,
 
-    sku: v.sku?.trim() || null,
+    option_label_1:
+      variant.optionLabel1?.trim() || null,
 
-    price: safeNumber(v.price),
-    sale_price: safeNullableNumber(v.salePrice),
-    final_price: calcFinalPrice(v),
+    option_label_2:
+      variant.optionLabel2?.trim() || null,
 
-    sale_enabled: Boolean(v.saleEnabled),
-    sale_stock: safeNumber(v.saleStock),
-    sale_sold: safeNumber(v.saleSold),
+    option_label_3:
+      variant.optionLabel3?.trim() || null,
 
-    stock: safeNumber(v.stock),
-    is_unlimited: Boolean(v.isUnlimited),
+    name:
+      variant.name?.trim() ||
+      buildVariantName(variant),
 
-    image: v.image ?? "",
+    sku: variant.sku?.trim() || null,
 
-    is_active: v.isActive !== false,
+    price: safeNumber(variant.price),
+
+    sale_price: safeNullableNumber(
+      variant.salePrice
+    ),
+
+    final_price: calcFinalPrice(variant),
+
+    sale_enabled: Boolean(
+      variant.saleEnabled
+    ),
+
+    sale_stock: safeNumber(
+      variant.saleStock
+    ),
+
+    sale_sold: safeNumber(
+      variant.saleSold
+    ),
+
+    stock: safeNumber(variant.stock),
+
+    is_unlimited: Boolean(
+      variant.isUnlimited
+    ),
+
+    image: variant.image ?? "",
+
+    is_active: variant.isActive !== false,
+
     sort_order: sortOrder,
 
-    sold: safeNumber(v.sold),
+    sold: safeNumber(variant.sold),
+
     currency: "PI",
   };
 
   vlog("MAP_APP_TO_DB", mapped);
+
   return mapped;
 }
 
 /* =========================================================
-   GET VARIANTS
+   GET VARIANTS BY PRODUCT
 ========================================================= */
+
 export async function getVariantsByProductId(
   productId: string
 ): Promise<ProductVariant[]> {
-  vlog("GET_START", productId);
+  vlog("GET_BY_PRODUCT_START", productId);
 
-  const res = await query(
+  const result = await query<ProductVariantDB>(
     `
     SELECT *
     FROM product_variants
@@ -237,50 +368,141 @@ export async function getVariantsByProductId(
     [productId]
   );
 
-  vlog("GET_RAW_ROWS", res.rows);
+  vlog("GET_BY_PRODUCT_ROWS", result.rows);
 
-  const mapped = res.rows.map((row) => mapVariantToApp(row as ProductVariantDB));
-
-  vlog("GET_DONE", mapped);
-
-  return mapped;
+  return result.rows.map(mapVariantToApp);
 }
 
 /* =========================================================
-   REPLACE ALL VARIANTS
+   GET SINGLE VARIANT
 ========================================================= */
+
+export async function getVariantById(
+  variantId: string
+): Promise<ProductVariantRow | null> {
+  vlog("GET_VARIANT_START", variantId);
+
+  const result = await query<ProductVariantRow>(
+    `
+    SELECT
+      id,
+      product_id,
+      price,
+      sale_price,
+      final_price,
+      stock,
+      is_unlimited,
+      is_active
+    FROM product_variants
+    WHERE id = $1
+      AND deleted_at IS NULL
+    LIMIT 1
+    `,
+    [variantId]
+  );
+
+  const row = result.rows[0] ?? null;
+
+  vlog("GET_VARIANT_RESULT", row);
+
+  return row;
+}
+
+/* =========================================================
+   VALIDATE VARIANT OWNERSHIP
+========================================================= */
+
+export async function validateVariantOwnership(
+  variantId: string,
+  productId: string
+): Promise<boolean> {
+  vlog("VALIDATE_VARIANT_START", {
+    variantId,
+    productId,
+  });
+
+  const variant = await getVariantById(
+    variantId
+  );
+
+  if (!variant) {
+    vlog("VALIDATE_VARIANT_NOT_FOUND");
+
+    return false;
+  }
+
+  if (!variant.is_active) {
+    vlog("VALIDATE_VARIANT_INACTIVE");
+
+    return false;
+  }
+
+  const matched =
+    variant.product_id === productId;
+
+  vlog("VALIDATE_VARIANT_RESULT", {
+    matched,
+  });
+
+  return matched;
+}
+
+/* =========================================================
+   REPLACE VARIANTS
+========================================================= */
+
 export async function replaceVariantsByProductId(
   productId: string,
-  input: ProductVariant[]
+  variants: ProductVariant[]
 ): Promise<void> {
-  return withTransaction(async (client) => {
-    vlog("REPLACE_START_PRODUCT", productId);
-    vlog("REPLACE_INPUT", input);
-
-    await client.query(`DELETE FROM product_variants WHERE product_id = $1`, [
+  await withTransaction(async (client) => {
+    vlog("REPLACE_START", {
       productId,
-    ]);
+      count: variants.length,
+    });
 
-    vlog("REPLACE_OLD_DELETED");
+    await client.query(
+      `
+      UPDATE product_variants
+      SET
+        deleted_at = NOW(),
+        updated_at = NOW()
+      WHERE product_id = $1
+        AND deleted_at IS NULL
+      `,
+      [productId]
+    );
 
-    if (!input.length) {
-      vlog("REPLACE_NO_INPUT_VARIANTS");
+    vlog("OLD_VARIANTS_SOFT_DELETED");
+
+    if (!variants.length) {
+      vlog("NO_NEW_VARIANTS");
+
       return;
     }
 
     const FIELD_COUNT = 22;
-    const values: unknown[] = [];
+
     const placeholders: string[] = [];
 
-    input.forEach((variant, index) => {
-      const db = mapVariantToDB(variant, productId, index);
+    const values: unknown[] = [];
 
-      const rowPlaceholder = Array.from(
+    variants.forEach((variant, index) => {
+      const db = mapVariantToDB(
+        variant,
+        productId,
+        index
+      );
+
+      const rowPlaceholders = Array.from(
         { length: FIELD_COUNT },
-        (_, k) => `$${index * FIELD_COUNT + k + 1}`
+        (_, k) =>
+          `$${index * FIELD_COUNT + k + 1}`
       ).join(",");
 
-      placeholders.push(`(${rowPlaceholder})`);
+      placeholders.push(
+        `(${rowPlaceholders})`
+      );
 
       values.push(
         db.product_id,
@@ -307,8 +529,6 @@ export async function replaceVariantsByProductId(
         db.currency
       );
     });
-
-    vlog("REPLACE_INSERT_VALUES", values);
 
     await client.query(
       `
@@ -341,50 +561,75 @@ export async function replaceVariantsByProductId(
       values
     );
 
-    vlog("REPLACE_DONE_SUCCESS");
+    vlog("REPLACE_SUCCESS");
   });
 }
 
 /* =========================================================
-   DECREASE VARIANT STOCK
+   DECREASE STOCK
 ========================================================= */
+
 export async function decreaseVariantStock(
   variantId: string,
   quantity: number
 ): Promise<{ success: true }> {
   return withTransaction(async (client) => {
-    vlog("DECREASE_START", { variantId, quantity });
+    vlog("DECREASE_START", {
+      variantId,
+      quantity,
+    });
 
-    const res = await client.query(
+    const result = await client.query<
+      ProductVariantDB & {
+        sale_start: string | null;
+        sale_end: string | null;
+      }
+    >(
       `
-      SELECT v.*, p.sale_start, p.sale_end
+      SELECT
+        v.*,
+        p.sale_start,
+        p.sale_end
       FROM product_variants v
-      JOIN products p ON p.id = v.product_id
+      JOIN products p
+        ON p.id = v.product_id
       WHERE v.id = $1
+        AND v.deleted_at IS NULL
       FOR UPDATE
       `,
       [variantId]
     );
 
-    if (!res.rows.length) {
-      vlog("DECREASE_VARIANT_NOT_FOUND");
+    if (!result.rows.length) {
+      vlog("VARIANT_NOT_FOUND");
+
       throw new Error("VARIANT_NOT_FOUND");
     }
 
-    const row = res.rows[0] as ProductVariantDB & {
-      sale_start: string | null;
-      sale_end: string | null;
-    };
+    const row = result.rows[0];
 
-    vlog("DECREASE_LOCKED_ROW", row);
+    vlog("LOCKED_VARIANT", row);
 
-    if (!row.is_unlimited && safeNumber(row.stock) < quantity) {
+    if (!row.is_active) {
+      throw new Error("VARIANT_INACTIVE");
+    }
+
+    if (
+      !row.is_unlimited &&
+      safeNumber(row.stock) < quantity
+    ) {
       throw new Error("OUT_OF_STOCK");
     }
 
     const now = Date.now();
-    const start = row.sale_start ? new Date(row.sale_start).getTime() : null;
-    const end = row.sale_end ? new Date(row.sale_end).getTime() : null;
+
+    const start = row.sale_start
+      ? new Date(row.sale_start).getTime()
+      : null;
+
+    const end = row.sale_end
+      ? new Date(row.sale_end).getTime()
+      : null;
 
     const isSaleWindow =
       Boolean(row.sale_enabled) &&
@@ -394,13 +639,21 @@ export async function decreaseVariantStock(
       now >= start &&
       now <= end;
 
-    if (isSaleWindow) {
-      const left = safeNumber(row.sale_stock) - safeNumber(row.sale_sold);
+    vlog("SALE_WINDOW", {
+      isSaleWindow,
+    });
 
-      vlog("DECREASE_SALE_WINDOW", { left });
+    if (isSaleWindow) {
+      const left =
+        safeNumber(row.sale_stock) -
+        safeNumber(row.sale_sold);
+
+      vlog("SALE_STOCK_LEFT", left);
 
       if (left < quantity) {
-        throw new Error("FLASH_SALE_SOLD_OUT");
+        throw new Error(
+          "FLASH_SALE_SOLD_OUT"
+        );
       }
     }
 
@@ -409,57 +662,34 @@ export async function decreaseVariantStock(
       UPDATE product_variants
       SET
         stock = CASE
-          WHEN is_unlimited THEN stock
+          WHEN is_unlimited
+          THEN stock
           ELSE stock - $2
         END,
 
         sale_sold = CASE
-          WHEN sale_enabled
-           AND sale_price IS NOT NULL
+          WHEN $3 = true
           THEN sale_sold + $2
           ELSE sale_sold
         END,
 
         sold = sold + $2,
+
         updated_at = NOW()
+
       WHERE id = $1
       `,
-      [variantId, quantity]
+      [
+        variantId,
+        quantity,
+        isSaleWindow,
+      ]
     );
 
-    vlog("DECREASE_DONE_SUCCESS");
+    vlog("DECREASE_SUCCESS");
 
-    return { success: true };
+    return {
+      success: true,
+    };
   });
-}
-
-export type ProductVariantRow = {
-  id: string;
-  product_id: string;
-  price: number;
-  sale_price: number | null;
-  stock: number;
-  is_active: boolean;
-};
-
-export async function getVariantById(
-  variantId: string
-): Promise<ProductVariantRow | null> {
-  const { rows } = await query<ProductVariantRow>(
-    `
-    SELECT
-      id,
-      product_id,
-      price,
-      sale_price,
-      stock,
-      is_active
-    FROM product_variants
-    WHERE id = $1
-    LIMIT 1
-    `,
-    [variantId]
-  );
-
-  return rows[0] ?? null;
 }
