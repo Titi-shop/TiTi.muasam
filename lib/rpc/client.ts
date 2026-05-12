@@ -333,19 +333,24 @@ const createdAt =
     });
 
     return {
-  hash:
-    str(result.txHash) ??
-    str(result.hash) ??
-    clean,
+  hash: str(result.txHash) || clean,
   ledger,
   amount,
   sender,
   receiver,
   confirmed,
   rpcReachable: true,
-  txStatus: status,
-  createdAt,
-  memo,
+  txStatus:
+    str(result.status) ??
+    (confirmed ? "SUCCESS" : "UNKNOWN"),
+  createdAt:
+    str(result.createdAt) ??
+    str(result.created_at) ??
+    null,
+  memo:
+    str(result.memo) ??
+    str(result.memoText) ??
+    null,
   raw: result,
       debug: {
         amountFound: amount !== null,
@@ -360,14 +365,17 @@ const createdAt =
     err("GET_TX_FAIL", e);
 
     return {
-      hash: clean,
-      ledger: null,
-      amount: null,
-      sender: null,
-      receiver: null,
-      confirmed: false,
-      rpcReachable: false,
-      raw: {},
+  hash: clean,
+  ledger: null,
+  amount: null,
+  sender: null,
+  receiver: null,
+  confirmed: false,
+  rpcReachable: false,
+  txStatus: null,
+  createdAt: null,
+  memo: null,
+  raw: {},
       debug: {
         amountFound: false,
         senderFound: false,
