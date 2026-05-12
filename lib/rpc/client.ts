@@ -21,16 +21,14 @@ type JsonObj = Record<string, unknown>;
 export type ParsedRpcTransaction = {
   hash: string | null;
   ledger: number | null;
-
   amount: number | null;
   sender: string | null;
   receiver: string | null;
-
   memo: string | null;
   createdAt: string | null;
-  txStatus: string | null;
   confirmed: boolean;
   rpcReachable: boolean;
+  txStatus: string | null;
   raw: unknown;
   debug: {
     amountFound: boolean;
@@ -356,18 +354,21 @@ const createdAt =
   receiver,
   memo,
   createdAt,
-  txStatus:
-    status ??
-    (confirmed ? "SUCCESS" : "UNKNOWN"),
   confirmed,
   rpcReachable: true,
+  txStatus:
+    str(result.status) ??
+    str(result.txStatus) ??
+    (confirmed ? "SUCCESS" : "UNKNOWN"),
   raw: result,
   debug: {
     amountFound: amount !== null,
     senderFound: !!sender,
     receiverFound: !!receiver,
     parseLayer,
-    hasMeta: !!result.resultMetaJson,
+    hasMeta:
+      !!result.resultMetaJson ||
+      !!result.resultMetaXdr,
     hasEvents: !!result.events,
   },
 };
