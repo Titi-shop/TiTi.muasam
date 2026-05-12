@@ -57,20 +57,13 @@ function emptyRpcPayload(): RpcAuditResult {
   return {
     ok: false,
     audited: false,
-
     amount: null,
-
     sender: null,
     receiver: null,
-
     ledger: null,
-
     confirmed: false,
-
     txStatus: "EMPTY",
-
     chainReference: null,
-
     stage: "EMPTY",
     reason: "EMPTY_RPC",
     payload: {},
@@ -138,9 +131,7 @@ async function safeAuditRpc(
 
     console.log("[PAYMENT][RPC_VERIFY] RESULT", {
   paymentIntentId,
-
   ok: rpc.ok,
-
   reason: rpc.reason,
   amount: rpc.amount,
   confirmed: rpc.confirmed,
@@ -308,7 +299,6 @@ async function safeLedger(
     });
 
     await SettlementLedger.releaseEscrow(escrowId);
-
     await auditFinalizeDone(paymentIntentId, {
       source: "ledger",
       orderId: paid.orderId,
@@ -465,29 +455,19 @@ export async function runPaymentSettlement({
 
   await auditPiVerified(paymentIntentId, {
   source,
-
   txid,
-
   piPaymentId,
-
   actorId: userId,
-
   amount: piVerified.verifiedAmount,
-
   receiverWallet: piVerified.receiverWallet,
-
   payload: {
     memo: piVerified.piPayload?.memo ?? null,
-
     identifier:
       piVerified.piPayload?.identifier ?? null,
-
     from_address:
       piVerified.piPayload?.from_address ?? null,
-
     to_address:
       piVerified.piPayload?.to_address ?? null,
-
     developer_completed:
       piVerified.piPayload?.status?.developer_completed ??
       false,
@@ -585,19 +565,23 @@ if (!intentRow) {
   paymentIntentId,
   piPaymentId,
   txid,
+
   verifiedAmount: piVerified.verifiedAmount,
   receiverWallet: piVerified.receiverWallet,
   piPayload: piVerified.piPayload ?? {},
-  rpcPayload:
-  rpcPayload:
-rpcVerified?.ok
-  ? {
-      ...rpcVerified,
-      confirmed: rpcVerified.confirmed,
-      txStatus: rpcVerified.txStatus,
-      chainReference: rpcVerified.chainReference ?? txid,
-    }
-  : emptyRpcPayload(),
+  rpcPayload: rpcVerified?.ok
+    ? {
+        ...rpcVerified,
+
+        confirmed:
+          rpcVerified.confirmed ?? true,
+        txStatus:
+          rpcVerified.txStatus ?? "CONFIRMED",
+        chainReference:
+          rpcVerified.chainReference ?? txid,
+      }
+    : emptyRpcPayload(),
+
   intent: intentRow,
 });
   console.log("[PAYMENT][SETTLEMENT] FINALIZE_ORDER_RESULT", {
