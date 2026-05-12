@@ -8,10 +8,11 @@ import {
 } from "@/lib/db/shipping";
 
 import {
+  getProductById,
+} from "@/lib/db/products";
+
+import {
   getVariantById,
-  isVariantActive,
-  isVariantBelongsToProduct,
-  isVariantPurchasable,
 } from "@/lib/db/variants";
 
 /* =========================================================
@@ -31,22 +32,25 @@ type PreviewOrderInput = {
   zone?: string;
 };
 
-type PreviewOrderItem = {
-  product_id: string;
-  variant_id: string | null;
-  name: string;
-  price: number;
-  quantity: number;
-  total: number;
-};
-
 type PreviewOrderResult = {
-  items: PreviewOrderItem[];
+  items: {
+    product_id: string;
+    variant_id: string | null;
+    name: string;
+    price: number;
+    quantity: number;
+    total: number;
+  }[];
+
   subtotal: number;
   shipping_fee: number;
   total: number;
   buyer_zone: string;
 };
+
+/* =========================================================
+   PRODUCT TYPES
+========================================================= */
 
 type ProductRow = {
   id: string;
@@ -55,22 +59,27 @@ type ProductRow = {
   sale_price: number | null;
   sale_start: string | null;
   sale_end: string | null;
+
+  status?: string | null;
+  deleted_at?: string | null;
 };
 
 type VariantRow = {
   id: string;
   product_id: string;
+
   price: number;
   sale_price: number | null;
-  stock: number | null;
-  is_active: boolean;
+
+  stock?: number | null;
+  is_active?: boolean | null;
 };
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
-function log(tag: string, data?: unknown): void {
+function log(tag: string, data?: unknown) {
   console.log(`[ORDER PREVIEW V7][${tag}]`, data ?? "");
 }
 
@@ -83,8 +92,8 @@ function isUUID(v: unknown): v is string {
   );
 }
 
-function safeQty(q: unknown): number {
-  const n = Number(q);
+function safeQty(v: unknown): number {
+  const n = Number(v);
 
   if (!Number.isInteger(n) || n <= 0) {
     return 1;
@@ -93,22 +102,33 @@ function safeQty(q: unknown): number {
   return Math.min(n, 100);
 }
 
-function resolveProductSalePrice(product: ProductRow): number {
+function isSaleActive(params: {
+  sale_start: string | null;
+  sale_end: string | null;
+}): boolean {
   const now = Date.now();
 
-  const start = product.sale_start
-    ? new Date(product.sale_start).getTime()
+  const start = params.sale_start
+    ? new Date(params.sale_start).getTime()
     : null;
 
-  const end = product.sale_end
-    ? new Date(product.sale_end).getTime()
+  const end = params.sale_end
+    ? new Date(params.sale_end).getTime()
     : null;
 
-  const active =
+  return (
     start !== null &&
     end !== null &&
     now >= start &&
-    now <= end;
+    now <= end
+  );
+}
+
+function resolveProductPrice(product: ProductRow): number {
+  const active = isSaleActive({
+    sale_start: product.sale_start,
+    sale_end: product.sale_end,
+  });
 
   if (
     active &&
@@ -121,12 +141,17 @@ function resolveProductSalePrice(product: ProductRow): number {
   return Number(product.price);
 }
 
-function resolveVariantSalePrice(
-  baseSaleActive: boolean,
+function resolveVariantPrice(
+  product: ProductRow,
   variant: VariantRow
 ): number {
+  const active = isSaleActive({
+    sale_start: product.sale_start,
+    sale_end: product.sale_end,
+  });
+
   if (
-    baseSaleActive &&
+    active &&
     variant.sale_price !== null &&
     Number(variant.sale_price) > 0
   ) {
@@ -136,31 +161,16 @@ function resolveVariantSalePrice(
   return Number(variant.price);
 }
 
-function isProductSaleActive(product: ProductRow): boolean {
-  const now = Date.now();
-
-  const start = product.sale_start
-    ? new Date(product.sale_start).getTime()
-    : null;
-
-  const end = product.sale_end
-    ? new Date(product.sale_end).getTime()
-    : null;
-
-  return (
-    start !== null &&
-    end !== null &&
-    now >= start &&
-    now <= end
-  );
-}
-
 function chooseShippingPrice(params: {
   rates: Awaited<ReturnType<typeof getShippingRatesByProduct>>;
   buyerCountry: string;
   buyerZone: string | null;
 }): number {
-  const { rates, buyerCountry, buyerZone } = params;
+  const {
+    rates,
+    buyerCountry,
+    buyerZone,
+  } = params;
 
   const domestic = rates.find(
     (r) =>
@@ -195,6 +205,106 @@ function chooseShippingPrice(params: {
 }
 
 /* =========================================================
+   VALIDATORS
+========================================================= */
+
+async function validateProduct(
+  productId: string
+): Promise<ProductRow> {
+  const product = await getProductById(productId);
+
+  if (!product) {
+    throw new Error("PRODUCT_NOT_FOUND");
+  }
+
+  const normalized: ProductRow = {
+    id: String(product.id),
+    name: String(product.name),
+    price: Number(product.price),
+    sale_price:
+      product.sale_price !== null
+        ? Number(product.sale_price)
+        : null,
+    sale_start:
+      product.sale_start !== null
+        ? String(product.sale_start)
+        : null,
+    sale_end:
+      product.sale_end !== null
+        ? String(product.sale_end)
+        : null,
+
+    status:
+      "status" in product
+        ? String(product.status ?? "")
+        : null,
+
+    deleted_at:
+      "deleted_at" in product
+        ? String(product.deleted_at ?? "")
+        : null,
+  };
+
+  if (
+    normalized.status &&
+    normalized.status !== "active"
+  ) {
+    throw new Error("PRODUCT_INACTIVE");
+  }
+
+  if (normalized.deleted_at) {
+    throw new Error("PRODUCT_DELETED");
+  }
+
+  return normalized;
+}
+
+async function validateVariant(
+  variantId: string,
+  productId: string
+): Promise<VariantRow> {
+  const variant = await getVariantById(variantId);
+
+  if (!variant) {
+    throw new Error("VARIANT_NOT_FOUND");
+  }
+
+  const normalized: VariantRow = {
+    id: String(variant.id),
+    product_id: String(variant.product_id),
+
+    price: Number(variant.price),
+
+    sale_price:
+      variant.sale_price !== null
+        ? Number(variant.sale_price)
+        : null,
+
+    stock:
+      "stock" in variant &&
+      typeof variant.stock === "number"
+        ? variant.stock
+        : null,
+
+    is_active:
+      "is_active" in variant &&
+      typeof variant.is_active === "boolean"
+        ? variant.is_active
+        : null,
+  };
+
+  if (normalized.product_id !== productId) {
+    throw new Error("VARIANT_PRODUCT_MISMATCH");
+  }
+
+  if (normalized.is_active === false) {
+    throw new Error("VARIANT_INACTIVE");
+  }
+
+  return normalized;
+}
+
+/* =========================================================
    MAIN
 ========================================================= */
 
@@ -203,7 +313,11 @@ export async function previewOrder(
 ): Promise<PreviewOrderResult> {
   log("START", input);
 
-  const { userId, items, country } = input;
+  const {
+    userId,
+    items,
+    country,
+  } = input;
 
   if (!userId) {
     throw new Error("INVALID_USER");
@@ -246,7 +360,9 @@ export async function previewOrder(
      BUYER GEO
   ===================================================== */
 
-  const buyerCountry = country.trim().toUpperCase();
+  const buyerCountry = country
+    .trim()
+    .toUpperCase();
 
   const buyerZone =
     await getZoneByCountry(buyerCountry);
@@ -257,135 +373,49 @@ export async function previewOrder(
   });
 
   /* =====================================================
-     LOAD PRODUCTS
-  ===================================================== */
-
-  const productIds = cleanItems.map(
-    (i) => i.product_id
-  );
-
-  const { rows: products } = await query<ProductRow>(
-    `
-      SELECT
-        id,
-        name,
-        price,
-        sale_price,
-        sale_start,
-        sale_end
-      FROM products
-      WHERE id = ANY($1::uuid[])
-    `,
-    [productIds]
-  );
-
-  const productMap = new Map<string, ProductRow>(
-    products.map((p) => [p.id, p])
-  );
-
-  /* =====================================================
-     CALCULATE
+     LOAD + VALIDATE
   ===================================================== */
 
   let subtotal = 0;
 
-  const previewItems: PreviewOrderItem[] = [];
+  const previewItems: PreviewOrderResult["items"] =
+    [];
 
   for (const item of cleanItems) {
-    const product = productMap.get(
+    const product = await validateProduct(
       item.product_id
     );
 
-    if (!product) {
-      throw new Error("INVALID_PRODUCT");
-    }
-
-    let finalPrice =
-      resolveProductSalePrice(product);
-
-    let finalVariantId: string | null = null;
-
-    /* ===================================================
-       VARIANT VALIDATION
-    =================================================== */
+    let price = resolveProductPrice(product);
 
     if (item.variant_id) {
-      const variant = (await getVariantById(
-        item.variant_id
-      )) as VariantRow | null;
-
-      if (!variant) {
-        throw new Error("INVALID_VARIANT");
-      }
-
-      const belongs =
-        await isVariantBelongsToProduct(
-          variant.id,
-          product.id
-        );
-
-      if (!belongs) {
-        throw new Error(
-          "VARIANT_PRODUCT_MISMATCH"
-        );
-      }
-
-      const active = await isVariantActive(
-        variant.id
+      const variant = await validateVariant(
+        item.variant_id,
+        product.id
       );
-
-      if (!active || !variant.is_active) {
-        throw new Error("VARIANT_DISABLED");
-      }
-
-      const purchasable =
-        await isVariantPurchasable(
-          variant.id,
-          item.quantity
-        );
-
-      if (!purchasable) {
-        throw new Error(
-          "VARIANT_NOT_PURCHASABLE"
-        );
-      }
 
       if (
         variant.stock !== null &&
         variant.stock < item.quantity
       ) {
-        throw new Error(
-          "VARIANT_OUT_OF_STOCK"
-        );
+        throw new Error("VARIANT_OUT_OF_STOCK");
       }
 
-      const saleActive =
-        isProductSaleActive(product);
-
-      finalPrice = resolveVariantSalePrice(
-        saleActive,
+      price = resolveVariantPrice(
+        product,
         variant
       );
-
-      finalVariantId = variant.id;
-
-      log("VARIANT_OK", {
-        variantId: variant.id,
-        productId: product.id,
-        quantity: item.quantity,
-      });
     }
 
-    const total =
-      finalPrice * item.quantity;
+    const total = price * item.quantity;
 
     subtotal += total;
 
     previewItems.push({
       product_id: product.id,
-      variant_id: finalVariantId,
+      variant_id: item.variant_id,
       name: product.name,
-      price: finalPrice,
+      price,
       quantity: item.quantity,
       total,
     });
@@ -405,12 +435,11 @@ export async function previewOrder(
         item.product_id
       );
 
-    const matched =
-      chooseShippingPrice({
-        rates,
-        buyerCountry,
-        buyerZone,
-      });
+    const matched = chooseShippingPrice({
+      rates,
+      buyerCountry,
+      buyerZone,
+    });
 
     shippingFee += matched;
   }
@@ -433,9 +462,13 @@ export async function previewOrder(
 
   return {
     items: previewItems,
+
     subtotal,
+
     shipping_fee: shippingFee,
+
     total,
+
     buyer_zone:
       buyerZone ?? "rest_of_world",
   };
