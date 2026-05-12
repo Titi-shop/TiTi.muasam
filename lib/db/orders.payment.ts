@@ -748,6 +748,7 @@ if (!orderId) {
   )
   ON CONFLICT (pi_payment_id)
   DO UPDATE SET
+
     order_id = COALESCE(EXCLUDED.order_id, pi_payments.order_id),
     user_id = COALESCE(EXCLUDED.user_id, pi_payments.user_id),
 
@@ -765,7 +766,11 @@ if (!orderId) {
 
     failure_reason = COALESCE(EXCLUDED.failure_reason, pi_payments.failure_reason),
     manual_review_reason = COALESCE(EXCLUDED.manual_review_reason, pi_payments.manual_review_reason),
+
     note = COALESCE(EXCLUDED.note, pi_payments.note),
+
+    processing_lock_id = COALESCE(EXCLUDED.processing_lock_id, pi_payments.processing_lock_id),
+    processing_locked_at = COALESCE(EXCLUDED.processing_locked_at, pi_payments.processing_locked_at),
 
     pi_raw_payload = COALESCE(EXCLUDED.pi_raw_payload, pi_payments.pi_raw_payload),
     rpc_raw_payload = COALESCE(EXCLUDED.rpc_raw_payload, pi_payments.rpc_raw_payload),
@@ -801,11 +806,17 @@ if (!orderId) {
     intent.zone ?? null,
 
     rpcPayload?.reason ?? null,
-    null,
-    null,
+    rpcPayload?.reason ?? (rpcPayload?.ok ? null : "RPC_FAILED"),
 
-    null,
-    null,
+    JSON.stringify({
+      memo: piPayload?.memo ?? null,
+      identifier: piPayload?.identifier ?? null,
+      network: piPayload?.network ?? null,
+      amount: piPayload?.amount ?? verifiedAmount,
+    }),
+
+    rpcPayload?.chainReference ?? txid,
+    new Date(),
 
     JSON.stringify(piPayload),
     JSON.stringify(rpcPayload),
