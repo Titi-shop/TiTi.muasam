@@ -11,8 +11,8 @@ import {
 } from "@/lib/db/products";
 
 import {
-  buildPricingSnapshot,
-  type PricingSnapshot,
+  calculatePricing,
+  type PricingResult,
 } from "@/lib/payments/pricing.engine";
 
 import type {
@@ -47,14 +47,18 @@ type CreatePiPaymentIntentInput = {
   userId: string;
 
   productId: string;
+
   variantId: string | null;
 
   quantity: number;
 
   country: string;
+
   zone: string;
 
   shipping: ShippingInput;
+
+  pricing: PricingResult;
 };
 
 type CreateIntentResult = {
@@ -77,6 +81,7 @@ type CreateIntentResult = {
 
 type ProductOwnerRow = {
   id: string;
+
   seller_id: string;
 };
 
@@ -84,9 +89,12 @@ type ProductOwnerRow = {
    HELPERS
 ========================================================= */
 
-function log(step: string, data?: unknown) {
+function vlog(
+  step: string,
+  data?: unknown
+) {
   console.log(
-    `🧪 [PAYMENT_INTENT_V7][${step}]`,
+    `[PAYMENT_INTENT_DB_V7][${step}]`,
     data ?? ""
   );
 }
@@ -96,11 +104,15 @@ function safeUUID(): string {
 }
 
 function makeNonce(): string {
-  return crypto.randomBytes(16).toString("hex");
+  return crypto.randomBytes(16).toString(
+    "hex"
+  );
 }
 
 function makeVerifyToken(): string {
-  return crypto.randomBytes(20).toString("hex");
+  return crypto.randomBytes(20).toString(
+    "hex"
+  );
 }
 
 function makeInitialStatus(): PaymentIntentStatus {
@@ -109,6 +121,24 @@ function makeInitialStatus(): PaymentIntentStatus {
 
 function makeInitialSettlement(): SettlementState {
   return "UNSETTLED";
+}
+
+function firstProductSnapshot(
+  pricing: PricingResult
+): Record<string, unknown> {
+  return (
+    pricing.snapshots.products[0] ??
+    {}
+  );
+}
+
+function firstVariantSnapshot(
+  pricing: PricingResult
+): Record<string, unknown> | null {
+  return (
+    pricing.snapshots.variants[0] ??
+    null
+  );
 }
 
 /* =========================================================
@@ -123,8 +153,9 @@ export async function createPiPaymentIntent({
   country,
   zone,
   shipping,
+  pricing,
 }: CreatePiPaymentIntentInput): Promise<CreateIntentResult> {
-  log("START", {
+  vlog("START", {
     userId,
     productId,
     variantId,
@@ -141,14 +172,16 @@ export async function createPiPaymentIntent({
 
   return withTransaction(async (client) => {
     /* =====================================================
-       1. LOAD PRODUCT OWNER
+       1. VERIFY PRODUCT
     ===================================================== */
 
     const product =
       await getProductById(productId);
 
     if (!product) {
-      throw new Error("PRODUCT_NOT_FOUND");
+      throw new Error(
+        "PRODUCT_NOT_FOUND"
+      );
     }
 
     const ownerRes =
@@ -165,45 +198,88 @@ export async function createPiPaymentIntent({
       );
 
     if (!ownerRes.rows.length) {
-      throw new Error("PRODUCT_NOT_FOUND");
+      throw new Error(
+        "PRODUCT_NOT_FOUND"
+      );
     }
 
-    const owner = ownerRes.rows[0];
+    const owner =
+      ownerRes.rows[0];
 
-    log("PRODUCT_OWNER_OK", owner);
+    vlog(
+      "PRODUCT_OWNER_OK",
+      owner
+    );
 
     /* =====================================================
        2. BLOCK SELF BUY
     ===================================================== */
 
-    if (owner.seller_id === userId) {
+    if (
+      owner.seller_id ===
+      userId
+    ) {
       throw new Error(
         "SELF_PAYMENT_FORBIDDEN"
       );
     }
 
     /* =====================================================
-       3. CENTRALIZED PRICING ENGINE
+       3. VERIFY AUTHORITATIVE PRICING
     ===================================================== */
 
-    const pricing: PricingSnapshot =
-      await buildPricingSnapshot({
-        productId,
-        variantId,
-        quantity,
-        buyerCountry: country,
-        buyerZone: zone,
-      });
+    if (
+      !pricing.items.length
+    ) {
+      throw new Error(
+        "INVALID_PRICING"
+      );
+    }
 
-    log("PRICING_OK", pricing);
+    const firstItem =
+      pricing.items[0];
+
+    if (
+      firstItem.product_id !==
+      productId
+    ) {
+      throw new Error(
+        "PRICING_PRODUCT_MISMATCH"
+      );
+    }
+
+    if (
+      (
+        firstItem.variant_id ??
+        null
+      ) !==
+      (variantId ?? null)
+    ) {
+      throw new Error(
+        "PRICING_VARIANT_MISMATCH"
+      );
+    }
+
+    vlog("PRICING_OK", {
+      subtotal:
+        pricing.subtotal,
+
+      shipping_fee:
+        pricing.shipping_fee,
+
+      total:
+        pricing.total,
+    });
 
     /* =====================================================
        4. IDS
     ===================================================== */
 
-    const paymentIntentId = safeUUID();
+    const paymentIntentId =
+      safeUUID();
 
-    const nonce = makeNonce();
+    const nonce =
+      makeNonce();
 
     const verifyToken =
       makeVerifyToken();
@@ -220,15 +296,42 @@ export async function createPiPaymentIntent({
        5. IMMUTABLE SNAPSHOT
     ===================================================== */
 
-    const shippingSnapshot = {
-      buyer_shipping: shipping,
+    const shippingSnapshot =
+      {
+        buyer_shipping:
+          shipping,
 
-      buyer_country: country,
+        buyer_country:
+          pricing.buyer_country,
 
-      buyer_zone: zone,
+        buyer_zone:
+          pricing.buyer_zone,
 
-      pricing_snapshot: pricing,
-    };
+        pricing_snapshot:
+          {
+            items:
+              pricing.items,
+
+            subtotal:
+              pricing.subtotal,
+
+            shipping_fee:
+              pricing.shipping_fee,
+
+            total:
+              pricing.total,
+          },
+
+        product_snapshot:
+          firstProductSnapshot(
+            pricing
+          ),
+
+        variant_snapshot:
+          firstVariantSnapshot(
+            pricing
+          ),
+      };
 
     /* =====================================================
        6. INSERT
@@ -295,18 +398,18 @@ export async function createPiPaymentIntent({
 
         quantity,
 
-        pricing.unit_price.amount,
-        pricing.subtotal.amount,
-        pricing.discount.amount,
-        pricing.shipping_fee.amount,
-        pricing.total.amount,
+        firstItem.unit_price,
+        pricing.subtotal,
+        0,
+        pricing.shipping_fee,
+        pricing.total,
 
         JSON.stringify(
           shippingSnapshot
         ),
 
-        country,
-        zone,
+        pricing.buyer_country,
+        pricing.buyer_zone,
 
         APP_MERCHANT_WALLET,
 
@@ -315,10 +418,11 @@ export async function createPiPaymentIntent({
       ]
     );
 
-    log("INSERT_OK", {
+    vlog("INSERT_OK", {
       paymentIntentId,
+
       total:
-        pricing.total.amount,
+        pricing.total,
     });
 
     /* =====================================================
@@ -331,9 +435,8 @@ export async function createPiPaymentIntent({
       payment_intent_id:
         paymentIntentId,
 
-      amount: Number(
-        pricing.total.amount
-      ),
+      amount:
+        pricing.total,
 
       currency: "PI",
 
@@ -367,5 +470,7 @@ export async function getPaymentIntent(
     [id]
   );
 
-  return res.rows[0] ?? null;
+  return (
+    res.rows[0] ?? null
+  );
 }
