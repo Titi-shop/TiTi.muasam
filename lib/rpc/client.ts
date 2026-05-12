@@ -21,14 +21,15 @@ type JsonObj = Record<string, unknown>;
 export type ParsedRpcTransaction = {
   hash: string | null;
   ledger: number | null;
+
   amount: number | null;
   sender: string | null;
   receiver: string | null;
+
+  memo: string | null;
+  createdAt: string | null;
   confirmed: boolean;
   rpcReachable: boolean;
-  txStatus: string | null;
-  createdAt: string | null;
-  memo: string | null;
   raw: unknown;
   debug: {
     amountFound: boolean;
@@ -274,17 +275,18 @@ const status =
   str(result.txStatus) ??
   null;
 
-const createdAt =
-  str(result.createdAt) ??
-  str(result.created_at) ??
-  str(result.closedAt) ??
-  null;
-
 const memo =
-  str(result.memo) ??
-  str(result.memoText) ??
-  str(result.memo_text) ??
-  null;
+  str(result.memo) ||
+  deepFindString(result, [
+    "memo",
+    "memoText",
+    "memo_text",
+  ]);
+
+const createdAt =
+  str(result.createdAt) ||
+  str(result.created_at) ||
+  str(result.created);
 
     const confirmed =
       status === "SUCCESS" ||
