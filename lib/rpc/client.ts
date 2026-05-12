@@ -28,6 +28,7 @@ export type ParsedRpcTransaction = {
 
   memo: string | null;
   createdAt: string | null;
+  txStatus: string | null;
   confirmed: boolean;
   rpcReachable: boolean;
   raw: unknown;
@@ -275,18 +276,33 @@ const status =
   str(result.txStatus) ??
   null;
 
+/* =====================================================
+   PI RPC ENVELOPE
+===================================================== */
+
+const envelopeJson = asObj(result.envelopeJson);
+const envelopeTx = asObj(envelopeJson.tx);
+const innerTx = asObj(envelopeTx.tx);
+const memoObj = asObj(innerTx.memo);
+/* =====================================================
+   MEMO
+===================================================== */
+
 const memo =
-  str(result.memo) ||
-  deepFindString(result, [
-    "memo",
-    "memoText",
-    "memo_text",
-  ]);
+  str(memoObj.text) ??
+  str(memoObj.id) ??
+  str(memoObj.hash) ??
+  null;
+
+/* =====================================================
+   CREATED AT
+===================================================== */
 
 const createdAt =
-  str(result.createdAt) ||
-  str(result.created_at) ||
-  str(result.created);
+  str(result.createdAt) ??
+  str(result.created_at) ??
+  str(result.created) ??
+  null;
 
     const confirmed =
       status === "SUCCESS" ||
@@ -338,26 +354,29 @@ const createdAt =
   amount,
   sender,
   receiver,
+  memo,
+  createdAt,
+  txStatus:
+    status ??
+    (confirmed ? "SUCCESS" : "UNKNOWN"),
   confirmed,
   rpcReachable: true,
-  txStatus:
-    str(result.status) ??
-    (confirmed ? "SUCCESS" : "UNKNOWN"),
-  createdAt:
-    str(result.createdAt) ??
-    str(result.created_at) ??
-    null,
-  memo:
-    str(result.memo) ??
-    str(result.memoText) ??
-    null,
   raw: result,
+  debug: {
+    amountFound: amount !== null,
+    senderFound: !!sender,
+    receiverFound: !!receiver,
+    parseLayer,
+    hasMeta: !!result.resultMetaJson,
+    hasEvents: !!result.events,
+  },
+};
       debug: {
         amountFound: amount !== null,
         senderFound: !!sender,
         receiverFound: !!receiver,
         parseLayer,
-        hasMeta: !!result.resultMetaXdr,
+        hasMeta: !!result.resultMetaJson,
         hasEvents: !!result.events,
       },
     };
