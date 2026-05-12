@@ -690,7 +690,11 @@ if (!orderId) {
        7. UPSERT PI PAYMENTS (FULL SCHEMA FIX)
     ===================================================== */
 
-    await client.query(
+    /* =====================================================
+   7. UPSERT PI PAYMENTS (FIXED FULL)
+===================================================== */
+
+await client.query(
   `
   INSERT INTO pi_payments (
     payment_intent_id,
@@ -765,64 +769,86 @@ if (!orderId) {
     last_reconcile_at = now(),
 
     failure_reason = COALESCE(EXCLUDED.failure_reason, pi_payments.failure_reason),
-    manual_review_reason = COALESCE(EXCLUDED.manual_review_reason, pi_payments.manual_review_reason),
 
-    note = COALESCE(EXCLUDED.note, pi_payments.note),
+    manual_review_reason = EXCLUDED.manual_review_reason,
+    note = EXCLUDED.note,
 
-    processing_lock_id = COALESCE(EXCLUDED.processing_lock_id, pi_payments.processing_lock_id),
-    processing_locked_at = COALESCE(EXCLUDED.processing_locked_at, pi_payments.processing_locked_at),
+    processing_lock_id = EXCLUDED.processing_lock_id,
+    processing_locked_at = EXCLUDED.processing_locked_at,
 
     pi_raw_payload = COALESCE(EXCLUDED.pi_raw_payload, pi_payments.pi_raw_payload),
     rpc_raw_payload = COALESCE(EXCLUDED.rpc_raw_payload, pi_payments.rpc_raw_payload),
     complete_raw_payload = COALESCE(EXCLUDED.complete_raw_payload, pi_payments.complete_raw_payload),
 
-    completed_at = COALESCE(pi_payments.completed_at, now()),
+    completed_at = COALESCE(pi_payments.completed_at, EXCLUDED.completed_at),
     updated_at = now()
   `,
   [
-    paymentIntentId,
-    orderId,
-    intent.buyer_id,
+    /* $1 */ paymentIntentId,
+    /* $2 */ orderId,
+    /* $3 */ intent.buyer_id,
 
-    piPaymentId,
-    txid,
-    receiverWallet,
+    /* $4 */ piPaymentId,
+    /* $5 */ txid,
+    /* $6 */ receiverWallet,
 
-    verifiedAmount,
-    expectedAmount,
-    verifiedAmount,
-    "PI",
+    /* $7 */ verifiedAmount,
+    /* $8 */ expectedAmount,
+    /* $9 */ verifiedAmount,
+    /* $10 */ "PI",
 
-    "SETTLED",
+    /* $11 */ "SETTLED",
 
-    1,
-    new Date(),
+    /* $12 */ 1,
+    /* $13 */ new Date(),
 
-    piPayload?.identifier ?? null,
-    rpcPayload?.chainReference ?? txid,
-    paymentIntentId,
+    /* $14 */ piPayload?.identifier ?? null,
+    /* $15 */ rpcPayload?.chainReference ?? txid,
+    /* $16 */ paymentIntentId,
 
-    intent.country ?? null,
-    intent.zone ?? null,
+    /* $17 */ intent.country ?? null,
+    /* $18 */ intent.zone ?? null,
 
-    rpcPayload?.reason ?? null,
-    rpcPayload?.reason ?? (rpcPayload?.ok ? null : "RPC_FAILED"),
+    /* $19 */ rpcPayload?.reason ?? null,
 
+    /* $20 */
+    rpcPayload?.reason ?? (rpcPayload?.ok ? "NONE" : "RPC_FAILED"),
+
+    /* $21 */
     JSON.stringify({
       memo: piPayload?.memo ?? null,
       identifier: piPayload?.identifier ?? null,
       network: piPayload?.network ?? null,
       amount: piPayload?.amount ?? verifiedAmount,
+      txid,
     }),
 
-    rpcPayload?.chainReference ?? txid,
+    /* $22 */
+    paymentIntentId, // processing_lock_id
+
+    /* $23 */
+    new Date(), // processing_locked_at
+
+    /* $24 */
+    JSON.stringify(piPayload),
+
+    /* $25 */
+    JSON.stringify(rpcPayload),
+
+    /* $26 */
+    JSON.stringify({
+      pi: piPayload,
+      rpc: rpcPayload,
+      finalized: true,
+    }),
+
+    /* $27 */
     new Date(),
 
-    JSON.stringify(piPayload),
-    JSON.stringify(rpcPayload),
-    JSON.stringify({ pi: piPayload, rpc: rpcPayload, finalized: true }),
+    /* $28 */
     new Date(),
-    new Date(),
+
+    /* $29 */
     new Date(),
   ]
 );
