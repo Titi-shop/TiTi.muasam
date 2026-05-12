@@ -554,10 +554,11 @@ if (!rpcTx.rpcReachable) {
   /* =====================================================
      INSERT FORENSIC LOG
   ===================================================== */
-
-  const txStatus = rpcTx.confirmed
+  const txStatus =
+  rpcTx.txStatus ??
+  (rpcTx.confirmed
     ? "confirmed"
-    : "unconfirmed";
+    : "unconfirmed");
 
   await insertRpcLog({
     paymentIntentId,
