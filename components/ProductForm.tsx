@@ -486,26 +486,28 @@ export default function ProductForm({
       className="space-y-4"
     >
       {/* CATEGORY */}
-      <select
-        value={form.categoryId}
-        onChange={(e) =>
-          form.setCategoryId(e.target.value)
-        }
-        className="w-full border p-2 rounded"
-      >
-        <option value="">
-          {t.select_category}
-        </option>
+<select
+  value={form.categoryId}
+  onChange={(e) =>
+    form.setCategoryId(e.target.value)
+  }
+  className="w-full border p-2 rounded"
+>
+  <option value="">
+    {t.select_category}
+  </option>
 
-        {categories.map((category) => (
-          <option
-            key={category.id}
-            value={category.id}
-          >
-            {category.key}
-          </option>
-        ))}
-      </select>
+  {categories.map((category) => (
+    <option
+      key={category.id}
+      value={category.id}
+    >
+      {t[
+        category.key as keyof typeof t
+      ] || category.key}
+    </option>
+  ))}
+</select>
 
       {/* NAME */}
       <input
