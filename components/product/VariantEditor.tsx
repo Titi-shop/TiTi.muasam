@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -541,59 +539,60 @@ export default function VariantEditor({
 
                         {v.saleEnabled && (
                           <>
-                            <input
-                              type="number"
-                              step="0.00001"
-                              min="0.00001"
-                              inputMode="decimal"
-                              placeholder={
-                                t.sale_price
-                              }
-                              value={
-                                v.salePrice ??
-                                ""
-                              }
-                              onChange={(
-                                e
-                              ) => {
-                                const value =
-                                  e
-                                    .target
-                                    .value;
+                           <input
+  type="number"
+  step="0.00001"
+  min="0.00001"
+  inputMode="decimal"
+  placeholder={t.sale_price}
+  value={
+    v.salePrice === null ||
+    v.salePrice === undefined
+      ? ""
+      : String(v.salePrice)
+  }
+  onChange={(e) => {
+    const value = e.target.value;
 
-                                updateField(
-                                  i,
-                                  "salePrice",
-                                  value ===
-                                    ""
-                                    ? null
-                                    : Number(
-                                        value
-                                      )
-                                );
-                              }}
-                              onBlur={() => {
-                                if (
-                                  v.salePrice ===
-                                    null ||
-                                  v.salePrice ===
-                                    undefined
-                                ) {
-                                  return;
-                                }
+    if (value === "") {
+      updateField(
+        i,
+        "salePrice",
+        null
+      );
 
-                                updateField(
-                                  i,
-                                  "salePrice",
-                                  normalizePrice(
-                                    Number(
-                                      v.salePrice
-                                    )
-                                  ) as ProductVariant["salePrice"]
-                                );
-                              }}
-                              className="border p-1 w-24 block"
-                            />
+      return;
+    }
+
+    updateField(
+      i,
+      "salePrice",
+      value as unknown as ProductVariant["salePrice"]
+    );
+  }}
+  onBlur={(e) => {
+    const value = e.target.value;
+
+    if (value.trim() === "") {
+      updateField(
+        i,
+        "salePrice",
+        null
+      );
+
+      return;
+    }
+
+    const parsed = Number(value);
+
+    updateField(
+      i,
+      "salePrice",
+      normalizePrice(parsed) as ProductVariant["salePrice"]
+    );
+  }}
+  className="border p-1 w-24 block"
+/>
 
                             <input
                               type="number"
