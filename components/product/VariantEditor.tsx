@@ -454,41 +454,39 @@ export default function VariantEditor({
                       {/* PRICE */}
                       <td className="p-2">
                         <input
-                          type="number"
-                          step="0.00001"
-                          min="0.00001"
-                          inputMode="decimal"
-                          value={
-                            v.price ?? ""
-                          }
-                          onChange={(
-                            e
-                          ) => {
-                            const parsed =
-                              parseNumberInput(
-                                e.target
-                                  .value
-                              );
+  type="number"
+  step="0.00001"
+  min="0.00001"
+  inputMode="decimal"
+  placeholder={t.sale_price}
+  value={v.salePrice ?? ""}
+  onChange={(e) =>
+    updateField(
+      i,
+      "salePrice",
+      e.target.value
+    )
+  }
+  onBlur={(e) => {
+    const value = e.target.value;
 
-                            updateField(
-                              i,
-                              "price",
-                              parsed as ProductVariant["price"]
-                            );
-                          }}
-                          onBlur={() => {
-                            updateField(
-                              i,
-                              "price",
-                              normalizePrice(
-                                Number(
-                                  v.price
-                                )
-                              ) as ProductVariant["price"]
-                            );
-                          }}
-                          className="border p-1 w-24"
-                        />
+    if (!value.trim()) {
+      updateField(i, "salePrice", null);
+      return;
+    }
+
+    const parsed = Number(value);
+
+    updateField(
+      i,
+      "salePrice",
+      parsed < MIN_PRICE
+        ? MIN_PRICE
+        : parsed
+    );
+  }}
+  className="border p-1 w-24 block"
+/>
                       </td>
 
                       {/* STOCK */}
