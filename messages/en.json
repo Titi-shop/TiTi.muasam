@@ -658,7 +658,9 @@
 "shipping_asia": "Asia",
 "shipping_europe": "Europe",
 "shipping_north_america": "North America",
-"shipping_rest_of_world": "Worldwide"
+"shipping_rest_of_world": "Worldwide",
+  "submit_product": "Post Product",
+"upload_detail_image": "Upload Detail Image"
 
 
 
