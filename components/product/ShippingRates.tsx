@@ -2,13 +2,19 @@
 
 import { countries } from "@/data/countries";
 
+type ShippingRatesState = Record<string, number | "">;
+
 interface Props {
-  shippingRates: Record<string, number | "">;
-  setShippingRates: (v: any) => void;
+  shippingRates: ShippingRatesState;
+  setShippingRates: (
+    v: ShippingRatesState | ((prev: ShippingRatesState) => ShippingRatesState)
+  ) => void;
 
   primaryShippingCountry: string;
   setPrimaryShippingCountry: (v: string) => void;
 }
+
+const MIN_SHIPPING_PRICE = 0.00001;
 
 export default function ShippingRates({
   shippingRates,
@@ -24,6 +30,20 @@ export default function ShippingRates({
     { key: "rest_of_world", label: "Rest of World" },
   ];
 
+  const normalizePrice = (val: number) => {
+    if (Number.isNaN(val)) return MIN_SHIPPING_PRICE;
+    return Math.max(val, MIN_SHIPPING_PRICE);
+  };
+
+  const handleChange = (key: string, value: string) => {
+    const parsed = Number(value);
+
+    setShippingRates((prev) => ({
+      ...prev,
+      [key]: value === "" ? "" : normalizePrice(parsed),
+    }));
+  };
+
   return (
     <div className="space-y-3">
       <p className="font-medium">🚚 Shipping Fee</p>
@@ -35,12 +55,9 @@ export default function ShippingRates({
         </p>
 
         <div className="grid grid-cols-2 gap-3">
-          {/* COUNTRY */}
           <select
             value={primaryShippingCountry}
-            onChange={(e) =>
-              setPrimaryShippingCountry(e.target.value)
-            }
+            onChange={(e) => setPrimaryShippingCountry(e.target.value)}
             className="border p-2 rounded"
           >
             {countries.map((c) => (
@@ -50,20 +67,13 @@ export default function ShippingRates({
             ))}
           </select>
 
-          {/* PRICE */}
           <input
             type="number"
-            step="0.00001"
+            step={MIN_SHIPPING_PRICE}
+            min={MIN_SHIPPING_PRICE}
             placeholder="Domestic Price"
             value={shippingRates.domestic || ""}
-            onChange={(e) => {
-              const val = Number(e.target.value);
-
-              setShippingRates((prev: any) => ({
-                ...prev,
-                domestic: Number.isNaN(val) ? 0 : val,
-              }));
-            }}
+            onChange={(e) => handleChange("domestic", e.target.value)}
             className="border p-2 rounded"
           />
         </div>
@@ -75,17 +85,11 @@ export default function ShippingRates({
           <input
             key={z.key}
             type="number"
-            step="0.00001"
+            step={MIN_SHIPPING_PRICE}
+            min={MIN_SHIPPING_PRICE}
             placeholder={z.label}
             value={shippingRates[z.key] || ""}
-            onChange={(e) => {
-              const val = Number(e.target.value);
-
-              setShippingRates((prev: any) => ({
-                ...prev,
-                [z.key]: Number.isNaN(val) ? 0 : val,
-              }));
-            }}
+            onChange={(e) => handleChange(z.key, e.target.value)}
             className="border p-2 rounded"
           />
         ))}
