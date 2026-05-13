@@ -558,5 +558,7 @@
 "shipping_asia": "亚洲",
 "shipping_europe": "欧洲",
 "shipping_north_america": "北美",
-"shipping_rest_of_world": "全球其他地区"
+"shipping_rest_of_world": "全球其他地区",
+  "submit_product": "发布商品",
+"upload_detail_image": "上传详情图片"
 }
