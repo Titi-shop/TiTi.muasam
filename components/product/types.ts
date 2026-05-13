@@ -54,9 +54,9 @@ export interface ProductVariant {
   name?: string;
 
   /* PRICE */
-  price?: number;
+  price?: number | string;
 
-  salePrice?: number | null;
+  salePrice?: number | string | null;
 
   finalPrice?: number;
 
