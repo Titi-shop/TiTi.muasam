@@ -59,7 +59,12 @@ export async function updateProductService(
     detail: body.detail,
     images: body.images,
     thumbnail: body.thumbnail,
-    category_id: body.categoryId,
+    category_id:
+  typeof body.category_id ===
+    "string" &&
+  body.category_id.trim()
+    ? body.category_id
+    : null,
 
     price: finalPrice,
     stock: finalStock,
