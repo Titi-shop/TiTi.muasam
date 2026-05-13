@@ -402,7 +402,9 @@ export default function ProductForm({
     Boolean(v.saleEnabled) &&
     Number(v.salePrice) > 0
 );
+
 console.log("🧪 FORM CATEGORY:", form.categoryId);
+
 const payload: ProductPayload = {
   id:
     typeof form.id === "string"
@@ -412,10 +414,10 @@ const payload: ProductPayload = {
   name: form.name,
 
   categoryId:
-  typeof form.categoryId === "string" &&
-  form.categoryId.trim().length > 0
-    ? form.categoryId.trim()
-    : undefined,
+    typeof form.categoryId === "string" &&
+    form.categoryId.trim().length > 0
+      ? form.categoryId.trim()
+      : undefined,
 
   description: form.description,
 
@@ -431,7 +433,7 @@ const payload: ProductPayload = {
 
   domesticCountryCode:
     form.primaryShippingCountry || null,
-console.log("🧪 PAYLOAD CATEGORY:", payload.categoryId);
+
   /* =====================================================
      PRODUCT PRICE / STOCK
   ===================================================== */
@@ -444,52 +446,44 @@ console.log("🧪 PAYLOAD CATEGORY:", payload.categoryId);
     ? undefined
     : Number(form.stock || 0),
 
-  /* =====================================================
-     SALE
-  ===================================================== */
+  saleEnabled:
+    hasVariants
+      ? hasVariantSale
+      : form.saleEnabled &&
+        hasSaleTime &&
+        hasSalePrice,
 
-  saleEnabled: hasVariants
-    ? hasVariantSale
-    : form.saleEnabled &&
-      hasSaleTime &&
-      hasSalePrice,
-
-  salePrice: hasVariants
-    ? null
-    : !form.saleEnabled
+  salePrice:
+    hasVariants
       ? null
-      : Number(form.salePrice),
+      : !form.saleEnabled
+        ? null
+        : Number(form.salePrice),
 
   saleStock:
     hasVariants || !form.saleEnabled
       ? 0
       : Number(form.saleStock || 0),
 
-  /*
-    KHÔNG phụ thuộc saleEnabled nữa
-    để variant sale vẫn lưu được thời gian sale
-  */
-  saleStart: hasSaleTime
-    ? toUTCFromInput(form.saleStart)
-    : null,
+  saleStart:
+    hasSaleTime
+      ? toUTCFromInput(form.saleStart)
+      : null,
 
-  saleEnd: hasSaleTime
-    ? toUTCFromInput(form.saleEnd)
-    : null,
-
-  /* =====================================================
-     VARIANTS
-  ===================================================== */
+  saleEnd:
+    hasSaleTime
+      ? toUTCFromInput(form.saleEnd)
+      : null,
 
   variants: normalizedVariants,
 
   idempotencyKey: generateKey(),
 };
 
-console.log(
-  "📦 PRODUCT PAYLOAD:",
-  payload
-);
+console.log("🧪 PAYLOAD CATEGORY:", payload.categoryId);
+
+console.log("📦 PRODUCT PAYLOAD:", payload);
+
 await onSubmit(payload);
     } catch (error) {
       console.error(error);
