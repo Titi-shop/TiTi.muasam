@@ -37,7 +37,7 @@ interface ShippingRatePayload {
 interface ProductPayload {
   id?: string;
   name: string;
-  categoryId: string;
+  categoryId: string | null;
   description: string;
   detail: string;
   images: string[];
@@ -79,9 +79,7 @@ export default function ProductForm({
   const { t } = useTranslation();
 
   const { user, loading } = useAuth();
-
   const form = useProductForm(initialData);
-
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -407,9 +405,8 @@ export default function ProductForm({
             : undefined,
 
         name: form.name,
-
-        categoryId: form.categoryId,
-
+        categoryId:
+  form.categoryId.trim() || null,
         description: form.description,
 
         detail: form.detail,
