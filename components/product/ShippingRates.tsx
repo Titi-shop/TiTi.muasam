@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { countries } from "@/data/countries";
 
 type ShippingValue = number | "";
@@ -15,12 +16,16 @@ interface ShippingRatesState {
 
 interface Props {
   shippingRates: ShippingRatesState;
+
   setShippingRates: React.Dispatch<
     React.SetStateAction<ShippingRatesState>
   >;
 
   primaryShippingCountry: string;
-  setPrimaryShippingCountry: (value: string) => void;
+
+  setPrimaryShippingCountry: (
+    value: string
+  ) => void;
 }
 
 const MIN_PRICE = 0.00001;
@@ -31,29 +36,31 @@ export default function ShippingRates({
   primaryShippingCountry,
   setPrimaryShippingCountry,
 }: Props) {
+  const { t } = useTranslation();
+
   const zones: {
     key: keyof ShippingRatesState;
     label: string;
   }[] = [
     {
       key: "sea",
-      label: "Southeast Asia",
+      label: t.shipping_sea,
     },
     {
       key: "asia",
-      label: "Asia",
+      label: t.shipping_asia,
     },
     {
       key: "europe",
-      label: "Europe",
+      label: t.shipping_europe,
     },
     {
       key: "north_america",
-      label: "North America",
+      label: t.shipping_north_america,
     },
     {
       key: "rest_of_world",
-      label: "Rest of World",
+      label: t.shipping_rest_of_world,
     },
   ];
 
@@ -61,7 +68,7 @@ export default function ShippingRates({
     key: keyof ShippingRatesState,
     value: string
   ) => {
-    if (value === "") {
+    if (value.trim() === "") {
       setShippingRates((prev) => ({
         ...prev,
         [key]: "",
@@ -83,13 +90,13 @@ export default function ShippingRates({
   return (
     <div className="space-y-3">
       <p className="font-medium">
-        🚚 Shipping Fee
+        🚚 {t.shipping_fee}
       </p>
 
       {/* DOMESTIC */}
       <div className="border rounded-xl p-3 bg-gray-50 space-y-2">
         <p className="text-sm font-medium text-gray-700">
-          Domestic Country
+          {t.domestic_country}
         </p>
 
         <div className="grid grid-cols-2 gap-3">
@@ -97,7 +104,9 @@ export default function ShippingRates({
           <select
             value={primaryShippingCountry}
             onChange={(e) =>
-              setPrimaryShippingCountry(e.target.value)
+              setPrimaryShippingCountry(
+                e.target.value
+              )
             }
             className="border p-2 rounded"
           >
@@ -117,17 +126,25 @@ export default function ShippingRates({
             step="0.00001"
             min={MIN_PRICE}
             inputMode="decimal"
-            placeholder="Domestic Price"
-            value={shippingRates.domestic}
+            placeholder={t.domestic_price}
+            value={
+              shippingRates.domestic === 0
+                ? ""
+                : shippingRates.domestic
+            }
             onChange={(e) =>
-              updateRate("domestic", e.target.value)
+              updateRate(
+                "domestic",
+                e.target.value
+              )
             }
             className="border p-2 rounded"
+            required
           />
         </div>
       </div>
 
-      {/* ZONES */}
+      {/* OPTIONAL ZONES */}
       <div className="grid grid-cols-2 gap-3">
         {zones.map((zone) => (
           <div
@@ -143,10 +160,20 @@ export default function ShippingRates({
               step="0.00001"
               min={MIN_PRICE}
               inputMode="decimal"
-              placeholder="0.00001"
-              value={shippingRates[zone.key]}
+              placeholder=""
+              value={
+                shippingRates[zone.key] ===
+                0
+                  ? ""
+                  : shippingRates[
+                      zone.key
+                    ]
+              }
               onChange={(e) =>
-                updateRate(zone.key, e.target.value)
+                updateRate(
+                  zone.key,
+                  e.target.value
+                )
               }
               className="border p-2 rounded w-full"
             />
