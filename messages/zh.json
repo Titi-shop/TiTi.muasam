@@ -487,5 +487,76 @@
   "return_max_3_images": "最多上传3张图片",
   "return_shipping_back": "退回中",
   "return_waiting_refund": "等待退款",
-  "waiting_refund": "等待退款确认"
+  "waiting_refund": "等待退款确认",
+  "loading": "加载中...",
+
+"product_select_category": "选择分类",
+
+"product_name": "商品名称",
+"description": "商品描述",
+"detail": "商品详情",
+
+"upload_image": "＋ 上传图片",
+"uploading": "正在上传图片...",
+"detail_image": "+ 详情图片",
+
+"price": "价格",
+"stock": "库存",
+
+"sale": "折扣",
+"enable_sale": "启用折扣",
+
+"sale_price": "折扣价",
+"sale_stock": "折扣库存",
+
+"sale_start": "折扣开始时间",
+"sale_end": "折扣结束时间",
+
+"active": "显示商品",
+
+"submit": "发布商品",
+"submitting": "正在发布...",
+
+"shipping_fee": "🚚 运费",
+"domestic_country": "国内国家",
+"domestic_price": "国内运费",
+
+"shipping_sea": "东南亚",
+"shipping_asia": "亚洲",
+"shipping_europe": "欧洲",
+"shipping_north_america": "北美",
+"shipping_rest_of_world": "全球其他地区",
+
+"variants": "商品规格",
+
+"option1_label": "属性名称 1",
+"option2_label": "属性名称 2",
+
+"option1_placeholder": "红色, 蓝色",
+"option2_placeholder": "S, M",
+
+"generate_variants": "生成规格",
+"bulk_price": "批量价格",
+"bulk_stock": "批量库存",
+"enable_sale_all": "全部启用折扣",
+"variant": "规格",
+"remove": "删除",
+"invalid_name": "商品名称无效",
+"need_image": "至少需要 1 张图片",
+"price_min": "价格必须大于或等于 0.00001 PI",
+"sale_price_min": "折扣价必须大于或等于 0.00001 PI",
+"sale_price_required": "设置折扣时间时必须填写折扣价",
+"sale_need_time": "折扣需要开始和结束时间",
+"sale_price_less_than_price": "折扣价必须低于原价",
+"sale_stock_exceeded": "折扣库存不能超过总库存",
+"upload_failed": "图片上传失败",
+"submit_failed": "商品发布失败",
+"shipping_fee": "🚚 运费",
+"domestic_country": "国内国家",
+"domestic_price": "国内运费",
+"shipping_sea": "东南亚",
+"shipping_asia": "亚洲",
+"shipping_europe": "欧洲",
+"shipping_north_america": "北美",
+"shipping_rest_of_world": "全球其他地区"
 }
