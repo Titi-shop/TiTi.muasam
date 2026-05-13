@@ -9,6 +9,8 @@ interface Props {
   setVariants: React.Dispatch<React.SetStateAction<ProductVariant[]>>;
 }
 
+const MIN_PRICE = 0.00001;
+
 const parseList = (value: string): string[] =>
   value
     .split(",")
@@ -21,15 +23,24 @@ const toSafeNumber = (value: string): number => {
   return Number.isNaN(n) ? 0 : n;
 };
 
+const normalizePrice = (value: number): number => {
+  if (Number.isNaN(value)) return MIN_PRICE;
+  return Math.max(value, MIN_PRICE);
+};
+
 const buildName = (v: ProductVariant): string =>
   [v.option1, v.option2, v.option3].filter(Boolean).join(" - ");
 
 const hydrateVariant = (v: ProductVariant): ProductVariant => {
-  const price = Number(v.price ?? 0);
-  const salePrice =
+  const price = normalizePrice(Number(v.price ?? 0));
+
+  const salePriceRaw =
     v.salePrice !== null && v.salePrice !== undefined
       ? Number(v.salePrice)
       : null;
+
+  const salePrice =
+    salePriceRaw !== null ? normalizePrice(salePriceRaw) : null;
 
   const saleEnabled = Boolean(v.saleEnabled);
 
@@ -57,6 +68,7 @@ const hydrateVariant = (v: ProductVariant): ProductVariant => {
     saleSold: Number(v.saleSold ?? 0),
     sold: Number(v.sold ?? 0),
     finalPrice: finalSalePrice ?? price,
+    price,
     isActive: v.isActive !== false,
     isUnlimited: Boolean(v.isUnlimited),
   };
@@ -115,7 +127,7 @@ export default function VariantEditor({
               option2: b,
               optionLabel1: label1,
               optionLabel2: label2,
-              price: found?.price ?? 0,
+              price: found?.price ?? MIN_PRICE,
               stock: found?.stock ?? 0,
             })
           );
@@ -123,9 +135,7 @@ export default function VariantEditor({
       }
     } else {
       for (const a of list1) {
-        const found = variants.find(
-          (x) => x.option1 === a && !x.option2
-        );
+        const found = variants.find((x) => x.option1 === a && !x.option2);
 
         next.push(
           hydrateVariant({
@@ -134,7 +144,7 @@ export default function VariantEditor({
             option2: null,
             optionLabel1: label1,
             optionLabel2: null,
-            price: found?.price ?? 0,
+            price: found?.price ?? MIN_PRICE,
             stock: found?.stock ?? 0,
           })
         );
@@ -152,10 +162,18 @@ export default function VariantEditor({
     setVariants((prev) =>
       prev.map((old, i) => {
         if (i !== index) return old;
-        return hydrateVariant({
+
+        const next = {
           ...old,
-          [key]: value,
-        });
+          [key]:
+            key === "price" || key === "salePrice"
+              ? typeof value === "number"
+                ? normalizePrice(value)
+                : value
+              : value,
+        };
+
+        return hydrateVariant(next);
       })
     );
   };
@@ -165,12 +183,19 @@ export default function VariantEditor({
     value: ProductVariant[K]
   ) => {
     setVariants((prev) =>
-      prev.map((old) =>
-        hydrateVariant({
+      prev.map((old) => {
+        const next = {
           ...old,
-          [key]: value,
-        })
-      )
+          [key]:
+            key === "price" || key === "salePrice"
+              ? typeof value === "number"
+                ? normalizePrice(value)
+                : value
+              : value,
+        };
+
+        return hydrateVariant(next);
+      })
     );
   };
 
@@ -224,9 +249,13 @@ export default function VariantEditor({
           <div className="grid grid-cols-3 gap-2">
             <input
               type="number"
+              min={MIN_PRICE}
+              step={MIN_PRICE}
               placeholder="Bulk price"
               className="border p-2 rounded"
-              onBlur={(e) => bulkSet("price", toSafeNumber(e.target.value))}
+              onBlur={(e) =>
+                bulkSet("price", normalizePrice(toSafeNumber(e.target.value)))
+              }
             />
 
             <input
@@ -268,9 +297,15 @@ export default function VariantEditor({
                     <td className="p-2">
                       <input
                         type="number"
-                        value={v.price ?? 0}
+                        min={MIN_PRICE}
+                        step={MIN_PRICE}
+                        value={v.price ?? MIN_PRICE}
                         onChange={(e) =>
-                          updateField(i, "price", toSafeNumber(e.target.value))
+                          updateField(
+                            i,
+                            "price",
+                            normalizePrice(toSafeNumber(e.target.value))
+                          )
                         }
                         className="border p-1 w-24"
                       />
@@ -303,6 +338,8 @@ export default function VariantEditor({
                         <>
                           <input
                             type="number"
+                            min={MIN_PRICE}
+                            step={MIN_PRICE}
                             placeholder="Sale price"
                             value={v.salePrice ?? ""}
                             onChange={(e) =>
@@ -311,7 +348,7 @@ export default function VariantEditor({
                                 "salePrice",
                                 e.target.value === ""
                                   ? null
-                                  : toSafeNumber(e.target.value)
+                                  : normalizePrice(toSafeNumber(e.target.value))
                               )
                             }
                             className="border p-1 w-24 block"
