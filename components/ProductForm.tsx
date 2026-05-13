@@ -397,13 +397,12 @@ export default function ProductForm({
       /* =========================
          PAYLOAD
       ========================= */
-
       const hasVariantSale = normalizedVariants.some(
   (v) =>
     Boolean(v.saleEnabled) &&
     Number(v.salePrice) > 0
 );
-
+console.log("🧪 FORM CATEGORY:", form.categoryId);
 const payload: ProductPayload = {
   id:
     typeof form.id === "string"
@@ -432,7 +431,7 @@ const payload: ProductPayload = {
 
   domesticCountryCode:
     form.primaryShippingCountry || null,
-
+console.log("🧪 PAYLOAD CATEGORY:", payload.categoryId);
   /* =====================================================
      PRODUCT PRICE / STOCK
   ===================================================== */
