@@ -2,12 +2,14 @@
 
 import { countries } from "@/data/countries";
 
-type ShippingRatesState = Record<string, number | "">;
+type ShippingRatesState = Record<string, string>;
 
 interface Props {
   shippingRates: ShippingRatesState;
   setShippingRates: (
-    v: ShippingRatesState | ((prev: ShippingRatesState) => ShippingRatesState)
+    v:
+      | ShippingRatesState
+      | ((prev: ShippingRatesState) => ShippingRatesState)
   ) => void;
 
   primaryShippingCountry: string;
@@ -28,16 +30,11 @@ export default function ShippingRates({
     { key: "rest_of_world", label: "Rest of World" },
   ];
 
-  const parseValue = (v: string) => {
-    if (v.trim() === "") return "";
-    const n = Number(v);
-    return Number.isNaN(n) ? "" : n;
-  };
-
   const handleChange = (key: string, value: string) => {
+    // giữ raw string để không mất "0", "0.", "0.0"
     setShippingRates((prev) => ({
       ...prev,
-      [key]: parseValue(value),
+      [key]: value,
     }));
   };
 
@@ -68,8 +65,7 @@ export default function ShippingRates({
             type="number"
             step="0.00001"
             min="0"
-            placeholder="Domestic Price"
-            value={shippingRates.domestic || ""}
+            value={shippingRates.domestic ?? ""}
             onChange={(e) => handleChange("domestic", e.target.value)}
             className="border p-2 rounded"
           />
@@ -84,8 +80,7 @@ export default function ShippingRates({
             type="number"
             step="0.00001"
             min="0"
-            placeholder={z.label}
-            value={shippingRates[z.key] || ""}
+            value={shippingRates[z.key] ?? ""}
             onChange={(e) => handleChange(z.key, e.target.value)}
             className="border p-2 rounded"
           />
