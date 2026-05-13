@@ -574,7 +574,91 @@
   "error_product_invalid": "Sản phẩm không hợp lệ",
   "error_network": "Lỗi mạng",
   "order_success": "Đặt hàng thành công",
-  "pi_not_ready": "Pi chưa sẵn sàng"
+  "pi_not_ready": "Pi chưa sẵn sàng",
+  "loading": "Loading...",
+
+"product_select_category": "Select Category",
+
+"product_name": "Product Name",
+"description": "Product Description",
+"detail": "Product Details",
+
+"upload_image": "＋ Upload Image",
+"uploading": "Uploading image...",
+"detail_image": "+ Detail Image",
+
+"price": "Price",
+"stock": "Stock",
+
+"sale": "Sale",
+"enable_sale": "Enable Sale",
+
+"sale_price": "Sale Price",
+"sale_stock": "Sale Stock",
+
+"sale_start": "Sale Start",
+"sale_end": "Sale End",
+
+"active": "Show Product",
+
+"submit": "Post Product",
+"submitting": "Posting...",
+
+"shipping_fee": "🚚 Shipping Fee",
+"domestic_country": "Domestic Country",
+"domestic_price": "Domestic Shipping Fee",
+
+"shipping_sea": "Southeast Asia",
+"shipping_asia": "Asia",
+"shipping_europe": "Europe",
+"shipping_north_america": "North America",
+"shipping_rest_of_world": "Worldwide",
+
+"variants": "Product Variants",
+
+"option1_label": "Option Name 1",
+"option2_label": "Option Name 2",
+
+"option1_placeholder": "Red, Blue",
+"option2_placeholder": "S, M",
+
+"generate_variants": "Generate Variants",
+
+"bulk_price": "Bulk Price",
+"bulk_stock": "Bulk Stock",
+
+"enable_sale_all": "Enable Sale for All",
+
+"variant": "Variant",
+
+"remove": "Remove",
+
+"invalid_name": "Invalid product name",
+
+"need_image": "At least 1 image is required",
+
+"price_min": "Price must be greater than or equal to 0.00001 PI",
+
+"sale_price_min": "Sale price must be greater than or equal to 0.00001 PI",
+
+"sale_price_required": "Sale price is required when sale time is set",
+
+"sale_need_time": "Sale requires start and end time",
+
+"sale_price_less_than_price": "Sale price must be lower than original price",
+
+"sale_stock_exceeded": "Sale stock cannot exceed total stock",
+
+"upload_failed": "Image upload failed",
+"submit_failed": "Failed to post product",
+"shipping_fee": "🚚 Shipping Fee",
+"domestic_country": "Domestic Country",
+"domestic_price": "Domestic Shipping Fee",
+"shipping_sea": "Southeast Asia",
+"shipping_asia": "Asia",
+"shipping_europe": "Europe",
+"shipping_north_america": "North America",
+"shipping_rest_of_world": "Worldwide"
 
 
 
