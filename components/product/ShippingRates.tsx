@@ -23,6 +23,7 @@ export default function ShippingRates({
   setPrimaryShippingCountry,
 }: Props) {
   const zones = [
+    { key: "domestic", label: "Domestic Shipping" },
     { key: "sea", label: "Southeast Asia" },
     { key: "asia", label: "Asia" },
     { key: "europe", label: "Europe" },
@@ -31,7 +32,6 @@ export default function ShippingRates({
   ];
 
   const handleChange = (key: string, value: string) => {
-    // giữ raw string để không mất "0", "0.", "0.0"
     setShippingRates((prev) => ({
       ...prev,
       [key]: value,
@@ -39,51 +39,50 @@ export default function ShippingRates({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <p className="font-medium">🚚 Shipping Fee</p>
 
-      {/* DOMESTIC */}
-      <div className="border rounded-xl p-3 bg-gray-50 space-y-2">
-        <p className="text-sm font-medium text-gray-700">
+      {/* COUNTRY */}
+      <div className="border rounded-xl p-3 bg-gray-50">
+        <p className="text-sm font-medium text-gray-700 mb-2">
           Domestic Country
         </p>
 
-        <div className="grid grid-cols-2 gap-3">
-          <select
-            value={primaryShippingCountry}
-            onChange={(e) => setPrimaryShippingCountry(e.target.value)}
-            className="border p-2 rounded"
-          >
-            {countries.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="number"
-            step="0.00001"
-            min="0"
-            value={shippingRates.domestic ?? ""}
-            onChange={(e) => handleChange("domestic", e.target.value)}
-            className="border p-2 rounded"
-          />
-        </div>
+        <select
+          value={primaryShippingCountry}
+          onChange={(e) => setPrimaryShippingCountry(e.target.value)}
+          className="border p-2 rounded w-full"
+        >
+          {countries.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.name}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* ZONES */}
+      {/* SHIPPING ZONES */}
       <div className="grid grid-cols-2 gap-3">
         {zones.map((z) => (
-          <input
+          <div
             key={z.key}
-            type="number"
-            step="0.00001"
-            min="0"
-            value={shippingRates[z.key] ?? ""}
-            onChange={(e) => handleChange(z.key, e.target.value)}
-            className="border p-2 rounded"
-          />
+            className="border rounded-lg p-3 bg-gray-50 space-y-2"
+          >
+            {/* LABEL HIỂN THỊ RÕ RÀNG */}
+            <p className="text-sm font-medium text-gray-700">
+              {z.label}
+            </p>
+
+            <input
+              type="number"
+              step="0.00001"
+              min="0"
+              placeholder="Enter shipping price"
+              value={shippingRates[z.key] ?? ""}
+              onChange={(e) => handleChange(z.key, e.target.value)}
+              className="border p-2 rounded w-full"
+            />
+          </div>
         ))}
       </div>
     </div>
