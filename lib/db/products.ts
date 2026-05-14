@@ -137,22 +137,32 @@ function isInSaleTime(start: string | null, end: string | null): boolean {
 
 function toAppProduct(row: ProductRow): ProductRecord {
   const price = Number(row.price ?? 0);
-  const salePrice = row.sale_price !== null
-    ? Number(row.sale_price)
-    : null;
+
+  const salePrice =
+    row.sale_price !== null ? Number(row.sale_price) : null;
+
+  const saleStart = row.sale_start ?? null;
+  const saleEnd = row.sale_end ?? null;
 
   const saleActive =
     Boolean(row.sale_enabled) &&
     salePrice !== null &&
     salePrice > 0 &&
     salePrice < price &&
-    isInSaleTime(row.sale_start, row.sale_end);
+    isInSaleTime(saleStart, saleEnd);
 
   const final_price = saleActive ? salePrice : price;
 
   return {
     ...row,
 
+    // ✅ FORCE KEEP THESE FIELDS (fix missing bug)
+    category_id: row.category_id,
+
+    sale_start: saleStart,
+    sale_end: saleEnd,
+
+    // normalize numbers
     price,
     sale_price: salePrice,
     final_price,
@@ -162,18 +172,9 @@ function toAppProduct(row: ProductRow): ProductRecord {
     sale_stock: Number(row.sale_stock ?? 0),
     sale_sold: Number(row.sale_sold ?? 0),
     sale_enabled: Boolean(row.sale_enabled),
-
     sold: Number(row.sold ?? 0),
     views: Number(row.views ?? 0),
-
     is_active: row.is_active !== false,
-
-    // 🔥 ENSURE NEVER LOST FIELDS
-    category_id: row.category_id ?? null,
-    sale_start: row.sale_start ?? null,
-    sale_end: row.sale_end ?? null,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
   };
 }
 
