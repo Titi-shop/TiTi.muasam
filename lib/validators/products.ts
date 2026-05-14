@@ -5,143 +5,316 @@ import { ProductVariant } from "@/lib/db/variants";
 ========================================================= */
 
 type VariantInput = {
-  id?: string;
+  id?: unknown;
 
-  option1?: string;
-  option2?: string | null;
-  option3?: string | null;
+  option1?: unknown;
+  option2?: unknown;
+  option3?: unknown;
 
-  optionLabel1?: string | null;
-  optionLabel2?: string | null;
-  optionLabel3?: string | null;
+  optionLabel1?: unknown;
+  optionLabel2?: unknown;
+  optionLabel3?: unknown;
 
-  name?: string;
+  name?: unknown;
 
-  sku?: string | null;
+  sku?: unknown;
 
-  price?: number | string;
+  price?: unknown;
 
-  salePrice?: number | string | null;
+  salePrice?: unknown;
 
-  saleEnabled?: boolean;
+  saleEnabled?: unknown;
 
-  saleStock?: number | string;
+  saleStock?: unknown;
 
-  saleSold?: number | string;
+  saleSold?: unknown;
 
-  stock?: number | string;
+  stock?: unknown;
 
-  isUnlimited?: boolean;
+  isUnlimited?: unknown;
 
-  image?: string;
+  image?: unknown;
 
-  isActive?: boolean;
+  isActive?: unknown;
 
-  sortOrder?: number | string;
+  sortOrder?: unknown;
 
-  sold?: number | string;
+  sold?: unknown;
 };
 
 /* =========================================================
-   SAFE HELPERS
+   HELPERS
 ========================================================= */
 
-function safeNumber(value: unknown, fallback = 0): number {
-  if (value === null || value === undefined || value === "") {
+function isObject(
+  value: unknown
+): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function safeString(
+  value: unknown,
+  fallback = ""
+): string {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  return value.trim();
+}
+
+function safeNullableString(
+  value: unknown
+): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+
+  return trimmed.length ? trimmed : null;
+}
+
+function safeNumber(
+  value: unknown,
+  fallback = 0
+): number {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return fallback;
   }
 
   const parsed = Number(value);
-  return Number.isNaN(parsed) ? fallback : parsed;
+
+  if (Number.isNaN(parsed)) {
+    return fallback;
+  }
+
+  return parsed;
 }
 
-function safeNullableNumber(value: unknown): number | null {
-  if (value === null || value === undefined || value === "") {
+function safeNullableNumber(
+  value: unknown
+): number | null {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return null;
   }
 
   const parsed = Number(value);
-  return Number.isNaN(parsed) ? null : parsed;
+
+  if (Number.isNaN(parsed)) {
+    return null;
+  }
+
+  return parsed;
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+function safeBoolean(
+  value: unknown,
+  fallback = false
+): boolean {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return value === "true";
+  }
+
+  return fallback;
+}
+
+function buildVariantName(
+  option1: string,
+  option2?: string | null,
+  option3?: string | null
+): string {
+  return [option1, option2, option3]
+    .filter(
+      (value): value is string =>
+        typeof value === "string" &&
+        value.trim().length > 0
+    )
+    .join(" - ");
+}
+
+function calcFinalPrice(
+  price: number,
+  salePrice: number | null,
+  saleEnabled: boolean
+): number {
+  if (
+    saleEnabled &&
+    salePrice !== null &&
+    salePrice > 0 &&
+    salePrice < price
+  ) {
+    return salePrice;
+  }
+
+  return price;
 }
 
 /* =========================================================
-   NORMALIZE VARIANTS (FIXED)
+   NORMALIZE SINGLE VARIANT
 ========================================================= */
 
-export function normalizeVariants(input: unknown): ProductVariant[] {
+export function normalizeVariant(
+  raw: unknown,
+  index = 0
+): ProductVariant | null {
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  const item = raw as VariantInput;
+
+  const option1 = safeString(item.option1);
+
+  if (!option1) {
+    console.warn(
+      "[VALIDATOR][VARIANT] INVALID_OPTION1",
+      {
+        index,
+      }
+    );
+
+    return null;
+  }
+
+  const option2 =
+    safeNullableString(item.option2);
+
+  const option3 =
+    safeNullableString(item.option3);
+
+  const price = safeNumber(item.price);
+
+  const salePrice =
+    safeNullableNumber(item.salePrice);
+
+  const saleEnabled = safeBoolean(
+    item.saleEnabled
+  );
+
+  const stock = safeNumber(item.stock);
+
+  const finalPrice = calcFinalPrice(
+    price,
+    salePrice,
+    saleEnabled
+  );
+
+  const variant: ProductVariant = {
+    id: safeNullableString(item.id) ?? undefined,
+
+    option1,
+
+    option2,
+
+    option3,
+
+    optionLabel1:
+      safeNullableString(
+        item.optionLabel1
+      ),
+
+    optionLabel2:
+      safeNullableString(
+        item.optionLabel2
+      ),
+
+    optionLabel3:
+      safeNullableString(
+        item.optionLabel3
+      ),
+
+    name:
+      safeNullableString(item.name) ??
+      buildVariantName(
+        option1,
+        option2,
+        option3
+      ),
+
+    sku: safeNullableString(item.sku),
+
+    price,
+
+    salePrice,
+
+    finalPrice,
+
+    saleEnabled,
+
+    saleStock: safeNumber(
+      item.saleStock
+    ),
+
+    saleSold: safeNumber(
+      item.saleSold
+    ),
+
+    stock,
+
+    isUnlimited: safeBoolean(
+      item.isUnlimited
+    ),
+
+    image: safeString(item.image),
+
+    isActive:
+      item.isActive !== false,
+
+    sortOrder: safeNumber(
+      item.sortOrder,
+      index
+    ),
+
+    sold: safeNumber(item.sold),
+  };
+
+  return variant;
+}
+
+/* =========================================================
+   NORMALIZE VARIANTS
+========================================================= */
+
+export function normalizeVariants(
+  input: unknown
+): ProductVariant[] {
   if (!Array.isArray(input)) {
     return [];
   }
 
   const result: ProductVariant[] = [];
 
-  for (let index = 0; index < input.length; index++) {
-    const raw = input[index];
+  for (
+    let index = 0;
+    index < input.length;
+    index++
+  ) {
+    const normalized =
+      normalizeVariant(
+        input[index],
+        index
+      );
 
-    if (!isObject(raw)) continue;
-
-    const item = raw as VariantInput;
-
-    const option1 = item.option1;
-
-    // ❗ SAFE GUARD (KHÔNG DROP BẬY)
-    if (typeof option1 !== "string") {
-      console.warn("[VARIANT] missing option1 at index:", index);
+    if (!normalized) {
       continue;
     }
 
-    const trimmedOption1 = option1.trim();
-
-    if (!trimmedOption1) {
-      console.warn("[VARIANT] empty option1 at index:", index);
-      continue;
-    }
-
-    const variant: ProductVariant = {
-      id: item.id,
-
-      option1: trimmedOption1,
-
-      option2: item.option2?.trim() || null,
-      option3: item.option3?.trim() || null,
-
-      optionLabel1: item.optionLabel1?.trim() || null,
-      optionLabel2: item.optionLabel2?.trim() || null,
-      optionLabel3: item.optionLabel3?.trim() || null,
-
-      name: item.name?.trim() || undefined,
-
-      sku: item.sku?.trim() || null,
-
-      price: safeNumber(item.price),
-
-      salePrice: safeNullableNumber(item.salePrice),
-
-      saleEnabled: Boolean(item.saleEnabled),
-
-      saleStock: safeNumber(item.saleStock),
-
-      saleSold: safeNumber(item.saleSold),
-
-      stock: safeNumber(item.stock),
-
-      isUnlimited: Boolean(item.isUnlimited),
-
-      image: item.image ?? "",
-
-      isActive: item.isActive !== false,
-
-      sortOrder: safeNumber(item.sortOrder, index),
-
-      sold: safeNumber(item.sold),
-    };
-
-    result.push(variant);
+    result.push(normalized);
   }
 
   return result;
+}
 }
