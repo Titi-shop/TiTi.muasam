@@ -27,9 +27,22 @@ export async function getProductService(id: string) {
   const variants = await getVariantsByProductId(id);
   const shippingRates = await getShippingRatesByProduct(id);
 
+  const enrichedVariants = variants.map((v) => ({
+    ...v,
+    finalPrice:
+      v.saleEnabled && v.salePrice && v.salePrice < v.price
+        ? v.salePrice
+        : v.price,
+  }));
+
+  const prices = enrichedVariants.map((v) => v.finalPrice);
+
   return {
     ...product,
-    variants,
+    hasVariants: variants.length > 0,
+    minPrice: prices.length ? Math.min(...prices) : null,
+    maxPrice: prices.length ? Math.max(...prices) : null,
+    variants: enrichedVariants,
     shippingRates,
   };
 }
