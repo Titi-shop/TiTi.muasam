@@ -216,16 +216,11 @@ export function mapVariantToApp(
 ): ProductVariant {
   const mapped: ProductVariant = {
     id: variant.id,
-
     option1: variant.option_1 ?? "",
-
     option2: variant.option_2,
-
     option3: variant.option_3,
-
     optionLabel1:
       variant.option_label_1,
-
     optionLabel2:
       variant.option_label_2,
 
@@ -249,10 +244,13 @@ export function mapVariantToApp(
       variant.sale_price
     ),
 
-    finalPrice: safeNumber(
-      variant.final_price
-    ),
-
+    finalPrice:
+  variant.final_price ??
+  calcFinalPrice({
+    price: variant.price,
+    salePrice: variant.sale_price,
+    saleEnabled: variant.sale_enabled,
+  } as any),
     saleEnabled: Boolean(
       variant.sale_enabled
     ),
@@ -336,10 +334,7 @@ export function mapVariantToDB(
       variant.salePrice
     ),
 
-    final_price: calcFinalPrice(
-      variant
-    ),
-
+    final_price: safeNumber(variant.finalPrice ?? calcFinalPrice(variant)),
     sale_enabled: Boolean(
       variant.saleEnabled
     ),
