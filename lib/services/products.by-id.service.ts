@@ -93,7 +93,10 @@ export async function updateProductService(
   if (!updated) return { error: "NOT_FOUND" };
 
   await replaceVariantsByProductId(id, variants);
-
+  await updateProductBySeller(userId, id, {
+  price: finalPrice,
+  stock: finalStock,
+});
   if (Array.isArray(body.shippingRates)) {
     await upsertShippingRates({
       productId: id,
