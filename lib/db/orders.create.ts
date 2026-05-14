@@ -339,8 +339,6 @@ console.log("🟢 [ORDER][CREATE] FINAL REALZONE", { realZone });
 
     /* ================= CREATE ORDER ================= */
 
-    const orderRes = await client.query(
-      `
       const orderRes = await client.query(
   `
   INSERT INTO orders (
