@@ -111,10 +111,7 @@ export function normalizeVariants(
 
       const item =
         raw as VariantInput;
-
-      const option1 =
-        item.option1?.trim();
-
+       
       const option1 = item.option1;
 if (typeof option1 !== "string") {
   return null;
