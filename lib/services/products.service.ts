@@ -145,12 +145,20 @@ export async function updateProductService(req: Request, userId: string) {
   const variants = normalizeVariants(body.variants);
 
   const updated = await updateProductBySeller(userId, body.id, {
-    name: body.name,
-    price: body.price,
-    stock: body.stock,
-    sale_price: body.salePrice ?? null,
-    sale_enabled: body.saleEnabled ?? false,
-  });
+  name: body.name,
+  price: body.price,
+  stock: body.stock,
+
+  sale_price: body.salePrice ?? null,
+  sale_enabled: body.saleEnabled ?? false,
+
+  // 🔥 ADD THESE
+  category_id: body.categoryId ?? null,
+  sale_start: body.saleStart ?? null,
+  sale_end: body.saleEnd ?? null,
+  sale_stock: body.saleStock ?? 0,
+  is_active: body.isActive ?? true,
+});
 
   if (!updated) return { error: "NOT_FOUND" };
 
