@@ -17,10 +17,11 @@ import {
 
 import { verifyPiPaymentForReconcile } from "@/lib/db/payments.verify";
 import { verifyRpcPaymentForReconcile } from "@/lib/db/payments.rpc";
-import {
-  finalizePaidOrderFromIntent,
-  FinalizePaidOrderResult,
-} from "@/lib/db/orders.payment";
+import { createPaidOrderFromIntent }
+  from "@/lib/db/orders.create";
+
+import { finalizePaymentRecords }
+  from "@/lib/db/orders.payment";
 
 import { SettlementLedgerV3 as SettlementLedger } from "@/lib/db/settlement.ledger";
 import { piCompletePayment } from "@/lib/pi/client";
@@ -561,10 +562,13 @@ if (!rpcVerified.ok) {
 if (!intentRow) {
   throw new Error("INTENT_NOT_FOUND_FINALIZE");
 }
-  const paid = await finalizePaidOrderFromIntent({
-  paymentIntentId,
-  piPaymentId,
-  txid,
+  const createdOrder =
+  await createPaidOrderFromIntent({
+    intent: intentRow,
+    paymentIntentId,
+    piPaymentId,
+    txid,
+  });
 
   verifiedAmount: piVerified.verifiedAmount,
   receiverWallet: piVerified.receiverWallet,
