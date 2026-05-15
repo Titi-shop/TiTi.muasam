@@ -58,7 +58,7 @@ function detectInitialZone(
   const domestic = rates.find(
     (r) =>
       r.zone === "domestic" &&
-      r.domesticCountryCode?.toUpperCase() === buyer
+      r.domestic_country_code?.toUpperCase() === buyer
   );
 
   if (domestic) return "domestic";
