@@ -14,8 +14,6 @@ interface ShippingRatesState {
   north_america: ShippingValue;
   rest_of_world: ShippingValue;
 
-  domestic_country_code?: string | null;
-
 }
 
 interface Props {
@@ -36,21 +34,10 @@ export default function ShippingRates({
 }: Props) {
   const { t } = useTranslation();
 useEffect(() => {
-  if (shippingRates.domestic_country_code) {
-    setPrimaryShippingCountry(
-      shippingRates.domestic_country_code
-    );
-    return;
-  }
-
   if (!primaryShippingCountry) {
     setPrimaryShippingCountry(countries[0].code);
   }
-}, [
-  shippingRates.domestic_country_code,
-  primaryShippingCountry,
-  setPrimaryShippingCountry,
-]);
+}, []);
   /* =========================================================
      🔥 SYNC COUNTRY -> STATE (QUAN TRỌNG FIX NULL BUG)
   ========================================================= */
