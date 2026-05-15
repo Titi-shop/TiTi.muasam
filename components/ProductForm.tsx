@@ -32,6 +32,7 @@ interface ProductFormProps {
 interface ShippingRatePayload {
   zone: string;
   price: number;
+  domestic_country_code?: string | null;
 }
 
 interface ProductPayload {
@@ -429,10 +430,13 @@ const payload: ProductPayload = {
 
   isActive: form.isActive,
 
-  shippingRates: shippingRatesPayload,
-
-  domesticCountryCode:
-    form.primaryShippingCountry || null,
+  shippingRates: shippingRatesPayload.map(rate => ({
+  ...rate,
+  domestic_country_code:
+    rate.zone === "domestic"
+      ? form.primaryShippingCountry
+      : null,
+})),
 
   /* =====================================================
      PRODUCT PRICE / STOCK
