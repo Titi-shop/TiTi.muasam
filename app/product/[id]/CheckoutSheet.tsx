@@ -318,7 +318,7 @@ setZone(r.zone);
       >
         <div className="font-medium">
   {r.zone === "domestic"
-  ? `Domestic (${r.domesticCountryCode ?? "—"})`
+  ? `Domestic (${r.domestic_country_code ?? "—"})`
   : (labelMap[r.zone] ?? r.zone)}
 </div>
 
