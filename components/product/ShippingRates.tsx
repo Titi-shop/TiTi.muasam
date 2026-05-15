@@ -35,7 +35,11 @@ export default function ShippingRates({
   setPrimaryShippingCountry,
 }: Props) {
   const { t } = useTranslation();
-
+useEffect(() => {
+  if (!primaryShippingCountry) {
+    setPrimaryShippingCountry(countries[0].code);
+  }
+}, []);
   /* =========================================================
      🔥 SYNC COUNTRY -> STATE (QUAN TRỌNG FIX NULL BUG)
   ========================================================= */
