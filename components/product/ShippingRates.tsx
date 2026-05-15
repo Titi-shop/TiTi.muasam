@@ -16,8 +16,6 @@ interface ShippingRatesState {
 
   domestic_country_code?: string | null;
 
-  // optional legacy
-  domesticCountryCode?: string | null;
 }
 
 interface Props {
@@ -38,12 +36,10 @@ export default function ShippingRates({
 }: Props) {
   const { t } = useTranslation();
 useEffect(() => {
-  const domesticCode =
-    shippingRates.domesticCountryCode ??
-    shippingRates.domestic_country_code;
-
-  if (domesticCode) {
-    setPrimaryShippingCountry(domesticCode);
+  if (shippingRates.domestic_country_code) {
+    setPrimaryShippingCountry(
+      shippingRates.domestic_country_code
+    );
     return;
   }
 
@@ -51,7 +47,7 @@ useEffect(() => {
     setPrimaryShippingCountry(countries[0].code);
   }
 }, [
-  shippingRates,
+  shippingRates.domestic_country_code,
   primaryShippingCountry,
   setPrimaryShippingCountry,
 ]);
