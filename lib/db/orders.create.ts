@@ -1,547 +1,810 @@
+
 import { withTransaction } from "@/lib/db";
 type OrderItemInternal = {
-  product: {
-    id: string;
-    seller_id: string;
-    name: string;
-    thumbnail: string | null;
-  };
-  variant_id: string | null;
-  price: number;
-  qty: number;
-  total: number;
-};
-type CreateOrderInput = {
-  userId: string;
-  items: {
-    product_id: string;
-    quantity: number;
-    variant_id?: string | null;
-  }[];
+product: {
 
-  country: string;
-  zone: string;
-  shipping: {
-    name: string;
-    phone: string;
-    address_line: string;
-    ward?: string | null;
-    district?: string | null;
-    region?: string | null;
-    postal_code?: string | null;
-  };
+id: string;
+
+seller_id: string;
+name: string;
+thumbnail: string | null;
+};
+
+variant_id: string | null;
+price: number;
+qty: number;
+total: number;
+};
+
+type CreateOrderInput = {
+userId: string;
+items: {
+
+product_id: string;
+quantity: number;
+variant_id?: string | null;
+
+}[];
+
+country: string;
+zone: string;
+shipping: {
+
+name: string;
+phone: string;
+
+address_line: string;
+ward?: string | null;
+district?: string | null;
+region?: string | null;
+postal_code?: string | null;
+
+};
+
 };
 
 function isUUID(v: string): boolean {
-  return /^[0-9a-f-]{36}$/i.test(v);
+
+return /^[0-9a-f-]{36}$/i.test(v);
+
 }
 
 export async function createOrder(input: CreateOrderInput) {
-  const { userId, items } = input;
 
-  if (!userId) throw new Error("INVALID_USER");
-  if (!Array.isArray(items) || items.length === 0)
-    throw new Error("INVALID_ITEMS");
+const { userId, items } = input;
 
-  const zone = input.zone?.trim().toLowerCase();
-  const country = input.country?.trim().toUpperCase();
+if (!userId) throw new Error("INVALID_USER");
 
-  return withTransaction(async (client) => {
+if (!Array.isArray(items) || items.length === 0)
 
-    console.log("🟡 [ORDER][CREATE] START", {
-      userId,
-      itemsCount: items.length,
-    });
+throw new Error("INVALID_ITEMS");
 
-    /* ================= VALIDATE ZONE ================= */
+const zone = input.zone?.trim().toLowerCase();
 
-    console.log("🟡 [ORDER][CREATE] STEP SHIPPING ZONE RESOLVE", {
-  country,
-  buyerZone: zone,
+const country = input.country?.trim().toUpperCase();
+
+return withTransaction(async (client) => {
+
+console.log("🟡 [ORDER][CREATE] START", {
+
+  userId,
+
+  itemsCount: items.length,
+
+});
+
+
+
+/* ================= VALIDATE ZONE ================= */
+
+
+
+console.log("🟡 [ORDER][CREATE] STEP SHIPPING ZONE RESOLVE", {
+
+country,
+
+buyerZone: zone,
+
 });
 
 /* =========================================================
-   LOAD PRODUCT SHIPPING RATES
+
+LOAD PRODUCT SHIPPING RATES
+
 ========================================================= */
 
 const productIds = items.map((i) => i.product_id);
 
 const shippingRateRows = await client.query<{
-  product_id: string;
-  zone: string;
-  domestic_country_code: string | null;
+
+product_id: string;
+
+zone: string;
+
+domestic_country_code: string | null;
+
 }>(
-  `
-  SELECT
-    sr.product_id,
-    sz.code AS zone,
-    sr.domestic_country_code
-  FROM shipping_rates sr
-  JOIN shipping_zones sz
-    ON sz.id = sr.zone_id
-  WHERE sr.product_id = ANY($1::uuid[])
-  `,
-  [productIds]
+
+`
+
+SELECT
+
+sr.product_id,
+
+sz.code AS zone,
+
+sr.domestic_country_code
+
+FROM shipping_rates sr
+
+JOIN shipping_zones sz
+
+ON sz.id = sr.zone_id
+
+WHERE sr.product_id = ANY($1::uuid[])
+
+`,
+
+[productIds]
+
 );
 
 if (!shippingRateRows.rows.length) {
-  throw new Error("SHIPPING_NOT_AVAILABLE");
+
+throw new Error("SHIPPING_NOT_AVAILABLE");
+
 }
 
 console.log("🧪 [ORDER][CREATE] SHIPPING RATE ROWS", shippingRateRows.rows);
 
 /* =========================================================
-   DOMESTIC CHECK
+
+DOMESTIC CHECK
+
 ========================================================= */
 
 let realZone: string | null = null;
 
 const domesticOk = shippingRateRows.rows.some(
-  (r) =>
-    r.zone === "domestic" &&
-    r.domestic_country_code &&
-    r.domestic_country_code.trim().toUpperCase() === country
+
+(r) =>
+
+r.zone === "domestic" &&
+
+r.domestic_country_code &&
+
+r.domestic_country_code.trim().toUpperCase() === country
+
 );
 
 if (domesticOk) {
-  realZone = "domestic";
-  console.log("🏠 [ORDER][CREATE] DOMESTIC MATCH");
+
+realZone = "domestic";
+
+console.log("🏠 [ORDER][CREATE] DOMESTIC MATCH");
+
 }
 
 /* =========================================================
-   GLOBAL ZONE CHECK
+
+GLOBAL ZONE CHECK
+
 ========================================================= */
 
 if (!realZone) {
-  const zoneRes = await client.query<{ code: string }>(
-    `
-    SELECT sz.code
-    FROM shipping_zone_countries szc
-    JOIN shipping_zones sz ON sz.id = szc.zone_id
-    WHERE szc.country_code = $1
-    LIMIT 1
-    `,
-    [country]
-  );
 
-  if (!zoneRes.rows.length) {
-    throw new Error("INVALID_COUNTRY");
-  }
+const zoneRes = await client.query<{ code: string }>(
 
-  realZone = zoneRes.rows[0].code;
-  console.log("🌍 [ORDER][CREATE] GLOBAL MATCH", { realZone });
+`
+
+SELECT sz.code
+
+FROM shipping_zone_countries szc
+
+JOIN shipping_zones sz ON sz.id = szc.zone_id
+
+WHERE szc.country_code = $1
+
+LIMIT 1
+
+`,
+
+[country]
+
+);
+
+if (!zoneRes.rows.length) {
+
+throw new Error("INVALID_COUNTRY");
+
+}
+
+realZone = zoneRes.rows[0].code;
+
+console.log("🌍 [ORDER][CREATE] GLOBAL MATCH", { realZone });
+
 }
 
 /* =========================================================
-   CLIENT SELECT CHECK
+
+CLIENT SELECT CHECK
+
 ========================================================= */
 
 if (realZone !== zone) {
-  console.error("❌ [ORDER][CREATE] INVALID_REGION", {
-    clientZone: zone,
-    serverZone: realZone,
-  });
 
-  throw new Error("INVALID_REGION");
+console.error("❌ [ORDER][CREATE] INVALID_REGION", {
+
+clientZone: zone,
+
+serverZone: realZone,
+
+});
+
+throw new Error("INVALID_REGION");
+
 }
 
 console.log("🟢 [ORDER][CREATE] FINAL REALZONE", { realZone });
 
-    /* ================= LOAD PRODUCTS ================= */
+/* ================= LOAD PRODUCTS ================= */
 
-    const { rows: products } = await client.query<{
-      id: string;
-      seller_id: string;
-      name: string;
-      price: number;
-      sale_price: number | null;
-      sale_start: string | null;
-      sale_end: string | null;
-      thumbnail: string;
-      is_active: boolean;
-      deleted_at: string | null;
-    }>(
-      `
-      SELECT id, seller_id, name, price,
-             sale_price, sale_start, sale_end,
-             thumbnail, is_active, deleted_at
-      FROM products
-      WHERE id = ANY($1::uuid[])
-      `,
-      [productIds]
-    );
 
-    const productMap = new Map(products.map((p) => [p.id, p]));
 
-    /* ================= LOAD VARIANTS ================= */
+const { rows: products } = await client.query<{
 
-    const variantIds = items
-      .map((i) => i.variant_id)
-      .filter(Boolean);
+  id: string;
 
-    const { rows: variants } =
-      variantIds.length > 0
-        ? await client.query<{
-            id: string;
-            product_id: string;
-            price: number;
-            sale_price: number | null;
-          }>(
-            `
-            SELECT id, product_id, price, sale_price
-            FROM product_variants
-            WHERE id = ANY($1::uuid[])
-            `,
-            [variantIds]
-          )
-        : { rows: [] };
+  seller_id: string;
 
-    const variantMap = new Map(variants.map((v) => [v.id, v]));
+  name: string;
 
-    /* ================= CALCULATE ================= */
+  price: number;
 
-    let subtotal = 0;
-    let totalQuantity = 0;
-    const orderItems: OrderItemInternal[] = [];
+  sale_price: number | null;
 
-    for (const item of items) {
-      if (!isUUID(item.product_id)) {
-        throw new Error("INVALID_PRODUCT_ID");
-      }
+  sale_start: string | null;
 
-      const p = productMap.get(item.product_id);
-      if (!p) throw new Error("INVALID_PRODUCT");
+  sale_end: string | null;
 
-      if (p.is_active === false || p.deleted_at) {
-        throw new Error("PRODUCT_NOT_AVAILABLE");
-      }
+  thumbnail: string;
 
-      const qty = item.quantity > 0 ? item.quantity : 1;
+  is_active: boolean;
 
-      let price = Number(p.price);
+  deleted_at: string | null;
 
-      /* ===== VARIANT ===== */
-      if (item.variant_id) {
-        const v = variantMap.get(item.variant_id);
-        if (!v) throw new Error("INVALID_VARIANT");
+}>(
 
-        price =
-          v.sale_price && v.sale_price > 0
-            ? Number(v.sale_price)
-            : Number(v.price);
-      } else {
-        /* ===== SALE ===== */
-        const now = Date.now();
-
-        const start = p.sale_start
-          ? new Date(p.sale_start).getTime()
-          : null;
-
-        const end = p.sale_end
-          ? new Date(p.sale_end).getTime()
-          : null;
-
-        const isSale =
-          p.sale_price &&
-          start &&
-          end &&
-          now >= start &&
-          now <= end;
-
-        price = isSale
-          ? Number(p.sale_price)
-          : Number(p.price);
-      }
-
-      const total = price * qty;
-
-      subtotal += total;
-      totalQuantity += qty;
-
-      orderItems.push({
-  product: {
-    id: p.id,
-    seller_id: p.seller_id,
-    name: p.name,
-    thumbnail: p.thumbnail ?? null,
-  },
-  variant_id: item.variant_id ?? null,
-  price,
-  qty,
-  total,
-});
-    }
-
-    /* ================= SHIPPING ================= */
-
-    const { rows: shippingRows } = await client.query<{
-      product_id: string;
-      price: number;
-    }>(
-      `
-      SELECT sr.product_id, sr.price
-      FROM shipping_rates sr
-      JOIN shipping_zones sz ON sz.id = sr.zone_id
-      WHERE sr.product_id = ANY($1::uuid[])
-      AND sz.code = $2
-      `,
-      [productIds, realZone]
-    );
-
-    const shippingMap = new Map(
-      shippingRows.map((r) => [r.product_id, Number(r.price)])
-    );
-
-    let shippingFee = 0;
-
-    for (const item of items) {
-      const fee = shippingMap.get(item.product_id);
-      if (fee === undefined) throw new Error("SHIPPING_NOT_AVAILABLE");
-      shippingFee += fee;
-    }
-
-    const total = subtotal + shippingFee;
-
-    console.log("💰 [ORDER][TOTAL]", {
-      subtotal,
-      shippingFee,
-      total,
-    });
-
-    /* ================= STOCK ================= */
-
-    for (const item of orderItems) {
-  if (item.variant_id) {
-    const res = await client.query(
-      `
-      UPDATE product_variants
-      SET stock = stock - $1
-      WHERE id = $2 AND stock >= $1
-      `,
-      [item.qty, item.variant_id]
-    );
-
-    if (!res.rowCount) throw new Error("OUT_OF_STOCK");
-  } else {
-    const res = await client.query(
-      `
-      UPDATE products
-      SET stock = stock - $1,
-          sold = sold + $1
-      WHERE id = $2 AND stock >= $1
-      `,
-      [item.qty, item.product.id]
-    );
-
-    if (!res.rowCount) throw new Error("OUT_OF_STOCK");
-  }
-}
-
-    /* ================= CREATE ORDER ================= */
-
-      const orderRes = await client.query<{ id: string }>(
   `
-  INSERT INTO orders (
-    buyer_id,
-    seller_id,
-    pi_payment_id,
-    pi_txid,
-    idempotency_key,
 
-    payment_status,
-    paid_at,
+  SELECT id, seller_id, name, price,
 
-    fulfillment_status,
+         sale_price, sale_start, sale_end,
 
-    settlement_status,
-    shipment_status,
-    delivery_status,
+         thumbnail, is_active, deleted_at
 
-    items_total,
-    subtotal,
-    discount,
-    shipping_fee,
-    tax,
-    total,
-    currency,
+  FROM products
 
-    shipping_name,
-    shipping_phone,
-    shipping_address_line,
-    shipping_ward,
-    shipping_district,
-    shipping_region,
-    shipping_country,
-    shipping_postal_code,
+  WHERE id = ANY($1::uuid[])
 
-    total_items,
-    total_quantity,
-
-    created_at,
-    updated_at
-  )
-  VALUES (
-    $1,  -- buyer_id
-    $2,  -- seller_id
-
-    $3,  -- pi_payment_id
-    $4,  -- pi_txid
-    $5,  -- idempotency_key
-
-    'paid',
-    now(),
-
-    'pending_fulfillment',
-
-    'ESCROWED',
-    'PENDING',
-    'PENDING',
-
-    $6,  -- items_total
-    $7,  -- subtotal
-    $8,  -- discount
-    $9,  -- shipping_fee
-    $10, -- tax
-    $11, -- total
-    $12, -- currency
-
-    $13, -- shipping_name
-    $14, -- shipping_phone
-    $15, -- shipping_address_line
-    $16, -- shipping_ward
-    $17, -- shipping_district
-    $18, -- shipping_region
-    $19, -- shipping_country
-    $20, -- shipping_postal_code
-
-    $21, -- total_items
-    $22, -- total_quantity
-
-    now(),
-    now()
-  )
-  RETURNING id
   `,
-  [
-    // $1
-    intent.buyer_id,
 
-    // $2
-    intent.seller_id,
+  [productIds]
 
-    // $3
-    piPaymentId,
-
-    // $4
-    txid,
-
-    // $5
-    paymentIntentId,
-
-    // $6 items_total
-    intent.subtotal,
-
-    // $7 subtotal
-    intent.subtotal,
-
-    // $8 discount
-    intent.discount,
-
-    // $9 shipping_fee
-    intent.shipping_fee,
-
-    // $10 tax
-    0,
-
-    // $11 total
-    intent.total_amount,
-
-    // $12 currency
-    intent.currency,
-
-    // $13 shipping_name
-    shipping.name ?? "",
-
-    // $14 shipping_phone
-    shipping.phone ?? "",
-
-    // $15 shipping_address_line
-    shipping.address_line ?? "",
-
-    // $16 shipping_ward
-    shipping.ward ?? null,
-
-    // $17 shipping_district
-    shipping.district ?? null,
-
-    // $18 shipping_region
-    shipping.region ?? null,
-
-    // $19 shipping_country
-    shipping.country ?? intent.country,
-
-    // $20 shipping_postal_code
-    shipping.postal_code ?? null,
-
-    // $21 total_items
-    intent.quantity,
-
-    // $22 total_quantity
-    intent.quantity,
-  ]
 );
 
-    const orderId = orderRes.rows[0].id;
-    await writePaymentAudit({
-  paymentIntentId,
-  eventCode: "ORDER_CREATED",
-  stage: "FINALIZE",
-  actorType: "system",
-  piPaymentId,
-  txid,
-  source: "orders.payment",
-  orderId,
-  newSettlementState: "ORDER_CREATED",
+
+
+const productMap = new Map(products.map((p) => [p.id, p]));
+
+
+
+/* ================= LOAD VARIANTS ================= */
+
+
+
+const variantIds = items
+
+  .map((i) => i.variant_id)
+
+  .filter(Boolean);
+
+
+
+const { rows: variants } =
+
+  variantIds.length > 0
+
+    ? await client.query<{
+
+        id: string;
+
+        product_id: string;
+
+        price: number;
+
+        sale_price: number | null;
+
+      }>(
+
+        `
+
+        SELECT id, product_id, price, sale_price
+
+        FROM product_variants
+
+        WHERE id = ANY($1::uuid[])
+
+        `,
+
+        [variantIds]
+
+      )
+
+    : { rows: [] };
+
+
+
+const variantMap = new Map(variants.map((v) => [v.id, v]));
+
+
+
+/* ================= CALCULATE ================= */
+
+
+
+let subtotal = 0;
+
+let totalQuantity = 0;
+
+const orderItems: OrderItemInternal[] = [];
+
+
+
+for (const item of items) {
+
+  if (!isUUID(item.product_id)) {
+
+    throw new Error("INVALID_PRODUCT_ID");
+
+  }
+
+
+
+  const p = productMap.get(item.product_id);
+
+  if (!p) throw new Error("INVALID_PRODUCT");
+
+
+
+  if (p.is_active === false || p.deleted_at) {
+
+    throw new Error("PRODUCT_NOT_AVAILABLE");
+
+  }
+
+
+
+  const qty = item.quantity > 0 ? item.quantity : 1;
+
+
+
+  let price = Number(p.price);
+
+
+
+  /* ===== VARIANT ===== */
+
+  if (item.variant_id) {
+
+    const v = variantMap.get(item.variant_id);
+
+    if (!v) throw new Error("INVALID_VARIANT");
+
+
+
+    price =
+
+      v.sale_price && v.sale_price > 0
+
+        ? Number(v.sale_price)
+
+        : Number(v.price);
+
+  } else {
+
+    /* ===== SALE ===== */
+
+    const now = Date.now();
+
+
+
+    const start = p.sale_start
+
+      ? new Date(p.sale_start).getTime()
+
+      : null;
+
+
+
+    const end = p.sale_end
+
+      ? new Date(p.sale_end).getTime()
+
+      : null;
+
+
+
+    const isSale =
+
+      p.sale_price &&
+
+      start &&
+
+      end &&
+
+      now >= start &&
+
+      now <= end;
+
+
+
+    price = isSale
+
+      ? Number(p.sale_price)
+
+      : Number(p.price);
+
+  }
+
+
+
+  const total = price * qty;
+
+
+
+  subtotal += total;
+
+  totalQuantity += qty;
+
+
+
+  orderItems.push({
+
+product: {
+
+id: p.id,
+
+seller_id: p.seller_id,
+
+name: p.name,
+
+thumbnail: p.thumbnail ?? null,
+
+},
+
+variant_id: item.variant_id ?? null,
+
+price,
+
+qty,
+
+total,
+
 });
-if (!orderId) {
-  throw new Error("ORDER_CREATE_FAILED");
+
 }
 
 
-    /* ================= ORDER ITEMS ================= */
 
-    for (const item of orderItems) {
-      await client.query(
+/* ================= SHIPPING ================= */
+
+
+
+const { rows: shippingRows } = await client.query<{
+
+  product_id: string;
+
+  price: number;
+
+}>(
+
   `
-  INSERT INTO order_items (
-    order_id,
-    product_id,
-    variant_id,
-    seller_id,
-    product_name,
-    thumbnail,
-    unit_price,
-    quantity,
-    total_price
-  )
-  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+
+  SELECT sr.product_id, sr.price
+
+  FROM shipping_rates sr
+
+  JOIN shipping_zones sz ON sz.id = sr.zone_id
+
+  WHERE sr.product_id = ANY($1::uuid[])
+
+  AND sz.code = $2
+
   `,
+
+  [productIds, realZone]
+
+);
+
+
+
+const shippingMap = new Map(
+
+  shippingRows.map((r) => [r.product_id, Number(r.price)])
+
+);
+
+
+
+let shippingFee = 0;
+
+
+
+for (const item of items) {
+
+  const fee = shippingMap.get(item.product_id);
+
+  if (fee === undefined) throw new Error("SHIPPING_NOT_AVAILABLE");
+
+  shippingFee += fee;
+
+}
+
+
+
+const total = subtotal + shippingFee;
+
+
+
+console.log("💰 [ORDER][TOTAL]", {
+
+  subtotal,
+
+  shippingFee,
+
+  total,
+
+});
+
+
+
+/* ================= STOCK ================= */
+
+
+
+for (const item of orderItems) {
+
+if (item.variant_id) {
+
+const res = await client.query(
+
+  `
+
+  UPDATE product_variants
+
+  SET stock = stock - $1
+
+  WHERE id = $2 AND stock >= $1
+
+  `,
+
+  [item.qty, item.variant_id]
+
+);
+
+
+
+if (!res.rowCount) throw new Error("OUT_OF_STOCK");
+
+} else {
+
+const res = await client.query(
+
+  `
+
+  UPDATE products
+
+  SET stock = stock - $1,
+
+      sold = sold + $1
+
+  WHERE id = $2 AND stock >= $1
+
+  `,
+
+  [item.qty, item.product.id]
+
+);
+
+
+
+if (!res.rowCount) throw new Error("OUT_OF_STOCK");
+
+}
+
+}
+
+/* ================= CREATE ORDER ================= */
+
+
+
+const orderRes = await client.query(
+
+  `
+
+  INSERT INTO orders (
+
+    order_number,
+
+    buyer_id,
+
+    seller_id,
+
+
+
+    subtotal,
+
+    shipping_fee,
+
+    total,
+
+
+
+    payment_status,
+
+    status,
+
+
+
+    shipping_name,
+
+    shipping_phone,
+
+    shipping_address_line,
+
+    shipping_ward,
+
+    shipping_district,
+
+    shipping_region,
+
+    shipping_country,
+
+    shipping_postal_code,
+
+    shipping_zone,
+
+
+
+    total_items,
+
+    total_quantity
+
+  )
+
+  VALUES (
+
+    gen_random_uuid()::text,
+
+    $1,$2,
+
+    $3,$4,$5,
+
+    'pending',
+
+    'pending',
+
+    $6,$7,$8,$9,$10,$11,$12,$13,$14,
+
+    $15,$16
+
+  )
+
+  RETURNING id
+
+  `,
+
   [
-    orderId,
-    item.product.id,
-    item.variant_id,
-    item.product.seller_id,
-    item.product.name,
-    item.product.thumbnail ?? "",
-    item.price,
-    item.qty,
-    item.total,
+
+    userId,
+
+    orderItems[0].product.seller_id,
+
+
+
+    subtotal,
+
+    shippingFee,
+
+    total,
+
+
+
+    input.shipping.name,
+
+    input.shipping.phone,
+
+    input.shipping.address_line,
+
+    input.shipping.ward ?? null,
+
+    input.shipping.district ?? null,
+
+    input.shipping.region ?? null,
+
+    country,
+
+    input.shipping.postal_code ?? null,
+
+    realZone,
+
+
+
+    orderItems.length,
+
+    totalQuantity,
+
   ]
-   );
-    }
 
-    console.log("🟢 [ORDER][CREATED]", { orderId });
+);
 
-    return { orderId };
-  });
+
+
+const orderId = orderRes.rows[0].id;
+
+
+
+/* ================= ORDER ITEMS ================= */
+
+
+
+for (const item of orderItems) {
+
+  await client.query(
+
+`
+
+INSERT INTO order_items (
+
+order_id,
+
+product_id,
+
+variant_id,
+
+seller_id,
+
+product_name,
+
+thumbnail,
+
+unit_price,
+
+quantity,
+
+total_price
+
+)
+
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+
+`,
+
+[
+
+orderId,
+
+item.product.id,
+
+item.variant_id,
+
+item.product.seller_id,
+
+item.product.name,
+
+item.product.thumbnail ?? "",
+
+item.price,
+
+item.qty,
+
+item.total,
+
+]
+
+);
+
+}
+
+
+
+console.log("🟢 [ORDER][CREATED]", { orderId });
+
+
+
+return { orderId };
+
+});
+
 }
