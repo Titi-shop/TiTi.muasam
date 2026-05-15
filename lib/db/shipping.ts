@@ -17,7 +17,7 @@ export type Region =
 export type ShippingRateInput = {
   zone: Region;
   price: number;
-  domesticCountryCode?: string | null;
+  domestic_country_code?: string | null;
 };
 
 type ShippingRateRow = {
