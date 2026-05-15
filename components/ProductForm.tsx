@@ -359,10 +359,10 @@ export default function ProductForm({
   Object.entries(form.shippingRates).map(([zone, price]) => ({
     zone,
     price: Number(price || 0),
-    domestic_country_code:
-      zone === "domestic"
-        ? form.primaryShippingCountry ?? null
-        : null,
+   domesticCountryCode:
+  zone === "domestic"
+    ? form.primaryShippingCountry || null
+    : null,
   }));
 
       /* =========================
