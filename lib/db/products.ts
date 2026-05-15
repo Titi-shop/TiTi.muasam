@@ -944,16 +944,72 @@ export async function getProductsByIds(ids: string[]) {
 
   return rows;
 }
-export async function deleteProductById(id: string) {
-  const { rowCount } = await query(
-    `
-    DELETE FROM products
-    WHERE id = $1
-    `,
-    [id]
-  );
+export async function deleteProductById(
+  productId: string,
+  sellerId: string
+) {
+  return withTransaction(async (client) => {
 
-  return rowCount > 0;
+    // variants
+    await client.query(
+      `
+      DELETE FROM product_variants
+      WHERE product_id = $1
+      `,
+      [productId]
+    );
+
+    // shipping
+    await client.query(
+      `
+      DELETE FROM shipping_rates
+      WHERE product_id = $1
+      `,
+      [productId]
+    );
+
+    // cart
+    await client.query(
+      `
+      DELETE FROM cart_items
+      WHERE product_id = $1
+      `,
+      [productId]
+    );
+
+    // wishlist
+    await client.query(
+      `
+      DELETE FROM favorites
+      WHERE product_id = $1
+      `,
+      [productId]
+    );
+
+    // reviews
+    await client.query(
+      `
+      DELETE FROM product_reviews
+      WHERE product_id = $1
+      `,
+      [productId]
+    );
+
+    // cuối cùng mới xóa product
+    const result = await client.query(
+      `
+      DELETE FROM products
+      WHERE id = $1
+        AND seller_id = $2
+      RETURNING id
+      `,
+      [productId, sellerId]
+    );
+
+    return {
+      ok: result.rows.length > 0,
+    };
+  });
 }
 export async function getSoldByProduct(productId: string) {
   const { rows } = await query(
