@@ -39,13 +39,7 @@ export default function ShippingRates({
   /* =========================================================
      🔥 SYNC COUNTRY -> STATE (QUAN TRỌNG FIX NULL BUG)
   ========================================================= */
-  useEffect(() => {
-    setShippingRates((prev) => ({
-      ...prev,
-      domesticCountryCode: primaryShippingCountry || null,
-    }));
-  }, [primaryShippingCountry, setShippingRates]);
-
+ 
   const zones: {
     key: keyof ShippingRatesState;
     placeholder: string;
