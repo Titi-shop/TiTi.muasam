@@ -1,5 +1,9 @@
 import { withTransaction } from "@/lib/db";
 
+/* =========================================================
+   TYPES
+========================================================= */
+
 type OrderItemInternal = {
   product: {
     id: string;
@@ -43,6 +47,10 @@ function isUUID(v: string): boolean {
   return /^[0-9a-f-]{36}$/i.test(v);
 }
 
+/* =========================================================
+   MAIN
+========================================================= */
+
 export async function createOrder(input: CreateOrderInput) {
   const { userId, items } = input;
 
@@ -53,22 +61,25 @@ export async function createOrder(input: CreateOrderInput) {
   const country = input.country?.trim().toUpperCase();
 
   return withTransaction(async (client) => {
-    console.log("🟡 [ORDER][FINAL_CREATE] START", {
+    console.log("🟡 [ORDER][V7][PAID_FLOW] START", {
       userId,
       itemsCount: items.length,
+      piPaymentId: input.piPaymentId,
+      txid: input.txid,
+      idempotencyKey: input.idempotencyKey,
     });
 
-    /* ================= PRODUCT IDS ================= */
+    /* =========================================================
+       PRODUCTS LOAD
+    ========================================================= */
 
     const productIds = items.map((i) => i.product_id);
-
-    /* ================= LOAD PRODUCTS ================= */
 
     const { rows: products } = await client.query<any>(
       `
       SELECT id, seller_id, name, price,
              sale_price, sale_start, sale_end,
-             thumbnail, is_active, deleted_at
+             thumbnail, is_active, deleted_at, stock
       FROM products
       WHERE id = ANY($1::uuid[])
       `,
@@ -77,15 +88,17 @@ export async function createOrder(input: CreateOrderInput) {
 
     const productMap = new Map(products.map((p) => [p.id, p]));
 
-    /* ================= VARIANTS ================= */
+    /* =========================================================
+       VARIANTS
+    ========================================================= */
 
     const variantIds = items.map((i) => i.variant_id).filter(Boolean);
 
     const { rows: variants } =
-      variantIds.length
+      variantIds.length > 0
         ? await client.query<any>(
             `
-            SELECT id, product_id, price, sale_price
+            SELECT id, product_id, price, sale_price, stock
             FROM product_variants
             WHERE id = ANY($1::uuid[])
             `,
@@ -95,7 +108,9 @@ export async function createOrder(input: CreateOrderInput) {
 
     const variantMap = new Map(variants.map((v) => [v.id, v]));
 
-    /* ================= CALCULATE ================= */
+    /* =========================================================
+       CALCULATE
+    ========================================================= */
 
     let subtotal = 0;
     let totalQuantity = 0;
@@ -103,10 +118,16 @@ export async function createOrder(input: CreateOrderInput) {
     const orderItems: OrderItemInternal[] = [];
 
     for (const item of items) {
-      if (!isUUID(item.product_id)) throw new Error("INVALID_PRODUCT_ID");
+      if (!isUUID(item.product_id)) {
+        throw new Error("INVALID_PRODUCT_ID");
+      }
 
       const p = productMap.get(item.product_id);
       if (!p) throw new Error("INVALID_PRODUCT");
+
+      if (!p.is_active || p.deleted_at) {
+        throw new Error("PRODUCT_NOT_AVAILABLE");
+      }
 
       const qty = Math.max(item.quantity, 1);
 
@@ -136,9 +157,18 @@ export async function createOrder(input: CreateOrderInput) {
         qty,
         total,
       });
+
+      console.log("🧾 [ORDER][ITEM]", {
+        productId: p.id,
+        qty,
+        price,
+        total,
+      });
     }
 
-    /* ================= SHIPPING (simplified kept logic) ================= */
+    /* =========================================================
+       SHIPPING
+    ========================================================= */
 
     const { rows: shippingRows } = await client.query<any>(
       `
@@ -171,7 +201,9 @@ export async function createOrder(input: CreateOrderInput) {
       total,
     });
 
-    /* ================= STOCK DEDUCTION ================= */
+    /* =========================================================
+       STOCK DEDUCTION (STRICT)
+    ========================================================= */
 
     for (const item of orderItems) {
       const res = await client.query(
@@ -184,10 +216,20 @@ export async function createOrder(input: CreateOrderInput) {
         [item.qty, item.product.id]
       );
 
-      if (!res.rowCount) throw new Error("OUT_OF_STOCK");
+      if (!res.rowCount) {
+        console.error("❌ [ORDER][STOCK] OUT_OF_STOCK", {
+          productId: item.product.id,
+          qty: item.qty,
+        });
+        throw new Error("OUT_OF_STOCK");
+      }
     }
 
-    /* ================= CREATE ORDER (PAID FLOW ONLY) ================= */
+    /* =========================================================
+       CREATE ORDER (PAID ONLY FLOW)
+    ========================================================= */
+
+    console.log("🟡 [ORDER][INSERT] CREATE ORDER ROW");
 
     const orderRes = await client.query<{ id: string }>(
       `
@@ -233,6 +275,7 @@ export async function createOrder(input: CreateOrderInput) {
       )
       VALUES (
         $1,$2,
+
         $3,$4,$5,
 
         'paid',
@@ -287,7 +330,16 @@ export async function createOrder(input: CreateOrderInput) {
 
     const orderId = orderRes.rows[0].id;
 
-    /* ================= ORDER ITEMS ================= */
+    console.log("🟢 [ORDER][CREATED][PAID_FLOW]", {
+      orderId,
+      buyerId: userId,
+      sellerId: orderItems[0].product.seller_id,
+      total,
+    });
+
+    /* =========================================================
+       ORDER ITEMS INSERT
+    ========================================================= */
 
     for (const item of orderItems) {
       await client.query(
@@ -319,8 +371,15 @@ export async function createOrder(input: CreateOrderInput) {
       );
     }
 
-    console.log("🟢 [ORDER][CREATED - PAID FLOW]", { orderId });
+    console.log("🟢 [ORDER][ITEMS_CREATED]", {
+      orderId,
+      items: orderItems.length,
+    });
+
+    /* =========================================================
+       RETURN
+    ========================================================= */
 
     return { orderId };
   });
-}
+      }
