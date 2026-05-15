@@ -40,7 +40,12 @@ export default function ShippingRates({
   setPrimaryShippingCountry,
 }: Props) {
   const { t } = useTranslation();
-
+useEffect(() => {
+  setShippingRates(prev => ({
+    ...prev,
+    domesticCountryCode: primaryShippingCountry,
+  }));
+}, [primaryShippingCountry]);
   const zones: {
     key: keyof ShippingRatesState;
     placeholder: string;
