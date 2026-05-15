@@ -149,7 +149,7 @@ export async function upsertShippingRates({
       productId,
       zoneId,
       r.price,
-      isDomestic ? r.domesticCountryCode ?? null : null
+      isDomestic ? r.domestic_country_code ?? null : null
     );
   }
 
@@ -219,7 +219,7 @@ export async function getShippingRatesByProduct(productId: string) {
     .map((r) => ({
       zone: r.zone as Region,
       price: Number(r.price),
-      domesticCountryCode: r.domestic_country_code,
+      domestic_country_code: r.domestic_country_code,
     }));
 
   console.log("🎯 FINAL SHIPPING RESULT:", mapped);
@@ -239,7 +239,7 @@ export async function getShippingRatesByProducts(
     product_id: string;
     zone: Region;
     price: number;
-    domesticCountryCode?: string | null;
+    domestic_country_code?: string | null;
   }[]
 > {
   const validIds = productIds.filter(isUUID);
@@ -266,7 +266,7 @@ export async function getShippingRatesByProducts(
       product_id: r.product_id,
       zone: r.code as Region,
       price: Number(r.price),
-      domesticCountryCode: r.domestic_country_code,
+      domestic_country_code: r.domestic_country_code,
     }));
 }
 
@@ -320,7 +320,7 @@ export async function resolveShippingPrice({
   const domestic = rates.find(
     (r) =>
       r.zone === "domestic" &&
-      r.domesticCountryCode?.toUpperCase() === buyer
+      r.domestic_country_code?.toUpperCase() === buyer
   );
 
   if (domestic) {
@@ -373,7 +373,7 @@ export async function resolveShippingRateForBuyer({
   const domestic = rates.find(
     (r) =>
       r.zone === "domestic" &&
-      r.domesticCountryCode?.toUpperCase() === buyer
+      r.domestic_country_code?.toUpperCase() === buyer
   );
 
   if (domestic) {
