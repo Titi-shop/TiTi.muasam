@@ -20,7 +20,7 @@ export type ShippingRatesState = {
 type ShippingRateItem = {
   zone: string;
   price: number;
-  domesticCountryCode?: string | null;
+  domestic_country_code?: string | null;
 };
 
 /* =========================================================
@@ -382,9 +382,9 @@ export function useProductForm(
     );
 
     setPrimaryShippingCountry(
-      domesticRate
-        ?.domesticCountryCode || ""
-    );
+  domesticRate
+    ?.domestic_country_code || ""
+);
   }, [initialData]);
 
   /* =========================================================
