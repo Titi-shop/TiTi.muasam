@@ -241,9 +241,10 @@ await writePaymentAudit({
 const createdOrder = await createOrder({
   userId: intent.buyer_id,
 
-  pi_payment_id: piPaymentId,
-  pi_txid: txid,
-  idempotency_key: paymentIntentId,
+  piPaymentId,
+  txid,
+  idempotencyKey: paymentIntentId, // hoặc intent.id
+
   country: intent.country,
   zone: intent.zone,
 
