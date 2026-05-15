@@ -34,8 +34,10 @@ function calcFinalPrice(variants: any[], fallbackPrice: number) {
 function normalizeShippingRates(body: any) {
   const rates = body.shippingRates || [];
 
-  const primaryCountry = body.primaryShippingCountry || null;
-
+ const primaryCountry =
+  body.primaryShippingCountry ||
+  body.domesticCountryCode ||
+  null;
   return rates.map((r: any) => {
     const zone = r.zone;
     const price = Number(r.price ?? 0);
