@@ -99,7 +99,7 @@ useEffect(() => {
   return (
     <div className="space-y-3">
       {/* TITLE */}
-      <p className="font-medium">🚚 {t.shipping_fee}</p>
+      <p className="font-medium"> {t.shipping_fee}</p>
 
       {/* DOMESTIC */}
       <div className="border rounded-xl p-3 bg-gray-50 space-y-3">
