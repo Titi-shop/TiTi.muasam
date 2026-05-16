@@ -168,8 +168,7 @@ export function useProductForm(initialData?: any) {
 
     setPrice(toInputNumber(initialData.price));
 
-    /* FIX: avoid "null" string bug */
-    setCategoryId(initialData.category_id ?? "");
+    setCategoryId( initialData.category_id != null  ? String(initialData.category_id)  : "");
 
     setDescription(initialData.description || "");
     setImages(Array.isArray(initialData.images) ? initialData.images : []);
@@ -181,7 +180,7 @@ export function useProductForm(initialData?: any) {
 
     setSaleEnabled(rawSaleEnabled);
 
-    setSalePrice(toInputNumber(initialData.sale_price));
+    setSalePrice(  initialData.sale_price != null  ? Number(initialData.sale_price)  : "");
 
     setSaleStock(toNumber(initialData.sale_stock));
 
@@ -190,7 +189,7 @@ export function useProductForm(initialData?: any) {
 
     /* ================= STOCK ================= */
 
-    setStock(toInputNumber(initialData.stock) || 1);
+    setStock(  initialData.stock != null  ? Number(initialData.stock)  : 1);
 
     /* ================= STATUS ================= */
 
