@@ -450,17 +450,38 @@ export function mapVariantToDB(
    GET VARIANTS BY PRODUCT
 ========================================================= */
 
+/* =====================================================
+   GET VARIANTS BY PRODUCT ID
+===================================================== */
 export async function getVariantsByProductId(
   productId: string
 ): Promise<ProductVariant[]> {
-  vlog(
-    "GET_BY_PRODUCT_START",
-    productId
+  console.log(
+    "\n🚀 [VARIANTS][GET_BY_PRODUCT] ===== START ====="
   );
 
-  const result =
-    await query<ProductVariantDB>(
-      `
+  try {
+    console.log(
+      "📥 Product ID:",
+      productId
+    );
+
+    vlog(
+      "GET_BY_PRODUCT_START",
+      productId
+    );
+
+    if (!productId) {
+      console.error(
+        "❌ Missing productId"
+      );
+
+      throw new Error(
+        "INVALID_PRODUCT_ID"
+      );
+    }
+
+    const sql = `
       SELECT *
       FROM product_variants
       WHERE product_id = $1
@@ -468,20 +489,80 @@ export async function getVariantsByProductId(
       ORDER BY
         sort_order ASC,
         created_at ASC
-      `,
+    `;
+
+    console.log(
+      "📜 SQL:",
+      sql
+    );
+
+    console.log(
+      "📦 SQL PARAMS:",
       [productId]
     );
 
-  vlog(
-    "GET_BY_PRODUCT_ROWS",
-    result.rows
-  );
+    console.log(
+      "🗄️ Executing variants query..."
+    );
 
-  return result.rows.map(
-    mapVariantToApp
-  );
+    const result =
+      await query<ProductVariantDB>(
+        sql,
+        [productId]
+      );
+
+    console.log(
+      "✅ Query success"
+    );
+
+    console.log(
+      "📊 Variant rows count:",
+      result.rows.length
+    );
+
+    console.log(
+      "📦 RAW VARIANT ROWS:",
+      result.rows
+    );
+
+    vlog(
+      "GET_BY_PRODUCT_ROWS",
+      result.rows
+    );
+
+    console.log(
+      "🧩 Mapping variants to app model..."
+    );
+
+    const mapped =
+      result.rows.map(
+        mapVariantToApp
+      );
+
+    console.log(
+      "🎯 FINAL VARIANTS:",
+      mapped
+    );
+
+    console.log(
+      "📊 Final variants count:",
+      mapped.length
+    );
+
+    console.log(
+      "🏁 [VARIANTS][GET_BY_PRODUCT] ===== SUCCESS =====\n"
+    );
+
+    return mapped;
+  } catch (error) {
+    console.error(
+      "💥 [VARIANTS][GET_BY_PRODUCT] ERROR:",
+      error
+    );
+
+    throw error;
+  }
 }
-
 /* =========================================================
    GET SINGLE VARIANT
 ========================================================= */
