@@ -44,7 +44,7 @@ interface ProductPayload {
   detail: string;
   images: string[];
   thumbnail: string;
-  is_active?: boolean;
+  is_active: form.isActive,
 
   shippingRates: ShippingRatePayload[];
   domestic_country_code: string | null;
@@ -417,11 +417,7 @@ const payload: ProductPayload = {
 
   name: form.name,
 
-  categoryId:
-    typeof form.categoryId === "string" &&
-    form.categoryId.trim().length > 0
-      ? form.categoryId.trim()
-      : undefined,
+  categoryId: Number(form.categoryId),
 
   description: form.description,
 
@@ -429,7 +425,7 @@ const payload: ProductPayload = {
 
   images: form.images,
 
-  thumbnail: form.images[0] || null,
+  thumbnail: form.images[0] || "",
 
   isActive: form.isActive,
 
@@ -455,11 +451,11 @@ const payload: ProductPayload = {
         hasSalePrice,
 
   salePrice:
-    hasVariants
-      ? null
-      : !form.saleEnabled
-        ? null
-        : Number(form.salePrice),
+  hasVariants
+    ? null
+    : form.saleEnabled && form.salePrice !== ""
+      ? Number(form.salePrice)
+      : null,
 
   saleStock:
     hasVariants || !form.saleEnabled
