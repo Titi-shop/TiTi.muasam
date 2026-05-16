@@ -253,77 +253,89 @@ export function useProductForm(
       return;
     }
 
-    /* ================= BASIC ================= */
+   
+   /* ================= BASIC ================= */
 
-    setId(initialData.id || "");
+setId(String(initialData.id || ""));
 
-    setName(initialData.name || "");
+setName(String(initialData.name || ""));
 
-    setPrice(
-      normalizePriceInput(initialData.price)
-    );
+setPrice(
+  normalizePriceInput(initialData.price)
+);
 
-    setCategoryId(
-      String(initialData.categoryId || "")
-    );
+setCategoryId(
+  String(
+    initialData.category_id || ""
+  )
+);
 
-    setDescription(
-      initialData.description || ""
-    );
+setDescription(
+  String(initialData.description || "")
+);
 
-    setImages(
-      Array.isArray(initialData.images)
-        ? initialData.images
-        : []
-    );
+setImages(
+  Array.isArray(initialData.images)
+    ? initialData.images
+    : []
+);
 
-    setDetail(initialData.detail || "");
+setDetail(
+  String(initialData.detail || "")
+);
 
-    /* ================= SALE ================= */
+/* ================= SALE ================= */
 
-    const hasSale =
-      typeof initialData.salePrice ===
-        "number" &&
-      initialData.salePrice >= 0.00001;
+const salePriceValue =
+  initialData.sale_price;
 
-    setSaleEnabled(hasSale);
+const hasSale =
+  salePriceValue !== null &&
+  salePriceValue !== undefined &&
+  Number(salePriceValue) >= 0.00001;
 
-    setSalePrice(
-      normalizePriceInput(
-        initialData.salePrice
-      )
-    );
+setSaleEnabled(hasSale);
 
-    setSaleStock(
-      normalizeNumber(
-        initialData.saleStock
-      )
-    );
+setSalePrice(
+  normalizePriceInput(
+    initialData.sale_price
+  )
+);
 
-    setSaleStart(
-      initialData.saleStart || ""
-    );
+setSaleStock(
+  normalizeNumber(
+    initialData.sale_stock
+  )
+);
 
-    setSaleEnd(
-      initialData.saleEnd || ""
-    );
+setSaleStart(
+  initialData.sale_start
+    ? String(initialData.sale_start)
+    : ""
+);
 
-    /* ================= STOCK ================= */
+setSaleEnd(
+  initialData.sale_end
+    ? String(initialData.sale_end)
+    : ""
+);
 
-    setStock(
-      normalizePriceInput(
-        initialData.stock
-      ) || 1
-    );
+/* ================= STOCK ================= */
 
-    /* ================= STATUS ================= */
+setStock(
+  normalizePriceInput(
+    initialData.stock
+  ) || 1
+);
 
-    setIsActive(
-      typeof initialData.isActive ===
-        "boolean"
-        ? initialData.isActive
-        : true
-    );
+/* ================= STATUS ================= */
+
+setIsActive(
+  typeof initialData.is_active ===
+    "boolean"
+    ? initialData.is_active
+    : true
+);
 
     /* ================= VARIANTS ================= */
 
