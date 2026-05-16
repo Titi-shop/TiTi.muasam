@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ProductPayload, ProductVariant } from "./types";
+import type { ProductVariant } from "./types";
 
 /* =========================================================
    TYPES
@@ -50,16 +50,15 @@ const toInputNumber = (v: any): number | "" => {
   return Number.isNaN(n) ? "" : n;
 };
 
+/* FIX: datetime-local safe (no crash, no invalid date) */
 const toDateInput = (v: any): string => {
   if (!v) return "";
 
   const d = new Date(v);
-
   if (isNaN(d.getTime())) return "";
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
-  // convert sang LOCAL TIME (quan trọng)
   return (
     d.getFullYear() +
     "-" +
@@ -72,6 +71,7 @@ const toDateInput = (v: any): string => {
     pad(d.getMinutes())
   );
 };
+
 /* =========================================================
    VARIANTS NORMALIZE
 ========================================================= */
@@ -81,11 +81,7 @@ function normalizeVariants(input?: ProductVariant[]): ProductVariant[] {
 
   return input.map((v, index) => {
     const price = toNumber(v.price);
-
-    const salePrice = v.sale_price != null
-      ? toNumber(v.sale_price)
-      : null;
-
+    const salePrice = v.sale_price != null ? toNumber(v.sale_price) : null;
     const saleEnabled = Boolean(v.sale_enabled);
 
     const finalPrice =
@@ -122,7 +118,7 @@ function normalizeVariants(input?: ProductVariant[]): ProductVariant[] {
    HOOK
 ========================================================= */
 
-export function useProductForm(initialData?: ProductPayload) {
+export function useProductForm(initialData?: any) {
   /* ================= BASIC ================= */
 
   const [id, setId] = useState("");
@@ -155,46 +151,59 @@ export function useProductForm(initialData?: ProductPayload) {
 
   /* ================= SHIPPING ================= */
 
-  const [shippingRates, setShippingRates] = useState<ShippingRatesState>(DEFAULT_SHIPPING);
+  const [shippingRates, setShippingRates] =
+    useState<ShippingRatesState>(DEFAULT_SHIPPING);
+
   const [primaryShippingCountry, setPrimaryShippingCountry] = useState("");
 
   /* =========================================================
-     INIT
+     INIT (FIXED + SAFE MAPPING)
   ========================================================= */
 
   useEffect(() => {
     if (!initialData) return;
 
-    /* BASIC */
     setId(initialData.id || "");
     setName(initialData.name || "");
+
     setPrice(toInputNumber(initialData.price));
-    setCategoryId(String(initialData.category_id || ""));
+
+    /* FIX: avoid "null" string bug */
+    setCategoryId(initialData.category_id ?? "");
+
     setDescription(initialData.description || "");
     setImages(Array.isArray(initialData.images) ? initialData.images : []);
     setDetail(initialData.detail || "");
 
-    /* SALE (snake_case ONLY) */
-    const saleEnabledRaw = initialData.sale_enabled;
+    /* ================= SALE FIX ================= */
 
-    setSaleEnabled(Boolean(saleEnabledRaw));
+    const rawSaleEnabled =
+      initialData.sale_enabled === true ||
+      initialData.sale_enabled === 1;
 
-    const sp = toInputNumber(initialData.sale_price);
-    setSalePrice(sp);
+    setSaleEnabled(rawSaleEnabled);
+
+    setSalePrice(toInputNumber(initialData.sale_price));
 
     setSaleStock(toNumber(initialData.sale_stock));
+
     setSaleStart(toDateInput(initialData.sale_start));
     setSaleEnd(toDateInput(initialData.sale_end));
-    /* STOCK */
+
+    /* ================= STOCK ================= */
+
     setStock(toInputNumber(initialData.stock) || 1);
 
-    /* STATUS */
+    /* ================= STATUS ================= */
+
     setIsActive(Boolean(initialData.is_active));
 
-    /* VARIANTS */
+    /* ================= VARIANTS ================= */
+
     setVariants(normalizeVariants(initialData.variants));
 
-    /* SHIPPING */
+    /* ================= SHIPPING ================= */
+
     const rates = Array.isArray(initialData.shippingRates)
       ? (initialData.shippingRates as ShippingRateItem[])
       : [];
