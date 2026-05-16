@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import type { ProductPayload, ProductVariant } from "./types";
 
 /* =========================================================
@@ -19,12 +18,12 @@ export type ShippingRatesState = {
 
 type ShippingRateItem = {
   zone: string;
-  price: number;
+  price: number | string;
   domestic_country_code?: string | null;
 };
 
 /* =========================================================
-   CONSTANTS
+   DEFAULT
 ========================================================= */
 
 const DEFAULT_SHIPPING: ShippingRatesState = {
@@ -40,129 +39,66 @@ const DEFAULT_SHIPPING: ShippingRatesState = {
    HELPERS
 ========================================================= */
 
-const normalizeNumber = (
-  value: unknown,
-  fallback = 0
-): number => {
-  const n = Number(value);
-
-  if (Number.isNaN(n)) {
-    return fallback;
-  }
-
-  return n;
+const toNumber = (v: any, fallback = 0): number => {
+  const n = Number(v);
+  return Number.isNaN(n) ? fallback : n;
 };
 
-const normalizePriceInput = (
-  value: unknown
-): number | "" => {
-  if (
-    value === null ||
-    value === undefined ||
-    value === ""
-  ) {
-    return "";
-  }
+const toInputNumber = (v: any): number | "" => {
+  if (v === null || v === undefined || v === "") return "";
+  const n = Number(v);
+  return Number.isNaN(n) ? "" : n;
+};
 
-  const n = Number(value);
-
-  if (Number.isNaN(n)) {
-    return "";
-  }
-
-  return n;
+const toDateInput = (v: any): string => {
+  if (!v) return "";
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 16);
 };
 
 /* =========================================================
-   VARIANT NORMALIZE
+   VARIANTS NORMALIZE
 ========================================================= */
 
-function normalizeInitVariants(
-  input: ProductVariant[] | undefined
-): ProductVariant[] {
-  if (!Array.isArray(input)) {
-    return [];
-  }
+function normalizeVariants(input?: ProductVariant[]): ProductVariant[] {
+  if (!Array.isArray(input)) return [];
 
   return input.map((v, index) => {
-    const price = normalizeNumber(v.price);
+    const price = toNumber(v.price);
 
-    const salePrice =
-      v.salePrice !== null &&
-      v.salePrice !== undefined
-        ? normalizeNumber(v.salePrice)
-        : null;
+    const salePrice = v.sale_price != null
+      ? toNumber(v.sale_price)
+      : null;
 
-    const saleEnabled = Boolean(v.saleEnabled);
+    const saleEnabled = Boolean(v.sale_enabled);
 
     const finalPrice =
-      saleEnabled &&
-      salePrice !== null &&
-      salePrice >= 0.00001 &&
-      salePrice < price
+      saleEnabled && salePrice !== null && salePrice < price
         ? salePrice
         : price;
 
     return {
-      id: v.id,
-
-      option1: v.option1 ?? "",
-      option2: v.option2 ?? null,
-      option3: v.option3 ?? null,
-
-      optionLabel1: v.optionLabel1 ?? null,
-      optionLabel2: v.optionLabel2 ?? null,
-      optionLabel3: v.optionLabel3 ?? null,
-
-      optionValue: v.optionValue ?? v.option1 ?? "",
-      optionName:
-        v.optionName ??
-        v.optionLabel1 ??
-        "",
-
-      name:
-        v.name ??
-        [v.option1, v.option2, v.option3]
-          .filter(Boolean)
-          .join(" - "),
-
-      sku: v.sku ?? null,
+      ...v,
 
       price,
-
-      salePrice:
-        saleEnabled &&
-        salePrice !== null &&
-        salePrice >= 0.00001 &&
-        salePrice < price
+      sale_price:
+        saleEnabled && salePrice !== null && salePrice < price
           ? salePrice
           : null,
 
-      finalPrice,
+      final_price: finalPrice,
 
-      saleEnabled,
+      sale_enabled: saleEnabled,
 
-      saleStock: Math.min(
-        normalizeNumber(v.saleStock),
-        normalizeNumber(v.stock)
-      ),
+      stock: toNumber(v.stock),
+      sale_stock: toNumber(v.sale_stock),
+      sale_sold: toNumber(v.sale_sold),
 
-      saleSold: normalizeNumber(v.saleSold),
+      is_active: v.is_active !== false,
+      is_unlimited: Boolean(v.is_unlimited),
 
-      stock: normalizeNumber(v.stock),
-
-      isUnlimited: Boolean(v.isUnlimited),
-
-      image: v.image ?? "",
-
-      isActive: v.isActive !== false,
-
-      sortOrder: normalizeNumber(
-        v.sortOrder,
-        index
-      ),
-
-      sold: normalizeNumber(v.sold),
+      sort_order: toNumber(v.sort_order, index),
     };
   });
 }
@@ -171,240 +107,101 @@ function normalizeInitVariants(
    HOOK
 ========================================================= */
 
-export function useProductForm(
-  initialData?: ProductPayload
-) {
+export function useProductForm(initialData?: ProductPayload) {
   /* ================= BASIC ================= */
 
-  const [id, setId] = useState<string>("");
-  const [name, setName] =
-    useState<string>("");
-
-  const [price, setPrice] = useState<
-    number | ""
-  >("");
-
-  const [categoryId, setCategoryId] =
-    useState<string>("");
-
-  const [description, setDescription] =
-    useState<string>("");
-
-  const [images, setImages] = useState<
-    string[]
-  >([]);
-
-  /* ================= DETAIL ================= */
-
-  const [detail, setDetail] =
-    useState<string>("");
+  const [id, setId] = useState("");
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState<number | "">("");
+  const [categoryId, setCategoryId] = useState("");
+  const [description, setDescription] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+  const [detail, setDetail] = useState("");
 
   /* ================= SALE ================= */
 
-  const [saleEnabled, setSaleEnabled] =
-    useState<boolean>(false);
-
-  const [salePrice, setSalePrice] =
-    useState<number | "">("");
-
-  const [saleStock, setSaleStock] =
-    useState<number>(0);
-
-  const [saleStart, setSaleStart] =
-    useState<string>("");
-
-  const [saleEnd, setSaleEnd] =
-    useState<string>("");
+  const [saleEnabled, setSaleEnabled] = useState(false);
+  const [salePrice, setSalePrice] = useState<number | "">("");
+  const [saleStock, setSaleStock] = useState(0);
+  const [saleStart, setSaleStart] = useState("");
+  const [saleEnd, setSaleEnd] = useState("");
 
   /* ================= STOCK ================= */
 
-  const [stock, setStock] = useState<
-    number | ""
-  >(1);
+  const [stock, setStock] = useState<number | "">(1);
 
   /* ================= STATUS ================= */
 
-  const [isActive, setIsActive] =
-    useState<boolean>(true);
+  const [isActive, setIsActive] = useState(true);
 
   /* ================= VARIANTS ================= */
 
-  const [variants, setVariants] =
-    useState<ProductVariant[]>([]);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
 
   /* ================= SHIPPING ================= */
 
-  const [shippingRates, setShippingRates] =
-    useState<ShippingRatesState>(
-      DEFAULT_SHIPPING
-    );
-
-  const [
-    primaryShippingCountry,
-    setPrimaryShippingCountry,
-  ] = useState<string>("");
+  const [shippingRates, setShippingRates] = useState<ShippingRatesState>(DEFAULT_SHIPPING);
+  const [primaryShippingCountry, setPrimaryShippingCountry] = useState("");
 
   /* =========================================================
-     INIT DATA
+     INIT
   ========================================================= */
 
   useEffect(() => {
-    if (!initialData) {
-      return;
-    }
+    if (!initialData) return;
 
-    /* ================= BASIC ================= */
-
+    /* BASIC */
     setId(initialData.id || "");
-
     setName(initialData.name || "");
-
-    setPrice(
-      normalizePriceInput(initialData.price)
-    );
-
-    setCategoryId(
-      String(initialData.categoryId || "")
-    );
-
-    setDescription(
-      initialData.description || ""
-    );
-
-    setImages(
-      Array.isArray(initialData.images)
-        ? initialData.images
-        : []
-    );
-
+    setPrice(toInputNumber(initialData.price));
+    setCategoryId(String(initialData.category_id || ""));
+    setDescription(initialData.description || "");
+    setImages(Array.isArray(initialData.images) ? initialData.images : []);
     setDetail(initialData.detail || "");
 
-    /* ================= SALE ================= */
+    /* SALE (snake_case ONLY) */
+    const saleEnabledRaw = initialData.sale_enabled;
 
-    /* ================= SALE ================= */
+    setSaleEnabled(Boolean(saleEnabledRaw));
 
-const rawSalePrice =
-  initialData.salePrice ??
-  initialData.sale_price;
+    const sp = toInputNumber(initialData.sale_price);
+    setSalePrice(sp);
 
-const rawSaleEnabled =
-  initialData.saleEnabled ??
-  initialData.sale_enabled;
+    setSaleStock(toNumber(initialData.sale_stock));
+    setSaleStart(toDateInput(initialData.sale_start));
+    setSaleEnd(toDateInput(initialData.sale_end));
 
-const rawSaleStock =
-  initialData.saleStock ??
-  initialData.sale_stock;
+    /* STOCK */
+    setStock(toInputNumber(initialData.stock) || 1);
 
-const rawSaleStart =
-  initialData.saleStart ??
-  initialData.sale_start;
+    /* STATUS */
+    setIsActive(Boolean(initialData.is_active));
 
-const rawSaleEnd =
-  initialData.saleEnd ??
-  initialData.sale_end;
+    /* VARIANTS */
+    setVariants(normalizeVariants(initialData.variants));
 
-const hasSale =
-  Boolean(rawSaleEnabled) &&
-  typeof Number(rawSalePrice) === "number" &&
-  Number(rawSalePrice) >= 0.00001;
-
-setSaleEnabled(hasSale);
-
-setSalePrice(
-  normalizePriceInput(rawSalePrice)
-);
-
-setSaleStock(
-  normalizeNumber(rawSaleStock)
-);
-
-setSaleStart(
-  rawSaleStart
-    ? new Date(rawSaleStart)
-        .toISOString()
-        .slice(0, 16)
-    : ""
-);
-
-setSaleEnd(
-  rawSaleEnd
-    ? new Date(rawSaleEnd)
-        .toISOString()
-        .slice(0, 16)
-    : ""
-);
-
-/* ================= STATUS ================= */
-
-const rawIsActive =
-  initialData.isActive ??
-  initialData.is_active;
-
-setIsActive(
-  typeof rawIsActive === "boolean"
-    ? rawIsActive
-    : true
-);
-    /* ================= VARIANTS ================= */
-
-    setVariants(
-      normalizeInitVariants(
-        initialData.variants
-      )
-    );
-
-    /* ================= SHIPPING ================= */
-
-    const rates = Array.isArray(
-      initialData.shippingRates
-    )
-      ? (
-          initialData.shippingRates as ShippingRateItem[]
-        )
+    /* SHIPPING */
+    const rates = Array.isArray(initialData.shippingRates)
+      ? (initialData.shippingRates as ShippingRateItem[])
       : [];
 
-    const rateMap = new Map<
-      string,
-      number
-    >(
-      rates.map((r) => [
-        r.zone,
-        normalizeNumber(r.price),
-      ])
-    );
+    const map = new Map<string, number>();
 
-    setShippingRates({
-      domestic:
-        rateMap.get("domestic") ?? "",
-
-      sea: rateMap.get("sea") ?? "",
-
-      asia: rateMap.get("asia") ?? "",
-
-      europe:
-        rateMap.get("europe") ?? "",
-
-      north_america:
-        rateMap.get(
-          "north_america"
-        ) ?? "",
-
-      rest_of_world:
-        rateMap.get(
-          "rest_of_world"
-        ) ?? "",
+    rates.forEach((r) => {
+      map.set(r.zone, toNumber(r.price));
     });
 
-    /* ================= COUNTRY ================= */
+    setShippingRates({
+      domestic: map.get("domestic") ?? "",
+      sea: map.get("sea") ?? "",
+      asia: map.get("asia") ?? "",
+      europe: map.get("europe") ?? "",
+      north_america: map.get("north_america") ?? "",
+      rest_of_world: map.get("rest_of_world") ?? "",
+    });
 
-    const domesticRate = rates.find(
-      (r) => r.zone === "domestic"
-    );
-
-    setPrimaryShippingCountry(
-  domesticRate
-    ?.domestic_country_code || ""
-);
+    const domestic = rates.find((r) => r.zone === "domestic");
+    setPrimaryShippingCountry(domestic?.domestic_country_code || "");
   }, [initialData]);
 
   /* =========================================================
@@ -412,9 +209,7 @@ setIsActive(
   ========================================================= */
 
   useEffect(() => {
-    if (saleEnabled) {
-      return;
-    }
+    if (saleEnabled) return;
 
     setSalePrice("");
     setSaleStock(0);
@@ -427,10 +222,7 @@ setIsActive(
   ========================================================= */
 
   useEffect(() => {
-    if (
-      typeof stock === "number" &&
-      saleStock > stock
-    ) {
+    if (typeof stock === "number" && saleStock > stock) {
       setSaleStock(stock);
     }
   }, [stock, saleStock]);
@@ -443,38 +235,28 @@ setIsActive(
     /* BASIC */
     id,
     setId,
-
     name,
     setName,
-
     price,
     setPrice,
-
     categoryId,
     setCategoryId,
-
     description,
     setDescription,
-
     images,
     setImages,
-
     detail,
     setDetail,
 
     /* SALE */
     saleEnabled,
     setSaleEnabled,
-
     salePrice,
     setSalePrice,
-
     saleStock,
     setSaleStock,
-
     saleStart,
     setSaleStart,
-
     saleEnd,
     setSaleEnd,
 
@@ -493,7 +275,6 @@ setIsActive(
     /* SHIPPING */
     shippingRates,
     setShippingRates,
-
     primaryShippingCountry,
     setPrimaryShippingCountry,
   };
