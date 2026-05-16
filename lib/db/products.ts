@@ -906,37 +906,24 @@ export async function deleteProductBySeller(
   sellerId: string,
   productId: string
 ): Promise<boolean> {
-  log("DELETE_START", {
+  log("DELETE_HARD_START", {
     sellerId,
     productId,
   });
 
-  if (
-    !isUUID(sellerId) ||
-    !isUUID(productId)
-  ) {
+  if (!isUUID(sellerId) || !isUUID(productId)) {
     return false;
   }
 
-  const result =
-    await query(
-      `
-      UPDATE products
-      SET
-        deleted_at = NOW(),
-        updated_at = NOW(),
-        is_active = false,
-        status = 'archived'
-      WHERE id = $1
-        AND seller_id = $2
-        AND deleted_at IS NULL
-      RETURNING id
-      `,
-      [
-        productId,
-        sellerId,
-      ]
-    );
+  const result = await query(
+    `
+    DELETE FROM products
+    WHERE id = $1
+      AND seller_id = $2
+    RETURNING id
+    `,
+    [productId, sellerId]
+  );
 
   return result.rows.length > 0;
 }
