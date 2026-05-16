@@ -282,50 +282,70 @@ export function useProductForm(
 
     /* ================= SALE ================= */
 
-    const hasSale =
-      typeof initialData.salePrice ===
-        "number" &&
-      initialData.salePrice >= 0.00001;
+    /* ================= SALE ================= */
 
-    setSaleEnabled(hasSale);
+const rawSalePrice =
+  initialData.salePrice ??
+  initialData.sale_price;
 
-    setSalePrice(
-      normalizePriceInput(
-        initialData.salePrice
-      )
-    );
+const rawSaleEnabled =
+  initialData.saleEnabled ??
+  initialData.sale_enabled;
 
-    setSaleStock(
-      normalizeNumber(
-        initialData.saleStock
-      )
-    );
+const rawSaleStock =
+  initialData.saleStock ??
+  initialData.sale_stock;
 
-    setSaleStart(
-      initialData.saleStart || ""
-    );
+const rawSaleStart =
+  initialData.saleStart ??
+  initialData.sale_start;
 
-    setSaleEnd(
-      initialData.saleEnd || ""
-    );
+const rawSaleEnd =
+  initialData.saleEnd ??
+  initialData.sale_end;
 
-    /* ================= STOCK ================= */
+const hasSale =
+  Boolean(rawSaleEnabled) &&
+  typeof Number(rawSalePrice) === "number" &&
+  Number(rawSalePrice) >= 0.00001;
 
-    setStock(
-      normalizePriceInput(
-        initialData.stock
-      ) || 1
-    );
+setSaleEnabled(hasSale);
 
-    /* ================= STATUS ================= */
+setSalePrice(
+  normalizePriceInput(rawSalePrice)
+);
 
-    setIsActive(
-      typeof initialData.isActive ===
-        "boolean"
-        ? initialData.isActive
-        : true
-    );
+setSaleStock(
+  normalizeNumber(rawSaleStock)
+);
 
+setSaleStart(
+  rawSaleStart
+    ? new Date(rawSaleStart)
+        .toISOString()
+        .slice(0, 16)
+    : ""
+);
+
+setSaleEnd(
+  rawSaleEnd
+    ? new Date(rawSaleEnd)
+        .toISOString()
+        .slice(0, 16)
+    : ""
+);
+
+/* ================= STATUS ================= */
+
+const rawIsActive =
+  initialData.isActive ??
+  initialData.is_active;
+
+setIsActive(
+  typeof rawIsActive === "boolean"
+    ? rawIsActive
+    : true
+);
     /* ================= VARIANTS ================= */
 
     setVariants(
