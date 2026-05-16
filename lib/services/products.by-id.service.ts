@@ -298,13 +298,15 @@ sale_end:
 
     const syncResult =
       await updateProductBySeller(
-        userId,
-        id,
-        {
-          price: finalPrice,
-          stock: finalStock,
-        }
-      );
+  sellerId,
+  productId,
+  {
+    price: finalPrice,
+    stock: finalStock,
+    has_variants:
+      normalizedVariants.length > 0,
+  }
+);
 
     console.log(
       "[products.by-id.service][PATCH] Sync result:",
