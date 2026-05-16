@@ -45,7 +45,7 @@ interface ProductPayload {
   isActive: boolean;
 
   shippingRates: ShippingRatePayload[];
-  domesticCountryCode: string | null;
+  domestic_country_code: string | null;
 
   price?: number;
   stock?: number;
@@ -431,7 +431,7 @@ const payload: ProductPayload = {
 
   shippingRates: shippingRatesPayload,
 
-  domesticCountryCode:
+  domestic_country_code:
     form.primaryShippingCountry || null,
 
   /* =====================================================
