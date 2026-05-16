@@ -639,7 +639,7 @@ await onSubmit(payload);
                   form.setSaleStart("");
                     form.setSaleEnd("");
                   form.setSalePrice("");
-                  form.setSaleStock(0);
+                  form.setSaleStock("");
                 }
               }}
             />
@@ -706,7 +706,7 @@ await onSubmit(payload);
       <div className="grid grid-cols-2 gap-2">
         <input
           type="datetime-local"
-          value={form.sale_start || ""}
+          value={form.saleStart || ""}
           onChange={(e) =>
             form.setSaleStart(
               e.target.value
