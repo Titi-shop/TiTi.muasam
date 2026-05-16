@@ -54,10 +54,12 @@ const toDateInput = (v: any): string => {
   if (!v) return "";
 
   const d = new Date(v);
+
   if (isNaN(d.getTime())) return "";
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
+  // convert sang LOCAL TIME (quan trọng)
   return (
     d.getFullYear() +
     "-" +
@@ -181,9 +183,8 @@ export function useProductForm(initialData?: ProductPayload) {
     setSalePrice(sp);
 
     setSaleStock(toNumber(initialData.sale_stock));
-    setSaleStart(toDateInput((initialData as any).saleStart ?? (initialData as any).sale_start));
-setSaleEnd(toDateInput((initialData as any).saleEnd ?? (initialData as any).sale_end));
-
+    setSaleStart(toDateInput(initialData.sale_start));
+    setSaleEnd(toDateInput(initialData.sale_end));
     /* STOCK */
     setStock(toInputNumber(initialData.stock) || 1);
 
