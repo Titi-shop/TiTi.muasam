@@ -318,30 +318,44 @@ sale_end:
     );
 
     if (
-      Array.isArray(body.shippingRates)
-    ) {
-      console.log(
-        "[products.by-id.service][PATCH] Updating shipping rates..."
-      );
+  Array.isArray(body.shippingRates)
+) {
+  console.log(
+    "[products.by-id.service][PATCH] Updating shipping rates..."
+  );
 
-      console.log(
-        "[products.by-id.service][PATCH] Shipping rates payload:",
-        body.shippingRates
-      );
+  const shippingRatesPayload =
+    body.shippingRates.map((r: any) => ({
+      ...r,
 
-      await upsertShippingRates({
-        productId: id,
-        rates: body.shippingRates,
-      });
+      domestic_country_code:
+        r.zone === "domestic"
+          ? (
+              body.domestic_country_code ??
+              body.domesticCountryCode ??
+              null
+            )
+          : null,
+    }));
 
-      console.log(
-        "[products.by-id.service][PATCH] Shipping rates updated successfully"
-      );
-    } else {
-      console.log(
-        "[products.by-id.service][PATCH] No shippingRates provided"
-      );
-    }
+  console.log(
+    "[products.by-id.service][PATCH] Shipping rates payload:",
+    shippingRatesPayload
+  );
+
+  await upsertShippingRates({
+    productId: id,
+    rates: shippingRatesPayload,
+  });
+
+  console.log(
+    "[products.by-id.service][PATCH] Shipping rates updated successfully"
+  );
+} else {
+  console.log(
+    "[products.by-id.service][PATCH] No shippingRates provided"
+  );
+}
 
     const response = {
       success: true,
