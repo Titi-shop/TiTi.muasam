@@ -636,8 +636,8 @@ await onSubmit(payload);
                 form.setSaleEnabled(checked);
 
                 if (!checked) {
-                  form.setSaleStart(null);
-                  form.setSaleEnd(null);
+                  form.setSaleStart("");
+                    form.setSaleEnd("");
                   form.setSalePrice("");
                   form.setSaleStock(0);
                 }
