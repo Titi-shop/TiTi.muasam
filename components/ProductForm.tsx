@@ -43,20 +43,20 @@ interface ProductPayload {
   detail: string;
   images: string[];
   thumbnail: string;
-  isActive: boolean;
+  is_active?: boolean;
 
   shippingRates: ShippingRatePayload[];
-  domesticCountryCode: string | null;
+  domestic_country_code: string | null;
 
   price?: number;
   stock?: number;
 
-  salePrice: number | null;
-  saleEnabled?: boolean;
-  saleStock: number;
+  sale_price?: number;
+  sale_enabled?: boolean;
+  sale_stock?: number;
 
-  saleStart: string | null;
-  saleEnd: string | null;
+   sale_start?: string;
+   sale_end?: string;
 
   variants: ProductVariant[];
 
