@@ -54,7 +54,9 @@ const toDateInput = (v: any): string => {
   if (!v) return "";
   const d = new Date(v);
   if (isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0, 16);
+  const offset = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - offset * 60000);
+  return local.toISOString().slice(0, 16);
 };
 
 /* =========================================================
