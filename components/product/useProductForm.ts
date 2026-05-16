@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -142,20 +143,26 @@ function normalizeInitVariants(
 
       saleEnabled,
 
-      sale_stock: Math.min(
+      saleStock: Math.min(
         normalizeNumber(v.saleStock),
         normalizeNumber(v.stock)
       ),
 
       saleSold: normalizeNumber(v.saleSold),
+
       stock: normalizeNumber(v.stock),
+
       isUnlimited: Boolean(v.isUnlimited),
+
       image: v.image ?? "",
+
       isActive: v.isActive !== false,
+
       sortOrder: normalizeNumber(
         v.sortOrder,
         index
       ),
+
       sold: normalizeNumber(v.sold),
     };
   });
@@ -201,7 +208,7 @@ export function useProductForm(
   const [salePrice, setSalePrice] =
     useState<number | "">("");
 
-  const [sale_stock, setsale_stock] =
+  const [saleStock, setSaleStock] =
     useState<number>(0);
 
   const [saleStart, setSaleStart] =
@@ -247,89 +254,77 @@ export function useProductForm(
       return;
     }
 
-   
-   /* ================= BASIC ================= */
+    /* ================= BASIC ================= */
 
-setId(String(initialData.id || ""));
+    setId(initialData.id || "");
 
-setName(String(initialData.name || ""));
+    setName(initialData.name || "");
 
-setPrice(
-  normalizePriceInput(initialData.price)
-);
+    setPrice(
+      normalizePriceInput(initialData.price)
+    );
 
-setCategoryId(
-  String(
-    initialData.category_id || ""
-  )
-);
+    setCategoryId(
+      String(initialData.categoryId || "")
+    );
 
-setDescription(
-  String(initialData.description || "")
-);
+    setDescription(
+      initialData.description || ""
+    );
 
-setImages(
-  Array.isArray(initialData.images)
-    ? initialData.images
-    : []
-);
+    setImages(
+      Array.isArray(initialData.images)
+        ? initialData.images
+        : []
+    );
 
-setDetail(
-  String(initialData.detail || "")
-);
+    setDetail(initialData.detail || "");
 
-/* ================= SALE ================= */
+    /* ================= SALE ================= */
 
-const salePriceValue =
-  initialData.sale_price;
+    const hasSale =
+      typeof initialData.salePrice ===
+        "number" &&
+      initialData.salePrice >= 0.00001;
 
-const hasSale =
-  salePriceValue !== null &&
-  salePriceValue !== undefined &&
-  Number(salePriceValue) >= 0.00001;
+    setSaleEnabled(hasSale);
 
-setSaleEnabled(hasSale);
+    setSalePrice(
+      normalizePriceInput(
+        initialData.salePrice
+      )
+    );
 
-setSalePrice(
-  normalizePriceInput(
-    initialData.sale_price
-  )
-);
+    setSaleStock(
+      normalizeNumber(
+        initialData.saleStock
+      )
+    );
 
-setSaleStock(
-  normalizeNumber(
-    initialData.sale_stock
-  )
-);
+    setSaleStart(
+      initialData.saleStart || ""
+    );
 
-setSaleStart(
-  initialData.sale_start
-    ? String(initialData.sale_start)
-    : ""
-);
+    setSaleEnd(
+      initialData.saleEnd || ""
+    );
 
-setSaleEnd(
-  initialData.sale_end
-    ? String(initialData.sale_end)
-    : ""
-);
+    /* ================= STOCK ================= */
 
-/* ================= STOCK ================= */
+    setStock(
+      normalizePriceInput(
+        initialData.stock
+      ) || 1
+    );
 
-setStock(
-  normalizePriceInput(
-    initialData.stock
-  ) || 1
-);
+    /* ================= STATUS ================= */
 
-/* ================= STATUS ================= */
-
-setIsActive(
-  typeof initialData.is_active ===
-    "boolean"
-    ? initialData.is_active
-    : true
-);
+    setIsActive(
+      typeof initialData.isActive ===
+        "boolean"
+        ? initialData.isActive
+        : true
+    );
 
     /* ================= VARIANTS ================= */
 
@@ -403,7 +398,7 @@ setIsActive(
     }
 
     setSalePrice("");
-    setsale_stock(0);
+    setSaleStock(0);
     setSaleStart("");
     setSaleEnd("");
   }, [saleEnabled]);
@@ -415,7 +410,7 @@ setIsActive(
   useEffect(() => {
     if (
       typeof stock === "number" &&
-      sale_stock > stock
+      saleStock > stock
     ) {
       setSaleStock(stock);
     }
@@ -455,8 +450,8 @@ setIsActive(
     salePrice,
     setSalePrice,
 
-    sale_stock,
-    setsale_stock,
+    saleStock,
+    setSaleStock,
 
     saleStart,
     setSaleStart,
