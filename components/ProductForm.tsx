@@ -143,23 +143,16 @@ export default function ProductForm({
 
       const uploads = files.map(async (file, index) => {
         const compressed = await compressImage(file);
-
         const { uploadUrl, publicUrl } = await getSignedUrl();
-
         await uploadWithProgress(uploadUrl, compressed, index);
-
         return publicUrl;
       });
 
       const urls = await Promise.all(uploads);
-
       form.setImages((prev: string[]) => [...prev, ...urls]);
-
     } catch (error) {
       console.error("💥 UPLOAD ERROR:", error);
-
       alert(t.upload_failed);
-
     } finally {
       setUploading(false);
     }
@@ -345,7 +338,7 @@ export default function ProductForm({
               ? Number(v.sale_price)
               : null,
 
-          saleStock:
+          sale_stock:
             v.sale_enabled
               ? Number(v.sale_stock || 0)
               : 0,
@@ -422,7 +415,7 @@ const payload: ProductPayload = {
       ? null
       : !form.sale_enabled
         ? null
-        : Number(form.salePrice),
+        : Number(form.sale_price),
 
   sale_stock:
     hasVariants || !form.sale_enabled
@@ -591,7 +584,7 @@ await onSubmit(payload);
 
             <input
               type="checkbox"
-              checked={Boolean(form.saleEnabled)}
+              checked={Boolean(form.sale_enabled)}
               onChange={(e) => {
                 const checked =
                   e.target.checked;
@@ -680,9 +673,9 @@ await onSubmit(payload);
 
         <input
           type="datetime-local"
-          value={form.saleEnd || ""}
+          value={form.sale_end || ""}
           onChange={(e) =>
-            form.setSaleEnd(
+            form.setsale_end(
               e.target.value
             )
           }
@@ -692,9 +685,9 @@ await onSubmit(payload);
 
       {/* SHIPPING */}
       <ShippingRates
-        shippingRates={form.shippingRates}
-        setShippingRates={
-          form.setShippingRates
+        shipping_rates={form.shipping_rates}
+        setshipping_rates={
+          form.setshipping_rates
         }
         primaryShippingCountry={
           form.primaryShippingCountry
@@ -710,9 +703,9 @@ await onSubmit(payload);
 
         <input
           type="checkbox"
-          checked={form.isActive}
+          checked={form.is_active}
           onChange={(e) =>
-            form.setIsActive(
+            form.setis_active(
               e.target.checked
             )
           }
