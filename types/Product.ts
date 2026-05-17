@@ -32,7 +32,7 @@ export type ShippingZone =
   | "rest_of_world";
 
 /* =========================================================
-   SHIPPING RATE (DB / API LAYER)
+   SHIPPING RATE
 ========================================================= */
 
 export interface ShippingRate {
@@ -44,12 +44,11 @@ export interface ShippingRate {
 
   currency?: "PI";
 
-  // DB field (snake_case source)
   domestic_country_code?: string | null;
 }
 
 /* =========================================================
-   SHIPPING FORM STATE (UI LAYER)
+   SHIPPING FORM STATE
 ========================================================= */
 
 export type ShippingRatesState = Record<
@@ -58,7 +57,7 @@ export type ShippingRatesState = Record<
 >;
 
 /* =========================================================
-   PRODUCT VARIANT (UI + API HYBRID)
+   PRODUCT VARIANT
 ========================================================= */
 
 export interface ProductVariant {
@@ -69,9 +68,9 @@ export interface ProductVariant {
   option2?: string | null;
   option3?: string | null;
 
-  optionLabel1?: string | null;
-  optionLabel2?: string | null;
-  optionLabel3?: string | null;
+  option_label1?: string | null;
+  option_label2?: string | null;
+  option_label3?: string | null;
 
   name?: string;
 
@@ -80,32 +79,39 @@ export interface ProductVariant {
 
   /* PRICE */
   price: number;
-  salePrice?: number | null;
-  finalPrice?: number;
+
+  sale_price?: number | null;
+
+  final_price?: number;
+
   currency?: "PI";
 
   /* SALE */
-  saleEnabled?: boolean;
-  saleStock?: number;
-  saleSold?: number;
+  sale_enabled?: boolean;
+
+  sale_stock?: number;
+
+  sale_sold?: number;
 
   /* STOCK */
   stock: number;
-  isUnlimited?: boolean;
+
+  is_unlimited?: boolean;
 
   /* MEDIA */
   image?: string;
 
   /* STATUS */
-  isActive?: boolean;
-  sortOrder?: number;
+  is_active?: boolean;
+
+  sort_order?: number;
 
   /* ANALYTICS */
   sold?: number;
 }
 
 /* =========================================================
-   PRODUCT FORM STATE (UI LAYER - CAMELCASE ONLY)
+   PRODUCT FORM STATE
 ========================================================= */
 
 export interface ProductFormState {
@@ -113,63 +119,78 @@ export interface ProductFormState {
 
   /* BASIC */
   name: string;
+
   slug?: string;
 
-  shortDescription: string;
+  short_description: string;
+
   description: string;
+
   detail: string;
 
-  categoryId: string | number | null;
+  category_id: string | number | null;
 
   /* MEDIA */
   thumbnail: string | null;
+
   images: string[];
-  detailImages: string[];
-  videoUrl: string;
+
+  detail_images: string[];
+
+  video_url: string;
 
   /* PRICE */
   price: number | "";
-  salePrice: number | "" | null;
-  finalPrice?: number;
+
+  sale_price: number | "" | null;
+
+  final_price?: number;
 
   currency: "PI";
 
   /* SALE */
-  saleEnabled: boolean;
-  saleStock: number | "";
-  saleSold?: number;
+  sale_enabled: boolean;
 
-  saleStart: string | null;
-  saleEnd: string | null;
+  sale_stock: number | "";
+
+  sale_sold?: number;
+
+  sale_start: string | null;
+
+  sale_end: string | null;
 
   /* STOCK */
   stock: number | "";
 
-  isUnlimited: boolean;
+  is_unlimited: boolean;
 
   /* VARIANTS */
-  hasVariants: boolean;
+  has_variants: boolean;
+
   variants: ProductVariant[];
 
   /* SHIPPING */
-  shippingRates: ShippingRatesState;
+  shipping_rates: ShippingRatesState;
 
-  domesticCountryCode: string | null;
+  domestic_country_code: string | null;
 
   /* STATUS */
   status: ProductStatus;
 
-  isActive: boolean;
-  isFeatured: boolean;
-  isDigital: boolean;
+  is_active: boolean;
+
+  is_featured: boolean;
+
+  is_digital: boolean;
 
   /* SEO */
-  metaTitle: string;
-  metaDescription: string;
+  meta_title: string;
+
+  meta_description: string;
 }
 
 /* =========================================================
-   PRODUCT PAYLOAD (API LAYER - SEND TO BACKEND)
+   PRODUCT PAYLOAD
 ========================================================= */
 
 export interface ProductPayload {
@@ -177,126 +198,151 @@ export interface ProductPayload {
 
   /* BASIC */
   name: string;
-  shortDescription: string;
+
+  short_description: string;
+
   description: string;
+
   detail: string;
 
-  categoryId: string | number | null;
+  category_id: string | number | null;
 
   /* MEDIA */
   thumbnail: string | null;
+
   images: string[];
-  detailImages: string[];
-  videoUrl?: string;
+
+  detail_images: string[];
+
+  video_url?: string;
 
   /* PRICE */
   price: number;
-  salePrice: number | null;
+
+  sale_price: number | null;
+
   currency?: "PI";
 
   /* SALE */
-  saleEnabled: boolean;
-  saleStock: number;
-  saleStart: string | null;
-  saleEnd: string | null;
+  sale_enabled: boolean;
+
+  sale_stock: number;
+
+  sale_start: string | null;
+
+  sale_end: string | null;
 
   /* STOCK */
   stock: number;
-  isUnlimited: boolean;
+
+  is_unlimited: boolean;
 
   /* VARIANTS */
-  hasVariants: boolean;
+  has_variants: boolean;
+
   variants: ProductVariant[];
 
   /* SHIPPING */
-  shippingRates: ShippingRate[];
+  shipping_rates: ShippingRate[];
+
   domestic_country_code?: string | null;
 
   /* STATUS */
   status?: ProductStatus;
 
-  isActive: boolean;
-  isFeatured?: boolean;
-  isDigital?: boolean;
+  is_active: boolean;
+
+  is_featured?: boolean;
+
+  is_digital?: boolean;
 
   /* SEO */
-  metaTitle?: string;
-  metaDescription?: string;
+  meta_title?: string;
+
+  meta_description?: string;
 
   /* REQUEST */
-  idempotencyKey?: string;
+  idempotency_key?: string;
 }
 
 /* =========================================================
-   PRODUCT RESPONSE (FROM SERVER)
+   PRODUCT RECORD
 ========================================================= */
 
 export interface ProductRecord {
   id: string;
 
-  sellerId: string;
+  seller_id: string;
 
   name: string;
+
   slug: string;
 
-  shortDescription: string;
+  short_description: string;
+
   description: string;
+
   detail: string;
 
   thumbnail: string | null;
+
   images: string[];
-  detailImages: string[];
-  videoUrl: string;
+
+  detail_images: string[];
+
+  video_url: string;
 
   price: number;
-  salePrice: number | null;
-  finalPrice: number;
+
+  sale_price: number | null;
+
+  final_price: number;
 
   currency: "PI";
 
   stock: number;
-  isUnlimited: boolean;
+
+  is_unlimited: boolean;
 
   sold: number;
+
   views: number;
 
-  ratingAvg: number;
-  ratingCount: number;
+  rating_avg: number;
+
+  rating_count: number;
 
   status: ProductStatus;
 
-  isActive: boolean;
-  isFeatured: boolean;
-  isDigital: boolean;
+  is_active: boolean;
 
-  categoryId: number | null;
+  is_featured: boolean;
 
-  saleEnabled: boolean;
-  saleStock: number;
-  saleSold: number;
+  is_digital: boolean;
 
-  saleStart: string | null;
-  saleEnd: string | null;
+  category_id: number | null;
 
-  hasVariants: boolean;
+  sale_enabled: boolean;
+
+  sale_stock: number;
+
+  sale_sold: number;
+
+  sale_start: string | null;
+
+  sale_end: string | null;
+
+  has_variants: boolean;
 
   variants?: ProductVariant[];
 
-  metaTitle: string;
-  metaDescription: string;
+  meta_title: string;
 
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
-}
-  /* ========================
-     RAW DB SUPPORT (FIX BUG EDIT)
-  ======================== */
+  meta_description: string;
 
-  // giúp tránh lỗi snake_case mismatch
-  is_active?: boolean;
-  sale_enabled?: boolean;
-  sale_price?: number;
-  sale_start?: string;
-  sale_end?: string;
+  created_at: string;
+
+  updated_at: string;
+
+  deleted_at?: string | null;
 }
