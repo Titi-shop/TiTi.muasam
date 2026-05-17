@@ -62,7 +62,6 @@ export default function ProductForm({
     if (value.trim() === "") return 0;
 
     const n = Number(value);
-
     return Number.isNaN(n) ? 0 : n;
   };
 
@@ -240,9 +239,9 @@ export default function ProductForm({
         Boolean(form.saleEnd);
 
       const hasSalePrice =
-        form.salePrice !== "" &&
-        form.salePrice !== null &&
-        form.salePrice !== undefined &&
+        form.sale_price !== "" &&
+        form.sale_price !== null &&
+        form.sale_price !== undefined &&
         !Number.isNaN(Number(form.salePrice));
 
       /* =========================
@@ -278,7 +277,7 @@ export default function ProductForm({
          SALE VALIDATION
       ========================= */
 
-      if (!hasVariants && form.saleEnabled) {
+      if (!hasVariants && form.sale_enabled) {
         const sale = Number(form.salePrice);
         const price = Number(form.price);
 
@@ -414,19 +413,19 @@ const payload: ProductPayload = {
   saleEnabled:
     hasVariants
       ? hasVariantSale
-      : form.saleEnabled &&
+      :form.sale_enabled &&
         hasSaleTime &&
         hasSalePrice,
 
   salePrice:
     hasVariants
       ? null
-      : !form.saleEnabled
+      : !form.sale_enabled
         ? null
         : Number(form.salePrice),
 
   saleStock:
-    hasVariants || !form.saleEnabled
+    hasVariants || !form.sale_enabled
       ? 0
       : Number(form.saleStock || 0),
 
@@ -610,16 +609,16 @@ await onSubmit(payload);
           </label>
 
           {/* SALE PRICE */}
-          {form.saleEnabled && (
+          {form.sale_enabled && (
             <input
               type="number"
               step="0.00001"
               min="0.00001"
               inputMode="decimal"
               value={
-                form.salePrice === ""
+                form.sale_price === ""
                   ? ""
-                  : form.salePrice
+                  : form.sale_price
               }
               onChange={(e) => {
                 const value =
@@ -643,7 +642,7 @@ await onSubmit(payload);
           {form.saleEnabled && (
             <input
               type="number"
-              value={form.saleStock || 0}
+              value={form.sale_stock || 0}
               onChange={(e) => {
                 const value = Number(
                   e.target.value
@@ -670,7 +669,7 @@ await onSubmit(payload);
       <div className="grid grid-cols-2 gap-2">
         <input
           type="datetime-local"
-          value={form.saleStart || ""}
+          value={form.sale_start || ""}
           onChange={(e) =>
             form.setSaleStart(
               e.target.value
