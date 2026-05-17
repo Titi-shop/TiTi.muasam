@@ -235,14 +235,14 @@ export default function ProductForm({
       const hasVariants = form.variants.length > 0;
 
       const hasSaleTime =
-        Boolean(form.saleStart) &&
-        Boolean(form.saleEnd);
+        Boolean(form.sale_start) &&
+        Boolean(form.sale_end);
 
       const hasSalePrice =
         form.sale_price !== "" &&
         form.sale_price !== null &&
         form.sale_price !== undefined &&
-        !Number.isNaN(Number(form.salePrice));
+        !Number.isNaN(Number(form.sale_price));
 
       /* =========================
          VALIDATION
@@ -278,7 +278,7 @@ export default function ProductForm({
       ========================= */
 
       if (!hasVariants && form.sale_enabled) {
-        const sale = Number(form.salePrice);
+        const sale = Number(form.sale_price);
         const price = Number(form.price);
 
         if (!hasSaleTime) {
@@ -322,7 +322,7 @@ export default function ProductForm({
       ========================= */
 
       const shippingRatesPayload: ShippingRate[] =
-        Object.entries(form.shippingRates).map(
+        Object.entries(form.shipping_rates).map(
           ([zone, price]) => ({
             zone,
             price: Number(price || 0),
@@ -337,27 +337,27 @@ export default function ProductForm({
         form.variants.map((v) => ({
           ...v,
 
-          saleEnabled: Boolean(v.saleEnabled),
+          sale_enabled: Boolean(v.sale_enabled),
 
-          salePrice:
-            v.saleEnabled &&
-            v.salePrice !== null
-              ? Number(v.salePrice)
+          sale_price:
+            v.sale_enabled &&
+            v.sale_price !== null
+              ? Number(v.sale_price)
               : null,
 
           saleStock:
-            v.saleEnabled
-              ? Number(v.saleStock || 0)
+            v.sale_enabled
+              ? Number(v.sale_stock || 0)
               : 0,
 
           saleSold: Number(v.saleSold || 0),
 
           finalPrice:
-            v.saleEnabled &&
+            v.sale_enabled &&
             v.salePrice !== null &&
-            Number(v.salePrice) > 0 &&
-            Number(v.salePrice) < Number(v.price)
-              ? Number(v.salePrice)
+            Number(v.sale_price) > 0 &&
+            Number(v.sale_price) < Number(v.price)
+              ? Number(v.sale_price)
               : Number(v.price),
         }));
 
@@ -366,8 +366,8 @@ export default function ProductForm({
       ========================= */
       const hasVariantSale = normalizedVariants.some(
   (v) =>
-    Boolean(v.saleEnabled) &&
-    Number(v.salePrice) > 0
+    Boolean(v.sale_enabled) &&
+    Number(v.sale_price) > 0
 );
 
 console.log("🧪 FORM CATEGORY:", form.categoryId);
@@ -391,9 +391,9 @@ const payload: ProductPayload = {
   detail: form.detail,
   images: form.images,
   thumbnail: form.images[0] || null,
-  isActive: form.isActive,
+  is_active: form.is_active,
 
-  shippingRates: shippingRatesPayload,
+  shipping_rates: shipping_ratesPayload,
 
   domestic_country_code:
     form.primaryShippingCountry || null,
@@ -410,33 +410,33 @@ const payload: ProductPayload = {
     ? undefined
     : Number(form.stock || 0),
 
-  saleEnabled:
+  sale_enabled:
     hasVariants
       ? hasVariantSale
       :form.sale_enabled &&
         hasSaleTime &&
         hasSalePrice,
 
-  salePrice:
+  sale_price:
     hasVariants
       ? null
       : !form.sale_enabled
         ? null
         : Number(form.salePrice),
 
-  saleStock:
+  sale_stock:
     hasVariants || !form.sale_enabled
       ? 0
-      : Number(form.saleStock || 0),
+      : Number(form.sale_stock || 0),
 
-  saleStart:
+  sale_start:
     hasSaleTime
-      ? toUTCFromInput(form.saleStart)
+      ? toUTCFromInput(form.sale_start)
       : null,
 
-  saleEnd:
+  sale_end:
     hasSaleTime
-      ? toUTCFromInput(form.saleEnd)
+      ? toUTCFromInput(form.sale_end)
       : null,
 
   variants: normalizedVariants,
@@ -596,13 +596,13 @@ await onSubmit(payload);
                 const checked =
                   e.target.checked;
 
-                form.setSaleEnabled(checked);
+                form.setsale_enabled(checked);
 
                 if (!checked) {
-                  form.setSaleStart(null);
-                  form.setSaleEnd(null);
-                  form.setSalePrice("");
-                  form.setSaleStock(0);
+                  form.setsale_start(null);
+                  form.setsale_end(null);
+                  form.setsale_price("");
+                  form.setsale_stock(0);
                 }
               }}
             />
@@ -625,11 +625,11 @@ await onSubmit(payload);
                   e.target.value;
 
                 if (value === "") {
-                  form.setSalePrice("");
+                  form.setsale_price("");
                   return;
                 }
 
-                form.setSalePrice(
+                form.setsale_price(
                   Number(value)
                 );
               }}
@@ -639,7 +639,7 @@ await onSubmit(payload);
           )}
 
           {/* SALE STOCK */}
-          {form.saleEnabled && (
+          {form.sale_enabled && (
             <input
               type="number"
               value={form.sale_stock || 0}
@@ -656,7 +656,7 @@ await onSubmit(payload);
                   return;
                 }
 
-                form.setSaleStock(value);
+                form.setsale_stock(value);
               }}
               placeholder={t.sale_stock}
               className="w-full border p-2 rounded"
