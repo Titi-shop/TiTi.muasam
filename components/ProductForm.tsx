@@ -359,7 +359,7 @@ export default function ProductForm({
     Number(v.sale_price) > 0
 );
 
-console.log("🧪 FORM CATEGORY:", form.categoryId);
+console.log("🧪 FORM CATEGORY:", form.category_id);
 const payload: ProductPayload = {
   id:
     typeof form.id === "string"
@@ -576,13 +576,12 @@ await onSubmit(payload);
                 const checked =
                   e.target.checked;
 
-                form.setsale_enabled(checked);
-
+                form.setSale_enabled(checked);
                 if (!checked) {
-                  form.setsale_start(null);
-                  form.setsale_end(null);
-                  form.setsale_price("");
-                  form.setsale_stock(0);
+                  form.setSale_start("");
+                    form.setSale_end("");
+                  form.setSale_price("");
+                  form.setSale_stock(0);
                 }
               }}
             />
@@ -605,11 +604,11 @@ await onSubmit(payload);
                   e.target.value;
 
                 if (value === "") {
-                  form.setsale_price("");
+                  form.ale_price("");
                   return;
                 }
 
-                form.setsale_price(
+                form.setSale_price(
                   Number(value)
                 );
               }}
@@ -632,7 +631,6 @@ await onSubmit(payload);
                   alert(
                     t.sale_stock_exceed
                   );
-
                   return;
                 }
 
@@ -662,7 +660,7 @@ await onSubmit(payload);
           type="datetime-local"
           value={form.sale_end || ""}
           onChange={(e) =>
-            form.setsale_end(
+            form.setSale_end(
               e.target.value
             )
           }
@@ -672,17 +670,15 @@ await onSubmit(payload);
 
       {/* SHIPPING */}
       <ShippingRates
-        shipping_rates={form.shipping_rates}
-        setshipping_rates={
-          form.setshipping_rates
-        }
-        primaryShippingCountry={
-          form.primaryShippingCountry
-        }
-        setPrimaryShippingCountry={
-          form.setPrimaryShippingCountry
-        }
-      />
+  shippingRates={form.shipping_rates}
+  setShippingRates={form.setShipping_rates}
+  primaryShippingCountry={
+    form.domestic_country_code
+  }
+  setPrimaryShippingCountry={
+    form.setDomestic_country_code
+  }
+/>
 
       {/* ACTIVE */}
       <label className="flex justify-between border p-3 rounded">
@@ -692,7 +688,7 @@ await onSubmit(payload);
           type="checkbox"
           checked={form.is_active}
           onChange={(e) =>
-            form.setis_active(
+            form.setIs_active(
               e.target.checked
             )
           }
