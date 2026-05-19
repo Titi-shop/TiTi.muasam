@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect } from "react";
+
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { countries } from "@/data/countries";
 
-type ShippingValue = number | string | "";
+/* =========================================================
+   TYPES
+========================================================= */
+
+type ShippingValue =
+  | number
+  | string
+  | "";
 
 interface ShippingRatesState {
   domestic: ShippingValue;
@@ -13,106 +21,225 @@ interface ShippingRatesState {
   europe: ShippingValue;
   north_america: ShippingValue;
   rest_of_world: ShippingValue;
-
 }
 
 interface Props {
-  shippingRates: ShippingRatesState;
-  setShippingRates: React.Dispatch<React.SetStateAction<ShippingRatesState>>;
+  shipping_rates: ShippingRatesState;
 
-  primaryShippingCountry: string;
-  setPrimaryShippingCountry: (value: string) => void;
+  setShipping_rates:
+    React.Dispatch<
+      React.SetStateAction<ShippingRatesState>
+    >;
+
+  domestic_country_code: string;
+
+  setDomestic_country_code: (
+    value: string
+  ) => void;
 }
+
+/* =========================================================
+   CONSTANTS
+========================================================= */
 
 const MIN_PRICE = 0.00001;
 
+/* =========================================================
+   COMPONENT
+========================================================= */
+
 export default function ShippingRates({
-  shippingRates,
-  setShippingRates,
-  primaryShippingCountry,
-  setPrimaryShippingCountry,
+  shipping_rates,
+  setShipping_rates,
+
+  domestic_country_code,
+  setDomestic_country_code,
 }: Props) {
-  const { t } = useTranslation();
-useEffect(() => {
-  if (!primaryShippingCountry) {
-    setPrimaryShippingCountry(countries[0].code);
-  }
-}, []);
+  const { t } =
+    useTranslation();
+
   /* =========================================================
-     🔥 SYNC COUNTRY -> STATE (QUAN TRỌNG FIX NULL BUG)
+     DEFAULT COUNTRY
   ========================================================= */
- 
+
+  useEffect(() => {
+    if (
+      !domestic_country_code
+    ) {
+      setDomestic_country_code(
+        countries[0].code
+      );
+    }
+  }, [
+    domestic_country_code,
+    setDomestic_country_code,
+  ]);
+
+  /* =========================================================
+     ZONES
+  ========================================================= */
+
   const zones: {
     key: keyof ShippingRatesState;
     placeholder: string;
   }[] = [
-    { key: "sea", placeholder: t.shipping_sea },
-    { key: "asia", placeholder: t.shipping_asia },
-    { key: "europe", placeholder: t.shipping_europe },
-    { key: "north_america", placeholder: t.shipping_north_america },
-    { key: "rest_of_world", placeholder: t.shipping_rest_of_world },
+    {
+      key: "sea",
+      placeholder:
+        t.shipping_sea,
+    },
+
+    {
+      key: "asia",
+      placeholder:
+        t.shipping_asia,
+    },
+
+    {
+      key: "europe",
+      placeholder:
+        t.shipping_europe,
+    },
+
+    {
+      key: "north_america",
+      placeholder:
+        t.shipping_north_america,
+    },
+
+    {
+      key: "rest_of_world",
+      placeholder:
+        t.shipping_rest_of_world,
+    },
   ];
 
-  const updateRate = (key: keyof ShippingRatesState, value: string) => {
-    setShippingRates((prev) => ({
-      ...prev,
-      [key]: value === "" ? "" : value,
-    }));
+  /* =========================================================
+     UPDATE RATE
+  ========================================================= */
+
+  const updateRate = (
+    key: keyof ShippingRatesState,
+    value: string
+  ) => {
+    setShipping_rates(
+      (prev) => ({
+        ...prev,
+
+        [key]:
+          value === ""
+            ? ""
+            : value,
+      })
+    );
   };
+
+  /* =========================================================
+     NORMALIZE RATE
+  ========================================================= */
 
   const normalizeRate = (
     key: keyof ShippingRatesState,
     value: ShippingValue
   ) => {
-    if (value === "" || value === null || value === undefined) {
-      setShippingRates((prev) => ({
-        ...prev,
-        [key]: "",
-      }));
+    if (
+      value === "" ||
+      value === null ||
+      value === undefined
+    ) {
+      setShipping_rates(
+        (prev) => ({
+          ...prev,
+
+          [key]: "",
+        })
+      );
+
       return;
     }
 
-    const parsed = Number(value);
+    const parsed =
+      Number(value);
 
-    if (Number.isNaN(parsed)) {
-      setShippingRates((prev) => ({
-        ...prev,
-        [key]: "",
-      }));
+    if (
+      Number.isNaN(parsed)
+    ) {
+      setShipping_rates(
+        (prev) => ({
+          ...prev,
+
+          [key]: "",
+        })
+      );
+
       return;
     }
 
-    if (parsed > 0 && parsed < MIN_PRICE) {
-      setShippingRates((prev) => ({
-        ...prev,
-        [key]: MIN_PRICE,
-      }));
+    if (
+      parsed > 0 &&
+      parsed < MIN_PRICE
+    ) {
+      setShipping_rates(
+        (prev) => ({
+          ...prev,
+
+          [key]:
+            MIN_PRICE,
+        })
+      );
+
       return;
     }
 
-    setShippingRates((prev) => ({
-      ...prev,
-      [key]: parsed,
-    }));
+    setShipping_rates(
+      (prev) => ({
+        ...prev,
+
+        [key]: parsed,
+      })
+    );
   };
+
+  /* =========================================================
+     UI
+  ========================================================= */
 
   return (
     <div className="space-y-3">
       {/* TITLE */}
-      <p className="font-medium"> {t.shipping_fee}</p>
+      <p className="font-medium">
+        {t.shipping_fee}
+      </p>
 
       {/* DOMESTIC */}
       <div className="border rounded-xl p-3 bg-gray-50 space-y-3">
         <select
-          value={primaryShippingCountry}
-          onChange={(e) => setPrimaryShippingCountry(e.target.value)}
+          value={
+            domestic_country_code
+          }
+          onChange={(e) =>
+            setDomestic_country_code(
+              e.target.value
+            )
+          }
           className="border p-2 rounded w-full"
         >
-          {countries.map((country) => (
-            <option key={country.code} value={country.code}>
-              {country.name}
-            </option>
-          ))}
+          {countries.map(
+            (country) => (
+              <option
+                key={
+                  country.code
+                }
+                value={
+                  country.code
+                }
+              >
+                {
+                  country.name
+                }
+              </option>
+            )
+          )}
         </select>
 
         <input
@@ -120,11 +247,26 @@ useEffect(() => {
           step="0.00001"
           min={MIN_PRICE}
           inputMode="decimal"
-          placeholder={t.domestic_price}
-          value={shippingRates.domestic === 0 ? "" : shippingRates.domestic}
-          onChange={(e) => updateRate("domestic", e.target.value)}
+          placeholder={
+            t.domestic_price
+          }
+          value={
+            shipping_rates.domestic ===
+            0
+              ? ""
+              : shipping_rates.domestic
+          }
+          onChange={(e) =>
+            updateRate(
+              "domestic",
+              e.target.value
+            )
+          }
           onBlur={() =>
-            normalizeRate("domestic", shippingRates.domestic)
+            normalizeRate(
+              "domestic",
+              shipping_rates.domestic
+            )
           }
           className="border p-2 rounded w-full"
           required
@@ -140,11 +282,31 @@ useEffect(() => {
             step="0.00001"
             min={MIN_PRICE}
             inputMode="decimal"
-            placeholder={zone.placeholder}
-            value={shippingRates[zone.key] === 0 ? "" : shippingRates[zone.key]}
-            onChange={(e) => updateRate(zone.key, e.target.value)}
+            placeholder={
+              zone.placeholder
+            }
+            value={
+              shipping_rates[
+                zone.key
+              ] === 0
+                ? ""
+                : shipping_rates[
+                    zone.key
+                  ]
+            }
+            onChange={(e) =>
+              updateRate(
+                zone.key,
+                e.target.value
+              )
+            }
             onBlur={() =>
-              normalizeRate(zone.key, shippingRates[zone.key])
+              normalizeRate(
+                zone.key,
+                shipping_rates[
+                  zone.key
+                ]
+              )
             }
             className="border p-2 rounded w-full"
           />
