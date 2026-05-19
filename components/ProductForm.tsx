@@ -116,14 +116,11 @@ export default function ProductForm({
 
     if (!res.ok) {
       const text = await res.text();
-
       console.error("❌ SIGNED URL FAIL:", text);
-
       throw new Error("SIGNED_URL_FAILED");
     }
 
     const data: SignedUrlResponse = await res.json();
-
     if (!data.uploadUrl || !data.publicUrl) {
       throw new Error("NO_UPLOAD_URL");
     }
@@ -343,11 +340,10 @@ export default function ProductForm({
               ? Number(v.sale_stock || 0)
               : 0,
 
-          saleSold: Number(v.saleSold || 0),
-
-          finalPrice:
-            v.sale_enabled &&
-            v.salePrice !== null &&
+          sale_sold: Number(v.sale_sold || 0),
+      final_price:
+     v.sale_enabled &&
+       v.sale_price !== null &&
             Number(v.sale_price) > 0 &&
             Number(v.sale_price) < Number(v.price)
               ? Number(v.sale_price)
@@ -364,30 +360,25 @@ export default function ProductForm({
 );
 
 console.log("🧪 FORM CATEGORY:", form.categoryId);
-
 const payload: ProductPayload = {
   id:
     typeof form.id === "string"
       ? form.id
       : undefined,
-
   name: form.name,
-
-  categoryId:
-    typeof form.categoryId === "string" &&
-    form.categoryId.trim().length > 0
-      ? form.categoryId.trim()
+  category_id:
+    typeof form.category_id === "string" &&
+    form.category_id.trim().length > 0
+      ? form.category_id.trim()
       : undefined,
 
   description: form.description,
-
   detail: form.detail,
   images: form.images,
   thumbnail: form.images[0] || null,
   is_active: form.is_active,
 
-  shipping_rates: shipping_ratesPayload,
-
+shipping_rates: shippingRatesPayload,
   domestic_country_code:
     form.primaryShippingCountry || null,
 
@@ -433,14 +424,11 @@ const payload: ProductPayload = {
       : null,
 
   variants: normalizedVariants,
-
   idempotencyKey: generateKey(),
 };
 
-console.log("🧪 PAYLOAD CATEGORY:", payload.categoryId);
-
+console.log("🧪 FORM CATEGORY:", form.category_id);
 console.log("📦 PRODUCT PAYLOAD:", payload);
-
 await onSubmit(payload);
     } catch (error) {
       console.error(error);
@@ -461,7 +449,7 @@ await onSubmit(payload);
     >
       {/* CATEGORY */}
 <select
-  value={form.categoryId}
+ value={form.category_id}
   onChange={(e) =>
     form.setCategoryId(e.target.value)
   }
@@ -470,7 +458,6 @@ await onSubmit(payload);
   <option value="">
     {t.select_category}
   </option>
-
   {categories.map((category) => (
     <option
       key={category.id}
