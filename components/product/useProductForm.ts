@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-import type { ProductPayload, ProductVariant } from "./types";
+import type {
+  ProductPayload,
+  ProductVariant,
+} from "@/types/product";
 
 /* =========================================================
    TYPES
@@ -85,44 +88,56 @@ function normalizeInitVariants(
   }
 
   return input.map((v, index) => {
-    const price = normalizeNumber(v.price);
+    const price = normalizeNumber(
+      v.price
+    );
 
-    const salePrice =
-      v.salePrice !== null &&
-      v.salePrice !== undefined
-        ? normalizeNumber(v.salePrice)
+    const sale_price =
+      v.sale_price !== null &&
+      v.sale_price !== undefined
+        ? normalizeNumber(
+            v.sale_price
+          )
         : null;
 
-    const saleEnabled = Boolean(v.saleEnabled);
+    const sale_enabled =
+      Boolean(v.sale_enabled);
 
-    const finalPrice =
-      saleEnabled &&
-      salePrice !== null &&
-      salePrice >= 0.00001 &&
-      salePrice < price
-        ? salePrice
+    const final_price =
+      sale_enabled &&
+      sale_price !== null &&
+      sale_price >= 0.00001 &&
+      sale_price < price
+        ? sale_price
         : price;
 
     return {
       id: v.id,
 
       option1: v.option1 ?? "",
-      option2: v.option2 ?? null,
-      option3: v.option3 ?? null,
 
-      optionLabel1: v.optionLabel1 ?? null,
-      optionLabel2: v.optionLabel2 ?? null,
-      optionLabel3: v.optionLabel3 ?? null,
+      option2:
+        v.option2 ?? null,
 
-      optionValue: v.optionValue ?? v.option1 ?? "",
-      optionName:
-        v.optionName ??
-        v.optionLabel1 ??
-        "",
+      option3:
+        v.option3 ?? null,
+
+      option_label1:
+        v.option_label1 ?? null,
+
+      option_label2:
+        v.option_label2 ?? null,
+
+      option_label3:
+        v.option_label3 ?? null,
 
       name:
         v.name ??
-        [v.option1, v.option2, v.option3]
+        [
+          v.option1,
+          v.option2,
+          v.option3,
+        ]
           .filter(Boolean)
           .join(" - "),
 
@@ -130,34 +145,56 @@ function normalizeInitVariants(
 
       price,
 
-      salePrice:
-        saleEnabled &&
-        salePrice !== null &&
-        salePrice >= 0.00001 &&
-        salePrice < price
-          ? salePrice
+      sale_price:
+        sale_enabled &&
+        sale_price !== null &&
+        sale_price >= 0.00001 &&
+        sale_price < price
+          ? sale_price
           : null,
 
-      finalPrice,
+      final_price,
 
-      saleEnabled,
+      currency:
+        v.currency ?? "PI",
 
-      saleStock: Math.min(
-        normalizeNumber(v.saleStock),
+      sale_enabled,
+
+      sale_stock: Math.min(
+        normalizeNumber(
+          v.sale_stock
+        ),
         normalizeNumber(v.stock)
       ),
 
-      saleSold: normalizeNumber(v.saleSold),
-      stock: normalizeNumber(v.stock),
-      isUnlimited: Boolean(v.isUnlimited),
-      image: v.image ?? "",
-      isActive: v.isActive !== false,
-      sortOrder: normalizeNumber(
-        v.sortOrder,
-        index
+      sale_sold:
+        normalizeNumber(
+          v.sale_sold
+        ),
+
+      stock: normalizeNumber(
+        v.stock
       ),
 
-      sold: normalizeNumber(v.sold),
+      is_unlimited:
+        Boolean(
+          v.is_unlimited
+        ),
+
+      image: v.image ?? "",
+
+      is_active:
+        v.is_active !== false,
+
+      sort_order:
+        normalizeNumber(
+          v.sort_order,
+          index
+        ),
+
+      sold: normalizeNumber(
+        v.sold
+      ),
     };
   });
 }
@@ -167,27 +204,31 @@ function normalizeInitVariants(
 ========================================================= */
 
 export function useProductForm(
-  initialData?: ProductPayload
+  initialData?: Partial<ProductPayload>
 ) {
   /* ================= BASIC ================= */
 
-  const [id, setId] = useState<string>("");
+  const [id, setId] =
+    useState<string>("");
+
   const [name, setName] =
     useState<string>("");
 
-  const [price, setPrice] = useState<
-    number | ""
-  >("");
+  const [price, setPrice] =
+    useState<number | "">("");
 
-  const [categoryId, setCategoryId] =
-    useState<string>("");
+  const [
+    category_id,
+    setCategory_id,
+  ] = useState<string>("");
 
-  const [description, setDescription] =
-    useState<string>("");
+  const [
+    description,
+    setDescription,
+  ] = useState<string>("");
 
-  const [images, setImages] = useState<
-    string[]
-  >([]);
+  const [images, setImages] =
+    useState<string[]>([]);
 
   /* ================= DETAIL ================= */
 
@@ -196,47 +237,65 @@ export function useProductForm(
 
   /* ================= SALE ================= */
 
-  const [saleEnabled, setSaleEnabled] =
-    useState<boolean>(false);
+  const [
+    sale_enabled,
+    setSale_enabled,
+  ] = useState<boolean>(false);
 
-  const [salePrice, setSalePrice] =
-    useState<number | "">("");
+  const [
+    sale_price,
+    setSale_price,
+  ] = useState<number | "">("");
 
-  const [saleStock, setSaleStock] =
-    useState<number>(0);
+  const [
+    sale_stock,
+    setSale_stock,
+  ] = useState<number>(0);
 
-  const [saleStart, setSaleStart] =
-    useState<string>("");
+  const [
+    sale_start,
+    setSale_start,
+  ] = useState<string>("");
 
-  const [saleEnd, setSaleEnd] =
-    useState<string>("");
+  const [
+    sale_end,
+    setSale_end,
+  ] = useState<string>("");
 
   /* ================= STOCK ================= */
 
-  const [stock, setStock] = useState<
-    number | ""
-  >(1);
+  const [stock, setStock] =
+    useState<number | "">(1);
 
   /* ================= STATUS ================= */
 
-  const [isActive, setIsActive] =
-    useState<boolean>(true);
+  const [
+    is_active,
+    setIs_active,
+  ] = useState<boolean>(true);
 
   /* ================= VARIANTS ================= */
 
-  const [variants, setVariants] =
-    useState<ProductVariant[]>([]);
+  const [
+    variants,
+    setVariants,
+  ] = useState<ProductVariant[]>(
+    []
+  );
 
   /* ================= SHIPPING ================= */
 
-  const [shippingRates, setShippingRates] =
+  const [
+    shipping_rates,
+    setShipping_rates,
+  ] =
     useState<ShippingRatesState>(
       DEFAULT_SHIPPING
     );
 
   const [
-    primaryShippingCountry,
-    setPrimaryShippingCountry,
+    domestic_country_code,
+    setDomestic_country_code,
   ] = useState<string>("");
 
   /* =========================================================
@@ -251,51 +310,70 @@ export function useProductForm(
     /* ================= BASIC ================= */
 
     setId(initialData.id || "");
-    setName(initialData.name || "");
-    setPrice(
-      normalizePriceInput(initialData.price)
+
+    setName(
+      initialData.name || ""
     );
-    setCategoryId(
-      String(initialData.categoryId || "")
+
+    setPrice(
+      normalizePriceInput(
+        initialData.price
+      )
+    );
+
+    setCategory_id(
+      String(
+        initialData.category_id ||
+          ""
+      )
     );
 
     setDescription(
-      initialData.description || ""
+      initialData.description ||
+        ""
     );
 
     setImages(
-      Array.isArray(initialData.images)
+      Array.isArray(
+        initialData.images
+      )
         ? initialData.images
         : []
     );
 
-    setDetail(initialData.detail || "");
+    setDetail(
+      initialData.detail || ""
+    );
 
     /* ================= SALE ================= */
 
     const hasSale =
-      typeof initialData.salePrice ===
+      typeof initialData.sale_price ===
         "number" &&
-      initialData.salePrice >= 0.00001;
-    setSaleEnabled(hasSale);
-    setSalePrice(
+      initialData.sale_price >=
+        0.00001;
+
+    setSale_enabled(hasSale);
+
+    setSale_price(
       normalizePriceInput(
-        initialData.salePrice
+        initialData.sale_price
       )
     );
 
-    setSaleStock(
+    setSale_stock(
       normalizeNumber(
-        initialData.saleStock
+        initialData.sale_stock
       )
     );
 
-    setSaleStart(
-      initialData.saleStart || ""
+    setSale_start(
+      initialData.sale_start ||
+        ""
     );
 
-    setSaleEnd(
-      initialData.saleEnd || ""
+    setSale_end(
+      initialData.sale_end || ""
     );
 
     /* ================= STOCK ================= */
@@ -308,10 +386,10 @@ export function useProductForm(
 
     /* ================= STATUS ================= */
 
-    setIsActive(
-      typeof initialData.isActive ===
+    setIs_active(
+      typeof initialData.is_active ===
         "boolean"
-        ? initialData.isActive
+        ? initialData.is_active
         : true
     );
 
@@ -326,11 +404,9 @@ export function useProductForm(
     /* ================= SHIPPING ================= */
 
     const rates = Array.isArray(
-      initialData.shippingRates
+      initialData.shipping_rates
     )
-      ? (
-          initialData.shippingRates as ShippingRateItem[]
-        )
+      ? (initialData.shipping_rates as ShippingRateItem[])
       : [];
 
     const rateMap = new Map<
@@ -339,17 +415,31 @@ export function useProductForm(
     >(
       rates.map((r) => [
         r.zone,
-        normalizeNumber(r.price),
+        normalizeNumber(
+          r.price
+        ),
       ])
     );
 
-    setShippingRates({
+    setShipping_rates({
       domestic:
-        rateMap.get("domestic") ?? "",
-      sea: rateMap.get("sea") ?? "",
-      asia: rateMap.get("asia") ?? "",
+        rateMap.get(
+          "domestic"
+        ) ?? "",
+
+      sea:
+        rateMap.get("sea") ??
+        "",
+
+      asia:
+        rateMap.get(
+          "asia"
+        ) ?? "",
+
       europe:
-        rateMap.get("europe") ?? "",
+        rateMap.get(
+          "europe"
+        ) ?? "",
 
       north_america:
         rateMap.get(
@@ -364,13 +454,17 @@ export function useProductForm(
 
     /* ================= COUNTRY ================= */
 
-    const domesticRate = rates.find(
-      (r) => r.zone === "domestic"
-    );
+    const domesticRate =
+      rates.find(
+        (r) =>
+          r.zone ===
+          "domestic"
+      );
 
-    setPrimaryShippingCountry(
+    setDomestic_country_code(
       domesticRate
-        ?.domestic_country_code || ""
+        ?.domestic_country_code ||
+        ""
     );
   }, [initialData]);
 
@@ -379,15 +473,15 @@ export function useProductForm(
   ========================================================= */
 
   useEffect(() => {
-    if (saleEnabled) {
+    if (sale_enabled) {
       return;
     }
 
-    setSalePrice("");
-    setSaleStock(0);
-    setSaleStart("");
-    setSaleEnd("");
-  }, [saleEnabled]);
+    setSale_price("");
+    setSale_stock(0);
+    setSale_start("");
+    setSale_end("");
+  }, [sale_enabled]);
 
   /* =========================================================
      AUTO FIX SALE STOCK
@@ -396,11 +490,11 @@ export function useProductForm(
   useEffect(() => {
     if (
       typeof stock === "number" &&
-      saleStock > stock
+      sale_stock > stock
     ) {
-      setSaleStock(stock);
+      setSale_stock(stock);
     }
-  }, [stock, saleStock]);
+  }, [stock, sale_stock]);
 
   /* =========================================================
      RETURN
@@ -417,8 +511,8 @@ export function useProductForm(
     price,
     setPrice,
 
-    categoryId,
-    setCategoryId,
+    category_id,
+    setCategory_id,
 
     description,
     setDescription,
@@ -430,38 +524,38 @@ export function useProductForm(
     setDetail,
 
     /* SALE */
-    saleEnabled,
-    setSaleEnabled,
+    sale_enabled,
+    setSale_enabled,
 
-    salePrice,
-    setSalePrice,
+    sale_price,
+    setSale_price,
 
-    saleStock,
-    setSaleStock,
+    sale_stock,
+    setSale_stock,
 
-    saleStart,
-    setSaleStart,
+    sale_start,
+    setSale_start,
 
-    saleEnd,
-    setSaleEnd,
+    sale_end,
+    setSale_end,
 
     /* STOCK */
     stock,
     setStock,
 
     /* STATUS */
-    isActive,
-    setIsActive,
+    is_active,
+    setIs_active,
 
     /* VARIANTS */
     variants,
     setVariants,
 
     /* SHIPPING */
-    shippingRates,
-    setShippingRates,
+    shipping_rates,
+    setShipping_rates,
 
-    primaryShippingCountry,
-    setPrimaryShippingCountry,
+    domestic_country_code,
+    setDomestic_country_code,
   };
 }
