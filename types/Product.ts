@@ -79,31 +79,22 @@ export interface ProductVariant {
 
   /* PRICE */
   price: number;
-
   sale_price?: number | null;
-
   final_price?: number;
-
   currency?: "PI";
 
   /* SALE */
   sale_enabled?: boolean;
-
   sale_stock?: number;
-
   sale_sold?: number;
 
   /* STOCK */
   stock: number;
-
   is_unlimited?: boolean;
-
   /* MEDIA */
   image?: string;
-
   /* STATUS */
   is_active?: boolean;
-
   sort_order?: number;
 
   /* ANALYTICS */
@@ -119,73 +110,45 @@ export interface ProductFormState {
 
   /* BASIC */
   name: string;
-
   slug?: string;
-
   short_description: string;
-
   description: string;
-
   detail: string;
-
   category_id: string | number | null;
 
   /* MEDIA */
   thumbnail: string | null;
-
   images: string[];
-
   detail_images: string[];
-
   video_url: string;
 
   /* PRICE */
   price: number | "";
-
   sale_price: number | "" | null;
-
   final_price?: number;
-
   currency: "PI";
-
   /* SALE */
   sale_enabled: boolean;
-
   sale_stock: number | "";
-
   sale_sold?: number;
-
   sale_start: string | null;
-
   sale_end: string | null;
-
   /* STOCK */
   stock: number | "";
-
   is_unlimited: boolean;
-
   /* VARIANTS */
   has_variants: boolean;
-
   variants: ProductVariant[];
-
   /* SHIPPING */
   shipping_rates: ShippingRatesState;
-
   domestic_country_code: string | null;
-
   /* STATUS */
   status: ProductStatus;
-
   is_active: boolean;
-
   is_featured: boolean;
-
   is_digital: boolean;
-
   /* SEO */
   meta_title: string;
-
   meta_description: string;
 }
 
