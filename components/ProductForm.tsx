@@ -670,16 +670,15 @@ await onSubmit(payload);
 
       {/* SHIPPING */}
       <ShippingRates
-  shippingRates={form.shipping_rates}
-  setShippingRates={form.setShipping_rates}
-  primaryShippingCountry={
+  shipping_rates={form.shipping_rates}
+  setShipping_rates={form.setShipping_rates}
+  domestic_country_code={
     form.domestic_country_code
   }
-  setPrimaryShippingCountry={
+  setDomestic_country_code={
     form.setDomestic_country_code
   }
 />
-
       {/* ACTIVE */}
       <label className="flex justify-between border p-3 rounded">
         <span>{t.active}</span>
