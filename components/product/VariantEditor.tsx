@@ -1,23 +1,32 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-import { ProductVariant } from "./types";
+
+import type { ProductVariant } from "@/types/product";
+
 interface Props {
   variants: ProductVariant[];
+
   setVariants: React.Dispatch<
     React.SetStateAction<ProductVariant[]>
   >;
 }
 
 const MIN_PRICE = 0.00001;
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
 const parseList = (
   value: string
 ): string[] =>
   value
     .split(",")
     .map((x) => x.trim())
-    .filter((x) => x.length > 0);
+    .filter(Boolean);
 
 const parseNumberInput = (
   value: string
@@ -28,11 +37,9 @@ const parseNumberInput = (
 
   const parsed = Number(value);
 
-  if (Number.isNaN(parsed)) {
-    return "";
-  }
-
-  return parsed;
+  return Number.isNaN(parsed)
+    ? ""
+    : parsed;
 };
 
 const normalizePrice = (
@@ -42,7 +49,10 @@ const normalizePrice = (
     return "";
   }
 
-  if (value > 0 && value < MIN_PRICE) {
+  if (
+    value > 0 &&
+    value < MIN_PRICE
+  ) {
     return MIN_PRICE;
   }
 
@@ -52,85 +62,167 @@ const normalizePrice = (
 const buildName = (
   v: ProductVariant
 ): string =>
-  [v.option1, v.option2, v.option3]
+  [
+    v.option1,
+    v.option2,
+    v.option3,
+  ]
     .filter(Boolean)
     .join(" - ");
 
 const hydrateVariant = (
-  v: ProductVariant
+  v: Partial<ProductVariant>
 ): ProductVariant => {
-  const price = Number(v.price ?? 0);
-
-  const salePrice =
-  v.salePrice !== null &&
-  v.salePrice !== undefined
-    ? v.salePrice
-    : null;
-
-  const saleEnabled = Boolean(
-    v.saleEnabled
+  const price = Number(
+    v.price ?? 0
   );
 
-  const finalSalePrice = salePrice;
+  const sale_price =
+    v.sale_price !== null &&
+    v.sale_price !== undefined
+      ? Number(v.sale_price)
+      : null;
 
-  const safeSaleStock = Math.min(
-    Number(v.saleStock ?? 0),
-    Number(v.stock ?? 0)
+  const sale_enabled = Boolean(
+    v.sale_enabled
+  );
+
+  const final_price =
+    sale_enabled &&
+    sale_price !== null &&
+    sale_price > 0 &&
+    sale_price < price
+      ? sale_price
+      : price;
+
+  const stock = Number(
+    v.stock ?? 0
+  );
+
+  const sale_stock = Math.min(
+    Number(v.sale_stock ?? 0),
+    stock
   );
 
   return {
-    ...v,
+    id: v.id,
 
-    optionValue: v.option1 ?? "",
-    optionName: v.optionLabel1 ?? "",
-    name: buildName(v),
-    saleEnabled,
-    salePrice:
-  salePrice === null ||
-  salePrice === undefined
-    ? null
-    : salePrice,
-    saleStock: safeSaleStock,
-    saleSold: Number(v.saleSold ?? 0),
+    option1: v.option1 ?? "",
+
+    option2:
+      v.option2 ?? null,
+
+    option3:
+      v.option3 ?? null,
+
+    option_label1:
+      v.option_label1 ?? "Color",
+
+    option_label2:
+      v.option_label2 ?? null,
+
+    option_label3:
+      v.option_label3 ?? null,
+
+    name:
+      v.name ??
+      buildName(
+        v as ProductVariant
+      ),
+
+    sku: v.sku ?? null,
+
+    price,
+
+    sale_enabled,
+
+    sale_price:
+      sale_enabled &&
+      sale_price !== null &&
+      sale_price > 0 &&
+      sale_price < price
+        ? sale_price
+        : null,
+
+    sale_stock,
+
+    sale_sold: Number(
+      v.sale_sold ?? 0
+    ),
+
+    final_price,
+
+    stock,
+
     sold: Number(v.sold ?? 0),
-    finalPrice:
-      finalSalePrice ?? price,
-    isActive:
-      v.isActive !== false,
-    isUnlimited: Boolean(
-      v.isUnlimited
+
+    currency:
+      v.currency ?? "PI",
+
+    image: v.image ?? "",
+
+    is_active:
+      v.is_active !== false,
+
+    is_unlimited: Boolean(
+      v.is_unlimited
+    ),
+
+    sort_order: Number(
+      v.sort_order ?? 0
     ),
   };
 };
+
+/* =========================================================
+   COMPONENT
+========================================================= */
 
 export default function VariantEditor({
   variants,
   setVariants,
 }: Props) {
-  const { t } = useTranslation();
+  const { t } =
+    useTranslation();
+
+  const hydrated =
+    useRef(false);
+
   const [label1, setLabel1] =
     useState("Color");
+
   const [values1, setValues1] =
     useState("");
+
   const [label2, setLabel2] =
     useState("Size");
+
   const [values2, setValues2] =
     useState("");
-  const hydrated = useRef(false);
-  useEffect(() => {
-    if (hydrated.current) return;
 
-    if (!variants.length) return;
+  /* =========================================================
+     HYDRATE
+  ========================================================= */
+
+  useEffect(() => {
+    if (
+      hydrated.current ||
+      !variants.length
+    ) {
+      return;
+    }
 
     hydrated.current = true;
 
     setLabel1(
-      variants[0].optionLabel1 ||
+      variants[0]
+        ?.option_label1 ||
         "Color"
     );
 
     setLabel2(
-      variants[0].optionLabel2 ||
+      variants[0]
+        ?.option_label2 ||
         "Size"
     );
 
@@ -150,14 +242,25 @@ export default function VariantEditor({
       ),
     ];
 
-    setValues1(uniq1.join(", "));
-    setValues2(uniq2.join(", "));
+    setValues1(
+      uniq1.join(", ")
+    );
+
+    setValues2(
+      uniq2.join(", ")
+    );
   }, [variants]);
 
-  const generateVariants = () => {
-    const list1 = parseList(values1);
+  /* =========================================================
+     GENERATE VARIANTS
+  ========================================================= */
 
-    const list2 = parseList(values2);
+  const generateVariants = () => {
+    const list1 =
+      parseList(values1);
+
+    const list2 =
+      parseList(values2);
 
     const next: ProductVariant[] =
       [];
@@ -170,11 +273,12 @@ export default function VariantEditor({
     if (list2.length) {
       for (const a of list1) {
         for (const b of list2) {
-          const found = variants.find(
-            (x) =>
-              x.option1 === a &&
-              x.option2 === b
-          );
+          const found =
+            variants.find(
+              (x) =>
+                x.option1 === a &&
+                x.option2 === b
+            );
 
           next.push(
             hydrateVariant({
@@ -183,41 +287,53 @@ export default function VariantEditor({
               option1: a,
               option2: b,
 
-              optionLabel1: label1,
-              optionLabel2: label2,
+              option_label1:
+                label1,
+
+              option_label2:
+                label2,
 
               price:
-                found?.price ?? 0,
+                found?.price ??
+                0,
 
               stock:
-                found?.stock ?? 0,
+                found?.stock ??
+                0,
             })
           );
         }
       }
     } else {
       for (const a of list1) {
-        const found = variants.find(
-          (x) =>
-            x.option1 === a &&
-            !x.option2
-        );
+        const found =
+          variants.find(
+            (x) =>
+              x.option1 === a &&
+              !x.option2
+          );
 
         next.push(
           hydrateVariant({
             ...found,
 
             option1: a,
+
             option2: null,
 
-            optionLabel1: label1,
-            optionLabel2: null,
+            option_label1:
+              label1,
+
+            option_label2:
+              null,
 
             price:
-              found?.price ?? 0,
+              found?.price ??
+              0,
 
             stock:
-              found?.stock ?? 0,
+              found?.stock ??
+              0,
           })
         );
       }
@@ -225,6 +341,10 @@ export default function VariantEditor({
 
     setVariants(next);
   };
+
+  /* =========================================================
+     UPDATE FIELD
+  ========================================================= */
 
   const updateField = <
     K extends keyof ProductVariant
@@ -247,6 +367,10 @@ export default function VariantEditor({
     );
   };
 
+  /* =========================================================
+     BULK SET
+  ========================================================= */
+
   const bulkSet = <
     K extends keyof ProductVariant
   >(
@@ -263,13 +387,23 @@ export default function VariantEditor({
     );
   };
 
-  const remove = (index: number) => {
+  /* =========================================================
+     REMOVE
+  ========================================================= */
+
+  const remove = (
+    index: number
+  ) => {
     setVariants((prev) =>
       prev.filter(
         (_, i) => i !== index
       )
     );
   };
+
+  /* =========================================================
+     UI
+  ========================================================= */
 
   return (
     <div className="space-y-4">
@@ -288,7 +422,9 @@ export default function VariantEditor({
               )
             }
             className="border p-2 rounded"
-            placeholder={t.option_1_label}
+            placeholder={
+              t.option_1_label
+            }
           />
 
           <input
@@ -310,7 +446,9 @@ export default function VariantEditor({
               )
             }
             className="border p-2 rounded"
-            placeholder={t.option_2_label}
+            placeholder={
+              t.option_2_label
+            }
           />
 
           <input
@@ -345,7 +483,9 @@ export default function VariantEditor({
               step="0.00001"
               min="0.00001"
               inputMode="decimal"
-              placeholder={t.bulk_price}
+              placeholder={
+                t.bulk_price
+              }
               className="border p-2 rounded"
               onBlur={(e) => {
                 const parsed =
@@ -364,7 +504,9 @@ export default function VariantEditor({
 
             <input
               type="number"
-              placeholder={t.bulk_stock}
+              placeholder={
+                t.bulk_stock
+              }
               className="border p-2 rounded"
               onBlur={(e) =>
                 bulkSet(
@@ -381,7 +523,7 @@ export default function VariantEditor({
               className="bg-orange-500 text-white rounded"
               onClick={() =>
                 bulkSet(
-                  "saleEnabled",
+                  "sale_enabled",
                   true
                 )
               }
@@ -419,7 +561,9 @@ export default function VariantEditor({
                 {variants.map(
                   (v, i) => (
                     <tr
-                      key={v.id ?? i}
+                      key={
+                        v.id ?? i
+                      }
                       className="border-t"
                     >
                       {/* VARIANT */}
@@ -439,7 +583,8 @@ export default function VariantEditor({
                           min="0.00001"
                           inputMode="decimal"
                           value={
-                            v.price ?? ""
+                            v.price ??
+                            ""
                           }
                           onChange={(
                             e
@@ -476,7 +621,8 @@ export default function VariantEditor({
                         <input
                           type="number"
                           value={
-                            v.stock ?? 0
+                            v.stock ??
+                            0
                           }
                           onChange={(
                             e
@@ -500,14 +646,14 @@ export default function VariantEditor({
                           <input
                             type="checkbox"
                             checked={Boolean(
-                              v.saleEnabled
+                              v.sale_enabled
                             )}
                             onChange={(
                               e
                             ) =>
                               updateField(
                                 i,
-                                "saleEnabled",
+                                "sale_enabled",
                                 e.target
                                   .checked
                               )
@@ -517,47 +663,48 @@ export default function VariantEditor({
                           {t.sale}
                         </label>
 
-                        {v.saleEnabled && (
+                        {v.sale_enabled && (
                           <>
-                           <input
-  type="number"
-  step="0.00001"
-  min="0.00001"
-  inputMode="decimal"
-  placeholder={t.sale_price}
-  value={v.salePrice ?? ""}
-  onChange={(e) => {
-    updateField(
-      i,
-      "salePrice",
-      e.target.value as ProductVariant["salePrice"]
-    );
-  }}
-  onBlur={(e) => {
-    const value = e.target.value;
+                            <input
+                              type="number"
+                              step="0.00001"
+                              min="0.00001"
+                              inputMode="decimal"
+                              placeholder={
+                                t.sale_price
+                              }
+                              value={
+                                v.sale_price ??
+                                ""
+                              }
+                              onChange={(
+                                e
+                              ) => {
+                                const parsed =
+                                  parseNumberInput(
+                                    e.target
+                                      .value
+                                  );
 
-    if (!value.trim()) {
-      updateField(
-        i,
-        "salePrice",
-        null
-      );
-
-      return;
-    }
-
-    const parsed = Number(value);
-
-    updateField(
-      i,
-      "salePrice",
-      normalizePrice(
-        parsed
-      ) as ProductVariant["salePrice"]
-    );
-  }}
-  className="border p-1 w-24 block"
-/>
+                                updateField(
+                                  i,
+                                  "sale_price",
+                                  parsed as ProductVariant["sale_price"]
+                                );
+                              }}
+                              onBlur={() => {
+                                updateField(
+                                  i,
+                                  "sale_price",
+                                  normalizePrice(
+                                    Number(
+                                      v.sale_price
+                                    )
+                                  ) as ProductVariant["sale_price"]
+                                );
+                              }}
+                              className="border p-1 w-24 block"
+                            />
 
                             <input
                               type="number"
@@ -565,21 +712,29 @@ export default function VariantEditor({
                                 t.sale_stock
                               }
                               value={
-                                v.saleStock ??
+                                v.sale_stock ??
                                 0
                               }
                               onChange={(
                                 e
-                              ) =>
-                                updateField(
-                                  i,
-                                  "saleStock",
+                              ) => {
+                                const value =
                                   Number(
                                     e.target
                                       .value
-                                  ) || 0
-                                )
-                              }
+                                  ) || 0;
+
+                                updateField(
+                                  i,
+                                  "sale_stock",
+                                  Math.min(
+                                    value,
+                                    Number(
+                                      v.stock
+                                    )
+                                  )
+                                );
+                              }}
                               className="border p-1 w-24 block"
                             />
                           </>
