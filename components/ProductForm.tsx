@@ -312,12 +312,12 @@ export default function ProductForm({
       ========================= */
 
       const shippingRatesPayload: ShippingRate[] =
-        Object.entries(form.shipping_rates).map(
-          ([zone, price]) => ({
-            zone,
-            price: Number(price || 0),
-          })
-        );
+  Object.entries(form.shipping_rates).map(
+    ([zone, price]) => ({
+      zone: zone as ShippingRate["zone"],
+      price: Number(price || 0),
+    })
+  );
 
       /* =========================
          VARIANTS
