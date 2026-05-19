@@ -145,25 +145,18 @@ const hydrateVariant = (
         : null,
 
     sale_stock,
-
     sale_sold: Number(
       v.sale_sold ?? 0
     ),
 
     final_price,
-
     stock,
-
     sold: Number(v.sold ?? 0),
-
     currency:
       v.currency ?? "PI",
-
     image: v.image ?? "",
-
     is_active:
       v.is_active !== false,
-
     is_unlimited: Boolean(
       v.is_unlimited
     ),
