@@ -40,7 +40,12 @@ function calcFinalPrice(
 
   return Math.min(
     ...variants.map((v) =>
-      Number(v.final_price ?? v.price ?? 0)
+      Number(
+        v.final_price ??
+        v.sale_price ??
+        v.price ??
+        0
+      )
     )
   );
 }
@@ -80,7 +85,8 @@ function normalizeShippingRates(
 export async function listProductsService(
   req: Request
 ) {
-  const { searchParams } = new URL(req.url);
+  const { searchParams } =
+    new URL(req.url);
 
   const ids =
     searchParams.get("ids");
@@ -280,16 +286,16 @@ export async function createProductService(
 
   /* ================= SHIPPING ================= */
 
-  const shippingRates =
+  const cleanedRates =
     normalizeShippingRates(
       body,
       body.primary_shipping_country
     );
 
-  if (shippingRates.length) {
+  if (cleanedRates.length) {
     await upsertShippingRates({
       productId: product.id,
-      rates: shippingRates,
+      rates: cleanedRates,
     });
   }
 
@@ -381,8 +387,9 @@ export async function updateProductService(
           null,
 
         sale_stock:
-          body.sale_stock ??
-          0,
+          Number(
+            body.sale_stock ?? 0
+          ),
 
         is_active:
           body.is_active ??
@@ -405,16 +412,16 @@ export async function updateProductService(
 
   /* ================= SHIPPING ================= */
 
-  const shippingRates =
+  const cleanedRates =
     normalizeShippingRates(
       body,
       body.primary_shipping_country
     );
 
-  if (shippingRates.length) {
+  if (cleanedRates.length) {
     await upsertShippingRates({
       productId: body.id,
-      rates: shippingRates,
+      rates: cleanedRates,
     });
   }
 
