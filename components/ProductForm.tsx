@@ -449,7 +449,7 @@ await onSubmit(payload);
     >
       {/* CATEGORY */}
 <select
- value={form.category_id}
+  value={form.category_id ?? ""}
   onChange={(e) =>
     form.setCategoryId(  e.target.value   ? Number(e.target.value)   : "")
   }
