@@ -218,10 +218,9 @@ export function useProductForm(
     useState<number | "">("");
 
   const [
-    category_id,
-    setCategory_id,
-  ] = useState<string>("");
-
+  category_id,
+  setCategory_id,
+] = useState<number | "">("");
   const [
     description,
     setDescription,
@@ -322,11 +321,11 @@ export function useProductForm(
     );
 
     setCategory_id(
-      String(
-        initialData.category_id ||
-          ""
-      )
-    );
+  typeof initialData.category_id ===
+    "number"
+    ? initialData.category_id
+    : ""
+);
 
     setDescription(
       initialData.description ||
