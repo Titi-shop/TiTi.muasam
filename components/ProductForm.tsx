@@ -367,11 +367,10 @@ const payload: ProductPayload = {
       : undefined,
   name: form.name,
   category_id:
-  form.category_id !== "" &&
-  form.category_id !== null &&
-  form.category_id !== undefined
-    ? Number(form.category_id)
-    : undefined,
+    typeof form.category_id === "string" &&
+    form.category_id.trim().length > 0
+      ? form.category_id.trim()
+      : undefined,
 
   description: form.description,
   detail: form.detail,
@@ -450,14 +449,10 @@ await onSubmit(payload);
     >
       {/* CATEGORY */}
 <select
-  value={form.category_id ?? ""}
+ value={form.category_id}
   onChange={(e) =>
-  form.setCategoryId(
-    e.target.value
-      ? Number(e.target.value)
-      : ""
-  )
-}
+    form.setCategoryId(e.target.value)
+  }
   className="w-full border p-2 rounded"
 >
   <option value="">
@@ -609,7 +604,7 @@ await onSubmit(payload);
                   e.target.value;
 
                 if (value === "") {
-                  form.setSale_price("");
+                 form.setSale_price("");
                   return;
                 }
 
@@ -654,7 +649,7 @@ await onSubmit(payload);
           type="datetime-local"
           value={form.sale_start || ""}
           onChange={(e) =>
-            form.setSaleStart(
+            form.setSale_start(
               e.target.value
             )
           }
