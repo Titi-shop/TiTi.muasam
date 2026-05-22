@@ -39,7 +39,6 @@ function calcVariantFinalPrice(v: any) {
 function normalizeShippingRates(body: any) {
   const rates =
     body.shipping_rates ??
-    body.shippingRates ??
     [];
 
   return rates.map((r: any) => ({
@@ -52,7 +51,6 @@ function normalizeShippingRates(body: any) {
         ? (
             r.domestic_country_code ??
             body.primary_shipping_country ??
-            body.primaryShippingCountry ??
             null
           )
         : null,
@@ -163,10 +161,10 @@ export async function updateProductService(
         body.variants ?? []
       );
 
-    const hasVariants =
+    const has_variants =
       variants.length > 0;
 
-    const finalPrice =
+    const final_price =
       hasVariants
         ? Math.min(
             ...variants.map(
@@ -180,7 +178,7 @@ export async function updateProductService(
             body.price ?? 0
           );
 
-    const finalStock =
+    const final_stock =
       hasVariants
         ? variants.reduce(
             (
@@ -288,7 +286,6 @@ export async function updateProductService(
 
     const shippingRates =
       body.shipping_rates ??
-      body.shippingRates;
 
     if (
       Array.isArray(
