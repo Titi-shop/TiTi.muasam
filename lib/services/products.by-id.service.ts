@@ -25,13 +25,13 @@ import {
 ===================================================== */
 
 function calcVariantFinalPrice(v: any) {
-  const saleActive =
+  const sale_active =
     v.sale_enabled &&
     v.sale_price !== null &&
     v.sale_price > 0 &&
     v.sale_price < v.price;
 
-  return saleActive
+  return sale_active
     ? Number(v.sale_price)
     : Number(v.price);
 }
@@ -90,7 +90,7 @@ export async function getProductService(
     const shipping_rates =
       await getShippingRatesByProduct(id);
 
-    const enrichedVariants =
+    const enriched_variants =
       variants.map((v: any) => ({
         ...v,
 
@@ -99,7 +99,7 @@ export async function getProductService(
       }));
 
     const prices =
-      enrichedVariants.map(
+      enriched_variants.map(
         (v: any) => v.final_price
       );
 
@@ -219,10 +219,10 @@ export async function updateProductService(
         null,
 
       price:
-        finalPrice,
+        final_price,
 
       stock:
-        finalStock,
+        final_stock,
 
       sale_price:
         hasVariants
@@ -284,11 +284,10 @@ export async function updateProductService(
     ========================= */
 
     const shipping_rates =
-      body.shipping_rates ??
-
+  body.shipping_rates ?? [];
     if (
       Array.isArray(
-        shippingRates
+        shipping_rates
       )
     ) {
       const cleaned_rates =
@@ -298,7 +297,7 @@ export async function updateProductService(
 
       await upsertShippingRates({
         product_id: id,
-        rates: cleanedRates,
+        rates: cleaned_rates,
       });
     }
 
@@ -309,10 +308,10 @@ export async function updateProductService(
         id,
 
         price:
-          finalPrice,
+          final_price,
 
         stock:
-          finalStock,
+          final_stock,
 
         has_variants:
           hasVariants,
