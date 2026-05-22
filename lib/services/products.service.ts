@@ -22,7 +22,7 @@ import { normalizeVariants } from "@/lib/validators/products";
    HELPERS
 ========================================================= */
 
-function getCategory_id(body: any) {
+function getCategoryId(body: any) {
   return (
     body.category_id ??
     null
@@ -96,17 +96,17 @@ export async function listProductsService(
       )
     : await getAllProducts();
 
-  const productIds =
+  const product_ids =
     products.map((p) => p.id);
 
-  const shippingRows =
+  const shipping_rows =
     productIds.length > 0
       ? await getShippingRatesByProducts(
           productIds
         )
       : [];
 
-  const shippingMap =
+  const shipping_map =
     new Map<string, any[]>();
 
   for (const r of shippingRows) {
@@ -136,7 +136,7 @@ export async function listProductsService(
           p.id
         );
 
-      const enrichedVariants =
+      const enriched_variants =
         variants.map((v: any) => {
           const sale_active =
             v.sale_enabled &&
@@ -283,7 +283,7 @@ export async function createProductService(
 
   /* ================= SHIPPING ================= */
 
-  const cleanedRates =
+  const cleaned_rates =
     normalizeShippingRates(
       body,
       body.primary_shipping_country
@@ -318,10 +318,10 @@ export async function updateProductService(
 
   const variants =
     normalizeVariants(
-      body.variants || []
+      body.variants ?? []
     );
 
-  const finalPrice =
+  const final_price =
     calcFinalPrice(
       variants,
       Number(body.price || 0)
