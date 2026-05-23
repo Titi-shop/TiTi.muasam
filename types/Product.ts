@@ -37,13 +37,9 @@ export type ShippingZone =
 
 export interface ShippingRate {
   id?: string;
-
   zone: ShippingZone;
-
   price: number;
-
   currency?: "PI";
-
   domestic_country_code?: string | null;
 }
 
