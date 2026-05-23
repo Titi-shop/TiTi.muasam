@@ -211,7 +211,7 @@ export async function createProductService(
     );
 
   const product =
-    await createProduct(userId, {
+    await createProduct(user_d, {
       name: body.name,
 
       description:
@@ -276,7 +276,7 @@ export async function createProductService(
 
   if (variants.length) {
     await replaceVariantsByProductId(
-      product.id,
+      product_id,
       variants
     );
   }
@@ -289,10 +289,10 @@ export async function createProductService(
       body.primary_shipping_country
     );
 
-  if (cleanedRates.length) {
+  if (cleaned_rates.length) {
     await upsertShippingRates({
       product_id: product_id,
-      rates: cleanedRates,
+      rates: cleaned_rates,
     });
   }
 
@@ -409,15 +409,15 @@ export async function updateProductService(
 
   /* ================= SHIPPING ================= */
 
-  const cleanedRates =
+  const cleaned_rates =
     normalizeShippingRates(
       body,
       body.primary_shipping_country
     );
 
-  if (cleanedRates.length) {
+  if (cleaned_rates.length) {
     await upsertShippingRates({
-      productId: body.id,
+      product_id: body.id,
       rates: cleaned_rates,
     });
   }
