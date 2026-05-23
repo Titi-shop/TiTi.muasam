@@ -181,11 +181,8 @@ async function generateUniqueSlug(
   name: string
 ): Promise<string> {
   const base_slug = slugify(name);
-
   let slug = base_slug;
-
   let counter = 1;
-
   while (true) {
     const result = await query(
       `
@@ -202,7 +199,6 @@ async function generateUniqueSlug(
     }
 
     slug = `${base_slug}-${counter}`;
-
     counter++;
   }
 }
@@ -219,7 +215,7 @@ function normalizeStatus(
     : "active";
 }
 
-function calc_final_price(
+function calcFinalPrice(
   data: {
     price?: number;
     sale_price?: number | null;
