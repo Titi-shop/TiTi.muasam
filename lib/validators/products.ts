@@ -432,3 +432,66 @@ export function normalizeVariants(
 
   return result;
 }
+export function validateProductPayload(
+  body: {
+    name?: string;
+    category_id?: number | null;
+    sale_enabled?: boolean;
+    sale_price?: number | null;
+    sale_stock?: number;
+    sale_start?: string | null;
+    sale_end?: string | null;
+    variants?: unknown[];
+  }
+): string | null {
+
+  if (!body.category_id) {
+    return "CATEGORY_REQUIRED";
+  }
+
+  if (!body.name?.trim()) {
+    return "PRODUCT_NAME_REQUIRED";
+  }
+
+  const hasVariants =
+    Array.isArray(body.variants) &&
+    body.variants.length > 0;
+
+  /* =========================
+     PRODUCT + VARIANT SALE
+  ========================= */
+
+  if (
+    hasVariants &&
+    body.sale_enabled
+  ) {
+    return "PRODUCT_SALE_NOT_ALLOWED_WITH_VARIANTS";
+  }
+
+  /* =========================
+     SALE REQUIRED FIELDS
+  ========================= */
+
+  if (
+    body.sale_enabled
+  ) {
+
+    if (!body.sale_price) {
+      return "SALE_PRICE_REQUIRED";
+    }
+
+    if (!body.sale_stock) {
+      return "SALE_STOCK_REQUIRED";
+    }
+
+    if (!body.sale_start) {
+      return "SALE_START_REQUIRED";
+    }
+
+    if (!body.sale_end) {
+      return "SALE_END_REQUIRED";
+    }
+  }
+
+  return null;
+}
