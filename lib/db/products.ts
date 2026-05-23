@@ -180,9 +180,9 @@ function slugify(
 async function generateUniqueSlug(
   name: string
 ): Promise<string> {
-  const baseSlug = slugify(name);
+  const base_lug = slugify(name);
 
-  let slug = baseSlug;
+  let slug = base_slug;
 
   let counter = 1;
 
@@ -208,13 +208,13 @@ async function generateUniqueSlug(
 }
 function normalizeStatus(
   status?: ProductStatus,
-  isActive?: boolean
+  is_ctive?: boolean
 ): ProductStatus {
   if (status) {
     return status;
   }
 
-  return isActive === false
+  return is_active === false
     ? "inactive"
     : "active";
 }
@@ -232,7 +232,7 @@ function calcFinalPrice(
     data.price
   );
 
-  const salePrice =
+  const sale_price =
     safeNullableNumber(
       data.sale_price
     );
@@ -242,17 +242,17 @@ function calcFinalPrice(
   }
 
   if (
-    salePrice === null ||
-    salePrice <= 0
+    sale_price === null ||
+    sale_price <= 0
   ) {
     return price;
   }
 
-  if (salePrice >= price) {
+  if (sale_price >= price) {
     return price;
   }
 
-  return salePrice;
+  return sale_rice;
 }
 
 function mapRow(
