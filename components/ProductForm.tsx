@@ -223,7 +223,16 @@ export default function ProductForm({
 
     try {
       const hasVariants = form.variants.length > 0;
-
+if (
+  hasVariants &&
+  form.sale_enabled
+) {
+  alert(
+    t.variant_product_cannot_sale
+  );
+  setSubmitting(false);
+  return;
+}
       const hasSaleTime =
         Boolean(form.sale_start) &&
         Boolean(form.sale_end);
@@ -243,7 +252,14 @@ export default function ProductForm({
         setSubmitting(false);
         return;
       }
-
+if (
+  !form.category_id ||
+  Number(form.category_id) <= 0
+) {
+  alert(t.category_required);
+  setSubmitting(false);
+  return;
+}
       if (!form.images.length) {
         alert(t.product_need_image);
         setSubmitting(false);
@@ -267,32 +283,102 @@ export default function ProductForm({
          SALE VALIDATION
       ========================= */
 
-      if (!hasVariants && form.sale_enabled) {
-        const sale = Number(form.sale_price);
-        const price = Number(form.price);
+if (
+  !hasVariants &&
+  form.sale_enabled
+) {
 
-        if (!hasSaleTime) {
-          alert(t.sale_time_required);
-          setSubmitting(false);
-          return;
-        }
+  const sale = Number(
+    form.sale_price
+  );
 
-        if (
-          Number.isNaN(sale) ||
-          sale < 0.00001
-        ) {
-          alert(t.sale_price_minimum_error);
-          setSubmitting(false);
-          return;
-        }
+  const price = Number(
+    form.price
+  );
 
-        if (sale >= price) {
-          alert(t.sale_price_less_than_price);
-          setSubmitting(false);
-          return;
-        }
-      }
+  /* =====================
+     SALE PRICE
+  ===================== */
 
+  if (
+    Number.isNaN(sale) ||
+    sale < 0.00001
+  ) {
+    alert(
+      t.sale_price_minimum_error
+    );
+
+    setSubmitting(false);
+
+    return;
+  }
+
+  /* =====================
+     SALE STOCK
+  ===================== */
+
+  if (
+    !form.sale_stock ||
+    Number(form.sale_stock) <= 0
+  ) {
+    alert(
+      t.sale_stock_required
+    );
+
+    setSubmitting(false);
+
+    return;
+  }
+
+  /* =====================
+     SALE TIME
+  ===================== */
+
+  if (!hasSaleTime) {
+    alert(
+      t.sale_time_required
+    );
+
+    setSubmitting(false);
+
+    return;
+  }
+
+  /* =====================
+     SALE PRICE < PRICE
+  ===================== */
+
+  if (sale >= price) {
+    alert(
+      t.sale_price_less_than_price
+    );
+
+    setSubmitting(false);
+
+    return;
+  }
+
+  /* =====================
+     INVALID TIME RANGE
+  ===================== */
+
+  if (
+    new Date(
+      form.sale_start
+    ).getTime() >=
+    new Date(
+      form.sale_end
+    ).getTime()
+  ) {
+    alert(
+      t.invalid_sale_time
+    );
+
+    setSubmitting(false);
+
+    return;
+  }
+}
       /* =========================
          SALE TIME BUT NO PRICE
       ========================= */
