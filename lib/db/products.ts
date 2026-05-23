@@ -860,8 +860,8 @@ input.has_variants !== undefined
   ? input.has_variants
   : current.has_variants,
 
-productId,
-sellerId,
+product_id,
+seller_id,
       ]
     );
 
@@ -882,12 +882,12 @@ sellerId,
 ========================================================= */
 
 export async function deleteProductBySeller(
-  sellerId: string,
-  productId: string
+  seller_id: string,
+  product_id: string
 ): Promise<boolean> {
   log("DELETE_HARD_START", {
-    sellerId,
-    productId,
+    seller_id,
+    product_id,
   });
 
   if (!isUUID(sellerId) || !isUUID(productId)) {
@@ -901,7 +901,7 @@ export async function deleteProductBySeller(
       AND seller_id = $2
     RETURNING id
     `,
-    [productId, sellerId]
+    [product_id, seller_id]
   );
 
   return result.rows.length > 0;
@@ -926,7 +926,7 @@ export async function incrementProductView(
       WHERE id = $1
       RETURNING views
       `,
-      [productId]
+      [product_id]
     );
 
   return safeNumber(
@@ -1041,7 +1041,7 @@ export async function deleteProductById(
       DELETE FROM product_variants
       WHERE product_id = $1
       `,
-      [productId]
+      [product_id]
     );
 
     // shipping
@@ -1050,7 +1050,7 @@ export async function deleteProductById(
       DELETE FROM shipping_rates
       WHERE product_id = $1
       `,
-      [productId]
+      [product_id]
     );
 
     // cart
@@ -1059,7 +1059,7 @@ export async function deleteProductById(
       DELETE FROM cart_items
       WHERE product_id = $1
       `,
-      [productId]
+      [product_id]
     );
 
     // wishlist
@@ -1068,7 +1068,7 @@ export async function deleteProductById(
       DELETE FROM favorites
       WHERE product_id = $1
       `,
-      [productId]
+      [product_id]
     );
 
     // reviews
@@ -1077,7 +1077,7 @@ export async function deleteProductById(
       DELETE FROM product_reviews
       WHERE product_id = $1
       `,
-      [productId]
+      [product_id]
     );
 
     // cuối cùng mới xóa product
@@ -1088,7 +1088,7 @@ export async function deleteProductById(
         AND seller_id = $2
       RETURNING id
       `,
-      [productId, sellerId]
+      [product_id, seller_id]
     );
 
     return {
@@ -1103,7 +1103,7 @@ export async function getSoldByProduct(productId: string) {
     FROM order_items
     WHERE product_id = $1
     `,
-    [productId]
+    [product_id]
   );
 
   return Number(rows[0]?.sold || 0);
@@ -1113,13 +1113,13 @@ export async function getSoldByProduct(productId: string) {
 ========================================================= */
 
 export async function syncProductFromVariants(
-  productId: string
+  product_id: string
 ): Promise<void> {
   await withTransaction(
     async (client) => {
       log(
         "SYNC_FROM_VARIANTS",
-        productId
+        product_id
       );
 
       const result =
@@ -1145,7 +1145,7 @@ export async function syncProductFromVariants(
             AND deleted_at IS NULL
             AND is_active = true
           `,
-          [productId]
+          [product_id]
         );
 
       const row =
@@ -1162,7 +1162,7 @@ export async function syncProductFromVariants(
         WHERE id = $1
         `,
         [
-          productId,
+          product_id,
           safeNumber(
             row?.min_price
           ),
