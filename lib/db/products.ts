@@ -180,7 +180,7 @@ function slugify(
 async function generateUniqueSlug(
   name: string
 ): Promise<string> {
-  const base_lug = slugify(name);
+  const base_slug = slugify(name);
 
   let slug = base_slug;
 
@@ -201,7 +201,7 @@ async function generateUniqueSlug(
       return slug;
     }
 
-    slug = `${baseSlug}-${counter}`;
+    slug = `${base_slug}-${counter}`;
 
     counter++;
   }
@@ -252,7 +252,7 @@ function calcFinalPrice(
     return price;
   }
 
-  return sale_rice;
+  return sale_price;
 }
 
 function mapRow(
@@ -323,31 +323,7 @@ function mapRow(
   };
 }
 
-/* =========================================================
-   GET ALL
-========================================================= */
 
-export async function getAllProducts(
-  limit = 20
-): Promise<ProductRecord[]> {
-  log("GET_ALL_START", {
-    limit,
-  });
-
-  const result =
-    await query<ProductRow>(
-      `
-      SELECT *
-      FROM products
-      WHERE deleted_at IS NULL
-      ORDER BY created_at DESC
-      LIMIT $1
-      `,
-      [limit]
-    );
-
-  return result.rows.map(mapRow);
-}
 
 /* =========================================================
    GET ALL PRODUCTS
@@ -658,7 +634,7 @@ export async function updateProductBySeller(
     return null;
   }
 
-  const next_rice =
+  const next_price =
     input.price !== undefined
       ? safeNumber(input.price)
       : current.price;
@@ -682,7 +658,7 @@ export async function updateProductBySeller(
     calcFinalPrice({
       price: next_price,
       sale_price:
-        nextSalePrice,
+        next_sale_price,
       sale_enabled:
         next_sale_enabled,
     });
@@ -796,7 +772,7 @@ export async function updateProductBySeller(
             )
           : current.is_digital,
 
-        nextStatus,
+        next_status,
 
         input.category_id !==
         undefined
@@ -850,7 +826,6 @@ seller_id,
   }
 
   log("UPDATE_SUCCESS", row.id);
-
   return mapRow(row);
 }
 
@@ -889,7 +864,7 @@ export async function deleteProductBySeller(
 ========================================================= */
 
 export async function incrementProductView(
-  productId: string
+  product_id: string
 ): Promise<number> {
   const result =
     await query<{
@@ -1007,8 +982,8 @@ export async function getProductsByIds(
   }
 }
 export async function deleteProductById(
-  productId: string,
-  sellerId: string
+  product_id: string,
+  seller_id: string
 ) {
   return withTransaction(async (client) => {
 
@@ -1073,7 +1048,7 @@ export async function deleteProductById(
     };
   });
 }
-export async function getSoldByProduct(productId: string) {
+export async function getSoldByProduct(product_id: string) {
   const { rows } = await query(
     `
     SELECT COALESCE(SUM(quantity), 0) as sold
