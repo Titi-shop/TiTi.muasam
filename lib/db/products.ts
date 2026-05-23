@@ -548,23 +548,15 @@ export async function createProduct(
       `,
       [
         seller_id,
-
         input.name.trim(),
-
         slug,
-
         input.short_description ??
           "",
-
         input.description ??
           "",
-
-        input.detail ??
-          "",
-
+        input.detail ??   "",
         input.thumbnail ??
           "",
-
         normalizeImages(
           input.images
         ),
@@ -575,15 +567,10 @@ export async function createProduct(
 
         input.video_url ??
           "",
-
         price,
-
         sale_price,
-
         final_price,
-
         "PI",
-
         safeNumber(
           input.stock
         ),
@@ -601,33 +588,24 @@ export async function createProduct(
         ),
 
         status,
-
         input.category_id ??
           null,
-
         input.sale_start ??
           null,
-
         input.sale_end ??
           null,
-
         Boolean(
           input.sale_enabled
         ),
-
         safeNumber(
           input.sale_stock
         ),
-
         input.meta_title ??
           "",
-
         input.meta_description ??
           "",
-
         input.is_active !==
           false,
-
         has_variants,
       ]
     );
@@ -654,19 +632,19 @@ export async function createProduct(
 ========================================================= */
 
 export async function updateProductBySeller(
-  sellerId: string,
-  productId: string,
+  seller_id: string,
+  product_id: string,
   input: UpdateProductInput
 ): Promise<ProductRecord | null> {
   log("UPDATE_START", {
-    sellerId,
-    productId,
+    seller_id,
+    product_id,
     input,
   });
 
   if (
-    !isUUID(sellerId) ||
-    !isUUID(productId)
+    !isUUID(seller_id) ||
+    !isUUID(product_id)
   ) {
     return null;
   }
@@ -680,7 +658,7 @@ export async function updateProductBySeller(
     return null;
   }
 
-  const nextPrice =
+  const next_rice =
     input.price !== undefined
       ? safeNumber(input.price)
       : current.price;
@@ -706,10 +684,10 @@ export async function updateProductBySeller(
       sale_price:
         nextSalePrice,
       sale_enabled:
-        nextSaleEnabled,
+        next_sale_enabled,
     });
 
-  const nextStatus =
+  const next_status =
     normalizeStatus(
       input.status,
       input.is_active
@@ -763,7 +741,6 @@ export async function updateProductBySeller(
 
         input.short_description ??
           current.short_description,
-
         input.description ??
           current.description,
 
@@ -787,9 +764,9 @@ export async function updateProductBySeller(
 
         input.video_url ??
           current.video_url,
-        nextPrice,
-        nextSalePrice,
-        nextFinalPrice,
+        next_price,
+        next_sale_price,
+        next_final_price,
 
         input.stock !==
         undefined
@@ -836,7 +813,7 @@ export async function updateProductBySeller(
           ? input.sale_end
           : current.sale_end,
 
-        nextSaleEnabled,
+        next_sale_enabled,
 
         input.sale_stock !==
         undefined
@@ -890,7 +867,7 @@ export async function deleteProductBySeller(
     product_id,
   });
 
-  if (!isUUID(sellerId) || !isUUID(productId)) {
+  if (!isUUID(seller_id) || !isUUID(product_id)) {
     return false;
   }
 
