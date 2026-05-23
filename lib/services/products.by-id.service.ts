@@ -2,16 +2,20 @@ import {
   getProductById,
   updateProductBySeller,
   deleteProductById,
+  type ProductRecord,
+  type UpdateProductInput,
 } from "@/lib/db/products";
 
 import {
   getVariantsByProductId,
   replaceVariantsByProductId,
+  type ProductVariantRecord,
 } from "@/lib/db/variants";
 
 import {
   getShippingRatesByProduct,
   upsertShippingRates,
+  type ShippingRateInput,
 } from "@/lib/db/shipping";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
@@ -21,40 +25,81 @@ import {
 } from "@/lib/validators/products";
 
 /* =====================================================
+   TYPES
+===================================================== */
+
+type ProductRequestBody = {
+  name?: string;
+  description?: string;
+  detail?: string;
+  images?: string[];
+  thumbnail?: string;
+  category_id?: number | null;
+  price?: number;
+  stock?: number;
+  sale_price?: number | null;
+  sale_enabled?: boolean;
+  sale_stock?: number;
+  sale_start?: string | null;
+  sale_end?: string | null;
+  is_active?: boolean;
+  primary_shipping_country?: string | null;
+  shipping_rates?: ShippingRateBody[];
+  variants?: ProductVariantRecord[];
+};
+
+type ShippingRateBody = {
+  zone: string;
+  price?: number;
+  domestic_country_code?:
+    | string
+    | null;
+};
+
+/* =====================================================
    HELPERS
 ===================================================== */
 
-function calcVariantFinalPrice(v: any) {
-  const sale_active =
-    v.sale_enabled &&
-    v.sale_price !== null &&
-    v.sale_price > 0 &&
-    v.sale_price < v.price;
+function calcVariantFinalPrice(
+  variant: ProductVariantRecord
+): number {
+  const saleActive =
+    variant.sale_enabled &&
+    variant.sale_price !== null &&
+    Number(variant.sale_price) > 0 &&
+    Number(variant.sale_price) <
+      Number(variant.price);
 
-  return sale_active
-    ? Number(v.sale_price)
-    : Number(v.price);
+  return saleActive
+    ? Number(variant.sale_price)
+    : Number(variant.price);
 }
 
-function normalizeShippingRates(body: any) {
-  const rates =
-    body.shipping_rates ??
-    [];
+function normalizeShippingRates(
+  body: ProductRequestBody
+): ShippingRateInput[] {
+  const shippingRates =
+    body.shipping_rates ?? [];
 
-  return rates.map((r: any) => ({
-    zone: r.zone,
+  return shippingRates.map(
+    (rate) => ({
+      zone: rate.zone,
 
-    price: Number(r.price ?? 0),
+      price: Number(
+        rate.price ?? 0
+      ),
 
-    domestic_country_code:
-      r.zone === "domestic"
-        ? (
-            r.domestic_country_code ??
-            body.primary_shipping_country ??
-            null
-          )
-        : null,
-  }));
+      domestic_country_code:
+        rate.zone ===
+        "domestic"
+          ? (
+              rate.domestic_country_code ??
+              body.primary_shipping_country ??
+              null
+            )
+          : null,
+    })
+  );
 }
 
 /* =====================================================
@@ -65,13 +110,14 @@ export async function getProductService(
   id: string
 ) {
   console.log(
-    "[products.by-id.service][GET] ===== START ====="
+    "[products.by-id.service][GET] START"
   );
 
   try {
     if (!id) {
       return {
-        error: "INVALID_PRODUCT_ID",
+        error:
+          "INVALID_PRODUCT_ID",
       };
     }
 
@@ -80,27 +126,37 @@ export async function getProductService(
 
     if (!product) {
       return {
-        error: "PRODUCT_NOT_FOUND",
+        error:
+          "PRODUCT_NOT_FOUND",
       };
     }
 
     const variants =
-      await getVariantsByProductId(id);
+      await getVariantsByProductId(
+        id
+      );
 
-    const shipping_rates =
-      await getShippingRatesByProduct(id);
+    const shippingRates =
+      await getShippingRatesByProduct(
+        id
+      );
 
-    const enriched_variants =
-      variants.map((v: any) => ({
-        ...v,
+    const enrichedVariants =
+      variants.map((variant) => ({
+        ...variant,
 
         final_price:
-          calcVariantFinalPrice(v),
+          calcVariantFinalPrice(
+            variant
+          ),
       }));
 
     const prices =
-      enriched_variants.map(
-        (v: any) => v.final_price
+      enrichedVariants.map(
+        (variant) =>
+          Number(
+            variant.final_price
+          )
       );
 
     return {
@@ -110,28 +166,30 @@ export async function getProductService(
         variants.length > 0,
 
       min_price:
-        prices.length
+        prices.length > 0
           ? Math.min(...prices)
           : null,
 
       max_price:
-        prices.length
+        prices.length > 0
           ? Math.max(...prices)
           : null,
 
       variants:
         enrichedVariants,
 
-      shipping_rates,
+      shipping_rates:
+        shippingRates,
     };
   } catch (error) {
     console.error(
-      "[products.by-id.service][GET] ERROR:",
+      "[products.by-id.service][GET] ERROR",
       error
     );
 
     return {
-      error: "INTERNAL_SERVER_ERROR",
+      error:
+        "INTERNAL_SERVER_ERROR",
     };
   }
 }
@@ -143,16 +201,17 @@ export async function getProductService(
 export async function updateProductService(
   id: string,
   userId: string,
-  body: any
+  body: ProductRequestBody
 ) {
   console.log(
-    "[products.by-id.service][PATCH] ===== START ====="
+    "[products.by-id.service][PATCH] START"
   );
 
   try {
     if (!id) {
       return {
-        error: "INVALID_PRODUCT_ID",
+        error:
+          "INVALID_PRODUCT_ID",
       };
     }
 
@@ -161,16 +220,16 @@ export async function updateProductService(
         body.variants ?? []
       );
 
-    const has_variants =
+    const hasVariants =
       variants.length > 0;
 
-    const final_price =
+    const finalPrice =
       hasVariants
         ? Math.min(
             ...variants.map(
-              (v: any) =>
+              (variant) =>
                 Number(
-                  v.final_price
+                  variant.final_price
                 )
             )
           )
@@ -178,19 +237,20 @@ export async function updateProductService(
             body.price ?? 0
           );
 
-    const final_stock =
+    const finalStock =
       hasVariants
         ? variants.reduce(
             (
-              sum: number,
-              v: any
+              total,
+              variant
             ) =>
-              sum +
+              total +
               (
-                v.is_unlimited
+                variant.is_unlimited
                   ? 0
                   : Number(
-                      v.stock ?? 0
+                      variant.stock ??
+                        0
                     )
               ),
             0
@@ -199,63 +259,47 @@ export async function updateProductService(
             body.stock ?? 0
           );
 
-    const payload = {
-      name: body.name,
+    const payload: UpdateProductInput =
+      {
+        name: body.name,
+        description: body.description,
+        detail:   body.detail,
+        images:  body.images,
+        thumbnail:   body.thumbnail,
+        category_id:    body.category_id ??   null,
+        price:   finalPrice,
+        stock:  finalStock,
+        sale_price:   hasVariants   ? null
+            : (
+                body.sale_price ??
+                null
+              ),
 
-      description:
-        body.description,
+        sale_enabled:
+          body.sale_enabled ??
+          false,
 
-      detail:
-        body.detail,
+        sale_stock:
+          Number(
+            body.sale_stock ??
+              0
+          ),
 
-      images:
-        body.images,
+        sale_start:
+          body.sale_start ??
+          null,
 
-      thumbnail:
-        body.thumbnail,
+        sale_end:
+          body.sale_end ??
+          null,
 
-      category_id:
-        body.category_id ??
-        null,
+        is_active:
+          body.is_active ??
+          true,
 
-      price:
-        final_price,
-
-      stock:
-        final_stock,
-
-      sale_price:
-        hasVariants
-          ? null
-          : (
-              body.sale_price ??
-              null
-            ),
-
-      sale_enabled:
-        body.sale_enabled ??
-        false,
-
-      sale_stock:
-        Number(
-          body.sale_stock ?? 0
-        ),
-
-      sale_start:
-        body.sale_start ??
-        null,
-
-      sale_end:
-        body.sale_end ??
-        null,
-
-      is_active:
-        body.is_active ??
-        true,
-
-      has_variants:
-        hasVariants,
-    };
+        has_variants:
+          hasVariants,
+      };
 
     const updated =
       await updateProductBySeller(
@@ -270,36 +314,30 @@ export async function updateProductService(
       };
     }
 
-    /* =========================
+    /* =====================
        VARIANTS
-    ========================= */
+    ===================== */
 
     await replaceVariantsByProductId(
       id,
       variants
     );
 
-    /* =========================
+    /* =====================
        SHIPPING
-    ========================= */
+    ===================== */
 
-    const shipping_rates =
-  body.shipping_rates ?? [];
-    if (
-      Array.isArray(
-        shipping_rates
-      )
-    ) {
-      const cleaned_rates =
-        normalizeShippingRates(
-          body
-        );
+    const cleanedRates =
+      normalizeShippingRates(
+        body
+      );
 
-      await upsertShippingRates({
-        product_id: id,
-        rates: cleaned_rates,
-      });
-    }
+    await upsertShippingRates({
+      product_id: id,
+
+      rates:
+        cleanedRates,
+    });
 
     return {
       success: true,
@@ -308,10 +346,10 @@ export async function updateProductService(
         id,
 
         price:
-          final_price,
+          finalPrice,
 
         stock:
-          final_stock,
+          finalStock,
 
         has_variants:
           hasVariants,
@@ -319,12 +357,13 @@ export async function updateProductService(
     };
   } catch (error) {
     console.error(
-      "[products.by-id.service][PATCH] ERROR:",
+      "[products.by-id.service][PATCH] ERROR",
       error
     );
 
     return {
-      error: "INTERNAL_SERVER_ERROR",
+      error:
+        "INTERNAL_SERVER_ERROR",
     };
   }
 }
@@ -338,13 +377,14 @@ export async function deleteProductService(
   userId: string
 ) {
   console.log(
-    "[products.by-id.service][DELETE] ===== START ====="
+    "[products.by-id.service][DELETE] START"
   );
 
   try {
     if (!id) {
       return {
-        error: "INVALID_PRODUCT_ID",
+        error:
+          "INVALID_PRODUCT_ID",
       };
     }
 
@@ -353,15 +393,16 @@ export async function deleteProductService(
 
     if (!product) {
       return {
-        error: "PRODUCT_NOT_FOUND",
+        error:
+          "PRODUCT_NOT_FOUND",
       };
     }
 
     const paths: string[] = [];
 
-    const collectPath = (
+    function collectPath(
       url?: string | null
-    ) => {
+    ) {
       if (!url) {
         return;
       }
@@ -385,7 +426,7 @@ export async function deleteProductService(
       if (path) {
         paths.push(path);
       }
-    };
+    }
 
     collectPath(
       product.thumbnail
@@ -414,7 +455,7 @@ export async function deleteProductService(
       };
     }
 
-    if (paths.length) {
+    if (paths.length > 0) {
       await supabaseAdmin.storage
         .from("products")
         .remove(paths);
@@ -425,12 +466,13 @@ export async function deleteProductService(
     };
   } catch (error) {
     console.error(
-      "[products.by-id.service][DELETE] ERROR:",
+      "[products.by-id.service][DELETE] ERROR",
       error
     );
 
     return {
-      error: "INTERNAL_SERVER_ERROR",
+      error:
+        "INTERNAL_SERVER_ERROR",
     };
   }
 }
