@@ -1,16 +1,12 @@
+bạn nên viết lại file này .
+components/product/VariantEditor.tsx
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
-import type {
-  ProductVariant,
-} from "@/types/Product";
+import type { ProductVariant } from "@/types/product";
 
 interface Props {
   variants: ProductVariant[];
@@ -26,19 +22,18 @@ const MIN_PRICE = 0.00001;
    HELPERS
 ========================================================= */
 
-function parseList(
+const parseList = (
   value: string
-): string[] {
-  return value
+): string[] =>
+  value
     .split(",")
     .map((x) => x.trim())
     .filter(Boolean);
-}
 
-function parseNumber(
+const parseNumberInput = (
   value: string
-): number | "" {
-  if (!value.trim()) {
+): number | "" => {
+  if (value.trim() === "") {
     return "";
   }
 
@@ -47,11 +42,11 @@ function parseNumber(
   return Number.isNaN(parsed)
     ? ""
     : parsed;
-}
+};
 
-function normalizePrice(
+const normalizePrice = (
   value: number | ""
-): number | "" {
+): number | "" => {
   if (value === "") {
     return "";
   }
@@ -64,104 +59,84 @@ function normalizePrice(
   }
 
   return value;
-}
+};
 
-function buildVariantName(
-  variant: Partial<ProductVariant>
-): string {
-  return [
-    variant.option1,
-    variant.option2,
-    variant.option3,
+const buildName = (
+  v: ProductVariant
+): string =>
+  [
+    v.option1,
+    v.option2,
+    v.option3,
   ]
     .filter(Boolean)
     .join(" - ");
-}
 
-function calcFinalPrice(
-  price: number,
-  sale_price: number | null,
-  sale_enabled: boolean
-): number {
-  const valid_sale =
-    sale_enabled &&
-    sale_price !== null &&
-    sale_price > 0 &&
-    sale_price < price;
-
-  return valid_sale
-    ? sale_price
-    : price;
-}
-
-function hydrateVariant(
-  variant: Partial<ProductVariant>
-): ProductVariant {
+const hydrateVariant = (
+  v: Partial<ProductVariant>
+): ProductVariant => {
   const price = Number(
-    variant.price ?? 0
+    v.price ?? 0
   );
 
   const sale_price =
-    variant.sale_price !==
-      undefined &&
-    variant.sale_price !== null
-      ? Number(
-          variant.sale_price
-        )
+    v.sale_price !== null &&
+    v.sale_price !== undefined
+      ? Number(v.sale_price)
       : null;
 
-  const sale_enabled =
-    Boolean(
-      variant.sale_enabled
-    );
-
-  const stock = Number(
-    variant.stock ?? 0
+  const sale_enabled = Boolean(
+    v.sale_enabled
   );
 
   const final_price =
-    calcFinalPrice(
-      price,
-      sale_price,
-      sale_enabled
-    );
+    sale_enabled &&
+    sale_price !== null &&
+    sale_price > 0 &&
+    sale_price < price
+      ? sale_price
+      : price;
+
+  const stock = Number(
+    v.stock ?? 0
+  );
+
+  const sale_stock = Math.min(
+    Number(v.sale_stock ?? 0),
+    stock
+  );
 
   return {
-    id: variant.id,
+    id: v.id,
 
-    option1:
-      variant.option1 ?? "",
+    option1: v.option1 ?? "",
 
     option2:
-      variant.option2 ??
-      null,
+      v.option2 ?? null,
 
     option3:
-      variant.option3 ??
-      null,
+      v.option3 ?? null,
 
     option_label1:
-      variant.option_label1 ??
-      "Color",
+      v.option_label1 ?? "Color",
 
     option_label2:
-      variant.option_label2 ??
-      null,
+      v.option_label2 ?? null,
 
     option_label3:
-      variant.option_label3 ??
-      null,
+      v.option_label3 ?? null,
 
     name:
-      variant.name ??
-      buildVariantName(
-        variant
+      v.name ??
+      buildName(
+        v as ProductVariant
       ),
 
-    sku:
-      variant.sku ?? null,
+    sku: v.sku ?? null,
 
     price,
+
+    sale_enabled,
 
     sale_price:
       sale_enabled &&
@@ -171,49 +146,28 @@ function hydrateVariant(
         ? sale_price
         : null,
 
-    final_price,
-
-    currency:
-      variant.currency ??
-      "PI",
-
-    sale_enabled,
-
-    sale_stock: Math.min(
-      Number(
-        variant.sale_stock ??
-          0
-      ),
-      stock
-    ),
-
+    sale_stock,
     sale_sold: Number(
-      variant.sale_sold ?? 0
+      v.sale_sold ?? 0
     ),
 
+    final_price,
     stock,
-
-    is_unlimited:
-      Boolean(
-        variant.is_unlimited
-      ),
-
-    image:
-      variant.image ?? "",
-
+    sold: Number(v.sold ?? 0),
+    currency:
+      v.currency ?? "PI",
+    image: v.image ?? "",
     is_active:
-      variant.is_active !==
-      false,
+      v.is_active !== false,
+    is_unlimited: Boolean(
+      v.is_unlimited
+    ),
 
     sort_order: Number(
-      variant.sort_order ?? 0
-    ),
-
-    sold: Number(
-      variant.sold ?? 0
+      v.sort_order ?? 0
     ),
   };
-}
+};
 
 /* =========================================================
    COMPONENT
@@ -255,59 +209,145 @@ export default function VariantEditor({
 
     hydrated.current = true;
 
-    const first =
-      variants[0];
-
     setLabel1(
-      first.option_label1 ??
+      variants[0]
+        ?.option_label1 ||
         "Color"
     );
 
     setLabel2(
-      first.option_label2 ??
+      variants[0]
+        ?.option_label2 ||
         "Size"
     );
 
-    const unique1 = [
+    const uniq1 = [
       ...new Set(
         variants
-          .map(
-            (v) => v.option1
-          )
+          .map((v) => v.option1)
           .filter(Boolean)
       ),
     ];
 
-    const unique2 = [
+    const uniq2 = [
       ...new Set(
         variants
-          .map(
-            (v) => v.option2
-          )
+          .map((v) => v.option2)
           .filter(Boolean)
       ),
     ];
 
     setValues1(
-      unique1.join(", ")
+      uniq1.join(", ")
     );
 
     setValues2(
-      unique2.join(", ")
+      uniq2.join(", ")
     );
   }, [variants]);
+
+  /* =========================================================
+     GENERATE VARIANTS
+  ========================================================= */
+
+  const generateVariants = () => {
+    const list1 =
+      parseList(values1);
+
+    const list2 =
+      parseList(values2);
+
+    const next: ProductVariant[] =
+      [];
+
+    if (!list1.length) {
+      setVariants([]);
+      return;
+    }
+
+    if (list2.length) {
+      for (const a of list1) {
+        for (const b of list2) {
+          const found =
+            variants.find(
+              (x) =>
+                x.option1 === a &&
+                x.option2 === b
+            );
+
+          next.push(
+            hydrateVariant({
+              ...found,
+
+              option1: a,
+              option2: b,
+
+              option_label1:
+                label1,
+
+              option_label2:
+                label2,
+
+              price:
+                found?.price ??
+                0,
+
+              stock:
+                found?.stock ??
+                0,
+            })
+          );
+        }
+      }
+    } else {
+      for (const a of list1) {
+        const found =
+          variants.find(
+            (x) =>
+              x.option1 === a &&
+              !x.option2
+          );
+
+        next.push(
+          hydrateVariant({
+            ...found,
+
+            option1: a,
+
+            option2: null,
+
+            option_label1:
+              label1,
+
+            option_label2:
+              null,
+
+            price:
+              found?.price ??
+              0,
+
+            stock:
+              found?.stock ??
+              0,
+          })
+        );
+      }
+    }
+
+    setVariants(next);
+  };
 
   /* =========================================================
      UPDATE FIELD
   ========================================================= */
 
-  function updateField<
-    K extends keyof ProductVariant,
+  const updateField = <
+    K extends keyof ProductVariant
   >(
     index: number,
     key: K,
     value: ProductVariant[K]
-  ) {
+  ) => {
     setVariants((prev) =>
       prev.map((old, i) => {
         if (i !== index) {
@@ -320,18 +360,18 @@ export default function VariantEditor({
         });
       })
     );
-  }
+  };
 
   /* =========================================================
      BULK SET
   ========================================================= */
 
-  function bulkSet<
-    K extends keyof ProductVariant,
+  const bulkSet = <
+    K extends keyof ProductVariant
   >(
     key: K,
     value: ProductVariant[K]
-  ) {
+  ) => {
     setVariants((prev) =>
       prev.map((old) =>
         hydrateVariant({
@@ -340,99 +380,21 @@ export default function VariantEditor({
         })
       )
     );
-  }
+  };
 
   /* =========================================================
      REMOVE
   ========================================================= */
 
-  function removeVariant(
+  const remove = (
     index: number
-  ) {
+  ) => {
     setVariants((prev) =>
       prev.filter(
         (_, i) => i !== index
       )
     );
-  }
-
-  /* =========================================================
-     GENERATE
-  ========================================================= */
-
-  function generateVariants() {
-    const list1 =
-      parseList(values1);
-
-    const list2 =
-      parseList(values2);
-
-    if (!list1.length) {
-      setVariants([]);
-      return;
-    }
-
-    const next: ProductVariant[] =
-      [];
-
-    for (const option1 of list1) {
-      if (list2.length) {
-        for (const option2 of list2) {
-          const found =
-            variants.find(
-              (v) =>
-                v.option1 ===
-                  option1 &&
-                v.option2 ===
-                  option2
-            );
-
-          next.push(
-            hydrateVariant({
-              ...found,
-
-              option1,
-              option2,
-
-              option_label1:
-                label1,
-
-              option_label2:
-                label2,
-            })
-          );
-        }
-
-        continue;
-      }
-
-      const found =
-        variants.find(
-          (v) =>
-            v.option1 ===
-              option1 &&
-            !v.option2
-        );
-
-      next.push(
-        hydrateVariant({
-          ...found,
-
-          option1,
-
-          option2: null,
-
-          option_label1:
-            label1,
-
-          option_label2:
-            null,
-        })
-      );
-    }
-
-    setVariants(next);
-  }
+  };
 
   /* =========================================================
      UI
