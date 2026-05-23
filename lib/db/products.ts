@@ -208,7 +208,7 @@ async function generateUniqueSlug(
 }
 function normalizeStatus(
   status?: ProductStatus,
-  is_ctive?: boolean
+  is_active?: boolean
 ): ProductStatus {
   if (status) {
     return status;
