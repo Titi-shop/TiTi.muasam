@@ -626,9 +626,9 @@ export async function createProduct(
 
         price,
 
-        salePrice,
+        sale_price,
 
-        finalPrice,
+        final_price,
 
         "PI",
 
@@ -718,7 +718,7 @@ export async function updateProductBySeller(
 
   const current =
     await getProductById(
-      productId
+      product_id
     );
 
   if (!current) {
@@ -730,14 +730,14 @@ export async function updateProductBySeller(
       ? safeNumber(input.price)
       : current.price;
 
-  const nextSalePrice =
+  const next_sale_price =
     input.sale_price !== undefined
       ? safeNullableNumber(
           input.sale_price
         )
       : current.sale_price;
 
-  const nextSaleEnabled =
+  const next_sale_enabled =
     input.sale_enabled !==
     undefined
       ? Boolean(
@@ -745,9 +745,9 @@ export async function updateProductBySeller(
         )
       : current.sale_enabled;
 
-  const nextFinalPrice =
+  const next_final_price =
     calcFinalPrice({
-      price: nextPrice,
+      price: next_price,
       sale_price:
         nextSalePrice,
       sale_enabled:
