@@ -319,3 +319,135 @@ export interface ProductPayload {
   meta_description?: string;
   idempotency_key?: string;
 }
+/* =========================================================
+   PRODUCT STATUS
+========================================================= */
+
+export type ProductStatus =
+  | "draft"
+  | "active"
+  | "hidden"
+  | "archived";
+
+/* =========================================================
+   PRODUCT DB ROW
+========================================================= */
+
+export interface ProductDB {
+  id: string;
+
+  seller_id: string;
+
+  name: string;
+  slug: string;
+
+  short_description: string;
+  description: string;
+  detail: string;
+
+  thumbnail: string;
+
+  images: string[];
+  detail_images: string[];
+
+  video_url: string;
+
+  category_id: number | null;
+
+  has_variants: boolean;
+  is_digital: boolean;
+
+  price: number;
+  sale_price: number | null;
+  final_price: number;
+
+  currency: "PI";
+
+  sale_enabled: boolean;
+  sale_stock: number;
+  sale_sold: number;
+
+  sale_start: string | null;
+  sale_end: string | null;
+
+  stock: number;
+
+  is_unlimited: boolean;
+
+  sold: number;
+
+  views: number;
+
+  rating_avg: number;
+  rating_count: number;
+
+  meta_title: string;
+  meta_description: string;
+
+  status: ProductStatus;
+
+  is_active: boolean;
+  is_featured: boolean;
+
+  created_at: string;
+  updated_at: string;
+
+  deleted_at: string | null;
+}
+
+/* =========================================================
+   PRODUCT CREATE INPUT
+========================================================= */
+
+export interface CreateProductInput {
+  name: string;
+
+  short_description?: string;
+  description?: string;
+  detail?: string;
+
+  thumbnail?: string;
+
+  images?: string[];
+  detail_images?: string[];
+
+  video_url?: string;
+
+  category_id?: number | null;
+
+  price?: number;
+  sale_price?: number | null;
+
+  currency?: "PI";
+
+  stock?: number;
+
+  is_unlimited?: boolean;
+
+  is_featured?: boolean;
+
+  is_digital?: boolean;
+
+  sale_enabled?: boolean;
+
+  sale_stock?: number;
+
+  sale_start?: string | null;
+  sale_end?: string | null;
+
+  meta_title?: string;
+  meta_description?: string;
+
+  status?: ProductStatus;
+
+  is_active?: boolean;
+
+  has_variants?: boolean;
+}
+
+/* =========================================================
+   PRODUCT UPDATE INPUT
+========================================================= */
+
+export type UpdateProductInput =
+  Partial<CreateProductInput>;
