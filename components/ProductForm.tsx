@@ -546,22 +546,27 @@ await onSubmit(payload);
       className="space-y-4"
     >
       {/* CATEGORY */}
-<select
+  <select
   required
   value={form.category_id ?? ""}
-  onChange={(e) =>
-    form.setCategory_id(  e.target.value   ? Number(e.target.value)   : "")
-  }
-  className="w-full border p-2 rounded"
+  onChange={(e) => {
+    setErrors((prev) => ({
+      ...prev,
+      category: false,
+    }));
+
+    form.setCategory_id(
+      e.target.value
+        ? Number(e.target.value)
+        : ""
+    );
+  }}
+  className={`w-full border p-2 rounded ${
+    errors.category
+      ? "border-red-500"
+      : ""
+  }`}
 >
-  <option value="">
-    {t.select_category}
-  </option>
-  {categories.map((category) => (
-    <option
-      key={category.id}
-      value={category.id}
-    >
       {t[
         category.key as keyof typeof t
       ] || category.key}
@@ -571,14 +576,25 @@ await onSubmit(payload);
 
       {/* NAME */}
       <input
-       required
-       value={form.name}
-        onChange={(e) =>
-          form.setName(e.target.value)
-        }
-        placeholder={t.product_name}
-        className="w-full border p-2 rounded"
-      />
+  required
+  value={form.name}
+  onChange={(e) => {
+    setErrors((prev) => ({
+      ...prev,
+      name: false,
+    }));
+
+    form.setName(
+      e.target.value
+    );
+  }}
+  placeholder={t.product_name}
+  className={`w-full border p-2 rounded ${
+    errors.name
+      ? "border-red-500"
+      : ""
+  }`}
+/>
 
       {/* IMAGES */}
       <div className="space-y-2">
@@ -642,22 +658,31 @@ await onSubmit(payload);
       {form.variants.length === 0 && (
         <>
           <input
-            required
-            type="number"
-            step="0.00001"
-            min="0.00001"
-            inputMode="decimal"
-            value={form.price}
-            onChange={(e) =>
-              form.setPrice(
-                e.target.value
-                  ? Number(e.target.value)
-                  : ""
-              )
-            }
-            placeholder={t.price}
-            className="w-full border p-2 rounded"
-          />
+  required
+  type="number"
+  step="0.00001"
+  min="0.00001"
+  inputMode="decimal"
+  value={form.price}
+  onChange={(e) => {
+    setErrors((prev) => ({
+      ...prev,
+      price: false,
+    }));
+
+    form.setPrice(
+      e.target.value
+        ? Number(e.target.value)
+        : ""
+    );
+  }}
+  placeholder={t.price}
+  className={`w-full border p-2 rounded ${
+    errors.price
+      ? "border-red-500"
+      : ""
+  }`}
+/>
 
           {/* STOCK */}
           <input
