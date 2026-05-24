@@ -55,7 +55,12 @@ export default function ProductForm({
   category?: boolean;
   images?: boolean;
   price?: boolean;
-    }>({});
+
+  sale_price?: boolean;
+  sale_stock?: boolean;
+  sale_start?: boolean;
+  sale_end?: boolean;
+}>({});
   /* =========================
      HELPERS
   ========================= */
@@ -314,49 +319,48 @@ if (
      SALE PRICE
   ===================== */
 
-  if (
-    Number.isNaN(sale) ||
-    sale < 0.00001
-  ) {
-    alert(
-      t.sale_price_minimum_error
-    );
-
-    setSubmitting(false);
-
-    return;
-  }
+if (
+  Number.isNaN(sale) ||
+  sale < 0.00001
+) {
+  setErrors((prev) => ({
+    ...prev,
+    sale_price: true,
+  }));
+  setSubmitting(false);
+  return;
+}
 
   /* =====================
      SALE STOCK
   ===================== */
 
   if (
-    !form.sale_stock ||
-    Number(form.sale_stock) <= 0
-  ) {
-    alert(
-      t.sale_stock_required
-    );
+  !form.sale_stock ||
+  Number(form.sale_stock) <= 0
+) {
+  setErrors((prev) => ({
+    ...prev,
+    sale_stock: true,
+  }));
 
-    setSubmitting(false);
-
-    return;
-  }
+  setSubmitting(false);
+  return;
+}
 
   /* =====================
      SALE TIME
   ===================== */
 
-  if (!hasSaleTime) {
-    alert(
-      t.sale_time_required
-    );
-
-    setSubmitting(false);
-
-    return;
-  }
+if (!hasSaleTime) {
+  setErrors((prev) => ({
+    ...prev,
+    sale_start: !form.sale_start,
+    sale_end: !form.sale_end,
+  }));
+  setSubmitting(false);
+  return;
+}
 
   /* =====================
      SALE PRICE < PRICE
@@ -734,82 +738,117 @@ await onSubmit(payload);
           {/* SALE PRICE */}
           {form.sale_enabled && (
             <input
-              type="number"
-              step="0.00001"
-              min="0.00001"
-              inputMode="decimal"
-              value={
-                form.sale_price === ""
-                  ? ""
-                  : form.sale_price
-              }
-              onChange={(e) => {
-                const value =
-                  e.target.value;
+  type="number"
+  step="0.00001"
+  min="0.00001"
+  inputMode="decimal"
+  value={
+    form.sale_price === ""
+      ? ""
+      : form.sale_price
+  }
+  onChange={(e) => {
+    setErrors((prev) => ({
+      ...prev,
+      sale_price: false,
+    }));
 
-                if (value === "") {
-                 form.setSale_price("");
-                  return;
-                }
+    const value =
+      e.target.value;
 
-                form.setSale_price(
-                  Number(value)
-                );
-              }}
-              placeholder={t.sale_price}
-              className="w-full border p-2 rounded"
-            />
+    if (value === "") {
+      form.setSale_price("");
+      return;
+    }
+
+    form.setSale_price(
+      Number(value)
+    );
+  }}
+  placeholder={t.sale_price}
+  className={`w-full border p-2 rounded ${
+    errors.sale_price
+      ? "border-red-500"
+      : ""
+  }`}
+/>
           )}
 
           {/* SALE STOCK */}
           {form.sale_enabled && (
             <input
-              type="number"
-              value={form.sale_stock || 0}
-              onChange={(e) => {
-                const value = Number(
-                  e.target.value
-                );
+  type="number"
+  value={form.sale_stock || 0}
+  onChange={(e) => {
+    setErrors((prev) => ({
+      ...prev,
+      sale_stock: false,
+    }));
 
-                if (value > form.stock) {
-                  alert(
-                    t.sale_stock_exceed
-                  );
-                  return;
-                }
+    const value = Number(
+      e.target.value
+    );
 
-                form.setSale_stock(value);
-              }}
-              placeholder={t.sale_stock}
-              className="w-full border p-2 rounded"
-            />
-          )}
-        </>
+    if (value > form.stock) {
+      alert(
+        t.sale_stock_exceed
+      );
+      return;
+    }
+
+    form.setSale_stock(value);
+  }}
+  placeholder={t.sale_stock}
+  className={`w-full border p-2 rounded ${
+    errors.sale_stock
+      ? "border-red-500"
+      : ""
+  }`}
+/>
       )}
 
       {/* SALE TIME */}
       <div className="grid grid-cols-2 gap-2">
-        <input
-          type="datetime-local"
-          value={form.sale_start || ""}
-          onChange={(e) =>
-            form.setSale_start(
-              e.target.value
-            )
-          }
-          className="border p-2 rounded"
-        />
+        <<input
+  type="<input
+  type="datetime-local"
+  value={form.sale_start || ""}
+  onChange={(e) => {
+    setErrors((prev) => ({
+      ...prev,
+      sale_start: false,
+    }));
 
-        <input
-          type="datetime-local"
-          value={form.sale_end || ""}
-          onChange={(e) =>
-            form.setSale_end(
-              e.target.value
-            )
-          }
-          className="border p-2 rounded"
-        />
+    form.setSale_start(
+      e.target.value
+    );
+  }}
+  className={`border p-2 rounded ${
+    errors.sale_start
+      ? "border-red-500"
+      : ""
+  }`}
+/>
+
+<input
+  type="datetime-local"
+  value={form.sale_end || ""}
+  onChange={(e) => {
+    setErrors((prev) => ({
+      ...prev,
+      sale_end: false,
+    }));
+
+    form.setSale_end(
+      e.target.value
+    );
+  }}
+  className={`border p-2 rounded ${
+    errors.sale_end
+      ? "border-red-500"
+      : ""
+  }`}
+/>
       </div>
 
       {/* SHIPPING */}
