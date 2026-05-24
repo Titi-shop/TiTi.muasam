@@ -775,81 +775,84 @@ await onSubmit(payload);
           )}
 
           {/* SALE STOCK */}
-          {form.sale_enabled && (
-            <input
-  type="number"
-  value={form.sale_stock || 0}
-  onChange={(e) => {
-    setErrors((prev) => ({
-      ...prev,
-      sale_stock: false,
-    }));
+      {form.sale_enabled && (
+        <input
+          type="number"
+          value={form.sale_stock || 0}
+          onChange={(e) => {
+            setErrors((prev) => ({
+              ...prev,
+              sale_stock: false,
+            }));
 
-    const value = Number(
-      e.target.value
-    );
+            const value = Number(
+              e.target.value
+            );
 
-    if (value > form.stock) {
-      alert(
-        t.sale_stock_exceed
-      );
-      return;
-    }
+            if (value > form.stock) {
+              alert(
+                t.sale_stock_exceed
+              );
+              return;
+            }
 
-    form.setSale_stock(value);
-  }}
-  placeholder={t.sale_stock}
-  className={`w-full border p-2 rounded ${
-    errors.sale_stock
-      ? "border-red-500"
-      : ""
-  }`}
-/>
+            form.setSale_stock(value);
+          }}
+          placeholder={t.sale_stock}
+          className={`w-full border p-2 rounded ${
+            errors.sale_stock
+              ? "border-red-500"
+              : ""
+          }`}
+        />
       )}
 
       {/* SALE TIME */}
-<div className="grid grid-cols-2 gap-2">
-  <input
-    type="datetime-local"
-    value={form.sale_start || ""}
-    onChange={(e) => {
-      setErrors((prev) => ({
-        ...prev,
-        sale_start: false,
-      }));
+      {form.sale_enabled && (
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="datetime-local"
+            value={form.sale_start || ""}
+            onChange={(e) => {
+              setErrors((prev) => ({
+                ...prev,
+                sale_start: false,
+              }));
 
-      form.setSale_start(
-        e.target.value
-      );
-    }}
-    className={`border p-2 rounded ${
-      errors.sale_start
-        ? "border-red-500"
-        : ""
-    }`}
-  />
+              form.setSale_start(
+                e.target.value
+              );
+            }}
+            className={`border p-2 rounded ${
+              errors.sale_start
+                ? "border-red-500"
+                : ""
+            }`}
+          />
 
-  <input
-    type="datetime-local"
-    value={form.sale_end || ""}
-    onChange={(e) => {
-      setErrors((prev) => ({
-        ...prev,
-        sale_end: false,
-      }));
+          <input
+            type="datetime-local"
+            value={form.sale_end || ""}
+            onChange={(e) => {
+              setErrors((prev) => ({
+                ...prev,
+                sale_end: false,
+              }));
 
-      form.setSale_end(
-        e.target.value
-      );
-    }}
-    className={`border p-2 rounded ${
-      errors.sale_end
-        ? "border-red-500"
-        : ""
-    }`}
-  />
-</div>
-
+              form.setSale_end(
+                e.target.value
+              );
+            }}
+            className={`border p-2 rounded ${
+              errors.sale_end
+                ? "border-red-500"
+                : ""
+            }`}
+          />
+        </div>
+      )}
+    </>
+)}
       {/* SHIPPING */}
       <ShippingRates
   shipping_rates={form.shipping_rates}
