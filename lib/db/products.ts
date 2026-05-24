@@ -437,16 +437,42 @@ export async function createProduct(
       "INVALID_SELLER_ID"
     );
   }
-
+if (!input.name?.trim()) {
+  throw new Error(
+    "INVALID_PRODUCT_NAME"
+  );
+}
+   if (
+  !Array.isArray(input.images) ||
+  input.images.length === 0
+) {
+  throw new Error(
+    "PRODUCT_IMAGE_REQUIRED"
+  );
+   }
   const price =
     safeNumber(
       input.price
     );
-
+   
+if (price < 0) {
+  throw new Error(
+    "INVALID_PRODUCT_PRICE"
+  );
+}
+   
   const sale_price =
     safeNullableNumber(
       input.sale_price
     );
+   if (
+  sale_price !== null &&
+  sale_price >= price
+) {
+  throw new Error(
+    "INVALID_SALE_PRICE"
+  );
+   }
 
   const final_price =
     calcFinalPrice({
@@ -607,7 +633,23 @@ export async function updateProductBySeller(
   ) {
     return null;
   }
+if (
+  input.name !== undefined &&
+  !input.name.trim()
+) {
+  throw new Error(
+    "INVALID_PRODUCT_NAME"
+  );
+}
 
+if (
+  input.images !== undefined &&
+  input.images.length === 0
+) {
+  throw new Error(
+    "PRODUCT_IMAGE_REQUIRED"
+  );
+}
   const current =
     await getProductById(
       product_id
