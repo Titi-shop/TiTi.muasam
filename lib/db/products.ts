@@ -1,87 +1,11 @@
 import { query, withTransaction } from "@/lib/db";
-
-/* =========================================================
-   TYPES
-========================================================= */
-
-export type ProductStatus =
-  | "draft"
-  | "active"
-  | "inactive"
-  | "archived"
-  | "banned";
-
-export type ProductRow = {
-  id: string;
-  seller_id: string;
-  name: string;
-  slug: string;
-  short_description: string;
-  description: string;
-  detail: string;
-  thumbnail: string;
-  images: string[];
-  detail_images: string[];
-  video_url: string;
-  price: number;
-  sale_price: number | null;
-  final_price: number;
-  currency: "PI";
-  stock: number;
-  is_unlimited: boolean;
-  sold: number;
-  views: number;
-  rating_avg: number;
-  rating_count: number;
-  is_active: boolean;
-  is_featured: boolean;
-  is_digital: boolean;
-  status: ProductStatus;
-  category_id: number | null;
-  sale_start: string | null;
-  sale_end: string | null;
-  sale_enabled: boolean;
-  sale_stock: number;
-  sale_sold: number;
-  meta_title: string;
-  meta_description: string;
-  has_variants: boolean;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-};
-
-export type ProductRecord = ProductRow;
-export type CreateProductInput = {
-  name: string;
-  short_description?: string;
-  description?: string;
-  detail?: string;
-  thumbnail?: string;
-  images?: string[];
-  detail_images?: string[];
-  video_url?: string;
-  category_id?: number | null;
-  price?: number;
-  sale_price?: number | null;
-  currency?: "PI";
-  stock?: number;
-  is_unlimited?: boolean;
-  is_featured?: boolean;
-  is_digital?: boolean;
-  sale_start?: string | null;
-  sale_end?: string | null;
-  sale_enabled?: boolean;
-  sale_stock?: number;
-  meta_title?: string;
-  meta_description?: string;
-  status?: ProductStatus;
-  is_active?: boolean;
-  has_variants?: boolean;
-};
-
-export type UpdateProductInput =
-  Partial<CreateProductInput>;
+import type {
+  ProductRow,
+  ProductRecord,
+  ProductStatus,
+  CreateProductInput,
+  UpdateProductInput,
+} from "@/types/Product";
 
 /* =========================================================
    LOGGER
