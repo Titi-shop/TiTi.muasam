@@ -214,7 +214,20 @@ export async function updateProductService(
           "INVALID_PRODUCT_ID",
       };
     }
+/* =====================
+   VALIDATE PRODUCT
+===================== */
 
+const error =
+  validateProductPayload({
+    ...body,
+    variants:
+      body.variants ?? [],
+  });
+
+if (error) {
+  return { error };
+}
     const variants =
       normalizeVariants(
         body.variants ?? []
