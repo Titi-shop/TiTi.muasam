@@ -495,13 +495,13 @@ const payload: ProductPayload = {
   is_active: form.is_active,
 
   /* ADD THIS */
-  has_variant: hasVariants,
+  has_variants: hasVariants,
 
   shipping_rates: shippingRatesPayload,
 
   domestic_country_code:
-    form.primaryShippingCountry || null,
-
+  form.domestic_country_code || null,
+  
   price: hasVariants
     ? undefined
     : Number(form.price),
