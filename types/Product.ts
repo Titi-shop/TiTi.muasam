@@ -448,6 +448,10 @@ export interface CreateProductInput {
 /* =========================================================
    PRODUCT UPDATE INPUT
 ========================================================= */
-
+export type ProductVariantInput = {
+  option_1?: string | null;
+  option_2?: string | null;
+  option_3?: string | null;
+};
 export type UpdateProductInput =
   Partial<CreateProductInput>;
