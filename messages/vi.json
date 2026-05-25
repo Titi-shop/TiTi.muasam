@@ -599,7 +599,37 @@
 "shipping_north_america": "Bắc Mỹ",
 "shipping_rest_of_world": "Toàn thế giới",
   "submit_product": "Đăng sản phẩm",
-"upload_detail_image": "Tải ảnh chi tiết"
-  
+"upload_detail_image": "Tải ảnh chi tiết",
+{
+  "all": "Tất cả",
+  "sale": "GIẢM GIÁ",
+  "hot": "HOT",
+  "sold": "đã bán",
+
+  "view_all": "Xem tất cả",
+
+  "explore_now": "Khám phá ngay",
+
+  "search_products": "Tìm kiếm sản phẩm...",
+
+  "trending_now": "Xu hướng hôm nay",
+
+  "discover_products": "Khám phá sản phẩm",
+
+  "most_popular_products_today":
+    "Sản phẩm phổ biến nhất hôm nay",
+
+  "curated_products_for_you":
+    "Sản phẩm được đề xuất cho bạn",
+
+  "trending_marketplace":
+    "Marketplace xu hướng",
+
+  "discover_modern_products":
+    "Khám phá sản phẩm từ nền tảng thương mại hiện đại",
+
+  "smart_shopping_discovery":
+    "Sản phẩm xu hướng, bộ sưu tập nổi bật và trải nghiệm mua sắm thông minh."
+
 
 }
