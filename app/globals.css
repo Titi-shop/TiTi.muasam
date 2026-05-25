@@ -18,19 +18,22 @@
    3️⃣ THEME MODE
 ================================ */
 
-/* LIGHT */
+/* LIGHT MODE (cam chủ đạo) */
 .theme-light {
-  --background: #ffffff;
-  --foreground: #171717;
+  --nav-bg: #ffffff;
+  --nav-text: #171717;
+  --nav-primary: #f97316;
+  --nav-icon: #6b7280;
+  --nav-button: #ffffff;
 }
 
-/* DARK */
+/* DARK MODE (trắng nền + đen nút như bạn muốn) */
 .theme-dark {
-  --background: #0b0b0b;
-  --foreground: #f3f4f6;
-
-  --color-primary: #f97316;
-  --color-primary-dark: #ea580c;
+  --nav-bg: #ffffff;
+  --nav-text: #111111;
+  --nav-primary: #000000;
+  --nav-icon: #111111;
+  --nav-button: #000000;
 }
 
 /* CUSTOMER */
