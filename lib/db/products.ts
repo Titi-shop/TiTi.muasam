@@ -494,18 +494,23 @@ export async function getSellerProducts(
     const result =
       await query<ProductRow>(
         `
-        SELECT p.*
+        SELECT
+          p.*,
+
+          /* ================= SHOP ================= */
+
+          up.shop_name,
+          up.shop_banner,
+          up.avatar_url,
+          up.total_sales
+
         FROM products p
 
         LEFT JOIN user_profiles up
           ON up.user_id = p.seller_id
 
-        WHERE (
-          p.seller_id = $1
-          OR up.user_id = $1
-        )
-
-        AND p.deleted_at IS NULL
+        WHERE p.seller_id = $1
+          AND p.deleted_at IS NULL
 
         ORDER BY p.created_at DESC
         `,
@@ -517,6 +522,8 @@ export async function getSellerProducts(
       {
         count:
           result.rows.length,
+        first:
+          result.rows[0] ?? null,
       }
     );
 
