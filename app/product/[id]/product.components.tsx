@@ -168,83 +168,79 @@ return (
       className="fixed inset-0 z-[999] bg-black/95 flex items-center justify-center"  
       onClick={() => setZoomImage(null)}  
     >  
-      <img  
-        src={zoomImage}  
-        onClick={(e) => e.stopPropagation()}  
+      <img
+  src={zoomImage}
+  alt="zoom"
+  draggable={false}
+  className="max-w-full max-h-full object-contain select-none"
+  style={{
+    transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+    transformOrigin: "center center",
+    willChange: "transform",
+    touchAction: "none",
+  }}
+  onClick={(e) => e.stopPropagation()}
 
-        /* ===== DOUBLE TAP (FIX) ===== */  
-        onTouchEnd={() => {  
-          const now = Date.now();  
+  onTouchStart={(e) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
 
-          if (now - lastTap < 300) {  
-            setScale((prev: number) => (prev === 1 ? 2 : 1));  
-            setPosition({ x: 0, y: 0 });  
-          }  
+      setInitialDistance(distance);
+      setInitialScale(scale);
+    }
 
-          setLastTap(now);  
-        }}  
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      touchStartX.current = touch.clientX;
+      touchStartY.current = touch.clientY;
+      moved.current = false;
 
-        /* ===== TOUCH START ===== */  
-        onTouchStart={(e) => {
+      setStart({
+        x: touch.clientX - position.x,
+        y: touch.clientY - position.y,
+      });
+    }
+  }}
 
-if (e.touches.length === 2) {
-const dx = e.touches[0].clientX - e.touches[1].clientX;
-const dy = e.touches[0].clientY - e.touches[1].clientY;
-const distance = Math.sqrt(dx * dx + dy * dy);
+  onTouchMove={(e) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
 
-setInitialDistance(distance);  
-setInitialScale(scale);
+      const distance = Math.sqrt(dx * dx + dy * dy);
 
-}
+      let newScale = initialScale * (distance / initialDistance);
+      newScale = Math.max(1, Math.min(newScale, 6));
 
-if (e.touches.length === 1) {
-  const touch = e.touches[0];
-  touchStartX.current = touch.clientX;
-  touchStartY.current = touch.clientY;
-  moved.current = false;
-  setStart({
-    x: touch.clientX - position.x,
-    y: touch.clientY - position.y,
-  });
-}
-}}
+      setScale(newScale);
+    }
 
-onTouchMove={(e) => {
-/* PINCH ZOOM */
-if (e.touches.length === 2) {
-const dx = e.touches[0].clientX - e.touches[1].clientX;
-const dy = e.touches[0].clientY - e.touches[1].clientY;
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
 
-const distance = Math.sqrt(dx * dx + dy * dy);  
-let newScale = initialScale * (distance / initialDistance);  
-newScale = Math.max(1, Math.min(newScale, 6));  
+      const dx = Math.abs(touch.clientX - touchStartX.current);
+      const dy = Math.abs(touch.clientY - touchStartY.current);
 
-setScale(newScale);
+      if (dx > 8 || dy > 8) {
+        moved.current = true;
+      }
 
-}
+      if (scale > 1 && moved.current) {
+        setPosition({
+          x: touch.clientX - start.x,
+          y: touch.clientY - start.y,
+        });
+      }
+    }
+  }}
 
-/* DRAG IMAGE */
-if (e.touches.length === 1) {
-  const touch = e.touches[0];
-  const dx = Math.abs(touch.clientX - touchStartX.current);
-  const dy = Math.abs(touch.clientY - touchStartY.current);
-  // 🔥 chỉ coi là drag nếu di chuyển đủ xa
-  if (dx > 8 || dy > 8) {
-    moved.current = true;
-  }
-
-  // ❗ chỉ drag khi zoom > 1
-  if (scale > 1 && moved.current) {
-    setPosition({
-      x: touch.clientX - start.x,
-      y: touch.clientY - start.y,
-    });
-  }
-}
-onTouchEnd={() => {
-  setDragging(false);
-  moved.current = false;
-}}
+  onTouchEnd={() => {
+    setDragging(false);
+    moved.current = false;
+  }}
+/>
 style={{
 transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
 transformOrigin: "center center",
