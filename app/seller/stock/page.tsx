@@ -13,20 +13,18 @@ import { isNowInRange } from "@/lib/utils/time"; // ✅ FIX
 /* =========================
    TYPES
 ========================= */
-type SellerProduct = Pick<
-  DBProduct,
-  | "id"
-  | "name"
-  | "price"
-  | "salePrice"
-  | "saleStart"
-  | "saleEnd"
-  | "thumbnail"
-  | "stock"
-  | "sold"
-  | "ratingAvg"
-  | "isActive"
-> & {
+type SellerProduct = {
+  id: string;
+  name: string;
+  price: number;
+  sale_price: number | null;
+  sale_start: string | null;
+  sale_end: string | null;
+  thumbnail: string;
+  stock: number;
+  sold: number;
+  rating_avg: number;
+  is_active: boolean;
   min_price?: number;
   min_sale_price?: number | null;
 };
@@ -96,7 +94,8 @@ export default function SellerStockPage() {
   });
 
   /* ================= LOAD ================= */
-  const loadProducts = useCallback(async () => {
+ 
+const loadProducts = useCallback(async () => {
   try {
     const res = await apiAuthFetch(
       "/api/seller/products",
@@ -114,72 +113,53 @@ export default function SellerStockPage() {
       return;
     }
 
-    const data: unknown =
-      await res.json();
-
-    if (
-      !data ||
-      typeof data !== "object"
-    ) {
-      setProducts([]);
-      return;
-    }
+    /* ✅ CHỈ JSON 1 LẦN */
+    const raw: unknown = await res.json();
 
     const payload =
-      data as {
-        profile?: Record<
-          string,
-          unknown
-        >;
+      raw as {
+        profile?: Record<string, unknown>;
         products?: unknown[];
       };
 
     /* ================= PROFILE ================= */
 
-    const profile =
-      payload.profile;
+    const profile = payload.profile;
 
     if (profile) {
       setShop({
         shop_name:
-          typeof profile.shop_name ===
-          "string"
+          typeof profile.shop_name === "string"
             ? profile.shop_name
             : null,
 
         shop_banner:
-          typeof profile.shop_banner ===
-          "string"
+          typeof profile.shop_banner === "string"
             ? profile.shop_banner
             : null,
 
         avatar_url:
-          typeof profile.avatar_url ===
-          "string"
+          typeof profile.avatar_url === "string"
             ? profile.avatar_url
             : null,
 
         shop_description:
-          typeof profile.shop_description ===
-          "string"
+          typeof profile.shop_description === "string"
             ? profile.shop_description
             : null,
 
         rating:
-          typeof profile.rating ===
-          "number"
+          typeof profile.rating === "number"
             ? profile.rating
             : 0,
 
         total_reviews:
-          typeof profile.total_reviews ===
-          "number"
+          typeof profile.total_reviews === "number"
             ? profile.total_reviews
             : 0,
 
         total_sales:
-          typeof profile.total_sales ===
-          "number"
+          typeof profile.total_sales === "number"
             ? profile.total_sales
             : 0,
       });
@@ -187,15 +167,14 @@ export default function SellerStockPage() {
 
     /* ================= PRODUCTS ================= */
 
-    const raw = await res.json();
+    const list = Array.isArray(raw)
+      ? raw
+      : Array.isArray(payload.products)
+        ? payload.products
+        : [];
 
-const list = Array.isArray(raw)
-  ? raw
-  : Array.isArray(raw.products)
-    ? raw.products
-    : [];
-
-const mapped: SellerProduct[] = list.map((item: unknown) => {
+    const mapped: SellerProduct[] = list.map(
+      (item: unknown) => {
         const p =
           item as Record<
             string,
@@ -208,8 +187,7 @@ const mapped: SellerProduct[] = list.map((item: unknown) => {
           ),
 
           name: String(
-            p.name ??
-              "Unnamed"
+            p.name ?? "Unnamed"
           ),
 
           price: Number(
@@ -264,15 +242,25 @@ const mapped: SellerProduct[] = list.map((item: unknown) => {
             p.rating_avg ?? 0
           ),
 
-          isActive:
-            Boolean(
-              p.is_active
-            ),
+          isActive: Boolean(
+            p.is_active
+          ),
         };
-      });
+      }
+    );
+
+    console.log(
+      "✅ PRODUCTS:",
+      mapped
+    );
 
     setProducts(mapped);
-  } catch {
+  } catch (error) {
+    console.error(
+      "LOAD_PRODUCTS_ERROR",
+      error
+    );
+
     setMessage({
       text: t.load_products_error,
       type: "error",
@@ -449,12 +437,12 @@ const handleBannerUpload = async (
           const isSale = isNowInRange(product.saleStart, product.saleEnd);
 
           const upcoming =
-            product.salePrice !== null &&
+            product.sale_price !== null &&
             start !== null &&
             now < start;
 
           const ended =
-            product.salePrice !== null &&
+            product.sale_rice !== null &&
             end !== null &&
             now > end;
 
