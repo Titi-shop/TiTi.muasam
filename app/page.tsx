@@ -381,7 +381,6 @@ export default function HomePage() {
 
       <section className="relative overflow-hidden rounded-b-[40px] bg-gradient-to-br from-black via-gray-900 to-orange-600 px-5 pb-10 pt-6 text-white">
         <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl" />
-
         <div className="absolute bottom-0 left-0 h-44 w-44 rounded-full bg-red-500/20 blur-3xl" />
 
         {/* TOP */}
@@ -458,7 +457,7 @@ export default function HomePage() {
             }`}
           >
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-2xl">
-              🛍️
+  
             </div>
 
             <span className="text-xs font-semibold">
@@ -481,8 +480,8 @@ export default function HomePage() {
                 }
                 className={`flex min-w-[90px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all ${
                   active
-                    ? "bg-black text-white shadow-xl"
-                    : "bg-white text-gray-700"
+  ? "bg-black text-black border border-black"
+  : "bg-[var(--card-bg)] text-[var(--foreground)]"
                 }`}
               >
                 <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-gray-100">
