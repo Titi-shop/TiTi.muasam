@@ -1,105 +1,80 @@
-
-
 "use client";
+
 export const dynamic = "force-dynamic";
-import SplashScreen from "./components/SplashScreen";
+
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ShoppingCart } from "lucide-react";
+import useSWR from "swr";
+
+import {
+  ShoppingCart,
+  Flame,
+  ChevronRight,
+  Star,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
+
+import SplashScreen from "./components/SplashScreen";
 import BannerCarousel from "./components/BannerCarousel";
 import PiPriceWidget from "./components/PiPriceWidget";
+
 import { useCart } from "@/app/context/CartContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
+
 import { formatPi } from "@/lib/pi";
-import useSWR from "swr";
+
+import type { Product } from "@/types/product";
+import type { Category } from "@/types/category";
+
+/* =========================================================
+   FETCHER
+========================================================= */
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch(url);
+
   if (!res.ok) {
     throw new Error("FETCH_FAILED");
   }
+
   return res.json() as Promise<T>;
 };
 
-/* ================= TYPES ================= */
-
-interface ProductVariant {
-  id: string;
-  name: string;
-  price: number;
-  finalPrice: number;
-  salePrice?: number;
-  saleEnabled?: boolean;
-  saleStock?: number;
-  saleSold?: number;
-  stock: number;
-
-}
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  finalPrice: number | null;
-
-  minPrice?: number | null;
-  maxPrice?: number | null;
-  hasVariants?: boolean;
-
-  thumbnail?: string;
-  isActive?: boolean;
-
-  stock?: number;
-  sold: number;
-
-  variants?: ProductVariant[];
-  categoryId: string | null;
-  isSale?: boolean;
-  saleEnd?: string;
-  saleStock?: number;
-  saleSold?: number;
-  saleLeft?: number;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  icon?: string;
-}
-
-/* ================= HELPERS ================= */
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function getMainImage(product: Product) {
-  if (product.thumbnail && product.thumbnail.trim().startsWith("http")) {
+  if (
+    product.thumbnail &&
+    product.thumbnail.trim().length > 0
+  ) {
     return product.thumbnail;
   }
+
   return "/placeholder.png";
 }
-function isProductOnSale(p: Product) {
-  return (p as any).isSale === true;
-}
-function getVariantDiscount(p: Product) {
-  if (!p.hasVariants || !p.variants?.length) return 0;
 
-  let max = 0;
-
-  for (const v of p.variants) {
-    if (!v || !("finalPrice" in v)) continue;
-    const base = (v as any).price || 0;
-    const final =
-  typeof (v as any).finalPrice === "number"
-    ? (v as any).finalPrice
-    : base;
-    if (base > final && base > 0) {
-      const percent = Math.round(((base - final) / base) * 100);
-      if (percent > max) max = percent;
-    }
+function getDiscount(product: Product) {
+  if (
+    product.sale_price &&
+    product.price > product.sale_price
+  ) {
+    return Math.round(
+      ((product.price - product.sale_price) /
+        product.price) *
+        100
+    );
   }
 
-  return max;
+  return 0;
 }
-/* ================= PRODUCT CARD ================= */
+
+/* =========================================================
+   PRODUCT CARD
+========================================================= */
 
 function ProductCard({
   product,
@@ -111,466 +86,580 @@ function ProductCard({
   t: Record<string, string>;
 }) {
   const router = useRouter();
-  const [added, setAdded] = useState(false);
 
-  const isOut = (product.stock ?? 0) <= 0;
-  const isLowStock =
-    (product.stock ?? 0) > 0 && (product.stock ?? 0) <= 5;
+  const discount = getDiscount(product);
 
-  const isSale = isProductOnSale(product);
+  const isOut =
+    !product.is_unlimited &&
+    (product.stock ?? 0) <= 0;
 
-  const discount = product.hasVariants
-  ? Math.max(
-      0,
-      ...(product.variants ?? []).map((v: any) => {
-        if (!v.isSale) return 0;
-        if (!v.price || !v.finalPrice) return 0;
-        return Math.round(((v.price - v.finalPrice) / v.price) * 100);
-      })
-    )
-  : product.price > 0
-  ? Math.round(
-      ((product.price - (product.finalPrice ?? product.price)) /
-        product.price) *
-        100
-    )
-  : 0;
-
-  const soldPercent = Math.min(
-    ((product.sold ?? 0) / ((product.sold ?? 0) + (product.stock ?? 1))) * 100,
-    100
-  );
-  const saleInfo = product.hasVariants
-  ? product.variants?.find((v: any) => v.isSale)
-  : product;
-
-const saleStock = saleInfo?.saleStock ?? 0;
-const saleSold = saleInfo?.saleSold ?? 0;
-const saleLeft = saleStock - saleSold;
-
-const isSaleOut = saleStock > 0 && saleLeft <= 0;
   return (
     <div
-      onClick={() => router.push(`/product/${product.id}`)}
-      className={`bg-white rounded-xl border shadow-sm overflow-hidden transition-all duration-200 cursor-pointer active:scale-[0.97] hover:shadow-md ${
-        isOut ? "opacity-60" : ""
-      }`}
+      onClick={() =>
+        router.push(`/product/${product.id}`)
+      }
+      className="group overflow-hidden rounded-[30px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
     >
-      {/* ================= IMAGE ================= */}
-      <div className="relative">
+      {/* IMAGE */}
+
+      <div className="relative overflow-hidden">
         <Image
-          src={getMainImage(product)}  
+          src={getMainImage(product)}
           alt={product.name}
-          width={300}
-          height={300}
-          className="w-full h-44 object-cover"
+          width={500}
+          height={500}
+          className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        {/* ===== BADGE ===== */}
-        {isOut ? (
-  <div className="absolute top-2 left-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
-    {t.out_of_stock || "Out of stock"}
-  </div>
-) : isLowStock ? (
-  <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded">
-    {t.low_stock || "Low stock"}
-  </div>
-) : discount > 0 ? (
-  <div className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs px-2 py-1 rounded shadow">
-    -{discount}%
-  </div>
-   ) : null}
+        {/* BADGES */}
 
-        {/* ===== ADD TO CART ===== */}
+        {discount > 0 && (
+          <div className="absolute left-3 top-3 rounded-full bg-gradient-to-r from-red-500 to-orange-500 px-3 py-1 text-xs font-bold text-white shadow-lg">
+            -{discount}%
+          </div>
+        )}
+
+        {isOut && (
+          <div className="absolute bottom-3 left-3 rounded-full bg-black/80 px-3 py-1 text-xs font-semibold text-white backdrop-blur-xl">
+            {t.out_of_stock || "Out of stock"}
+          </div>
+        )}
+
+        {/* CART */}
+
         <button
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
 
-            if (isOut) return;
-
             onAddToCart(product);
-            setAdded(true);
-            setTimeout(() => setAdded(false), 600);
           }}
-          className={`absolute top-2 right-2 p-2 rounded-full shadow transition-all ${
-            isOut
-              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-              : added
-              ? "bg-green-500 text-white scale-110"
-              : "bg-white"
-          }`}
-          aria-label={t.add_to_cart || "Add to cart"}
+          className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-black shadow-xl backdrop-blur-xl transition-all active:scale-95"
         >
-          🛒
+          <ShoppingCart size={18} />
         </button>
       </div>
 
-      {/* ================= CONTENT ================= */}
-      <div className="p-3">
-        {/* NAME */}
-        <p className="text-sm line-clamp-2 min-h-[40px]">
+      {/* CONTENT */}
+
+      <div className="p-4">
+        <h3 className="line-clamp-2 min-h-[42px] text-sm font-semibold">
           {product.name}
-        </p>
+        </h3>
 
-        {/* ===== PRICE ===== */}
-        <p className="text-orange-500 font-bold mt-1 text-[15px]">
-          {product.hasVariants
-            ? `${formatPi(product.minPrice ?? 0)} - ${formatPi(product.maxPrice ?? 0)} π`
-            : `${formatPi(product.finalPrice ?? product.price)} π`}
-        </p>
+        <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
+          <Star
+            size={14}
+            className="fill-yellow-400 text-yellow-400"
+          />
 
-        {/* ORIGINAL PRICE */}
-        {!product.hasVariants && isSale && (
-          <p className="text-xs text-gray-400 line-through">
-            {formatPi(product.price)} π
-          </p>
-        )}
-{/* ===== PROGRESS BAR ===== */}
-{/* ===== PROGRESS BAR ===== */}
-{saleStock > 0 ? (
-  <div className="mt-2">
-    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-      <div
-        className="h-full bg-red-500"
-        style={{
-          width: `${(saleSold / (saleStock || 1)) * 100}%`,
-        }}
-      />
+          {product.rating_avg || 5}
+
+          <span>
+            • {product.sold}{" "}
+            {t.sold || "sold"}
+          </span>
+        </div>
+
+        <div className="mt-4 flex items-end justify-between">
+          <div>
+            <p className="text-lg font-black text-red-500">
+              {formatPi(
+                product.final_price ||
+                  product.price
+              )}{" "}
+              π
+            </p>
+
+            {product.sale_price && (
+              <p className="text-xs text-gray-400 line-through">
+                {formatPi(product.price)} π
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
-
-    <p className="text-[11px] text-red-500 text-center mt-1 font-medium">
-      🔥 Còn {saleLeft}
-    </p>
-  </div>
-) : (
-  <div className="mt-2">
-    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-      <div
-        className="h-full bg-orange-400"
-        style={{ width: `${soldPercent}%` }}
-      />
-    </div>
-
-    <p className="text-[11px] text-gray-500 mt-1 text-center">
-      {t.sold || "Sold"} {product.sold ?? 0}
-    </p>
-  </div>
-)}
-        
-      </div> 
-    </div>  
   );
 }
-/* ================= PAGE ================= */
+
+/* =========================================================
+   PAGE
+========================================================= */
 
 export default function HomePage() {
-  
   const router = useRouter();
+
   const { addToCart } = useCart();
+
   const { t } = useTranslation();
-  const [showSplash, setShowSplash] = useState(true);
-  const {
-  data: productsData,
-  isLoading: loadingProducts,
-} = useSWR<Product[]>("/api/products", fetcher, {
-  refreshInterval: 3000, // 🔥 realtime mỗi 3s
-  revalidateOnFocus: true,
-});
 
-const {
-  data: categoriesData,
-  isLoading: loadingCategories,
-} = useSWR<Category[]>("/api/categories", fetcher, {
-  revalidateOnFocus: false,
-  dedupingInterval: 10000,
-});
-const [fallbackProducts, setFallbackProducts] = useState<Product[]>([]);
-const products = useMemo(() => {
-  return Array.isArray(productsData)
-    ? productsData
-    : fallbackProducts ?? [];
-}, [productsData, fallbackProducts]);
+  const [showSplash, setShowSplash] =
+    useState(true);
 
-const categories = useMemo(() => {
-  if (!categoriesData) return [];
-  return categoriesData;
-}, [categoriesData]);
-  const loading = loadingProducts || loadingCategories;
-  const [selectedCategory, setSelectedCategory] = useState<string | "all">("all");
-  const [sortType, setSortType] = useState("sale");
-  const [timeLeft, setTimeLeft] = useState("");
+  const [selectedCategory, setSelectedCategory] =
+    useState<number | "all">("all");
+
   const [message, setMessage] = useState<{
-  text: string;
-  type: "error" | "success";
-} | null>(null);
+    text: string;
+    type: "error" | "success";
+  } | null>(null);
 
-const showMessage = (text: string, type: "error" | "success" = "error") => {
-  setMessage({ text, type });
-  setTimeout(() => setMessage(null), 3000);
-};
+  /* =========================================================
+     DATA
+  ========================================================= */
 
-  const handleAddToCart = (product: Product) => {
-  if (product.isActive === false) {
-    showMessage(t.product_unavailable || "Product is unavailable");
-    return;
-  }
-
- if (product.hasVariants) {
-  router.push(`/product/${product.id}`);
-  return;
-}
-
-  if (product.stock !== undefined && product.stock <= 0) {
-    showMessage(t.out_of_stock || "Out of stock");
-    return;
-  }
-
-  addToCart({
-    id: product.id,
-    product_id: product.id,
-    name: product.name,
-    price: product.price,
-    sale_price: product.finalPrice,
-    quantity: 1,
-    thumbnail: product.thumbnail,
-  });
-
-  showMessage(t.added_to_cart || "Added to cart", "success");
-};
-  /* ===== COUNTDOWN ===== */
-  useEffect(() => {
-  if (!products || products.length === 0) return;
-
-  const saleProduct = products.find(
-  (p: any) => p.isSale && p.saleEnd
-     );
-
-  if (!saleProduct) return;
-
-  const target = new Date(
-    saleProduct?.saleEnd || Date.now()
+  const {
+    data: productsData,
+    isLoading: loadingProducts,
+  } = useSWR<Product[]>(
+    "/api/products",
+    fetcher,
+    {
+      refreshInterval: 5000,
+      revalidateOnFocus: true,
+    }
   );
 
-  const interval = setInterval(() => {
-    const diff = target.getTime() - Date.now();
+  const {
+    data: categoriesData,
+    isLoading: loadingCategories,
+  } = useSWR<Category[]>(
+    "/api/categories",
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 10000,
+    }
+  );
 
-    if (diff <= 0) {
-      setTimeLeft("00:00:00");
+  const products = useMemo(() => {
+    return productsData || [];
+  }, [productsData]);
+
+  const categories = useMemo(() => {
+    return categoriesData || [];
+  }, [categoriesData]);
+
+  const loading =
+    loadingProducts || loadingCategories;
+
+  /* =========================================================
+     EFFECTS
+  ========================================================= */
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  /* =========================================================
+     MESSAGE
+  ========================================================= */
+
+  const showMessage = (
+    text: string,
+    type: "error" | "success" = "error"
+  ) => {
+    setMessage({ text, type });
+
+    setTimeout(() => {
+      setMessage(null);
+    }, 2500);
+  };
+
+  /* =========================================================
+     FILTER
+  ========================================================= */
+
+  const filteredProducts = useMemo(() => {
+    if (selectedCategory === "all") {
+      return products;
+    }
+
+    return products.filter(
+      (p) =>
+        Number(p.category_id) ===
+        Number(selectedCategory)
+    );
+  }, [products, selectedCategory]);
+
+  /* =========================================================
+     TRENDING
+  ========================================================= */
+
+  const trendingProducts = useMemo(() => {
+    return [...products]
+      .sort((a, b) => b.sold - a.sold)
+      .slice(0, 8);
+  }, [products]);
+
+  /* =========================================================
+     CART
+  ========================================================= */
+
+  const handleAddToCart = (
+    product: Product
+  ) => {
+    if (!product.is_active) {
+      showMessage(
+        t.product_unavailable ||
+          "Product unavailable"
+      );
+
       return;
     }
 
-    const h = Math.floor(diff / 1000 / 60 / 60);
-    const m = Math.floor((diff / 1000 / 60) % 60);
-    const s = Math.floor((diff / 1000) % 60);
+    if (
+      !product.is_unlimited &&
+      (product.stock ?? 0) <= 0
+    ) {
+      showMessage(
+        t.out_of_stock || "Out of stock"
+      );
 
-    setTimeLeft(
-      `${String(h).padStart(2, "0")}:${String(m).padStart(
-        2,
-        "0"
-      )}:${String(s).padStart(2, "0")}`
+      return;
+    }
+
+    addToCart({
+      id: String(product.id),
+      product_id: product.id,
+      name: product.name,
+      price: product.price,
+      sale_price:
+        product.final_price ||
+        product.sale_price,
+      quantity: 1,
+      thumbnail: product.thumbnail,
+    });
+
+    showMessage(
+      t.added_to_cart || "Added",
+      "success"
     );
-  }, 1000);
+  };
 
-  return () => clearInterval(interval);
-}, [products]);
-  useEffect(() => {
-  if (!productsData) {
-    const cached = localStorage.getItem("products");
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) {
-          setFallbackProducts(parsed);
-        }
-      } catch {}
-    }
+  /* =========================================================
+     LOADING
+  ========================================================= */
+
+  if (
+    showSplash ||
+    (loading && products.length === 0)
+  ) {
+    return <SplashScreen />;
   }
-}, [productsData]);
-useEffect(() => {
-  if (categoriesData) {
-    localStorage.setItem("categories", JSON.stringify(categoriesData));
-  }
-}, [categoriesData]);
-  useEffect(() => {
-  if (productsData) {
-    localStorage.setItem("products", JSON.stringify(productsData));
-  }
-}, [productsData]);
 
-  useEffect(() => {
-  const timer = setTimeout(() => {
-    setShowSplash(false);
-  }, 1200); // 1.2s
+  /* =========================================================
+     UI
+  ========================================================= */
 
-  return () => clearTimeout(timer);
-}, []);
-  /* ===== FILTER ===== */
-  
-  const filteredProducts = useMemo(() => {
-    let list = [...products];
-    if (selectedCategory !== "all") {
-      list = list.filter((p) => p.categoryId === selectedCategory);
-    }
-
-    if (sortType === "sold") {
-  list.sort((a, b) => (b.sold ?? 0) - (a.sold ?? 0));
-} else if (sortType === "sale") {
-  list.sort((a, b) => {
-    const discountA = a.hasVariants
-  ? (a.maxPrice ?? 0) - (a.minPrice ?? 0)
-  : a.price - (a.finalPrice ?? a.price);
-
-    const discountB = b.hasVariants
-  ? (b.maxPrice ?? 0) - (b.minPrice ?? 0)
-  : b.price - (b.finalPrice ?? b.price);
-    return discountB - discountA;
-  });
-}
-
-    return list;
-  }, [products, selectedCategory, sortType]);
-
-  if (showSplash || (loading && products.length === 0)) {
-  return <SplashScreen />;
-}
-if (loading && products.length === 0) {
   return (
-    <p className="text-center mt-10">
-      {t.loading_products || "Loading products..."}
-    </p>
-  );
-}
-  return (
-    <main className="bg-gray-50 min-h-screen pb-24">
+    <main className="min-h-screen bg-[#f5f7fb] pb-28">
+      {/* MESSAGE */}
+
       {message && (
-  <div
-    className={`fixed top-16 left-1/2 z-50 -translate-x-1/2 rounded px-4 py-2 shadow-lg ${
-      message.type === "error"
-        ? "bg-red-500 text-white"
-        : "bg-green-500 text-white"
-    }`}
-  >
-    {message.text}
-  </div>
-)}
-      <BannerCarousel />
-      {/* PI PRICE + FLASH SALE */}
-      <div className="my-4 px-3 space-y-3">
-        <div className="flex justify-center">
-          <PiPriceWidget />
+        <div
+          className={`fixed left-1/2 top-20 z-50 -translate-x-1/2 rounded-2xl px-5 py-3 text-sm font-medium shadow-2xl backdrop-blur-xl ${
+            message.type === "error"
+              ? "bg-red-500 text-white"
+              : "bg-green-500 text-white"
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+
+      {/* HERO */}
+
+      <section className="relative overflow-hidden rounded-b-[40px] bg-gradient-to-br from-black via-gray-900 to-orange-600 px-5 pb-10 pt-6 text-white">
+        <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl" />
+
+        <div className="absolute bottom-0 left-0 h-44 w-44 rounded-full bg-red-500/20 blur-3xl" />
+
+        {/* TOP */}
+
+        <div className="relative z-10">
+          <BannerCarousel />
+
+          <div className="mt-5 flex justify-center">
+            <PiPriceWidget />
+          </div>
+
+          {/* CONTENT */}
+
+          <div className="mt-8">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold backdrop-blur-xl">
+              <Sparkles size={14} />
+
+              {t.future_marketplace ||
+                "Future Marketplace"}
+            </div>
+
+            <h1 className="mt-5 max-w-xl text-4xl font-black leading-tight">
+              {t.discover_modern_products ||
+                "Discover modern commerce experiences"}
+            </h1>
+
+            <p className="mt-4 max-w-md text-sm text-white/80">
+              {t.smart_shopping_discovery ||
+                "Trending products, curated collections and next generation shopping."}
+            </p>
+
+            <button
+              onClick={() =>
+                router.push("/categories")
+              }
+              className="mt-6 flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-black"
+            >
+              {t.explore_now ||
+                "Explore Now"}
+
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* CATEGORIES */}
+
+      <section className="mt-6 px-4">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-black">
+              {t.categories ||
+                "Categories"}
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              {t.shop_by_category ||
+                "Shop by category"}
+            </p>
+          </div>
         </div>
 
-        <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-xl p-3 text-white">
-          <div className="flex justify-between items-center mb-3">
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          <button
+            onClick={() =>
+              setSelectedCategory("all")
+            }
+            className={`flex min-w-[90px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all ${
+              selectedCategory === "all"
+                ? "bg-black text-white shadow-xl"
+                : "bg-white text-gray-700"
+            }`}
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-2xl">
+              🛍️
+            </div>
+
+            <span className="text-xs font-semibold">
+              {t.all || "All"}
+            </span>
+          </button>
+
+          {categories.map((category) => {
+            const active =
+              Number(selectedCategory) ===
+              Number(category.id);
+
+            return (
+              <button
+                key={category.id}
+                onClick={() =>
+                  setSelectedCategory(
+                    Number(category.id)
+                  )
+                }
+                className={`flex min-w-[90px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all ${
+                  active
+                    ? "bg-black text-white shadow-xl"
+                    : "bg-white text-gray-700"
+                }`}
+              >
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-gray-100">
+                  <Image
+                    src={
+                      category.icon ||
+                      "/placeholder.png"
+                    }
+                    alt={category.key}
+                    width={80}
+                    height={80}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+
+                <span className="line-clamp-2 text-center text-[11px] font-semibold">
+                  {t[category.key] ||
+                    category.key}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* TRENDING */}
+
+      <section className="mt-10 px-4">
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600">
+              <TrendingUp size={14} />
+
+              {t.trending_now ||
+                "Trending Now"}
+            </div>
+
+            <h2 className="text-2xl font-black">
+              {t.best_selling_products ||
+                "Best selling products"}
+            </h2>
+          </div>
+
+          <button
+            onClick={() =>
+              router.push("/categories")
+            }
+            className="text-sm font-semibold text-gray-500"
+          >
+            {t.view_all || "View all"}
+          </button>
+        </div>
+
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          {trendingProducts.map((product) => (
+            <div
+              key={product.id}
+              className="min-w-[240px]"
+            >
+              <ProductCard
+                product={product}
+                onAddToCart={
+                  handleAddToCart
+                }
+                t={t}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FLASH SALE */}
+
+      <section className="mt-10 px-4">
+        <div className="overflow-hidden rounded-[32px] bg-gradient-to-r from-red-500 to-orange-500 p-5 text-white">
+          <div className="mb-5 flex items-center justify-between">
             <div>
-              <p className="font-bold text-sm">
-                🔥 {t.flash_sale || "Flash Sale"}
-              </p>
-              <p className="text-xs opacity-90">
-                {t.ends_in || "Ends in"}
-              </p>
-            </div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur-xl">
+                <Flame size={14} />
 
-            <div className="bg-white text-red-600 font-bold px-3 py-1 rounded-lg text-sm tracking-wider">
-              {timeLeft}
+                {t.flash_sale ||
+                  "Flash Sale"}
+              </div>
+
+              <h2 className="mt-3 text-2xl font-black">
+                {t.limited_offers ||
+                  "Limited offers"}
+              </h2>
             </div>
           </div>
-          <div className="flex gap-3 overflow-x-auto">
-          {(Array.isArray(products) ? products : [])
-             .filter((p: any) => p.isSale === true)
-             .slice(0, 10)
-             .map((p) => (
+
+          <div className="grid grid-cols-2 gap-4">
+            {products
+              .filter(
+                (p) => p.sale_price
+              )
+              .slice(0, 4)
+              .map((product) => (
                 <div
-                  key={p.id}
-                  onClick={() => router.push(`/product/${p.id}`)}
-                  className="min-w-[140px] bg-white rounded-lg overflow-hidden text-black cursor-pointer"
+                  key={product.id}
+                  onClick={() =>
+                    router.push(
+                      `/product/${product.id}`
+                    )
+                  }
+                  className="overflow-hidden rounded-2xl bg-white text-black"
                 >
-                  <div className="relative overflow-hidden group">
-           <Image
-  src={getMainImage(p)}
-  alt={p.name}
-    width={300}
-    height={300}
-    className="w-full h-44 object-cover transition-transform duration-300 group-hover:scale-110"
-             />
+                  <Image
+                    src={getMainImage(product)}
+                    alt={product.name}
+                    width={300}
+                    height={300}
+                    className="h-36 w-full object-cover"
+                  />
 
-                    {p.stock === 0 ? (
-               <div className="absolute top-1 left-1 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded">
-            {t.out_of_stock || "Out of stock"}
-         </div>
-        ) : (p.hasVariants
-    ? getVariantDiscount(p) > 0
-    : isProductOnSale(p)
-  ) ? (
-        <div className="absolute top-2 left-2 bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs px-2 py-1 rounded shadow font-semibold animate-pulse">
-        ⚡ SALE
-          </div>
-             ) : null}
+                  <div className="p-3">
+                    <p className="line-clamp-2 text-xs font-medium">
+                      {product.name}
+                    </p>
 
-                    <button
-                      onClick={(e) => {
-                   e.preventDefault();
-                 e.stopPropagation();
-                 handleAddToCart(p);
-                  }}
-                      
-                      className="absolute top-1 right-1 bg-white p-1.5 rounded-full shadow active:scale-95"
-                      aria-label={t.add_to_cart || "Add to cart"}
-                    >
-                      <ShoppingCart size={14} />
-                    </button>
-                  </div>
+                    <p className="mt-2 text-sm font-black text-red-500">
+                      {formatPi(
+                        product.final_price ||
+                          product.price
+                      )}{" "}
+                      π
+                    </p>
 
-                  <div className="p-2">
-                    <p className="text-xs line-clamp-2 min-h-[32px]">{p.name}</p>
-
-                    <p className="text-orange-500 font-bold text-sm mt-1">
-               {p.hasVariants
-            ? `${formatPi(p.minPrice ?? 0)} - ${formatPi(p.maxPrice ?? 0)} π`
-            : `${formatPi(p.finalPrice ?? p.price)} π`}
-              </p>
-
-                    <p className="text-[10px] text-gray-400 line-through">
-                      {formatPi(p.price)} π
+                    <p className="text-[11px] text-gray-400 line-through">
+                      {formatPi(
+                        product.price
+                      )}{" "}
+                      π
                     </p>
                   </div>
                 </div>
               ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* SORT MENU */}
-      <div className="flex gap-3 overflow-x-auto px-3 py-3 bg-white text-sm">
-        {[
-          { key: "sold", label: t.best_seller || "Best Seller" },
-          { key: "sale", label: t.flash_sale || "Flash Sale" },
-        ].map((item) => (
-          <button
-            key={item.key}
-            onClick={() => setSortType(item.key)}
-            className={`px-4 py-1 rounded-full whitespace-nowrap ${
-              sortType === item.key ? "bg-orange-600 text-white" : "bg-gray-100"
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      {/* PRODUCTS */}
 
-      {/* PRODUCT GRID */}
-      <div className="px-3 mt-4">
-        <section className="grid grid-cols-2 gap-3">
-          {filteredProducts.map((p) => (
-            <ProductCard
-              key={p.id}
-              product={p}
-              t={t}
-            onAddToCart={handleAddToCart}
-            />
-          ))}
-        </section>
-      </div>
+      <section className="mt-10 px-4">
+        <div className="mb-5">
+          <h2 className="text-2xl font-black">
+            {t.discover_products ||
+              "Discover Products"}
+          </h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            {t.curated_products_for_you ||
+              "Curated products for you"}
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="h-72 animate-pulse rounded-[28px] bg-white"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {filteredProducts.map(
+              (product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={
+                    handleAddToCart
+                  }
+                  t={t}
+                />
+              )
+            )}
+          </div>
+        )}
+      </section>
     </main>
   );
 }
