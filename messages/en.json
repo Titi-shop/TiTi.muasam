@@ -660,9 +660,36 @@
 "shipping_north_america": "North America",
 "shipping_rest_of_world": "Worldwide",
   "submit_product": "Post Product",
-"upload_detail_image": "Upload Detail Image"
+"upload_detail_image": "Upload Detail Image",
+  "all": "All",
+  "sale": "SALE",
+  "hot": "HOT",
+  "sold": "sold",
 
+  "view_all": "View all",
 
+  "explore_now": "Explore Now",
+
+  "search_products": "Search products...",
+
+  "trending_now": "Trending Now",
+
+  "discover_products": "Discover Products",
+
+  "most_popular_products_today":
+    "Most popular products today",
+
+  "curated_products_for_you":
+    "Curated products for you",
+
+  "trending_marketplace":
+    "Trending Marketplace",
+
+  "discover_modern_products":
+    "Discover products from modern commerce experiences",
+
+  "smart_shopping_discovery":
+    "Trending products, curated collections and smart shopping discovery."
 
 
 
