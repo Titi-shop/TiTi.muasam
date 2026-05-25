@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Home,
-  Grid2X2,
-  Search,
-  Bell,
-  User,
-} from "lucide-react";
-
+import { Home, Grid2X2, Search, Bell, User } from "lucide-react";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { useEffect, useState } from "react";
 
@@ -23,7 +16,6 @@ export default function BottomNav() {
   useEffect(() => {
     const onScroll = () => {
       const current = window.scrollY;
-
       setHidden(current > lastScroll && current > 80);
       setLastScroll(current);
     };
@@ -65,65 +57,47 @@ export default function BottomNav() {
                 pathname === href ||
                 (href !== "/" && pathname.startsWith(href));
 
-              /* ================= CENTER ================= */
+              const color = active
+                ? "var(--nav-active)"
+                : "var(--nav-muted)";
+
               if (center) {
                 return (
-                  <Link
-                    key={href}
-                    href={href}
-                    className="relative -mt-7 flex flex-col items-center"
-                  >
+                  <Link key={href} href={href} className="relative -mt-7 flex flex-col items-center">
                     <div
                       style={{
                         backgroundColor: active
                           ? "var(--nav-active)"
-                          : "var(--nav-text)",
-                        color: active ? "#fff" : "var(--nav-bg)",
+                          : "var(--nav-muted)",
+                        color: "#fff",
                       }}
                       className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-white shadow-lg"
                     >
                       <Icon size={22} />
                     </div>
 
-                    <span style={{ color: "var(--nav-muted)" }} className="mt-1 text-[10px]">
+                    <span className="mt-1 text-[10px]" style={{ color: "var(--nav-muted)" }}>
                       {label}
                     </span>
                   </Link>
                 );
               }
 
-              /* ================= NORMAL ================= */
               return (
                 <Link
                   key={href}
                   href={href}
                   className="relative flex flex-1 flex-col items-center justify-center"
                 >
-                  <div className="relative">
-                    <Icon
-                      size={22}
-                      style={{
-                        color: active
-                          ? "var(--nav-active)"
-                          : "var(--nav-muted)",
-                      }}
-                    />
+                  <Icon size={22} style={{ color }} />
 
-                    {badge ? (
-                      <span className="absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
-                        {badge}
-                      </span>
-                    ) : null}
-                  </div>
+                  {badge && (
+                    <span className="absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                      {badge}
+                    </span>
+                  )}
 
-                  <span
-                    className="mt-1 text-[10px]"
-                    style={{
-                      color: active
-                        ? "var(--nav-active)"
-                        : "var(--nav-muted)",
-                    }}
-                  >
+                  <span className="mt-1 text-[10px]" style={{ color }}>
                     {label}
                   </span>
                 </Link>
