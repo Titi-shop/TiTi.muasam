@@ -344,7 +344,7 @@ const handleBannerUpload = async (
     shop.shop_banner ||
     DEFAULT_BANNER
   }
-  alt="Shop banner"
+  alt="/banners/30FD1BCC-E31C-4702-9E63-8BF08C5E311C.png"
   fill
   priority
   unoptimized
