@@ -86,9 +86,7 @@ function ProductCard({
   t: Record<string, string>;
 }) {
   const router = useRouter();
-
   const discount = getDiscount(product);
-
   const isOut =
     !product.is_unlimited &&
     (product.stock ?? 0) <= 0;
@@ -358,7 +356,13 @@ export default function HomePage() {
   ========================================================= */
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb] pb-28">
+    <main
+  className="min-h-screen pb-28 transition-colors duration-300"
+  style={{
+    backgroundColor: "var(--background)",
+    color: "var(--foreground)",
+  }}
+>
       {/* MESSAGE */}
 
       {message && (
@@ -434,7 +438,8 @@ export default function HomePage() {
                 "Categories"}
             </h2>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm"
+          style={{ color: "var(--text-muted, #9ca3af)" }}>
               {t.shop_by_category ||
                 "Shop by category"}
             </p>
@@ -448,8 +453,8 @@ export default function HomePage() {
             }
             className={`flex min-w-[90px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all ${
               selectedCategory === "all"
-                ? "bg-black text-white shadow-xl"
-                : "bg-white text-gray-700"
+          ? "bg-primary text-white"
+            : "bg-[var(--card-bg)] text-[var(--foreground)]"
             }`}
           >
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-2xl">
