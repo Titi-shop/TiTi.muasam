@@ -917,4 +917,94 @@ export default function SellerStockPage() {
                           <p className="text-sm text-gray-400 line-through">
                             {formatPi(
                               display.price
-                
+                            )}{" "}
+                            π
+                          </p>
+
+                          <p className="text-[#ff6600] font-bold">
+                            {formatPi(
+                              display.sale_price
+                            )}{" "}
+                            π
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-[#ff6600] font-bold">
+                          {formatPi(
+                            display.price
+                          )}{" "}
+                          π
+                        </p>
+                      )}
+                    </div>
+
+                    {/* SALE TIME */}
+
+                    {product.sale_start && (
+                      <p className="text-xs text-gray-500">
+                        {
+                          t.sale_start
+                        }
+                        :{" "}
+                        {new Date(
+                          product.sale_start
+                        ).toLocaleString()}
+                      </p>
+                    )}
+
+                    {product.sale_end && (
+                      <p className="text-xs text-gray-500">
+                        {
+                          t.sale_end
+                        }
+                        :{" "}
+                        {new Date(
+                          product.sale_end
+                        ).toLocaleString()}
+                      </p>
+                    )}
+
+                    {/* ACTIONS */}
+
+                    <div className="flex gap-4 mt-2">
+
+                      <button
+                        onClick={(
+                          e
+                        ) => {
+                          e.stopPropagation();
+
+                          router.push(
+                            `/seller/edit/${product.id}`
+                          );
+                        }}
+                        className="text-green-600 underline"
+                      >
+                        {t.edit}
+                      </button>
+
+                      <button
+                        onClick={(
+                          e
+                        ) => {
+                          e.stopPropagation();
+
+                          handleDelete(
+                            product.id
+                          );
+                        }}
+                        className="text-red-600 underline"
+                      >
+                        {t.delete}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+          )}
+        </div>
+      </div>
+    </main>
+  );
+}
