@@ -18,29 +18,6 @@ calcSalePercent,
 
 import "swiper/css";
 import "swiper/css/pagination";
-"use client";
-
-import { useMemo, useState } from "react";
-import type {
-  ProductRecord,
-  ProductVariant,
-} from "@/types/Product";
-
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Pagination } from "swiper/modules";
-
-import { ShoppingCart } from "lucide-react";
-import { formatPi } from "@/lib/pi";
-import { prefetchProduct } from "@/lib/prefetch";
-
-import {
-  formatShortDescription,
-  formatDetail,
-  calcSalePercent,
-} from "./product.helpers";
-
-import "swiper/css";
-import "swiper/css/pagination";
 
 /* =========================================================
    TYPES
