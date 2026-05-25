@@ -10,9 +10,6 @@ import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { formatPi } from "@/lib/pi";
 import { isNowInRange } from "@/lib/utils/time"; // ✅ FIX
 
-const DEFAULT_BANNER =
-  "/banners/default-shop.png";
-
 const DEFAULT_AVATAR =
   "/avatars/default-avatar.png";
 /* =========================
@@ -344,12 +341,12 @@ const handleBannerUpload = async (
 
       {/* BANNER */}
       <div className="relative w-full h-40 rounded-xl overflow-hidden">
-       <Image
+      <Image
   src={
     shop.shop_banner ||
-    DEFAULT_BANNER
+    "/banners/30FD1BCC-E31C-4702-9E63-8BF08C5E311C.png"
   }
-  alt="/banners/30FD1BCC-E31C-4702-9E63-8BF08C5E311C.png"
+  alt="Shop banner"
   fill
   priority
   unoptimized
