@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { applyTheme, getSavedMode, ThemeRole } from "@/lib/theme";
 
 export default function ThemeProvider({
   children,
@@ -11,39 +12,13 @@ export default function ThemeProvider({
   const pathname = usePathname();
 
   useEffect(() => {
-    const root = document.documentElement;
+    const role: ThemeRole = pathname.startsWith("/seller")
+      ? "seller"
+      : "customer";
 
-    // lấy theme đã lưu
-    const savedTheme =
-      typeof window !== "undefined"
-        ? localStorage.getItem("theme-mode")
-        : null;
+    const mode = getSavedMode();
 
-    const isDark = savedTheme === "dark";
-
-    // reset class
-    root.classList.remove(
-      "theme-light",
-      "theme-dark",
-      "theme-seller",
-      "theme-customer"
-    );
-
-    // base mode (light/dark)
-    if (isDark) {
-      root.classList.add("theme-dark");
-    } else {
-      root.classList.add("theme-light");
-    }
-
-    // business theme (seller/customer)
-    if (pathname.startsWith("/seller")) {
-      root.classList.add("theme-seller");
-    } else {
-      root.classList.add("theme-customer");
-    }
-
-    console.log("🎨 theme:", root.className);
+    applyTheme(role, mode);
   }, [pathname]);
 
   return <>{children}</>;
