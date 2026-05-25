@@ -92,7 +92,11 @@ export default function SellerStockPage() {
     total_reviews: null,
     total_sales: null,
   });
-
+const [avatarCache, setAvatarCache] =
+  useState<string | null>(
+    null
+  );
+  
   /* ================= LOAD ================= */
  
 const loadProducts = useCallback(async () => {
@@ -180,7 +184,10 @@ const loadProducts = useCallback(async () => {
             string,
             unknown
           >;
-
+const avatar =
+  avatarCache ||
+  shop.avatar_url ||
+  DEFAULT_AVATAR;
         return {
   id: String(
     p.id ?? ""
@@ -274,6 +281,33 @@ useEffect(() => {
     loadProducts();
   }
 }, [authLoading, loadProducts]);
+  useEffect(() => {
+  const cached =
+    localStorage.getItem(
+      "avatar"
+    );
+
+  if (cached) {
+    setAvatarCache(
+      cached
+    );
+  }
+}, []);
+  useEffect(() => {
+  if (
+    shop.avatar_url
+  ) {
+    setAvatarCache(
+      shop.avatar_url
+    );
+
+    localStorage.setItem(
+      "avatar",
+      shop.avatar_url
+    );
+  }
+}, [shop.avatar_url]);
+  
    /* ================= BANNER ================= */
 const handleBannerUpload = async (
   e: React.ChangeEvent<HTMLInputElement>
@@ -373,26 +407,20 @@ const handleBannerUpload = async (
       </div>
 
       {/* AVATAR */}
-      <div className="flex justify-center -mt-12">
-        <div className="relative w-24 h-24">
-          {shop.avatar_url ? (
-            <Image
-  src={
-    shop.avatar_url ||
-    DEFAULT_AVATAR
-  }
-  alt="avatar"
-  fill
-  className="rounded-full border-4 border-white shadow-lg object-cover"
-/>
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-white shadow-lg flex items-center justify-center text-gray-500">
-              ?
-            </div>
-          )}
-        </div>
-      </div>
-
+      
+<div className="flex justify-center -mt-12">
+  <div className="w-24 h-24 bg-white rounded-full overflow-hidden shadow border-4 border-white flex items-center justify-center">
+    <Image
+      src={avatar}
+      alt="Avatar"
+      width={96}
+      height={96}
+      priority
+      unoptimized
+      className="object-cover w-full h-full"
+    />
+  </div>
+</div>
       {/* SHOP NAME */}
       <h2 className="text-center font-bold text-xl mt-3">
         {shop.shop_name || t.my_store}
