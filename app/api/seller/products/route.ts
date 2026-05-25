@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSeller } from "@/lib/auth/guard";
 import { getSellerProducts } from "@/lib/db/products";
-import { getProfileByUserId } from "@/lib/db/profile";
+import { getProfileByUserId } from "@/lib/db/userProfiles";
 import type {
   ProductRecord,
 } from "@/types/Product";
