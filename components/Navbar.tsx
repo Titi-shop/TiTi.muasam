@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { ShoppingCart, ChevronDown, Bell, Sun, Moon } from "lucide-react";
+import { useMemo, useEffect, useState } from "react";
 
-import { ShoppingCart, ChevronDown, Moon, Sun } from "lucide-react";
-import { useMemo } from "react";
-import { useEffect, useState } from "react";
-import { toggleThemeSimple } from "@/lib/theme";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { availableLanguages } from "@/app/lib/i18n";
 import { useCart } from "@/app/context/CartContext";
@@ -15,45 +13,57 @@ export default function Navbar() {
   const { t, lang, setLang } = useTranslation();
   const { cart } = useCart();
 
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme-mode");
+    if (saved === "dark") {
+      document.documentElement.classList.add("theme-dark");
+      setDark(true);
+    }
+  }, []);
+
+  const toggleDark = () => {
+    const root = document.documentElement;
+
+    const isDark = root.classList.contains("theme-dark");
+
+    root.classList.toggle("theme-dark", !isDark);
+    root.classList.toggle("theme-light", isDark);
+
+    localStorage.setItem("theme-mode", isDark ? "light" : "dark");
+    setDark(!isDark);
+  };
+
   const cartCount = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
-const [isDark, setIsDark] = useState(false);
-useEffect(() => {
-  const saved = localStorage.getItem("theme-mode");
-  setIsDark(saved === "dark");
-}, []);
+
   return (
     <>
-      {/* spacer đúng height navbar */}
       <div className="h-[56px]" />
 
       <header
         className="
           fixed top-0 left-0 right-0 z-50
-          bg-orange-500 text-white
+          bg-primary text-white
           shadow-md
         "
-        style={{
-          paddingTop: "env(safe-area-inset-top)",
-        }}
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="h-[56px] px-3 flex items-center justify-between">
-          
-          {/* LEFT - LOGO */}
+
+          {/* LOGO */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="relative w-8 h-8 rounded-md overflow-hidden bg-white">
+            <div className="relative w-8 h-8 bg-white rounded overflow-hidden">
               <Image
                 src="/banners/3D035BE4-0822-403D-9631-6C4CF674A519.png"
-                alt="Logo"
+                alt="logo"
                 fill
                 className="object-cover"
               />
             </div>
-
-            <span className="font-bold text-sm">
-              TITI
-            </span>
+            <span className="font-bold text-sm">TITI</span>
           </Link>
 
           {/* RIGHT */}
@@ -64,46 +74,40 @@ useEffect(() => {
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value)}
-                className="
-                  bg-white text-black text-xs
-                  px-2 py-1 pr-6 rounded
-                  appearance-none
-                "
+                className="bg-white text-black text-xs px-2 py-1 pr-6 rounded appearance-none"
               >
-                {Object.entries(availableLanguages).map(
-                  ([code, label]) => (
-                    <option key={code} value={code}>
-                      {label}
-                    </option>
-                  )
-                )}
+                {Object.entries(availableLanguages).map(([code, label]) => (
+                  <option key={code} value={code}>
+                    {label}
+                  </option>
+                ))}
               </select>
 
               <ChevronDown
                 size={12}
-                className="
-                  absolute right-1 top-1/2
-                  -translate-y-1/2 text-gray-500
-                  pointer-events-none
-                "
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
               />
             </div>
-            {/* THEME TOGGLE */}
-<button
-  onClick={() => {
-    toggleThemeSimple();
-    setIsDark((prev) => !prev);
-  }}
-  className="relative"
->
-  <div className="w-9 h-9 flex items-center justify-center rounded bg-orange-600 active:scale-95">
-    {isDark ? <Sun size={18} /> : <Moon size={18} />}
-  </div>
-</button>
 
-            {/* CART */}
+            {/* DARK MODE TOGGLE */}
+            <button
+              onClick={toggleDark}
+              className="w-9 h-9 flex items-center justify-center rounded bg-black/20 active:scale-95"
+            >
+              {dark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
+            {/* NOTI */}
+            <Link href="/notifications" className="relative">
+              <div className="w-9 h-9 flex items-center justify-center rounded bg-primary-dark active:scale-95">
+                <Bell size={18} />
+              </div>
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+            </Link>
+
+            {/* CART (FIXED) */}
             <Link href="/cart" className="relative">
-              className="w-9 h-9 flex items-center justify-center rounded bg-orange-600 transition active:scale-95 hover:scale-105"
+              <div className="w-9 h-9 flex items-center justify-center rounded bg-white text-primary active:scale-95">
                 <ShoppingCart size={18} />
               </div>
 
