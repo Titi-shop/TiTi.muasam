@@ -1,12 +1,19 @@
 "use client";
 
-import Image from "next/image";
-import { Plus, Upload } from "lucide-react";
+import type { SellerProduct } from "@/types/Product";
+
+import {
+  Plus,
+  Upload,
+} from "lucide-react";
+
 import {
   useState,
   useEffect,
   useCallback,
 } from "react";
+
+import Image from "next/image";
 
 import { useRouter } from "next/navigation";
 
@@ -20,27 +27,22 @@ import { formatPi } from "@/lib/pi";
 
 import { isNowInRange } from "@/lib/utils/time";
 
-import type {
-  SellerProduct,
-} from "@/types/Product";
-
-/* =====================================================
-   DEFAULTS
-===================================================== */
-
-const DEFAULT_AVATAR =
-  "/avatars/default-avatar.png";
+/* =========================
+   DEFAULT IMAGES
+========================= */
 
 const DEFAULT_BANNER =
   "/banners/30FD1BCC-E31C-4702-9E63-8BF08C5E311C.png";
 
-/* =====================================================
+const DEFAULT_AVATAR =
+  "/avatars/default-avatar.png";
+
+/* =========================
    TYPES
-===================================================== */
+========================= */
 
 interface Message {
   text: string;
-
   type:
     | "success"
     | "error"
@@ -49,29 +51,17 @@ interface Message {
 
 interface ShopProfile {
   shop_name: string | null;
-
   shop_banner: string | null;
-
   avatar_url: string | null;
-
-  shop_description:
-    | string
-    | null;
-
+  shop_description: string | null;
   rating: number | null;
-
-  total_reviews:
-    | number
-    | null;
-
-  total_sales:
-    | number
-    | null;
+  total_reviews: number | null;
+  total_sales: number | null;
 }
 
-/* =====================================================
+/* =========================
    HELPERS
-===================================================== */
+========================= */
 
 function getDisplayPrice(
   p: SellerProduct
@@ -100,16 +90,15 @@ function getDisplayPrice(
     price: basePrice,
 
     sale_price:
-      isSale &&
-      baseSale
+      isSale
         ? baseSale
         : null,
   };
 }
 
-/* =====================================================
+/* =========================
    PAGE
-===================================================== */
+========================= */
 
 export default function SellerStockPage() {
   const router =
@@ -119,13 +108,8 @@ export default function SellerStockPage() {
     useTranslation();
 
   const {
-    loading:
-      authLoading,
+    loading: authLoading,
   } = useAuth();
-
-  /* =====================================================
-     STATES
-  ===================================================== */
 
   const [
     products,
@@ -157,25 +141,18 @@ export default function SellerStockPage() {
   const [shop, setShop] =
     useState<ShopProfile>({
       shop_name: null,
-
       shop_banner: null,
-
       avatar_url: null,
-
       shop_description:
         null,
-
       rating: null,
-
-      total_reviews:
-        null,
-
+      total_reviews: null,
       total_sales: null,
     });
 
-  /* =====================================================
-     CACHE AVATAR
-  ===================================================== */
+  /* =========================
+     AVATAR CACHE
+  ========================= */
 
   useEffect(() => {
     const cached =
@@ -205,29 +182,16 @@ export default function SellerStockPage() {
     }
   }, [shop.avatar_url]);
 
-  /* =====================================================
-     COMPUTED
-  ===================================================== */
-
-  const avatar =
-    avatarCache ||
-    shop.avatar_url ||
-    DEFAULT_AVATAR;
-
-  const banner =
-    shop.shop_banner ||
-    DEFAULT_BANNER;
-
-  /* =====================================================
+  /* =========================
      LOAD PRODUCTS
-  ===================================================== */
+  ========================= */
 
   const loadProducts =
     useCallback(
       async () => {
         try {
           console.log(
-            "📦 LOAD_PRODUCTS_START"
+            "🟡 LOAD_PRODUCTS_START"
           );
 
           const res =
@@ -240,15 +204,13 @@ export default function SellerStockPage() {
             );
 
           console.log(
-            "📦 RESPONSE_STATUS:",
+            "🟢 API_STATUS:",
             res.status
           );
 
           if (!res.ok) {
             setMessage({
-              text:
-                t.load_products_error,
-
+              text: t.load_products_error,
               type:
                 "error",
             });
@@ -260,7 +222,7 @@ export default function SellerStockPage() {
             await res.json();
 
           console.log(
-            "📦 RAW_RESPONSE:",
+            "🟢 RAW_RESPONSE:",
             raw
           );
 
@@ -270,23 +232,20 @@ export default function SellerStockPage() {
                 string,
                 unknown
               >;
-
               products?: unknown[];
             };
 
-          /* =========================================
-             PROFILE
-          ========================================= */
+          /* ================= PROFILE ================= */
 
           const profile =
             payload.profile;
 
-          console.log(
-            "👤 PROFILE:",
-            profile
-          );
-
           if (profile) {
+            console.log(
+              "🟢 PROFILE_FOUND:",
+              profile
+            );
+
             setShop({
               shop_name:
                 typeof profile.shop_name ===
@@ -332,20 +291,22 @@ export default function SellerStockPage() {
             });
           }
 
-          /* =========================================
-             PRODUCTS
-          ========================================= */
+          /* ================= PRODUCTS ================= */
 
           const list =
             Array.isArray(
               payload.products
             )
               ? payload.products
-              : [];
+              : Array.isArray(
+                    raw
+                  )
+                ? raw
+                : [];
 
           console.log(
-            "📦 PRODUCTS_LIST:",
-            list
+            "🟢 PRODUCT_COUNT:",
+            list.length
           );
 
           const mapped: SellerProduct[] =
@@ -439,23 +400,23 @@ export default function SellerStockPage() {
             );
 
           console.log(
-            "✅ MAPPED_PRODUCTS:",
+            "🟢 MAPPED_PRODUCTS:",
             mapped
           );
 
           setProducts(
             mapped
           );
-        } catch (error) {
+        } catch (
+          error
+        ) {
           console.error(
-            "💥 LOAD_PRODUCTS_ERROR",
+            "🔴 LOAD_PRODUCTS_ERROR:",
             error
           );
 
           setMessage({
-            text:
-              t.load_products_error,
-
+            text: t.load_products_error,
             type:
               "error",
           });
@@ -468,10 +429,6 @@ export default function SellerStockPage() {
       [t]
     );
 
-  /* =====================================================
-     EFFECT
-  ===================================================== */
-
   useEffect(() => {
     if (
       !authLoading
@@ -483,9 +440,9 @@ export default function SellerStockPage() {
     loadProducts,
   ]);
 
-  /* =====================================================
-     BANNER UPLOAD
-  ===================================================== */
+  /* =========================
+     UPLOAD BANNER
+  ========================= */
 
   const handleBannerUpload =
     async (
@@ -498,6 +455,10 @@ export default function SellerStockPage() {
         return;
 
       try {
+        console.log(
+          "🟡 UPLOAD_BANNER_START"
+        );
+
         const formData =
           new FormData();
 
@@ -512,32 +473,26 @@ export default function SellerStockPage() {
             {
               method:
                 "POST",
-
-              body:
-                formData,
+              body: formData,
             }
           );
 
-        if (!res.ok) {
+        if (!res.ok)
           throw new Error(
             "UPLOAD_FAILED"
           );
-        }
 
         const data =
           await res.json();
 
         console.log(
-          "✅ BANNER_UPLOAD:",
+          "🟢 BANNER_UPLOAD_SUCCESS:",
           data
         );
 
         setShop(
-          (
-            prev
-          ) => ({
+          (prev) => ({
             ...prev,
-
             shop_banner:
               data.banner,
           })
@@ -546,29 +501,29 @@ export default function SellerStockPage() {
         setMessage({
           text:
             "Banner updated",
-
           type:
             "success",
         });
-      } catch (error) {
+      } catch (
+        error
+      ) {
         console.error(
-          "💥 BANNER_UPLOAD_ERROR",
+          "🔴 BANNER_UPLOAD_ERROR:",
           error
         );
 
         setMessage({
           text:
             "Upload failed",
-
           type:
             "error",
         });
       }
     };
 
-  /* =====================================================
-     DELETE PRODUCT
-  ===================================================== */
+  /* =========================
+     DELETE
+  ========================= */
 
   const handleDelete =
     async (
@@ -578,9 +533,8 @@ export default function SellerStockPage() {
         !confirm(
           t.confirm_delete
         )
-      ) {
+      )
         return;
-      }
 
       try {
         const res =
@@ -594,15 +548,15 @@ export default function SellerStockPage() {
             }
           );
 
-        if (res.ok) {
+        if (
+          res.ok
+        ) {
           setProducts(
             (
               prev
             ) =>
               prev.filter(
-                (
-                  p
-                ) =>
+                (p) =>
                   p.id !==
                   id
               )
@@ -611,7 +565,6 @@ export default function SellerStockPage() {
           setMessage({
             text:
               t.delete_success,
-
             type:
               "success",
           });
@@ -619,7 +572,6 @@ export default function SellerStockPage() {
           setMessage({
             text:
               t.delete_failed,
-
             type:
               "error",
           });
@@ -628,46 +580,41 @@ export default function SellerStockPage() {
         setMessage({
           text:
             t.delete_failed,
-
           type:
             "error",
         });
       }
     };
 
-  /* =====================================================
-     LOADING
-  ===================================================== */
+  /* =========================
+     AVATAR
+  ========================= */
 
-  if (
-    pageLoading
-  ) {
-    return (
-      <main className="p-6 text-center text-gray-500">
-        Loading...
-      </main>
-    );
-  }
+  const avatar =
+    avatarCache ||
+    shop.avatar_url ||
+    DEFAULT_AVATAR;
 
-  /* =====================================================
+  /* =========================
      UI
-  ===================================================== */
+  ========================= */
 
   return (
     <main className="p-4 max-w-2xl mx-auto pb-28">
 
-      {/* =========================================
-          SHOP HEADER
-      ========================================= */}
+      {/* ================= HEADER ================= */}
 
       <div className="mb-10">
 
-        {/* BANNER */}
+        {/* ================= BANNER ================= */}
 
-        <div className="relative w-full h-40 rounded-xl overflow-hidden">
+        <div className="relative w-full h-52 rounded-2xl overflow-hidden shadow">
 
           <Image
-            src={banner}
+            src={
+              shop.shop_banner ||
+              DEFAULT_BANNER
+            }
             alt="Shop banner"
             fill
             priority
@@ -675,13 +622,18 @@ export default function SellerStockPage() {
             className="object-cover"
           />
 
+          {/* OVERLAY */}
+
+          <div className="absolute inset-0 bg-black/20" />
+
           {/* CHANGE BANNER */}
 
-          <label className="absolute top-3 left-3 bg-black/60 hover:bg-black/70 text-white text-xs px-3 py-1 rounded cursor-pointer flex items-center gap-1">
-
+          <label className="absolute top-3 left-3 z-20 bg-black/60 hover:bg-black/70 text-white text-xs px-3 py-2 rounded-lg cursor-pointer flex items-center gap-2 backdrop-blur-sm">
             <Upload size={14} />
 
-            {t.change_banner}
+            {
+              t.change_banner
+            }
 
             <input
               type="file"
@@ -693,7 +645,7 @@ export default function SellerStockPage() {
             />
           </label>
 
-          {/* POST PRODUCT */}
+          {/* ADD PRODUCT */}
 
           <button
             onClick={() =>
@@ -701,98 +653,109 @@ export default function SellerStockPage() {
                 "/seller/post"
               )
             }
-            className="absolute top-3 right-3 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-11 h-11 flex items-center justify-center shadow-lg"
+            className="absolute top-3 right-3 z-20 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-11 h-11 flex items-center justify-center shadow-lg"
           >
-            <Plus size={20} />
-          </button>
-        </div>
-
-        {/* AVATAR */}
-
-        <div className="flex justify-center -mt-12">
-
-          <div className="w-24 h-24 bg-white rounded-full overflow-hidden shadow border-4 border-white flex items-center justify-center">
-
-            <Image
-              src={avatar}
-              alt="Avatar"
-              width={96}
-              height={96}
-              priority
-              unoptimized
-              className="object-cover w-full h-full"
+            <Plus
+              size={20}
             />
+          </button>
+
+          {/* ================= AVATAR ================= */}
+
+          <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 z-20">
+
+            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-xl bg-white">
+
+              <Image
+                src={
+                  avatar
+                }
+                alt="Avatar"
+                width={96}
+                height={96}
+                priority
+                unoptimized
+                className="object-cover w-full h-full"
+              />
+
+            </div>
+
           </div>
+
         </div>
 
-        {/* SHOP NAME */}
+        {/* ================= SHOP INFO ================= */}
 
-        <h2 className="text-center font-bold text-xl mt-3">
-          {shop.shop_name ||
-            t.my_store}
-        </h2>
+        <div className="pt-16">
 
-        {/* STATS */}
+          <h2 className="text-center font-bold text-2xl">
+            {shop.shop_name ||
+              t.my_store}
+          </h2>
 
-        <div className="flex justify-center gap-6 text-sm text-gray-600 mt-2">
+          <div className="flex justify-center gap-6 text-sm text-gray-600 mt-3">
 
-          <div className="flex items-center gap-1">
-            ⭐{" "}
-            <span>
-              {shop.rating ??
-                0}
-            </span>
+            <div className="flex items-center gap-1">
+              ⭐
+              <span>
+                {shop.rating ??
+                  0}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              📦
+              <span>
+                {
+                  products.length
+                }
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              🛒
+              <span>
+                {shop.total_sales ??
+                  0}
+              </span>
+            </div>
+
           </div>
 
-          <div className="flex items-center gap-1">
-            📦{" "}
-            <span>
-              {
-                products.length
-              }
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            🛒{" "}
-            <span>
-              {shop.total_sales ??
-                0}
-            </span>
-          </div>
         </div>
 
-        {/* MESSAGE */}
+        {/* ================= MESSAGE ================= */}
 
         {message.text && (
           <p
-            className={`text-center mb-4 ${
+            className={`text-center mt-4 ${
               message.type ===
               "success"
                 ? "text-green-600"
                 : "text-red-600 font-medium"
             }`}
           >
-            {message.text}
-          </p>
-        )}
-
-        {/* EMPTY */}
-
-        {products.length ===
-          0 && (
-          <p className="text-center text-gray-400">
             {
-              t.no_products
+              message.text
             }
           </p>
         )}
 
-        {/* =========================================
-            PRODUCT LIST
-        ========================================= */}
+        {/* ================= EMPTY ================= */}
 
-        <div className="space-y-4">
+        {!pageLoading &&
+          products.length ===
+            0 && (
+            <p className="text-center text-gray-400 mt-10">
+              {
+                t.no_products
+              }
+            </p>
+          )}
+
+        {/* ================= PRODUCTS ================= */}
+
+        <div className="space-y-4 mt-8">
 
           {products.map(
             (
@@ -887,6 +850,7 @@ export default function SellerStockPage() {
                         }
                         fill
                         sizes="96px"
+                        unoptimized
                         className="object-cover"
                       />
                     ) : (
@@ -896,6 +860,7 @@ export default function SellerStockPage() {
                         }
                       </div>
                     )}
+
                   </div>
 
                   {/* CONTENT */}
@@ -936,12 +901,13 @@ export default function SellerStockPage() {
                           π
                         </p>
                       )}
+
                     </div>
 
                     {/* SALE TIME */}
 
                     {product.sale_start && (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 mt-1">
                         {
                           t.sale_start
                         }
@@ -997,14 +963,20 @@ export default function SellerStockPage() {
                       >
                         {t.delete}
                       </button>
+
                     </div>
+
                   </div>
+
                 </div>
               );
             }
           )}
+
         </div>
+
       </div>
+
     </main>
   );
 }
