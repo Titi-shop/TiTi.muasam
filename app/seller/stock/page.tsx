@@ -107,21 +107,12 @@ export default function SellerStockPage() {
         return;
       }
 
-      const data = await res.json();
+      const raw: unknown = await res.json();
 
-const raw = Array.isArray(data.products)
-  ? data.products
-  : [];
-
-setShop({
-  shop_name: data.shop?.shop_name ?? null,
-  shop_banner: data.shop?.shop_banner ?? null,
-  avatar_url: data.shop?.avatar_url ?? null,
-  shop_description: null,
-  rating: null,
-  total_reviews: null,
-  total_sales: null,
-});
+      if (!Array.isArray(raw)) {
+        setProducts([]);
+        return;
+      }
 
       const mapped: SellerProduct[] = raw.map((item) => {
         const p = item as Record<string, unknown>;
@@ -166,11 +157,35 @@ setShop({
     }
   }, [t]);
 
-useEffect(() => {
-  if (!authLoading) {
-    loadProducts();
-  }
-}, [authLoading, loadProducts]);
+  const loadProfile = useCallback(async () => {
+    try {
+      const res = await apiAuthFetch("/api/profile", {
+        cache: "no-store",
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      const profile = data.profile;
+
+      setShop({
+        shop_name: profile?.shop_name ?? null,
+        shop_banner: profile?.shop_banner ?? null,
+        avatar_url: profile?.avatar_url ?? null,
+        shop_description: profile?.shop_description ?? null,
+        rating: profile?.rating ?? 0,
+        total_reviews: profile?.total_reviews ?? 0,
+        total_sales: profile?.total_sales ?? 0,
+      });
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!authLoading) {
+      loadProducts();
+      loadProfile();
+    }
+  }, [authLoading, loadProducts, loadProfile]);
    /* ================= BANNER ================= */
 const handleBannerUpload = async (
   e: React.ChangeEvent<HTMLInputElement>
