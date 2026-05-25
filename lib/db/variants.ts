@@ -538,16 +538,12 @@ export async function replaceVariantsByProductId(
       });
 
       await client.query(
-        `
-        UPDATE product_variants
-        SET
-          deleted_at = NOW(),
-          updated_at = NOW()
-        WHERE product_id = $1
-          AND deleted_at IS NULL
-        `,
-        [productId]
-      );
+  `
+  DELETE FROM product_variants
+  WHERE product_id = $1
+  `,
+  [productId]
+);
 
       if (!variants.length) {
         vlog(
