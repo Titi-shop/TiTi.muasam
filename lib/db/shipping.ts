@@ -345,7 +345,7 @@ export async function getShippingRatesByProducts(
     .filter((r) => isValidRegion(r.code))
     .map((r) => ({
       product_id: r.product_id,
-      zone: r.code as Region,
+      zone: r.zone as Region,
       price: Number(r.price),
       domestic_country_code: r.domestic_country_code,
     }));
