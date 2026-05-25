@@ -522,18 +522,22 @@ const handleBannerUpload = async (
 
                 {/* SALE TIME (FIX TIMEZONE DISPLAY) */}
                 {product.sale_start && (
-                  <p className="text-xs text-gray-500">
-                    {t.sale_start}:{" "}
-                    {new Date(product.sale_start).toLocaleString()}
-                  </p>
-                )}
+  <p className="text-xs text-gray-500">
+    {t.sale_start}:{" "}
+    {new Date(
+      product.sale_start
+    ).toLocaleString()}
+  </p>
+)}
 
-                {product.saleEnd && (
-                  <p className="text-xs text-gray-500">
-                    {t.sale_end}:{" "}
-                    {new Date(product.sale_end).toLocaleString()}
-                  </p>
-                )}
+{product.sale_end && (
+  <p className="text-xs text-gray-500">
+    {t.sale_end}:{" "}
+    {new Date(
+      product.sale_end
+    ).toLocaleString()}
+  </p>
+)}
 
                 {/* ACTIONS */}
                 <div className="flex gap-4 mt-2">
