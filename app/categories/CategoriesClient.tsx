@@ -2,26 +2,27 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 
 import useSWR from "swr";
 
 import {
   Search,
   ShoppingCart,
-  Flame,
+  SlidersHorizontal,
   Star,
-  ChevronRight,
+  Sparkles,
 } from "lucide-react";
 
 import { useCart } from "@/app/context/CartContext";
+
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 import { formatPi } from "@/lib/pi";
 
-import type { Category } from "@/types/category";
 import type { Product } from "@/types/product";
+import type { Category } from "@/types/category";
 
 /* =========================================================
    FETCHER
@@ -40,6 +41,16 @@ const fetcher = async <T,>(
 };
 
 /* =========================================================
+   HELPERS
+========================================================= */
+
+function getImage(src?: string | null) {
+  if (!src) return "/placeholder.png";
+
+  return src;
+}
+
+/* =========================================================
    COMPONENT
 ========================================================= */
 
@@ -48,44 +59,30 @@ export default function CategoriesClient() {
 
   const { addToCart } = useCart();
 
-  const [
-    activeCategoryId,
-    setActiveCategoryId,
-  ] = useState<number | null>(null);
-
-  const [message, setMessage] = useState<{
-    text: string;
-    type: "error" | "success";
-  } | null>(null);
-
   /* =========================================================
-     EFFECT
+     STATE
   ========================================================= */
 
-  useEffect(() => {
-    const prev =
-      document.body.style.background;
+  const [search, setSearch] =
+    useState("");
 
-    document.body.style.background =
-      "#f5f7fb";
+  const [selectedCategory, setSelectedCategory] =
+    useState<number | "all">("all");
 
-    return () => {
-      document.body.style.background =
-        prev;
-    };
-  }, []);
+  const [sortType, setSortType] =
+    useState<
+      "popular" | "sale" | "latest"
+    >("popular");
+
+  const [message, setMessage] =
+    useState<{
+      text: string;
+      type: "success" | "error";
+    } | null>(null);
 
   /* =========================================================
      DATA
   ========================================================= */
-
-  const {
-    data: categoriesData,
-    isLoading: loadingCategories,
-  } = useSWR<Category[]>(
-    "/api/categories",
-    fetcher
-  );
 
   const {
     data: productsData,
@@ -94,47 +91,96 @@ export default function CategoriesClient() {
     "/api/products",
     fetcher,
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 5000,
+      refreshInterval: 5000,
+      revalidateOnFocus: true,
     }
   );
 
-  const categories = useMemo(() => {
-    return categoriesData || [];
-  }, [categoriesData]);
+  const {
+    data: categoriesData,
+    isLoading: loadingCategories,
+  } = useSWR<Category[]>(
+    "/api/categories",
+    fetcher,
+    {
+      revalidateOnFocus: false,
+    }
+  );
 
   const products = useMemo(() => {
     return productsData || [];
   }, [productsData]);
 
+  const categories = useMemo(() => {
+    return categoriesData || [];
+  }, [categoriesData]);
+
   const loading =
-    loadingCategories || loadingProducts;
+    loadingProducts ||
+    loadingCategories;
 
   /* =========================================================
      FILTER
   ========================================================= */
 
-  const visibleProducts = useMemo(() => {
-    if (activeCategoryId === null) {
-      return products;
+  const filteredProducts = useMemo(() => {
+    let list = [...products];
+
+    /* CATEGORY */
+
+    if (selectedCategory !== "all") {
+      list = list.filter(
+        (product) =>
+          product.category_id ===
+          selectedCategory
+      );
     }
 
-    return products.filter(
-      (product) =>
-        product.category_id ===
-        activeCategoryId
-    );
-  }, [products, activeCategoryId]);
+    /* SEARCH */
 
-  /* =========================================================
-     FEATURED
-  ========================================================= */
+    if (search.trim()) {
+      list = list.filter((product) =>
+        product.name
+          .toLowerCase()
+          .includes(
+            search.toLowerCase()
+          )
+      );
+    }
 
-  const featuredProducts = useMemo(() => {
-    return [...products]
-      .sort((a, b) => b.sold - a.sold)
-      .slice(0, 6);
-  }, [products]);
+    /* SORT */
+
+    if (sortType === "popular") {
+      list.sort(
+        (a, b) => b.sold - a.sold
+      );
+    }
+
+    if (sortType === "sale") {
+      list.sort((a, b) => {
+        const discountA =
+          a.price -
+          (a.final_price ?? a.price);
+
+        const discountB =
+          b.price -
+          (b.final_price ?? b.price);
+
+        return discountB - discountA;
+      });
+    }
+
+    if (sortType === "latest") {
+      list.reverse();
+    }
+
+    return list;
+  }, [
+    products,
+    search,
+    selectedCategory,
+    sortType,
+  ]);
 
   /* =========================================================
      MESSAGE
@@ -142,12 +188,9 @@ export default function CategoriesClient() {
 
   const showMessage = (
     text: string,
-    type: "error" | "success" = "error"
+    type: "success" | "error" = "error"
   ) => {
-    setMessage({
-      text,
-      type,
-    });
+    setMessage({ text, type });
 
     setTimeout(() => {
       setMessage(null);
@@ -155,7 +198,7 @@ export default function CategoriesClient() {
   };
 
   /* =========================================================
-     ADD TO CART
+     CART
   ========================================================= */
 
   const handleAddToCart = (
@@ -163,6 +206,7 @@ export default function CategoriesClient() {
     product: Product
   ) => {
     e.preventDefault();
+
     e.stopPropagation();
 
     if (!product.is_active) {
@@ -191,33 +235,64 @@ export default function CategoriesClient() {
       product_id: product.id,
       name: product.name,
       price: product.price,
-      sale_price:
-        product.final_price,
+      sale_price: product.final_price,
       quantity: 1,
-      thumbnail:
-        product.thumbnail,
+      thumbnail: product.thumbnail,
     });
 
     showMessage(
-      t.added_to_cart || "Added",
+      t.added_to_cart ||
+        "Added to cart",
       "success"
     );
   };
 
   /* =========================================================
-     EMPTY
+     EFFECT
   ========================================================= */
 
-  if (
-    !loading &&
-    visibleProducts.length === 0
-  ) {
+  useEffect(() => {
+    const prev =
+      document.body.style.background;
+
+    document.body.style.background =
+      "#f5f7fb";
+
+    return () => {
+      document.body.style.background =
+        prev;
+    };
+  }, []);
+
+  /* =========================================================
+     LOADING
+  ========================================================= */
+
+  if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-gray-400">
-        🛒{" "}
-        {t.no_products ||
-          "No products"}
-      </div>
+      <main className="min-h-screen bg-[#f5f7fb] p-4">
+        <div className="animate-pulse space-y-5">
+          <div className="h-14 rounded-2xl bg-white" />
+
+          <div className="flex gap-3 overflow-hidden">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="h-20 min-w-[90px] rounded-2xl bg-white"
+              />
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="h-72 rounded-[28px] bg-white"
+              />
+            ))}
+          </div>
+        </div>
+      </main>
     );
   }
 
@@ -231,7 +306,7 @@ export default function CategoriesClient() {
 
       {message && (
         <div
-          className={`fixed left-1/2 top-20 z-50 -translate-x-1/2 rounded-2xl px-5 py-3 text-sm font-medium shadow-2xl backdrop-blur-xl ${
+          className={`fixed left-1/2 top-20 z-50 -translate-x-1/2 rounded-2xl px-5 py-3 text-sm font-semibold shadow-2xl ${
             message.type === "error"
               ? "bg-red-500 text-white"
               : "bg-green-500 text-white"
@@ -241,10 +316,10 @@ export default function CategoriesClient() {
         </div>
       )}
 
-      {/* SEARCH */}
+      {/* HEADER */}
 
-      <div className="sticky top-0 z-40 border-b border-white/40 bg-white/80 backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-4">
+      <section className="sticky top-0 z-40 border-b border-white/30 bg-white/80 px-4 py-4 backdrop-blur-2xl">
+        <div className="flex items-center gap-3">
           <div className="flex h-12 flex-1 items-center gap-3 rounded-2xl bg-gray-100 px-4">
             <Search
               size={18}
@@ -253,6 +328,12 @@ export default function CategoriesClient() {
 
             <input
               type="text"
+              value={search}
+              onChange={(e) =>
+                setSearch(
+                  e.target.value
+                )
+              }
               placeholder={
                 t.search_products ||
                 "Search products..."
@@ -261,102 +342,119 @@ export default function CategoriesClient() {
             />
           </div>
 
-          <button className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white">
-            <ShoppingCart size={18} />
-
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-              2
-            </span>
+          <button className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white">
+            <SlidersHorizontal
+              size={18}
+            />
           </button>
         </div>
-      </div>
+      </section>
 
       {/* HERO */}
 
-      <section className="px-4 pt-4">
-        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 p-6 text-white shadow-[0_20px_80px_rgba(255,90,31,0.35)]">
-          <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+      <section className="px-4 pt-5">
+        <div className="overflow-hidden rounded-[32px] bg-gradient-to-br from-zinc-900 via-black to-zinc-800 p-6 text-white">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold backdrop-blur-xl">
+                <Sparkles size={14} />
 
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold backdrop-blur-xl">
-              <Flame size={14} />
+                {t.smart_catalog ||
+                  "Smart Catalog"}
+              </div>
 
-              {t.trending_marketplace ||
-                "Trending Marketplace"}
+              <h1 className="mt-5 text-3xl font-black leading-tight">
+                {t.explore_categories ||
+                  "Explore Categories"}
+              </h1>
+
+              <p className="mt-3 max-w-sm text-sm text-white/70">
+                {t.find_products_fast ||
+                  "Find products faster with category filters and smart discovery."}
+              </p>
             </div>
 
-            <h1 className="mt-5 max-w-xl text-3xl font-black leading-tight">
-              {t.discover_modern_products ||
-                "Discover products from modern commerce experiences"}
-            </h1>
+            <div className="rounded-3xl bg-white/10 px-4 py-3 text-center backdrop-blur-xl">
+              <p className="text-2xl font-black">
+                {
+                  filteredProducts.length
+                }
+              </p>
 
-            <p className="mt-3 max-w-md text-sm text-white/80">
-              {t.smart_shopping_discovery ||
-                "Trending products, curated collections and smart shopping discovery."}
-            </p>
-
-            <button className="mt-6 flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-black">
-              {t.explore_now ||
-                "Explore Now"}
-
-              <ChevronRight size={16} />
-            </button>
+              <p className="text-xs text-white/70">
+                {t.products ||
+                  "Products"}
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CATEGORY */}
+      {/* CATEGORY LIST */}
 
       <section className="mt-6 overflow-x-auto px-4">
         <div className="flex gap-3 pb-2">
           <button
             onClick={() =>
-              setActiveCategoryId(
-                null
+              setSelectedCategory(
+                "all"
               )
             }
-            className={`whitespace-nowrap rounded-2xl px-5 py-3 text-sm font-semibold transition-all ${
-              activeCategoryId === null
+            className={`flex min-w-[82px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all ${
+              selectedCategory === "all"
                 ? "bg-black text-white shadow-xl"
-                : "bg-white text-gray-600"
+                : "bg-white text-gray-700"
             }`}
           >
-            {t.all || "All"}
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
+              🛍️
+            </div>
+
+            <span className="text-[11px] font-medium">
+              {t.all || "All"}
+            </span>
           </button>
 
           {categories.map(
             (category) => {
               const active =
-                activeCategoryId ===
+                selectedCategory ===
                 category.id;
 
               return (
                 <button
                   key={category.id}
                   onClick={() =>
-                    setActiveCategoryId(
+                    setSelectedCategory(
                       category.id
                     )
                   }
-                  className={`flex items-center gap-2 whitespace-nowrap rounded-2xl px-5 py-3 text-sm font-semibold transition-all ${
+                  className={`flex min-w-[82px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all ${
                     active
                       ? "bg-black text-white shadow-xl"
                       : "bg-white text-gray-700"
                   }`}
                 >
-                  {category.icon && (
-                    <img
-                      src={
+                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-gray-100">
+                    <Image
+                      src={getImage(
                         category.icon
-                      }
+                      )}
                       alt={
-                        category.name
+                        category.key
                       }
-                      className="h-5 w-5 object-contain"
+                      width={50}
+                      height={50}
+                      className="h-full w-full object-cover"
                     />
-                  )}
+                  </div>
 
-                  {t[category.key] || category.key}
+                  <span className="line-clamp-2 text-center text-[11px] font-medium">
+                    {t[
+                      category.key
+                    ] ||
+                      category.key}
+                  </span>
                 </button>
               );
             }
@@ -364,157 +462,83 @@ export default function CategoriesClient() {
         </div>
       </section>
 
-      {/* TRENDING */}
+      {/* SORT */}
 
-      <section className="mt-8 px-4">
-        <div className="mb-5 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-black">
-              {t.trending_now ||
-                "Trending Now"}
-            </h2>
+      <section className="mt-6 overflow-x-auto px-4">
+        <div className="flex gap-3">
+          {[
+            {
+              key: "popular",
+              label:
+                t.best_seller ||
+                "Best Seller",
+            },
 
-            <p className="mt-1 text-sm text-gray-500">
-              {t.most_popular_products_today ||
-                "Most popular products today"}
-            </p>
-          </div>
+            {
+              key: "sale",
+              label:
+                t.flash_sale ||
+                "Flash Sale",
+            },
 
-          <button className="text-sm font-semibold text-gray-500">
-            {t.view_all ||
-              "View all"}
-          </button>
-        </div>
-
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {featuredProducts.map(
-            (product) => (
-              <Link
-                key={product.id}
-                href={`/product/${product.id}`}
-                className="min-w-[220px]"
-              >
-                <div className="overflow-hidden rounded-[28px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
-                  <div className="relative">
-                    <Image
-                      src={
-                        product.thumbnail ||
-                        "/placeholder.png"
-                      }
-                      alt={
-                        product.name
-                      }
-                      width={400}
-                      height={400}
-                      className="h-52 w-full object-cover"
-                    />
-
-                    <div className="absolute left-3 top-3 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
-                      {t.hot || "HOT"}
-                    </div>
-                  </div>
-
-                  <div className="p-4">
-                    <h3 className="line-clamp-2 text-sm font-semibold">
-                      {product.name}
-                    </h3>
-
-                    <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
-                      <Star
-                        size={14}
-                        className="fill-yellow-400 text-yellow-400"
-                      />
-
-                      {product.rating_avg ||
-                        5}
-
-                      <span>
-                        •{" "}
-                        {
-                          product.sold
-                        }{" "}
-                        {t.sold ||
-                          "sold"}
-                      </span>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between">
-                      <p className="text-lg font-black text-red-500">
-                        {formatPi(
-                          product.final_price
-                        )}{" "}
-                        π
-                      </p>
-
-                      <button
-                        onClick={(
-                          e
-                        ) =>
-                          handleAddToCart(
-                            e,
-                            product
-                          )
-                        }
-                        className="flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white transition-all active:scale-95"
-                      >
-                        <ShoppingCart
-                          size={
-                            18
-                          }
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            )
-          )}
+            {
+              key: "latest",
+              label:
+                t.new_arrivals ||
+                "New",
+            },
+          ].map((item) => (
+            <button
+              key={item.key}
+              onClick={() =>
+                setSortType(
+                  item.key as
+                    | "popular"
+                    | "sale"
+                    | "latest"
+                )
+              }
+              className={`whitespace-nowrap rounded-full px-5 py-2 text-sm font-semibold transition-all ${
+                sortType ===
+                item.key
+                  ? "bg-black text-white"
+                  : "bg-white text-gray-600"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
       </section>
 
-      {/* PRODUCTS */}
+      {/* PRODUCT GRID */}
 
-      <section className="mt-10 px-4">
-        <div className="mb-5">
-          <h2 className="text-2xl font-black">
-            {t.discover_products ||
-              "Discover Products"}
-          </h2>
+      <section className="mt-8 px-4">
+        {filteredProducts.length === 0 ? (
+          <div className="flex h-60 flex-col items-center justify-center rounded-[32px] bg-white text-center">
+            <p className="text-lg font-bold">
+              🛒
+            </p>
 
-          <p className="mt-1 text-sm text-gray-500">
-            {t.curated_products_for_you ||
-              "Curated products for you"}
-          </p>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              ...Array(6),
-            ].map((_, i) => (
-              <div
-                key={i}
-                className="h-72 animate-pulse rounded-[28px] bg-white"
-              />
-            ))}
+            <p className="mt-2 text-sm text-gray-500">
+              {t.no_products ||
+                "No products"}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
-            {visibleProducts.map(
+            {filteredProducts.map(
               (product) => (
                 <Link
-                  key={
-                    product.id
-                  }
+                  key={product.id}
                   href={`/product/${product.id}`}
                 >
                   <div className="group overflow-hidden rounded-[28px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
                     <div className="relative overflow-hidden">
                       <Image
-                        src={
-                          product.thumbnail ||
-                          "/placeholder.png"
-                        }
+                        src={getImage(
+                          product.thumbnail
+                        )}
                         alt={
                           product.name
                         }
@@ -525,35 +549,28 @@ export default function CategoriesClient() {
 
                       {product.sale_price && (
                         <div className="absolute left-3 top-3 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
-                          {t.sale ||
-                            "SALE"}
+                          SALE
                         </div>
                       )}
 
                       <button
-                        onClick={(
-                          e
-                        ) =>
+                        onClick={(e) =>
                           handleAddToCart(
                             e,
                             product
                           )
                         }
-                        className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-black shadow-xl backdrop-blur-xl transition-all active:scale-95"
+                        className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-black shadow-xl"
                       >
                         <ShoppingCart
-                          size={
-                            18
-                          }
+                          size={18}
                         />
                       </button>
                     </div>
 
                     <div className="p-4">
                       <h3 className="line-clamp-2 min-h-[40px] text-sm font-semibold">
-                        {
-                          product.name
-                        }
+                        {product.name}
                       </h3>
 
                       <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
@@ -604,4 +621,4 @@ export default function CategoriesClient() {
       </section>
     </main>
   );
-      }
+}
