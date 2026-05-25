@@ -88,8 +88,6 @@ useEffect(() => {
                 "
               />
             </div>
-
-            {/* NOTI */}
             {/* THEME TOGGLE */}
 <button
   onClick={() => {
@@ -105,7 +103,7 @@ useEffect(() => {
 
             {/* CART */}
             <Link href="/cart" className="relative">
-              <div className="w-9 h-9 flex items-center justify-center rounded bg-white text-orange-500 active:scale-95">
+              className="w-9 h-9 flex items-center justify-center rounded bg-orange-600 transition active:scale-95 hover:scale-105"
                 <ShoppingCart size={18} />
               </div>
 
