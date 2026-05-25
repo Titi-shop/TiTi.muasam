@@ -2,58 +2,63 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, ChevronDown, Bell, Sun, Moon } from "lucide-react";
+import {
+  ShoppingCart,
+  ChevronDown,
+  Sun,
+  Moon,
+} from "lucide-react";
+
 import { useMemo, useEffect, useState } from "react";
 
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { availableLanguages } from "@/app/lib/i18n";
 import { useCart } from "@/app/context/CartContext";
 
+import { toggleDarkMode, getSavedMode } from "@/lib/theme";
+
 export default function Navbar() {
-  const { t, lang, setLang } = useTranslation();
+  const { lang, setLang } = useTranslation();
   const { cart } = useCart();
 
   const [dark, setDark] = useState(false);
 
+  // ===== SYNC THEME STATE =====
   useEffect(() => {
-    const saved = localStorage.getItem("theme-mode");
-    if (saved === "dark") {
-      document.documentElement.classList.add("theme-dark");
-      setDark(true);
-    }
+    const sync = () => {
+      setDark(document.documentElement.classList.contains("theme-dark"));
+    };
+
+    sync();
+
+    window.addEventListener("theme-change", sync);
+    return () => window.removeEventListener("theme-change", sync);
   }, []);
 
-  const toggleDark = () => {
-    const root = document.documentElement;
-
-    const isDark = root.classList.contains("theme-dark");
-
-    root.classList.toggle("theme-dark", !isDark);
-    root.classList.toggle("theme-light", isDark);
-
-    localStorage.setItem("theme-mode", isDark ? "light" : "dark");
-    setDark(!isDark);
-  };
-
+  // ===== CART COUNT =====
   const cartCount = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
+
+  // ===== ROLE DETECT (customer/seller) =====
+  const getRole = () => {
+    return window.location.pathname.startsWith("/seller")
+      ? "seller"
+      : "customer";
+  };
 
   return (
     <>
       <div className="h-[56px]" />
 
       <header
-    className="
-    fixed top-0 left-0 right-0 z-50
-     shadow-md
-    "
-  style={{
-    backgroundColor: "var(--nav-bg)",
-    color: "var(--nav-text)",
-    paddingTop: "env(safe-area-inset-top)",
-  }}
-  >
+        className="fixed top-0 left-0 right-0 z-50 shadow-md"
+        style={{
+          backgroundColor: "var(--nav-bg)",
+          color: "var(--nav-text)",
+          paddingTop: "env(safe-area-inset-top)",
+        }}
+      >
         <div className="h-[56px] px-3 flex items-center justify-between">
 
           {/* LOGO */}
@@ -66,7 +71,7 @@ export default function Navbar() {
                 className="object-cover"
               />
             </div>
-           <span className="font-bold text-sm"> TITI</span>
+            <span className="font-bold text-sm">TITI</span>
           </Link>
 
           {/* RIGHT */}
@@ -77,7 +82,7 @@ export default function Navbar() {
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value)}
-               className="  bg-white text-black text-xs  px-2 py-1 pr-6 rounded  border"
+                className="bg-white text-black text-xs px-2 py-1 pr-6 rounded border"
               >
                 {Object.entries(availableLanguages).map(([code, label]) => (
                   <option key={code} value={code}>
@@ -92,44 +97,43 @@ export default function Navbar() {
               />
             </div>
 
-             {/* DARK MODE TOGGLE */}
+            {/* DARK MODE TOGGLE */}
             <button
-    onClick={toggleDark}
-  className="
-    w-9 h-9 flex items-center justify-center rounded
-    transition active:scale-95
-  "
-  style={{
-    backgroundColor: "var(--nav-button)",
-    color: dark ? "#fff" : "#000",
-  }}
-  >
-    {dark ? <Sun size={18} /> : <Moon size={18} />}
-    </button>
+              onClick={() => {
+                toggleDarkMode(getRole());
+              }}
+              className="w-9 h-9 flex items-center justify-center rounded transition active:scale-95"
+              style={{
+                backgroundColor: "var(--nav-button)",
+                color: "var(--nav-text)",
+              }}
+            >
+              {dark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
 
-            {/* CART (FIXED) */}
-           <Link href="/cart" className="relative">
-  <div
-    className="w-9 h-9 flex items-center justify-center rounded active:scale-95"
-    style={{
-      backgroundColor: "var(--nav-button)",
-      color: "var(--nav-primary)",
-    }}
-  >
-    <ShoppingCart size={18} />
-  </div>
+            {/* CART */}
+            <Link href="/cart" className="relative">
+              <div
+                className="w-9 h-9 flex items-center justify-center rounded active:scale-95"
+                style={{
+                  backgroundColor: "var(--nav-button)",
+                  color: "var(--nav-primary)",
+                }}
+              >
+                <ShoppingCart size={18} />
+              </div>
 
-  {cartCount > 0 && (
-    <span className="
-      absolute -top-1 -right-1
-      bg-red-600 text-white
-      text-[10px] px-1.5 py-0.5
-      rounded-full
-    ">
-      {cartCount}
-    </span>
-  )}
-</Link>
+              {cartCount > 0 && (
+                <span className="
+                  absolute -top-1 -right-1
+                  bg-red-600 text-white
+                  text-[10px] px-1.5 py-0.5
+                  rounded-full
+                ">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
 
           </div>
         </div>
