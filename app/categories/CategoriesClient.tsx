@@ -356,7 +356,7 @@ export default function CategoriesClient() {
                     />
                   )}
 
-                  {category.name}
+                  {t[category.key] || category.key}
                 </button>
               );
             }
