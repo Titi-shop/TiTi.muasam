@@ -40,7 +40,7 @@ export default function Navbar() {
   return (
     <>
       {/* SPACER */}
-      <div className="h-[78px]" />
+      <div className="h-[64px]" />
 
       <header
         className="
