@@ -3,9 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 
-import { ShoppingCart, ChevronDown, Bell } from "lucide-react";
+import { ShoppingCart, ChevronDown, Moon, Sun } from "lucide-react";
 import { useMemo } from "react";
-
+import { useEffect, useState } from "react";
+import { toggleThemeSimple } from "@/lib/theme";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { availableLanguages } from "@/app/lib/i18n";
 import { useCart } from "@/app/context/CartContext";
@@ -17,7 +18,11 @@ export default function Navbar() {
   const cartCount = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
-
+const [isDark, setIsDark] = useState(false);
+useEffect(() => {
+  const saved = localStorage.getItem("theme-mode");
+  setIsDark(saved === "dark");
+}, []);
   return (
     <>
       {/* spacer đúng height navbar */}
@@ -85,16 +90,18 @@ export default function Navbar() {
             </div>
 
             {/* NOTI */}
-            <Link
-              href="/notifications"
-              className="relative"
-            >
-              <div className="w-9 h-9 flex items-center justify-center rounded bg-orange-600 active:scale-95">
-                <Bell size={18} />
-              </div>
-
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
-            </Link>
+            {/* THEME TOGGLE */}
+<button
+  onClick={() => {
+    toggleThemeSimple();
+    setIsDark((prev) => !prev);
+  }}
+  className="relative"
+>
+  <div className="w-9 h-9 flex items-center justify-center rounded bg-orange-600 active:scale-95">
+    {isDark ? <Sun size={18} /> : <Moon size={18} />}
+  </div>
+</button>
 
             {/* CART */}
             <Link href="/cart" className="relative">
