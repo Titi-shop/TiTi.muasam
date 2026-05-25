@@ -4,21 +4,19 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import useSWR from "swr";
 
 import {
+  Search,
   ShoppingCart,
-  Flame,
-  ChevronRight,
-  Star,
   Sparkles,
-  TrendingUp,
+  ArrowRight,
+  Flame,
+  Star,
 } from "lucide-react";
 
-import SplashScreen from "./components/SplashScreen";
-import BannerCarousel from "./components/BannerCarousel";
-import PiPriceWidget from "./components/PiPriceWidget";
+import { useRouter } from "next/navigation";
 
 import { useCart } from "@/app/context/CartContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
@@ -46,141 +44,14 @@ const fetcher = async <T,>(url: string): Promise<T> => {
    HELPERS
 ========================================================= */
 
-function getMainImage(product: Product) {
-  if (
-    product.thumbnail &&
-    product.thumbnail.trim().length > 0
-  ) {
-    return product.thumbnail;
+function getImage(src?: string | null) {
+  if (!src) return "/placeholder.png";
+
+  if (src.startsWith("http")) {
+    return src;
   }
 
-  return "/placeholder.png";
-}
-
-function getDiscount(product: Product) {
-  if (
-    product.sale_price &&
-    product.price > product.sale_price
-  ) {
-    return Math.round(
-      ((product.price - product.sale_price) /
-        product.price) *
-        100
-    );
-  }
-
-  return 0;
-}
-
-/* =========================================================
-   PRODUCT CARD
-========================================================= */
-
-function ProductCard({
-  product,
-  onAddToCart,
-  t,
-}: {
-  product: Product;
-  onAddToCart: (product: Product) => void;
-  t: Record<string, string>;
-}) {
-  const router = useRouter();
-
-  const discount = getDiscount(product);
-
-  const isOut =
-    !product.is_unlimited &&
-    (product.stock ?? 0) <= 0;
-
-  return (
-    <div
-      onClick={() =>
-        router.push(`/product/${product.id}`)
-      }
-      className="group overflow-hidden rounded-[30px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
-    >
-      {/* IMAGE */}
-
-      <div className="relative overflow-hidden">
-        <Image
-          src={getMainImage(product)}
-          alt={product.name}
-          width={500}
-          height={500}
-          className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-
-        {/* BADGES */}
-
-        {discount > 0 && (
-          <div className="absolute left-3 top-3 rounded-full bg-gradient-to-r from-red-500 to-orange-500 px-3 py-1 text-xs font-bold text-white shadow-lg">
-            -{discount}%
-          </div>
-        )}
-
-        {isOut && (
-          <div className="absolute bottom-3 left-3 rounded-full bg-black/80 px-3 py-1 text-xs font-semibold text-white backdrop-blur-xl">
-            {t.out_of_stock || "Out of stock"}
-          </div>
-        )}
-
-        {/* CART */}
-
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            onAddToCart(product);
-          }}
-          className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-black shadow-xl backdrop-blur-xl transition-all active:scale-95"
-        >
-          <ShoppingCart size={18} />
-        </button>
-      </div>
-
-      {/* CONTENT */}
-
-      <div className="p-4">
-        <h3 className="line-clamp-2 min-h-[42px] text-sm font-semibold">
-          {product.name}
-        </h3>
-
-        <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
-          <Star
-            size={14}
-            className="fill-yellow-400 text-yellow-400"
-          />
-
-          {product.rating_avg || 5}
-
-          <span>
-            • {product.sold}{" "}
-            {t.sold || "sold"}
-          </span>
-        </div>
-
-        <div className="mt-4 flex items-end justify-between">
-          <div>
-            <p className="text-lg font-black text-red-500">
-              {formatPi(
-                product.final_price ||
-                  product.price
-              )}{" "}
-              π
-            </p>
-
-            {product.sale_price && (
-              <p className="text-xs text-gray-400 line-through">
-                {formatPi(product.price)} π
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return src;
 }
 
 /* =========================================================
@@ -194,15 +65,9 @@ export default function HomePage() {
 
   const { t } = useTranslation();
 
-  const [showSplash, setShowSplash] =
-    useState(true);
-
-  const [selectedCategory, setSelectedCategory] =
-    useState<number | "all">("all");
-
   const [message, setMessage] = useState<{
     text: string;
-    type: "error" | "success";
+    type: "success" | "error";
   } | null>(null);
 
   /* =========================================================
@@ -229,7 +94,6 @@ export default function HomePage() {
     fetcher,
     {
       revalidateOnFocus: false,
-      dedupingInterval: 10000,
     }
   );
 
@@ -245,50 +109,7 @@ export default function HomePage() {
     loadingProducts || loadingCategories;
 
   /* =========================================================
-     EFFECTS
-  ========================================================= */
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 1200);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  /* =========================================================
-     MESSAGE
-  ========================================================= */
-
-  const showMessage = (
-    text: string,
-    type: "error" | "success" = "error"
-  ) => {
-    setMessage({ text, type });
-
-    setTimeout(() => {
-      setMessage(null);
-    }, 2500);
-  };
-
-  /* =========================================================
-     FILTER
-  ========================================================= */
-
-  const filteredProducts = useMemo(() => {
-    if (selectedCategory === "all") {
-      return products;
-    }
-
-    return products.filter(
-      (p) =>
-        Number(p.category_id) ===
-        Number(selectedCategory)
-    );
-  }, [products, selectedCategory]);
-
-  /* =========================================================
-     TRENDING
+     PRODUCTS
   ========================================================= */
 
   const trendingProducts = useMemo(() => {
@@ -296,6 +117,33 @@ export default function HomePage() {
       .sort((a, b) => b.sold - a.sold)
       .slice(0, 8);
   }, [products]);
+
+  const flashSaleProducts = useMemo(() => {
+    return products
+      .filter((p) => p.sale_price)
+      .slice(0, 10);
+  }, [products]);
+
+  const newProducts = useMemo(() => {
+    return [...products]
+      .reverse()
+      .slice(0, 6);
+  }, [products]);
+
+  /* =========================================================
+     MESSAGE
+  ========================================================= */
+
+  const showMessage = (
+    text: string,
+    type: "success" | "error" = "error"
+  ) => {
+    setMessage({ text, type });
+
+    setTimeout(() => {
+      setMessage(null);
+    }, 2500);
+  };
 
   /* =========================================================
      CART
@@ -314,11 +162,12 @@ export default function HomePage() {
     }
 
     if (
-      !product.is_unlimited &&
-      (product.stock ?? 0) <= 0
+      product.stock <= 0 &&
+      !product.is_unlimited
     ) {
       showMessage(
-        t.out_of_stock || "Out of stock"
+        t.out_of_stock ||
+          "Out of stock"
       );
 
       return;
@@ -329,28 +178,65 @@ export default function HomePage() {
       product_id: product.id,
       name: product.name,
       price: product.price,
-      sale_price:
-        product.final_price ||
-        product.sale_price,
+      sale_price: product.final_price,
       quantity: 1,
       thumbnail: product.thumbnail,
     });
 
     showMessage(
-      t.added_to_cart || "Added",
+      t.added_to_cart ||
+        "Added to cart",
       "success"
     );
   };
 
   /* =========================================================
+     EFFECT
+  ========================================================= */
+
+  useEffect(() => {
+    const prev =
+      document.body.style.background;
+
+    document.body.style.background =
+      "#f5f7fb";
+
+    return () => {
+      document.body.style.background =
+        prev;
+    };
+  }, []);
+
+  /* =========================================================
      LOADING
   ========================================================= */
 
-  if (
-    showSplash ||
-    (loading && products.length === 0)
-  ) {
-    return <SplashScreen />;
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#f5f7fb] p-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-56 rounded-[32px] bg-white" />
+
+          <div className="grid grid-cols-4 gap-3">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="h-24 rounded-2xl bg-white"
+              />
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="h-72 rounded-[28px] bg-white"
+              />
+            ))}
+          </div>
+        </div>
+      </main>
+    );
   }
 
   /* =========================================================
@@ -363,7 +249,7 @@ export default function HomePage() {
 
       {message && (
         <div
-          className={`fixed left-1/2 top-20 z-50 -translate-x-1/2 rounded-2xl px-5 py-3 text-sm font-medium shadow-2xl backdrop-blur-xl ${
+          className={`fixed left-1/2 top-20 z-50 -translate-x-1/2 rounded-2xl px-5 py-3 text-sm font-semibold shadow-2xl ${
             message.type === "error"
               ? "bg-red-500 text-white"
               : "bg-green-500 text-white"
@@ -373,40 +259,62 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* HERO */}
+      {/* HEADER */}
 
-      <section className="relative overflow-hidden rounded-b-[40px] bg-gradient-to-br from-black via-gray-900 to-orange-600 px-5 pb-10 pt-6 text-white">
-        <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl" />
+      <header className="sticky top-0 z-40 border-b border-white/30 bg-white/80 backdrop-blur-2xl">
+        <div className="flex items-center gap-3 px-4 py-4">
+          <div className="flex h-12 flex-1 items-center gap-3 rounded-2xl bg-gray-100 px-4">
+            <Search
+              size={18}
+              className="text-gray-400"
+            />
 
-        <div className="absolute bottom-0 left-0 h-44 w-44 rounded-full bg-red-500/20 blur-3xl" />
-
-        {/* TOP */}
-
-        <div className="relative z-10">
-          <BannerCarousel />
-
-          <div className="mt-5 flex justify-center">
-            <PiPriceWidget />
+            <input
+              type="text"
+              placeholder={
+                t.search_products ||
+                "Search products..."
+              }
+              className="w-full bg-transparent text-sm outline-none"
+            />
           </div>
 
-          {/* CONTENT */}
+          <button className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white">
+            <ShoppingCart size={18} />
 
-          <div className="mt-8">
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              2
+            </span>
+          </button>
+        </div>
+      </header>
+
+      {/* HERO */}
+
+      <section className="px-4 pt-5">
+        <div className="relative overflow-hidden rounded-[36px] bg-gradient-to-br from-black via-zinc-900 to-orange-600 p-7 text-white shadow-2xl">
+          <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-orange-500/30 blur-3xl" />
+
+          <div className="absolute bottom-0 right-0 opacity-20">
+            <Sparkles size={180} />
+          </div>
+
+          <div className="relative z-10">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold backdrop-blur-xl">
-              <Sparkles size={14} />
+              <Flame size={14} />
 
-              {t.future_marketplace ||
-                "Future Marketplace"}
+              {t.trending_marketplace ||
+                "Trending Marketplace"}
             </div>
 
-            <h1 className="mt-5 max-w-xl text-4xl font-black leading-tight">
-              {t.discover_modern_products ||
-                "Discover modern commerce experiences"}
+            <h1 className="mt-5 max-w-xs text-4xl font-black leading-tight">
+              {t.discover_products ||
+                "Discover Future Commerce"}
             </h1>
 
-            <p className="mt-4 max-w-md text-sm text-white/80">
+            <p className="mt-4 max-w-sm text-sm text-white/80">
               {t.smart_shopping_discovery ||
-                "Trending products, curated collections and next generation shopping."}
+                "Explore curated collections, flash deals and modern shopping experiences."}
             </p>
 
             <button
@@ -418,88 +326,160 @@ export default function HomePage() {
               {t.explore_now ||
                 "Explore Now"}
 
-              <ChevronRight size={16} />
+              <ArrowRight size={16} />
             </button>
           </div>
         </div>
       </section>
 
-      {/* CATEGORIES */}
+      {/* QUICK CATEGORIES */}
 
-      <section className="mt-6 px-4">
+      <section className="mt-7 px-4">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-black">
+            <h2 className="text-xl font-black">
               {t.categories ||
                 "Categories"}
             </h2>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="text-sm text-gray-500">
               {t.shop_by_category ||
                 "Shop by category"}
+            </p>
+          </div>
+
+          <Link
+            href="/categories"
+            className="text-sm font-semibold text-gray-500"
+          >
+            {t.view_all ||
+              "View all"}
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-4 gap-3">
+          {categories
+            .slice(0, 8)
+            .map((category) => (
+              <Link
+                key={category.id}
+                href={`/categories?id=${category.id}`}
+              >
+                <div className="rounded-[24px] bg-white p-3 shadow-sm transition-all duration-300 active:scale-95">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
+                    <Image
+                      src={getImage(
+                        category.icon
+                      )}
+                      alt={category.key}
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 rounded-xl object-cover"
+                    />
+                  </div>
+
+                  <p className="mt-2 line-clamp-2 text-center text-[11px] font-medium">
+                    {t[
+                      category.key
+                    ] || category.key}
+                  </p>
+                </div>
+              </Link>
+            ))}
+        </div>
+      </section>
+
+      {/* FLASH SALE */}
+
+      <section className="mt-8 px-4">
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <Flame
+                size={18}
+                className="text-red-500"
+              />
+
+              <h2 className="text-2xl font-black">
+                {t.flash_sale ||
+                  "Flash Sale"}
+              </h2>
+            </div>
+
+            <p className="mt-1 text-sm text-gray-500">
+              {t.best_deals_today ||
+                "Best deals today"}
             </p>
           </div>
         </div>
 
         <div className="flex gap-4 overflow-x-auto pb-2">
-          <button
-            onClick={() =>
-              setSelectedCategory("all")
-            }
-            className={`flex min-w-[90px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all ${
-              selectedCategory === "all"
-                ? "bg-black text-white shadow-xl"
-                : "bg-white text-gray-700"
-            }`}
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-2xl">
-              🛍️
-            </div>
-
-            <span className="text-xs font-semibold">
-              {t.all || "All"}
-            </span>
-          </button>
-
-          {categories.map((category) => {
-            const active =
-              Number(selectedCategory) ===
-              Number(category.id);
-
-            return (
-              <button
-                key={category.id}
-                onClick={() =>
-                  setSelectedCategory(
-                    Number(category.id)
-                  )
-                }
-                className={`flex min-w-[90px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all ${
-                  active
-                    ? "bg-black text-white shadow-xl"
-                    : "bg-white text-gray-700"
-                }`}
+          {flashSaleProducts.map(
+            (product) => (
+              <Link
+                key={product.id}
+                href={`/product/${product.id}`}
+                className="min-w-[220px]"
               >
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-gray-100">
-                  <Image
-                    src={
-                      category.icon ||
-                      "/placeholder.png"
-                    }
-                    alt={category.key}
-                    width={80}
-                    height={80}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+                <div className="overflow-hidden rounded-[28px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
+                  <div className="relative">
+                    <Image
+                      src={getImage(
+                        product.thumbnail
+                      )}
+                      alt={product.name}
+                      width={500}
+                      height={500}
+                      className="h-52 w-full object-cover"
+                    />
 
-                <span className="line-clamp-2 text-center text-[11px] font-semibold">
-                  {t[category.key] ||
-                    category.key}
-                </span>
-              </button>
-            );
-          })}
+                    <div className="absolute left-3 top-3 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
+                      SALE
+                    </div>
+                  </div>
+
+                  <div className="p-4">
+                    <h3 className="line-clamp-2 text-sm font-semibold">
+                      {product.name}
+                    </h3>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-lg font-black text-red-500">
+                          {formatPi(
+                            product.final_price
+                          )}{" "}
+                          π
+                        </p>
+
+                        <p className="text-xs text-gray-400 line-through">
+                          {formatPi(
+                            product.price
+                          )}{" "}
+                          π
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+
+                          handleAddToCart(
+                            product
+                          );
+                        }}
+                        className="flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white"
+                      >
+                        <ShoppingCart
+                          size={18}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            )
+          )}
         </div>
       </section>
 
@@ -508,157 +488,160 @@ export default function HomePage() {
       <section className="mt-10 px-4">
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600">
-              <TrendingUp size={14} />
-
+            <h2 className="text-2xl font-black">
               {t.trending_now ||
                 "Trending Now"}
-            </div>
-
-            <h2 className="text-2xl font-black">
-              {t.best_selling_products ||
-                "Best selling products"}
             </h2>
-          </div>
 
-          <button
-            onClick={() =>
-              router.push("/categories")
-            }
-            className="text-sm font-semibold text-gray-500"
-          >
-            {t.view_all || "View all"}
-          </button>
+            <p className="mt-1 text-sm text-gray-500">
+              {t.most_popular_products_today ||
+                "Most popular today"}
+            </p>
+          </div>
         </div>
 
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {trendingProducts.map((product) => (
-            <div
-              key={product.id}
-              className="min-w-[240px]"
-            >
-              <ProductCard
-                product={product}
-                onAddToCart={
-                  handleAddToCart
-                }
-                t={t}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
+        <div className="grid grid-cols-2 gap-4">
+          {trendingProducts.map(
+            (product) => (
+              <Link
+                key={product.id}
+                href={`/product/${product.id}`}
+              >
+                <div className="group overflow-hidden rounded-[30px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                  <div className="relative overflow-hidden">
+                    <Image
+                      src={getImage(
+                        product.thumbnail
+                      )}
+                      alt={product.name}
+                      width={500}
+                      height={500}
+                      className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
 
-      {/* FLASH SALE */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
 
-      <section className="mt-10 px-4">
-        <div className="overflow-hidden rounded-[32px] bg-gradient-to-r from-red-500 to-orange-500 p-5 text-white">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur-xl">
-                <Flame size={14} />
+                        handleAddToCart(
+                          product
+                        );
+                      }}
+                      className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-black shadow-xl"
+                    >
+                      <ShoppingCart
+                        size={18}
+                      />
+                    </button>
+                  </div>
 
-                {t.flash_sale ||
-                  "Flash Sale"}
-              </div>
-
-              <h2 className="mt-3 text-2xl font-black">
-                {t.limited_offers ||
-                  "Limited offers"}
-              </h2>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {products
-              .filter(
-                (p) => p.sale_price
-              )
-              .slice(0, 4)
-              .map((product) => (
-                <div
-                  key={product.id}
-                  onClick={() =>
-                    router.push(
-                      `/product/${product.id}`
-                    )
-                  }
-                  className="overflow-hidden rounded-2xl bg-white text-black"
-                >
-                  <Image
-                    src={getMainImage(product)}
-                    alt={product.name}
-                    width={300}
-                    height={300}
-                    className="h-36 w-full object-cover"
-                  />
-
-                  <div className="p-3">
-                    <p className="line-clamp-2 text-xs font-medium">
+                  <div className="p-4">
+                    <h3 className="line-clamp-2 min-h-[40px] text-sm font-semibold">
                       {product.name}
-                    </p>
+                    </h3>
 
-                    <p className="mt-2 text-sm font-black text-red-500">
-                      {formatPi(
-                        product.final_price ||
-                          product.price
-                      )}{" "}
-                      π
-                    </p>
+                    <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                      <Star
+                        size={14}
+                        className="fill-yellow-400 text-yellow-400"
+                      />
 
-                    <p className="text-[11px] text-gray-400 line-through">
-                      {formatPi(
-                        product.price
-                      )}{" "}
-                      π
-                    </p>
+                      {product.rating_avg ||
+                        5}
+
+                      <span>
+                        •{" "}
+                        {product.sold}{" "}
+                        {t.sold ||
+                          "sold"}
+                      </span>
+                    </div>
+
+                    <div className="mt-4">
+                      <p className="text-lg font-black text-red-500">
+                        {formatPi(
+                          product.final_price
+                        )}{" "}
+                        π
+                      </p>
+                    </div>
                   </div>
                 </div>
-              ))}
-          </div>
+              </Link>
+            )
+          )}
         </div>
       </section>
 
-      {/* PRODUCTS */}
+      {/* NEW ARRIVALS */}
 
       <section className="mt-10 px-4">
         <div className="mb-5">
           <h2 className="text-2xl font-black">
-            {t.discover_products ||
-              "Discover Products"}
+            {t.new_arrivals ||
+              "New Arrivals"}
           </h2>
 
           <p className="mt-1 text-sm text-gray-500">
-            {t.curated_products_for_you ||
-              "Curated products for you"}
+            {t.latest_products ||
+              "Latest products"}
           </p>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-2 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="h-72 animate-pulse rounded-[28px] bg-white"
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4">
-            {filteredProducts.map(
-              (product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={
-                    handleAddToCart
-                  }
-                  t={t}
+        <div className="space-y-4">
+          {newProducts.map((product) => (
+            <Link
+              key={product.id}
+              href={`/product/${product.id}`}
+            >
+              <div className="flex items-center gap-4 rounded-[28px] bg-white p-3 shadow-sm">
+                <Image
+                  src={getImage(
+                    product.thumbnail
+                  )}
+                  alt={product.name}
+                  width={120}
+                  height={120}
+                  className="h-24 w-24 rounded-2xl object-cover"
                 />
-              )
-            )}
-          </div>
-        )}
+
+                <div className="min-w-0 flex-1">
+                  <h3 className="line-clamp-2 text-sm font-semibold">
+                    {product.name}
+                  </h3>
+
+                  <p className="mt-2 text-lg font-black text-red-500">
+                    {formatPi(
+                      product.final_price
+                    )}{" "}
+                    π
+                  </p>
+
+                  <p className="mt-1 text-xs text-gray-500">
+                    {product.sold}{" "}
+                    {t.sold ||
+                      "sold"}
+                  </p>
+                </div>
+
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+
+                    handleAddToCart(
+                      product
+                    );
+                  }}
+                  className="flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white"
+                >
+                  <ShoppingCart
+                    size={18}
+                  />
+                </button>
+              </div>
+            </Link>
+          ))}
+        </div>
       </section>
     </main>
   );
