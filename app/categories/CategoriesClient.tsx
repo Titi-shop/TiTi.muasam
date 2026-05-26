@@ -482,7 +482,7 @@ ${
     : "border-transparent"
 }
 bg-[var(--card-bg)] text-[var(--foreground)]`}
-              }`}
+              
             >
               {item.label}
             </button>
