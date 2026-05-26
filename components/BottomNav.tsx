@@ -39,17 +39,17 @@ export default function BottomNav() {
       <nav
   className={`
     fixed bottom-0 left-0 right-0 z-50
-    border-t backdrop-blur-2xl
     transition-transform duration-300
+    backdrop-blur-xl
     ${hidden ? "translate-y-full" : "translate-y-0"}
   `}
-        style={{
-          backgroundColor: "var(--nav-bg)",
-          color: "var(--nav-text)",
-          borderTop: "1px solid var(--nav-border)",
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}
-      >
+  style={{
+    backgroundColor: "var(--nav-bg)",
+    color: "var(--nav-text)",
+    borderTop: "1px solid var(--nav-border)",
+    paddingBottom: "env(safe-area-inset-bottom)",
+  }}
+>
         <div className="mx-auto max-w-md">
           <div className="flex h-[64px] items-center justify-around px-2">
 
