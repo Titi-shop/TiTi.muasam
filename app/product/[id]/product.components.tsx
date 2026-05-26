@@ -29,14 +29,12 @@ type Variant = {
   name?: string;
 
   price: number;
-  salePrice?: number | null;
-  finalPrice: number;
-
-  saleEnabled: boolean;
+  sale_price?: number | null;
+  final_price: number;
+  sale_enabled: boolean;
   stock: number;
-
   image?: string;
-  isActive?: boolean;
+  is_active?: boolean;
 };
 
 type RelatedProduct = {
@@ -112,8 +110,8 @@ export function ProductView(props: ProductViewProps) {
     relatedProducts,
   } = props;
    const variantOnSale =
-  selectedVariant?.salePrice != null &&
-  selectedVariant.salePrice < selectedVariant.price;
+  selectedVariant?.sale_price != null &&
+  selectedVariant.sale_price < selectedVariant.price;
   /* ================= SAFE ================= */
   if (!product) return null;
 
@@ -136,7 +134,9 @@ export function ProductView(props: ProductViewProps) {
   return (
     <div className="min-h-screen pb-40 bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300">
       {/* ===== GALLERY ===== */}
-      <div className="relative bg-white">
+      <div
+  className="relative" style={{  backgroundColor: "var(--card-bg)",  }}
+>
         {product.sale_price &&
  product.final_price < product.price && (
           <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 text-xs rounded z-10">
@@ -247,155 +247,232 @@ onTouchMove={(e) => {
       )}
 
       {/* ===== INFO ===== */}
-      <div className="bg-white p-4 flex justify-between items-start">
-        <h2 className="text-lg font-medium">{product.name}</h2>
+      <div
+  className="p-4 flex justify-between items-start"
+  style={{
+    backgroundColor: "var(--card-bg)",
+  }}
+>
+  <h2 className="text-lg font-medium">
+    {product.name}
+  </h2>
 
-<div className="text-right">
-  {hasVariants ? (
-    selectedVariant ? (
+  <div className="text-right">
+    {hasVariants ? (
+      selectedVariant ? (
+        <>
+          <p className="text-xl font-bold text-primary">
+            π{" "}
+            {formatPi(
+              selectedVariant.final_price ??
+                selectedVariant.sale_price ??
+                selectedVariant.price
+            )}
+          </p>
+
+          {variantOnSale && (
+            <p className="text-sm text-gray-400 line-through">
+              π{" "}
+              {formatPi(
+                selectedVariant.price
+              )}
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="text-xl font-bold text-primary">
+          π{" "}
+          {formatPi(
+            product.final_price ??
+              product.sale_price ??
+              product.price ??
+              0
+          )}
+        </p>
+      )
+    ) : (
       <>
         <p className="text-xl font-bold text-primary">
-          π {formatPi(selectedVariant.finalPrice)}
+          π{" "}
+          {formatPi(
+            product.final_price ??
+              product.sale_price ??
+              product.price ??
+              0
+          )}
         </p>
 
-      {variantOnSale && (
-      <p className="text-sm text-gray-400 line-through">
-    π {formatPi(selectedVariant.price)}
-      </p>
-       )}
+        {(product.sale_price ?? 0) >
+          0 &&
+          (product.final_price ??
+            product.price) <
+            product.price && (
+            <p className="text-sm text-gray-400 line-through">
+              π{" "}
+              {formatPi(
+                product.price
+              )}
+            </p>
+          )}
       </>
-    ) : (
-      <p className="text-xl font-bold text-primary">
-        {product.minPrice === product.maxPrice
-          ? `π ${formatPi(product.minPrice ?? 0)}`
-          : `π ${formatPi(product.minPrice ?? 0)} - ${formatPi(product.maxPrice ?? 0)}`}
-      </p>
-    )
-  ) : (
-    <>
-      <p className="text-xl font-bold text-primary">
-        π {formatPi(product.finalPrice ?? product.price)}
-      </p>
-
-      {product.finalPrice < product.price && (
-        <p className="text-sm text-gray-400 line-through">
-          π {formatPi(product.price)}
-        </p>
-      )}
-    </>
-  )}
+    )}
+  </div>
 </div>
-      </div>
 
       {/* ===== META ===== */}
       style={{ backgroundColor: "var(--card-bg)" }}
-        <span>👁 {product.views || 0} {t.views}</span>
+<div
+  className="px-4 pb-4 flex gap-4 text-sm"
+  style={{
+    backgroundColor: "var(--card-bg)",
+    color: "var(--text-muted)",
+  }}
+>
+  <span>
+    👁 {product.views || 0}{" "}
+    {t.views}
+  </span>
 
-        <span className="flex items-center gap-1">
-          <ShoppingCart className="w-4 h-4" />
-          {product.sold || 0} {t.orders}
-        </span>
+  <span className="flex items-center gap-1">
+    <ShoppingCart className="w-4 h-4" />
+    {product.sold || 0} {t.orders}
+  </span>
 
-        <span className="flex items-center gap-1">
-          ⭐ {Number(product.rating_avg ?? 0).toFixed(1)}
-          <span className="text-gray-400">
-            ({product.rating_count ?? 0})
-          </span>
-        </span>
-      </div>
+  <span className="flex items-center gap-1">
+    ⭐{" "}
+    {Number(
+      product.rating_avg ?? 0
+    ).toFixed(1)}
+
+    <span className="text-gray-400">
+      ({product.rating_count ?? 0})
+    </span>
+  </span>
+</div>
 
       {/* ===== STOCK ===== */}
-      style={{ backgroundColor: "var(--card-bg)" }}
-        {canBuy ? (
-          <span className="text-green-600">
-            ✅ {t.in_stock}{" "}
-            {hasVariants
-              ? selectedVariant
-                ? selectedVariant.stock
-                : product.stock
-              : product.stock}
-            </span>
-            ) : (
-          <span className="text-red-500">
-            ❌ {t.out_of_stock}
-          </span>
-        )}
-      </div>
+      <div
+  className="px-4 pb-2 text-sm"
+  style={{
+    backgroundColor: "var(--card-bg)",
+  }}
+>
+  {canBuy ? (
+    <span className="text-green-600">
+      ✅ {t.in_stock}{" "}
+      {hasVariants
+        ? selectedVariant
+          ? selectedVariant.stock
+          : product.stock
+        : product.stock}
+    </span>
+  ) : (
+    <span className="text-red-500">
+      ❌ {t.out_of_stock}
+    </span>
+  )}
+</div>
 
       {/* ===== VARIANTS ===== */}
-     {hasVariants && availableVariants?.length > 0 && (
-  style={{ backgroundColor: "var(--card-bg)" }}
-    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+     {hasVariants &&
+  availableVariants?.length > 0 && (
+    <div
+      className="px-4 pb-4"
+      style={{
+        backgroundColor:
+          "var(--card-bg)",
+      }}
+    >
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+        {availableVariants.map((v) => {
+          const isSelected =
+            selectedVariant?.id ===
+            v.id;
 
-      {availableVariants.map((v) => {
-        const isSelected = selectedVariant?.id === v.id;
-        const isDisabled = v.stock <= 0;
+          const isDisabled =
+            v.stock <= 0;
 
-        return (
-          <button
-            key={v.id}
-            disabled={isDisabled}
-            onClick={() => {
-              if (!isDisabled) {
-                setSelectedVariant(v);
-                if (v.image ?? null) {
-              setActiveImage(v.image);
-             }else {
-                  setActiveImage(null);
+          return (
+            <button
+              key={v.id}
+              disabled={isDisabled}
+              onClick={() => {
+                if (!isDisabled) {
+                  setSelectedVariant(v);
+
+                  if (v.image ?? null) {
+                    setActiveImage(
+                      v.image
+                    );
+                  } else {
+                    setActiveImage(
+                      null
+                    );
+                  }
                 }
-              }
-            }}
-            className={`
+              }}
+              className={`
               rounded border px-2 py-2 text-sm transition
               ${
                 isDisabled
                   ? "bg-gray-100 text-gray-400"
                   : isSelected
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-gray-300 bg-white"
+                  : "border-[var(--nav-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
               }
             `}
-          >
-            <div className="flex flex-col items-center gap-1">
+            >
+              <div className="flex flex-col items-center gap-1">
+                {v.image && (
+                  <img
+                    src={v.image}
+                    className="w-6 h-6 rounded-full object-cover border"
+                  />
+                )}
 
-              {v.image && (
-                <img
-                  src={v.image}
-                  className="w-6 h-6 rounded-full object-cover border"
-                />
-              )}
+                <span className="text-[11px]">
+                  {v.option2 ||
+                    v.option1 ||
+                    "Option"}
+                </span>
 
-              <span className="text-[11px]">
-                {v.option2 || v.option1 || "Option"}
-              </span>
-
-              <span className="text-[10px] text-gray-400">
-                {v.stock}
-              </span>
-
-            </div>
-          </button>
-        );
-      })}
-
+                <span className="text-[10px] text-gray-400">
+                  {v.stock}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
-  </div>
-)}
+  )}
 
       {/* ===== DESCRIPTION ===== */}
-    style={{ backgroundColor: "var(--card-bg)" }}
-        {formatShortDescription(product.description).map((l, i) => (
-          <p key={i}>• {l}</p>
-        ))}
-      </div>
+    <div
+  className="p-4"
+  style={{
+    backgroundColor: "var(--card-bg)",
+  }}
+>
+  {formatShortDescription(
+    product.description
+  ).map((l, i) => (
+    <p key={i}>• {l}</p>
+  ))}
+</div>
 
       {/* ===== DETAIL ===== */}
       <div
-        className="bg-white mt-2 p-4 text-sm"
-        dangerouslySetInnerHTML={{
-          __html: formatDetail(product.detail || ""),
-        }}
-      />
+  className="mt-2 p-4 text-sm"
+  style={{
+    backgroundColor: "var(--card-bg)",
+  }}
+  dangerouslySetInnerHTML={{
+    __html: formatDetail(
+      product.detail || ""
+    ),
+  }}
+/>
 
       {/* ===== RELATED ===== */}
       {relatedProducts?.length > 0 && (
