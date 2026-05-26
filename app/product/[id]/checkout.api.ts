@@ -44,11 +44,15 @@ export const previewFetcher = async (
   }
 
   if (!res.ok) {
-    throw new Error(
-      typeof (data as any)?.error === "string"
-        ? (data as any).error
-        : "PREVIEW_FAILED"
-    );
+  const errorMessage =
+    typeof data === "object" &&
+    data !== null &&
+    "error" in data &&
+    typeof data.error === "string"
+      ? data.error
+      : "PREVIEW_FAILED";
+
+  throw new Error(errorMessage);
   }
 
   return data as PreviewResponse;
