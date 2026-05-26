@@ -94,7 +94,9 @@ export function ProductView(props: ProductViewProps) {
   if (!product) return null;
 
   /* ================= DOUBLE TAP FIX ================= */
-  const [lastTap, setLastTap] = useState(0);
+  const [lastTap, setLastTap] =
+  useState(0);
+if (!product) return null;
 
   /* ================= IMAGES ================= */
   const displayImages = [
@@ -192,9 +194,7 @@ onTouchMove={(e) => {
   if (e.touches.length === 2) {
     const dx = e.touches[0].clientX - e.touches[1].clientX;
     const dy = e.touches[0].clientY - e.touches[1].clientY;
-
     const distance = Math.sqrt(dx * dx + dy * dy);
-
     let newScale = initialScale * (distance / initialDistance);
     newScale = Math.max(1, Math.min(newScale, 6));
 
@@ -300,7 +300,6 @@ onTouchMove={(e) => {
     )}
   </div>
 </div>
-  
 
       {/* ===== META ===== */}
   
@@ -460,7 +459,11 @@ onTouchMove={(e) => {
 
       {/* ===== RELATED ===== */}
       {relatedProducts?.length > 0 && (
-        <div className="bg-white mt-2 p-4">
+        <div
+  className="mt-2 p-4"
+  style={{
+    backgroundColor: "var(--card-bg)", }}
+>
           <h3 className="text-sm font-semibold mb-3">
             🔗 {t.product_related_products}
           </h3>
