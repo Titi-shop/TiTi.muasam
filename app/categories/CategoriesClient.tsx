@@ -475,11 +475,13 @@ bg-[var(--card-bg)] text-[var(--foreground)]`}
                     | "latest"
                 )
               }
-              className={`whitespace-nowrap rounded-full px-5 py-2 text-sm font-semibold transition-all ${
-                sortType ===
-                item.key
-                  ? "bg-black text-white"
-                  : "bg-white text-gray-600"
+              className={`whitespace-nowrap rounded-full px-5 py-2 text-sm font-semibold transition-all border-2
+${
+  sortType === item.key
+    ? "border-[var(--color-primary)]"
+    : "border-transparent"
+}
+bg-[var(--card-bg)] text-[var(--foreground)]`}
               }`}
             >
               {item.label}
