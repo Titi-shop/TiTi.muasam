@@ -195,7 +195,11 @@ onTouchMove={(e) => {
     const dx = e.touches[0].clientX - e.touches[1].clientX;
     const dy = e.touches[0].clientY - e.touches[1].clientY;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    let newScale = initialScale * (distance / initialDistance);
+   if (!initialDistance) return;
+
+let newScale =
+  initialScale *
+  (distance / initialDistance);
     newScale = Math.max(1, Math.min(newScale, 6));
 
     setScale(newScale);
