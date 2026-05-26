@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
 import Image from "next/image";
 import Link from "next/link";
-
 import useSWR from "swr";
-
 import {
   Search,
   ShoppingCart,
@@ -16,11 +13,8 @@ import {
 } from "lucide-react";
 
 import { useCart } from "@/app/context/CartContext";
-
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-
 import { formatPi } from "@/lib/pi";
-
 import type { Product } from "@/types/product";
 import type { Category } from "@/types/category";
 
@@ -379,11 +373,13 @@ export default function CategoriesClient() {
                 "all"
               )
             }
-            className={`flex min-w-[82px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all ${
-              selectedCategory === "all"
-                ? "bg-black text-white shadow-xl"
-                : "bg-white text-gray-700"
-            }`}
+            className={`flex min-w-[82px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all border-2
+${
+  selectedCategory === "all"
+    ? "border-[var(--color-primary)]"
+    : "border-transparent"
+}
+bg-[var(--card-bg)] text-[var(--foreground)]`}
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
               🛍️
