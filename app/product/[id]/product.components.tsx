@@ -45,9 +45,12 @@ type ProductViewProps = {
   setInitialDistance: (v: number) => void;
   initialScale: number;
   setInitialScale: (v: number) => void;
-  selectedVariant: Variant | null;
-  setSelectedVariant: (v: Variant | null) => void;
-  availableVariants: Variant[];
+  selectedVariant: ProductVariantView | null;
+  setSelectedVariant: (
+  v: ProductVariantView | null
+) => void;
+
+availableVariants: ProductVariantView[];
   canBuy: boolean;
   selectedStock: number;
   hasVariants: boolean;
