@@ -236,7 +236,7 @@ setInitialScale={setInitialScale}
           thumbnail: product.thumbnail,
           stock,
 
-          shippingRates: product.shipping_rates,
+          shipping_rates: product.shipping_rates,
           variant_id: selectedVariant?.id ?? null,
         }}
       />
