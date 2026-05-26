@@ -4,7 +4,7 @@ import useSWR from "swr";
 import { useMemo } from "react";
 
 import type {
-  Product as ProductType,
+  ProductRecord,
   ProductVariant,
   ShippingRate,
 } from "@/types/Product";
@@ -65,7 +65,7 @@ export function useProduct(
     }
 
     const api =
-      data as Partial<ProductType>;
+  data as Partial<ProductRecord>;
 
     const normalizedProduct = {
       ...api,
@@ -157,7 +157,7 @@ export function useProduct(
           0,
     };
 
-    return normalizedProduct as ProductType & {
+    return normalizedProduct as ProductRecord & {
       is_sale: boolean;
 
       is_out_of_stock: boolean;
