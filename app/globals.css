@@ -22,9 +22,6 @@
 /* ===============================
    3️⃣ THEME MODE
 ================================ */
-/* =========================================
-   🌞 LIGHT MODE (Cam chủ đạo)
-========================================= */
 .theme-light {
 
   /* BACKGROUND */
@@ -51,6 +48,13 @@
   --hero-from: #f97316;
   --hero-via: #ea580c;
   --hero-to: #fb923c;
+
+ 
+--nav-bg: rgba(255,255,255,0.75);
+--nav-border: rgba(0,0,0,0.06);
+--nav-text: #111111;
+--nav-muted: #6b7280;
+--nav-active: #f97316;
 }
 
 :root {
@@ -87,6 +91,13 @@
   --hero-from: #000000;
   --hero-via: #111111;
   --hero-to: #1f2937;
+
+
+--nav-bg: rgba(0,0,0,0.88);
+--nav-border: rgba(255,255,255,0.08);
+--nav-text: #ffffff;
+--nav-muted: #9ca3af;
+--nav-active: #ffffff;
 }
 
 /* CUSTOMER */
