@@ -450,11 +450,11 @@ export default function HomePage() {
             onClick={() =>
               setSelectedCategory("all")
             }
-            className={`flex min-w-[90px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all ${
-              selectedCategory === "all"
-          ? "bg-primary text-white"
-            : "bg-[var(--card-bg)] text-[var(--foreground)]"
-            }`}
+            className={`flex min-w-[90px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all border-2 ${
+       selectedCategory === "all"
+    ? "border-orange-500"
+    : "border-transparent dark:border-black"
+}`}
           >
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-2xl">
   
