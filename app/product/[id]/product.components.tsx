@@ -134,7 +134,7 @@ export function ProductView(props: ProductViewProps) {
   /* ================= UI ================= */
 
   return (
-    <div className="pb-40 bg-gray-50 min-h-screen">
+    <div className="min-h-screen pb-40 bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300">
       {/* ===== GALLERY ===== */}
       <div className="relative bg-white">
         {product.sale_price &&
@@ -288,7 +288,7 @@ onTouchMove={(e) => {
       </div>
 
       {/* ===== META ===== */}
-      <div className="bg-white px-4 pb-4 flex gap-4 text-sm text-gray-600">
+      style={{ backgroundColor: "var(--card-bg)" }}
         <span>👁 {product.views || 0} {t.views}</span>
 
         <span className="flex items-center gap-1">
@@ -305,7 +305,7 @@ onTouchMove={(e) => {
       </div>
 
       {/* ===== STOCK ===== */}
-      <div className="bg-white px-4 pb-2 text-sm">
+      style={{ backgroundColor: "var(--card-bg)" }}
         {canBuy ? (
           <span className="text-green-600">
             ✅ {t.in_stock}{" "}
@@ -324,7 +324,7 @@ onTouchMove={(e) => {
 
       {/* ===== VARIANTS ===== */}
      {hasVariants && availableVariants?.length > 0 && (
-  <div className="bg-white px-4 pb-4">
+  style={{ backgroundColor: "var(--card-bg)" }}
     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
 
       {availableVariants.map((v) => {
@@ -383,7 +383,7 @@ onTouchMove={(e) => {
 )}
 
       {/* ===== DESCRIPTION ===== */}
-      <div className="bg-white p-4">
+    style={{ backgroundColor: "var(--card-bg)" }}
         {formatShortDescription(product.description).map((l, i) => (
           <p key={i}>• {l}</p>
         ))}
