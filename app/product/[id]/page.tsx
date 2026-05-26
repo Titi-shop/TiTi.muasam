@@ -13,7 +13,10 @@ import { useProduct } from "./product.logic";
 import { ProductView } from "./product.components";
 import CheckoutSheet from "./CheckoutSheet";
 
-import type { ProductRecord, ProductVariant } from "@/types/product";
+import type {
+  ProductRecord,
+  ProductVariant,
+} from "@/types/Product";
 
 /* =========================================================
    PAGE
@@ -35,7 +38,32 @@ export default function ProductDetail() {
 
   const [related, setRelated] = useState<ProductRecord[]>([]);
   const [openCheckout, setOpenCheckout] = useState(false);
+const [zoomImage, setZoomImage] =
+  useState<string | null>(null);
 
+const [scale, setScale] =
+  useState(1);
+
+const [position, setPosition] =
+  useState({
+    x: 0,
+    y: 0,
+  });
+
+const [dragging, setDragging] =
+  useState(false);
+
+const [start, setStart] =
+  useState({
+    x: 0,
+    y: 0,
+  });
+
+const [initialDistance, setInitialDistance] =
+  useState(0);
+
+const [initialScale, setInitialScale] =
+  useState(1);
   /* ================= DEFAULT VARIANT ================= */
 
   useEffect(() => {
@@ -173,6 +201,21 @@ export default function ProductDetail() {
         canBuy={canBuy}
         selectedStock={stock}
         relatedProducts={related}
+         zoomImage={zoomImage}
+setZoomImage={setZoomImage}
+scale={scale}
+setScale={setScale}
+position={position}
+setPosition={setPosition}
+dragging={dragging}
+setDragging={setDragging}
+start={start}
+setStart={setStart}
+initialDistance={initialDistance}
+setInitialDistance={setInitialDistance}
+
+initialScale={initialScale}
+setInitialScale={setInitialScale}
       />
 
       <CheckoutSheet
