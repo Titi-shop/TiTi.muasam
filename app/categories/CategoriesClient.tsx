@@ -316,7 +316,13 @@ export default function CategoriesClient() {
             />
           </div>
 
-          <button className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white">
+          <button
+  className="flex h-12 w-12 items-center justify-center rounded-2xl transition-colors"
+  style={{
+    backgroundColor: "var(--color-primary)",
+    color: "#fff",
+  }}
+>
             <SlidersHorizontal
               size={18}
             />
@@ -327,7 +333,17 @@ export default function CategoriesClient() {
       {/* HERO */}
 
       <section className="px-4 pt-5">
-        <div className="overflow-hidden rounded-[32px] bg-gradient-to-br from-zinc-900 via-black to-zinc-800 p-6 text-white">
+        <div
+  className="overflow-hidden rounded-[32px] p-6 text-white"
+  style={{
+    background: `linear-gradient(
+      135deg,
+      var(--hero-from),
+      var(--hero-via),
+      var(--hero-to)
+    )`,
+  }}
+>
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold backdrop-blur-xl">
