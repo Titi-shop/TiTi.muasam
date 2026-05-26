@@ -2,19 +2,32 @@
 
 import useSWR from "swr";
 import { useMemo } from "react";
-import type { Product as ProductType } from "@/types/Product";
+
+import type {
+  Product as ProductType,
+  ProductVariant,
+  ShippingRate,
+} from "@/types/Product";
+
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
-/* ================= FETCHER ================= */
+/* =========================================================
+   FETCHER
+========================================================= */
 
-const fetcher = async (url: string) => {
+const fetcher = async (
+  url: string
+) => {
   try {
-    const res = await apiAuthFetch(url, {
-      cache: "no-store",
-    });
+    const res = await apiAuthFetch(
+      url,
+      {
+        cache: "no-store",
+      }
+    );
 
     if (!res.ok) {
-      return null; // ❗ không throw raw error
+      return null;
     }
 
     return await res.json();
@@ -23,53 +36,133 @@ const fetcher = async (url: string) => {
   }
 };
 
-/* ================= HOOK ================= */
+/* =========================================================
+   HOOK
+========================================================= */
 
-export function useProduct(id: string) {
-  const { data, isLoading } = useSWR(
-    id ? `/api/products/${id}` : null,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      revalidateIfStale: true,
-      keepPreviousData: true,
-    }
-  );
+export function useProduct(
+  id: string
+) {
+  const { data, isLoading } =
+    useSWR(
+      id
+        ? `/api/products/${id}`
+        : null,
+      fetcher,
+      {
+        revalidateOnFocus: false,
+        revalidateIfStale: true,
+        keepPreviousData: true,
+      }
+    );
 
   const product = useMemo(() => {
-  if (!data || typeof data !== "object") return null;
+    if (
+      !data ||
+      typeof data !== "object"
+    ) {
+      return null;
+    }
 
-  const api = data as Partial<ProductType>;
+    const api =
+      data as Partial<ProductType>;
 
-  return {
-    ...api,
+    const normalizedProduct = {
+      ...api,
 
-    images: Array.isArray(api.images) ? api.images : [],
-    variants: Array.isArray(api.variants) ? api.variants : [],
-    shippingRates: Array.isArray(api.shippingRates)
-      ? api.shippingRates
-      : [],
+      /* ARRAYS */
 
-    ratingAvg: Number.isFinite(Number(api.ratingAvg))
-      ? Number(api.ratingAvg)
-      : 0,
+      images: Array.isArray(
+        api.images
+      )
+        ? api.images
+        : [],
 
-    ratingCount: Number.isFinite(Number(api.ratingCount))
-      ? Number(api.ratingCount)
-      : 0,
+      variants: Array.isArray(
+        api.variants
+      )
+        ? (api.variants as ProductVariant[])
+        : [],
 
-    // 🔥 CHUẨN
-    finalPrice: api.finalPrice ?? api.price ?? 0,
-    isSale: api.isSale ?? false,
+      shipping_rates:
+        Array.isArray(
+          api.shipping_rates
+        )
+          ? (api.shipping_rates as ShippingRate[])
+          : [],
 
-    isOutOfStock:
-      (api.stock ?? 0) <= 0 || api.isActive === false,
-  } as ProductType & {
-    finalPrice: number;
-    isSale: boolean;
-    isOutOfStock: boolean;
-  };
-}, [data]);
+      /* NUMBERS */
+
+      rating_avg: Number(
+        api.rating_avg ?? 0
+      ),
+
+      rating_count: Number(
+        api.rating_count ?? 0
+      ),
+
+      sold: Number(
+        api.sold ?? 0
+      ),
+
+      stock: Number(
+        api.stock ?? 0
+      ),
+
+      views: Number(
+        api.views ?? 0
+      ),
+
+      price: Number(
+        api.price ?? 0
+      ),
+
+      sale_price:
+        api.sale_price != null
+          ? Number(api.sale_price)
+          : null,
+
+      final_price: Number(
+        api.final_price ??
+          api.sale_price ??
+          api.price ??
+          0
+      ),
+
+      /* SAFE BOOLEAN */
+
+      is_active:
+        api.is_active !== false,
+
+      is_unlimited:
+        api.is_unlimited === true,
+
+      sale_enabled:
+        api.sale_enabled === true,
+
+      /* DERIVED */
+
+      is_sale:
+        !!api.sale_price &&
+        Number(
+          api.final_price ??
+            api.sale_price ??
+            0
+        ) <
+          Number(api.price ?? 0),
+
+      is_out_of_stock:
+        !api.is_unlimited &&
+        Number(api.stock ?? 0) <=
+          0,
+    };
+
+    return normalizedProduct as ProductType & {
+      is_sale: boolean;
+
+      is_out_of_stock: boolean;
+    };
+  }, [data]);
 
   return {
     product,
