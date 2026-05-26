@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -49,7 +47,7 @@ export default function CheckoutSheet({ open, onClose, product }: Props) {
   /* ========================= */
 function detectInitialZone(
   shippingCountry: string,
-  rates: Shipping_rate[]
+  rates: ShippingRate[]
 ): Region | null {
   if (!shippingCountry || !Array.isArray(rates)) return null;
 
@@ -84,7 +82,7 @@ function detectInitialZone(
       id: product.id,
       name: product.name,
       price,
-      finalPrice: price,
+      final_price: price,
       thumbnail: product.thumbnail || "/placeholder.png",
       stock: selected.stock ?? 0,
     };
@@ -92,17 +90,17 @@ function detectInitialZone(
 
   /* ================= PRODUCT ================= */
   const price =
-    typeof product.finalPrice === "number"
-      ? product.finalPrice
-      : product.salePrice && product.salePrice > 0
-      ? product.salePrice
+    typeof product.final_price === "number"
+      ? product.final_price
+      : product.sale_price && product.sale_price > 0
+      ? product.sale_price
       : product.price;
 
   return {
     id: product.id,
     name: product.name,
     price,
-    finalPrice: price,
+    final_price: price,
     thumbnail: product.thumbnail || "/placeholder.png",
     stock: product.stock ?? 0,
   };
@@ -200,12 +198,12 @@ useEffect(() => {
 
   const availableRegions = useMemo(() => {
   return Array.isArray(product?.shipping_rates)
-    ? product.shippingr_rates
+    ? product.shipping_rates
     : [];
 }, [product?.shipping_rates]);
-
-  const total = preview?.total ?? 0;
-
+  const total =
+  preview?.total ??
+  unitPrice * quantity;
   /* ========================= */
 
   const validate = () =>
@@ -256,7 +254,13 @@ useEffect(() => {
         </div>
       )}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl h-[65vh] flex flex-col">
+      <div
+  className="absolute bottom-0 left-0 right-0 rounded-t-2xl h-[65vh] flex flex-col"
+  style={{
+    backgroundColor: "var(--card-bg)",
+    color: "var(--foreground)",
+  }}
+>
 
         {/* SCROLL */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
@@ -360,8 +364,10 @@ setZone(r.zone);
         value={qtyDraft}
         onChange={(e) => {
           const val = e.target.value.replace(/\D/g, "");
-          if (!val) return;
-
+          if (val === "") {
+  setQtyDraft("");
+  return;
+          }
        const num = Number(val);
         if (num > maxStock) return;
 
