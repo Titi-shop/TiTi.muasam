@@ -202,7 +202,18 @@ export default function HomePage() {
     text: string;
     type: "error" | "success";
   } | null>(null);
+const [isDark, setIsDark] = useState(false);
 
+useEffect(() => {
+  const sync = () => {
+    setIsDark(document.documentElement.classList.contains("theme-dark"));
+  };
+
+  sync();
+  window.addEventListener("theme-change", sync);
+
+  return () => window.removeEventListener("theme-change", sync);
+}, []);
   /* =========================================================
      DATA
   ========================================================= */
@@ -451,9 +462,11 @@ export default function HomePage() {
               setSelectedCategory("all")
             }
             className={`flex min-w-[90px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all border-2 ${
-       selectedCategory === "all"
-    ? "border-orange-500"
-    : "border-transparent dark:border-black"
+      selectedCategory === "all"
+    ? isDark
+      ? "border-black"
+      : "border-orange-500"
+    : "border-transparent"
 }`}
           >
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-2xl">
