@@ -8,7 +8,7 @@ import { Pagination } from "swiper/modules";
 import { ShoppingCart } from "lucide-react";
 import { prefetchProduct } from "@/lib/prefetch";
 import type {
-  Product as ProductType,
+  ProductRecord,
   ProductVariantView,
   RelatedProduct,
 } from "@/types/Product";
@@ -23,7 +23,7 @@ import "swiper/css/pagination";
 
 
 type ProductViewProps = {
-  product: ProductType;
+  product: ProductRecord;
 
   t: Record<string, string>;
   router: {
