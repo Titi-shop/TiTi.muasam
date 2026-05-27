@@ -893,17 +893,13 @@ export default function CheckoutSheet({
 
             <div className="text-right">
               <p
-                className="
-                  font-bold
-                  text-lg
-                "
-                style={{
-                  color:
-                    "var(--primary)",
-                }}
-              >
-                {formatPi(total)} π
-              </p>
+  className="font-bold text-lg"
+  style={{
+    color: "#ef4444", // RED
+  }}
+>
+  {formatPi(total)} π
+</p>
 
               {(isLoading ||
                 isValidating) && (
