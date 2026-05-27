@@ -6,7 +6,6 @@ import { Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 
-// Định nghĩa kiểu Banner, bỏ any
 interface Banner {
   id: number | string;
   image: string;
@@ -17,21 +16,15 @@ interface Banner {
 export default function BannerCarousel() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBanners = async () => {
       try {
         const res = await fetch("/api/banners");
-        if (!res.ok) throw new Error("Không thể tải dữ liệu banner");
-
         const data = await res.json();
         setBanners(Array.isArray(data) ? data : []);
-      } catch (err: unknown) {
-        console.error("❌ Lỗi tải banner:", err);
-        const message =
-          err instanceof Error ? err.message : "Lỗi không xác định";
-        setError(message);
+      } catch (err) {
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -40,46 +33,71 @@ export default function BannerCarousel() {
     fetchBanners();
   }, []);
 
-  // ❌ KHÔNG render gì khi đang loading / lỗi / không có banner
-  // → Không tạo khoảng trống
-  if (loading || error || banners.length === 0) {
-    return null;
-  }
+  if (loading || banners.length === 0) return null;
 
-return (
-  <div className="w-screen -mx-5 overflow-hidden">
-    <Swiper
-      modules={[Pagination, Autoplay]}
-      pagination={{ clickable: true }}
-      autoplay={{ delay: 3000, disableOnInteraction: false }}
-      loop
-      className="h-48 md:h-60 w-screen"
-    >
-      {banners.map((b) => {
-        const imageSrc = b.image.startsWith("/")
-          ? b.image
-          : `/${b.image}`;
+  return (
+    <div className="w-screen -mx-5 overflow-hidden">
+      <Swiper
+        modules={[Pagination, Autoplay]}
+        pagination={{ clickable: true }}
+        autoplay={{ delay: 3500, disableOnInteraction: false }}
+        loop
+        className="h-48 md:h-60 w-screen"
+      >
+        {banners.map((b) => {
+          const imageSrc = b.image.startsWith("/")
+            ? b.image
+            : `/${b.image}`;
 
-        return (
-          <SwiperSlide key={b.id}>
-            <a href={b.link || "#"} className="relative block h-full">
-              <img
-                src={imageSrc}
-                alt={b.title || `Banner ${b.id}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
+          return (
+            <SwiperSlide key={b.id}>
+              <a
+                href={b.link || "#"}
+                className="relative block h-full"
+              >
+                {/* IMAGE */}
+                <img
+                  src={imageSrc}
+                  alt={b.title || "banner"}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
 
-              {b.title && (
-                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-center py-2 text-sm md:text-base font-medium">
-                  {b.title}
-                </div>
-              )}
-            </a>
-          </SwiperSlide>
-        );
-      })}
-    </Swiper>
-  </div>
-);
+                {/* DARK GRADIENT OVERLAY */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
+
+                {/* TITLE */}
+                {b.title && (
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <div className="inline-block rounded-xl bg-black/40 px-3 py-1 text-xs text-white backdrop-blur-md">
+                      {b.title}
+                    </div>
+                  </div>
+                )}
+              </a>
+            </SwiperSlide>
+          );
+        })}
+      </Swiper>
+
+      {/* 🔥 PRO STYLING */}
+      <style jsx global>{`
+        .swiper-pagination-bullet {
+          background: rgba(255, 255, 255, 0.5);
+          opacity: 1;
+          width: 6px;
+          height: 6px;
+        }
+
+        .swiper-pagination-bullet-active {
+          background: #f97316;
+          width: 18px;
+          border-radius: 999px;
+        }
+      `}</style>
+
+      {/* ✨ EDGE GLOW EFFECT */}
+      <div className="pointer-events-none absolute inset-0 ring-1 ring-orange-400/20" />
+    </div>
+  );
 }
