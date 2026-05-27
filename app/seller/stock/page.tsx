@@ -1,15 +1,15 @@
-               "use client";
+"use client";
 
 import Image from "next/image";
 
 import {
   Plus,
   Upload,
-  Star,
-  Package2,
-  ShoppingBag,
   Pencil,
   Trash2,
+  Star,
+  Package2,
+  ShoppingCart,
 } from "lucide-react";
 
 import {
@@ -491,7 +491,9 @@ export default function SellerStockPage() {
           );
 
         if (!res.ok) {
-          throw new Error();
+          throw new Error(
+            "UPLOAD_FAILED"
+          );
         }
 
         const data =
@@ -510,7 +512,7 @@ export default function SellerStockPage() {
 
         setMessage({
           text:
-            t.saved_successfully,
+            "Banner updated",
 
           type:
             "success",
@@ -518,7 +520,7 @@ export default function SellerStockPage() {
       } catch {
         setMessage({
           text:
-            t.upload_failed,
+            "Upload failed",
 
           type:
             "error",
@@ -605,8 +607,8 @@ export default function SellerStockPage() {
     return (
       <main
         className="
-          min-h-screen
           flex
+          min-h-screen
           items-center
           justify-center
         "
@@ -642,35 +644,39 @@ export default function SellerStockPage() {
         className="
           mx-auto
           max-w-2xl
+          p-4
         "
       >
-        {/* =====================================
-            SHOP HEADER
-        ===================================== */}
+        {/* HEADER */}
 
         <section
           className="
             overflow-hidden
-            border-b
+            rounded-3xl
+            border
+            shadow-sm
           "
           style={{
+            backgroundColor:
+              "var(--card-bg)",
+
             borderColor:
               "var(--border-color)",
           }}
         >
           {/* BANNER */}
 
-          <div className="relative h-52 w-full">
+          <div className="relative h-44 w-full">
             <Image
               src={banner}
-              alt="Banner"
+              alt="Shop banner"
               fill
               priority
               unoptimized
               className="object-cover"
             />
 
-            <div className="absolute inset-0 bg-black/30" />
+            <div className="absolute inset-0 bg-black/20" />
 
             {/* CHANGE BANNER */}
 
@@ -694,10 +700,10 @@ export default function SellerStockPage() {
               "
               style={{
                 borderColor:
-                  "rgba(255,255,255,0.2)",
+                  "rgba(255,255,255,0.3)",
 
                 backgroundColor:
-                  "rgba(255,255,255,0.12)",
+                  "rgba(0,0,0,0.35)",
               }}
             >
               <Upload size={14} />
@@ -732,6 +738,7 @@ export default function SellerStockPage() {
                 items-center
                 justify-center
                 rounded-full
+                text-white
                 shadow-lg
                 transition-all
                 active:scale-95
@@ -739,30 +746,18 @@ export default function SellerStockPage() {
               style={{
                 background:
                   "linear-gradient(135deg,#f97316,#ea580c)",
-
-                color: "#fff",
               }}
             >
               <Plus size={22} />
             </button>
           </div>
 
-          {/* SHOP INFO */}
+          {/* PROFILE */}
 
-          <div
-            className="
-              relative
-              px-5
-              pb-6
-            "
-            style={{
-              backgroundColor:
-                "var(--card-bg)",
-            }}
-          >
+          <div className="px-5 pb-6">
             {/* AVATAR */}
 
-            <div className="-mt-14 flex justify-center">
+            <div className="flex justify-center -mt-14">
               <div
                 className="
                   h-28
@@ -796,52 +791,43 @@ export default function SellerStockPage() {
               </div>
             </div>
 
-            {/* NAME */}
+            {/* SHOP NAME */}
 
-            <h1
-              className="
-                mt-4
-                text-center
-                text-2xl
-                font-bold
-              "
-              style={{
-                color:
-                  "var(--foreground)",
-              }}
-            >
-              {shop.shop_name ||
-                t.my_store}
-            </h1>
+            <div className="mt-4 text-center">
+              <h1
+                className="
+                  text-2xl
+                  font-bold
+                "
+                style={{
+                  color:
+                    "var(--foreground)",
+                }}
+              >
+                {shop.shop_name ||
+                  t.my_store}
+              </h1>
 
-            {/* DESCRIPTION */}
-
-            {shop.shop_description && (
               <p
                 className="
-                  mx-auto
-                  mt-2
-                  max-w-md
-                  text-center
+                  mt-1
                   text-sm
-                  leading-relaxed
                 "
                 style={{
                   color:
                     "var(--muted-foreground)",
                 }}
               >
-                {
-                  shop.shop_description
-                }
+                {shop.shop_description ||
+                  "Manage your products and sales"}
               </p>
-            )}
+            </div>
 
             {/* STATS */}
 
             <div
               className="
-                mt-5
+                mt-6
                 grid
                 grid-cols-3
                 gap-3
@@ -862,19 +848,10 @@ export default function SellerStockPage() {
                     "var(--border-color)",
                 }}
               >
-                <div
-                  className="
-                    mb-2
-                    flex
-                    justify-center
-                  "
-                  style={{
-                    color:
-                      "#f59e0b",
-                  }}
-                >
-                  <Star size={20} />
-                </div>
+                <Star
+                  size={18}
+                  className="mx-auto mb-2 text-yellow-500"
+                />
 
                 <p
                   className="
@@ -918,19 +895,10 @@ export default function SellerStockPage() {
                     "var(--border-color)",
                 }}
               >
-                <div
-                  className="
-                    mb-2
-                    flex
-                    justify-center
-                  "
-                  style={{
-                    color:
-                      "#f97316",
-                  }}
-                >
-                  <Package2 size={20} />
-                </div>
+                <Package2
+                  size={18}
+                  className="mx-auto mb-2 text-orange-500"
+                />
 
                 <p
                   className="
@@ -975,19 +943,10 @@ export default function SellerStockPage() {
                     "var(--border-color)",
                 }}
               >
-                <div
-                  className="
-                    mb-2
-                    flex
-                    justify-center
-                  "
-                  style={{
-                    color:
-                      "#22c55e",
-                  }}
-                >
-                  <ShoppingBag size={20} />
-                </div>
+                <ShoppingCart
+                  size={18}
+                  className="mx-auto mb-2 text-green-500"
+                />
 
                 <p
                   className="
@@ -1016,70 +975,67 @@ export default function SellerStockPage() {
                 </p>
               </div>
             </div>
-
-            {/* MESSAGE */}
-
-            {message.text && (
-              <div
-                className={`
-                  mt-5
-                  rounded-2xl
-                  border
-                  px-4
-                  py-3
-                  text-center
-                  text-sm
-                  font-medium
-                  ${
-                    message.type ===
-                    "success"
-                      ? "border-green-500/30 bg-green-500/10 text-green-500"
-                      : "border-red-500/30 bg-red-500/10 text-red-500"
-                  }
-                `}
-              >
-                {message.text}
-              </div>
-            )}
           </div>
         </section>
 
-        {/* =====================================
-            PRODUCT LIST
-        ===================================== */}
+        {/* MESSAGE */}
 
-        <section className="space-y-4 p-4">
-          {products.length ===
-            0 && (
-            <div
-              className="
-                rounded-3xl
-                border
-                px-6
-                py-16
-                text-center
-              "
+        {message.text && (
+          <div
+            className={`
+              mt-4
+              rounded-2xl
+              border
+              px-4
+              py-3
+              text-sm
+              font-medium
+              ${
+                message.type ===
+                "success"
+                  ? "border-green-500/30 bg-green-500/10 text-green-500"
+                  : "border-red-500/30 bg-red-500/10 text-red-500"
+              }
+            `}
+          >
+            {message.text}
+          </div>
+        )}
+
+        {/* EMPTY */}
+
+        {products.length ===
+          0 && (
+          <div
+            className="
+              mt-6
+              rounded-3xl
+              border
+              p-10
+              text-center
+            "
+            style={{
+              backgroundColor:
+                "var(--card-bg)",
+
+              borderColor:
+                "var(--border-color)",
+            }}
+          >
+            <p
               style={{
-                backgroundColor:
-                  "var(--card-bg)",
-
-                borderColor:
-                  "var(--border-color)",
+                color:
+                  "var(--muted-foreground)",
               }}
             >
-              <p
-                style={{
-                  color:
-                    "var(--muted-foreground)",
-                }}
-              >
-                {
-                  t.no_products
-                }
-              </p>
-            </div>
-          )}
+              {t.no_products}
+            </p>
+          </div>
+        )}
 
+        {/* PRODUCTS */}
+
+        <section className="mt-6 space-y-5">
           {products.map(
             (
               product
@@ -1137,7 +1093,7 @@ export default function SellerStockPage() {
                     overflow-hidden
                     rounded-3xl
                     border
-                    transition-all
+                    shadow-sm
                   "
                   style={{
                     backgroundColor:
@@ -1147,6 +1103,8 @@ export default function SellerStockPage() {
                       "var(--border-color)",
                   }}
                 >
+                  {/* CARD */}
+
                   <div
                     onClick={() =>
                       router.push(
@@ -1169,8 +1127,16 @@ export default function SellerStockPage() {
                         w-28
                         overflow-hidden
                         rounded-2xl
+                        border
                         flex-shrink-0
                       "
+                      style={{
+                        borderColor:
+                          "var(--border-color)",
+
+                        backgroundColor:
+                          "var(--soft-bg)",
+                      }}
                     >
                       {isSale && (
                         <span
@@ -1254,9 +1220,6 @@ export default function SellerStockPage() {
                             text-sm
                           "
                           style={{
-                            backgroundColor:
-                              "var(--soft-bg)",
-
                             color:
                               "var(--muted-foreground)",
                           }}
@@ -1484,4 +1447,4 @@ export default function SellerStockPage() {
       </div>
     </main>
   );
-}         
+}
