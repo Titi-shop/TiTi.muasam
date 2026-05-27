@@ -304,24 +304,29 @@ export default function HomePage() {
     return;
   }
 
-  if (!product.is_unlimited && (product.stock ?? 0) <= 0) {
-    showMessage(t.out_of_stock || "Out of stock");
+  const isOutOfStock =
+    !product.is_unlimited &&
+    (product.stock ?? 0) <= 0;
+
+  if (isOutOfStock) {
+    showMessage(
+      t.out_of_stock || "Out of stock"
+    );
     return;
   }
 
-  // 🔥 NEW: check variant
+  // 🔥 TYPE SAFE VARIANT CHECK (NO ANY)
   const hasVariant =
-    (product as any).has_variants ||
-    (product as any).variants?.length > 0 ||
-    (product as any).options?.size?.length > 0;
+    Boolean(product.has_variants) ||
+    (product.variants?.length ?? 0) > 0 ||
+    (product.options?.size?.length ?? 0) > 0;
 
   if (hasVariant) {
     showMessage(
-      t.please_select_size || "Please select size first"
+      t.please_select_variant ||
+        "Please select variant before adding to cart"
     );
 
-    // redirect sang product detail để chọn size
-    router.push(`/product/${product.id}`);
     return;
   }
 
@@ -330,12 +335,16 @@ export default function HomePage() {
     product_id: product.id,
     name: product.name,
     price: product.price,
-    sale_price: product.final_price || product.sale_price,
+    sale_price:
+      product.final_price || product.sale_price,
     quantity: 1,
     thumbnail: product.thumbnail,
   });
 
-  showMessage(t.added_to_cart || "Added", "success");
+  showMessage(
+    t.added_to_cart || "Added to cart",
+    "success"
+  );
 };
 
   /* =========================================================
