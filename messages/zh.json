@@ -642,7 +642,14 @@
   "sale_price_less_than_price": "折扣价必须低于原价",
   "sale_stock_exceeded": "折扣库存不能超过总库存",
   "upload_failed": "上传失败",
-  "submit_failed": "发布失败"
+  "submit_failed": "发布失败",
+  
+  "smart_catalog": "智能目录",
+  "explore_categories": "探索分类",
+  "find_products_fast": "通过分类筛选和智能推荐更快找到商品",
+  "flash_sale": "限时抢购",
+  "new_arrivals": "新品上架"
+
 
   
 }
