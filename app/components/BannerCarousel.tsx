@@ -46,41 +46,40 @@ export default function BannerCarousel() {
     return null;
   }
 
-  return (
-    <div className="w-full overflow-hidden rounded-xl shadow-md bg-white">
-      <Swiper
-        modules={[Pagination, Autoplay]}
-        pagination={{ clickable: true }}
-        autoplay={{ delay: 3000, disableOnInteraction: false }}
-        loop
-        className="h-48 md:h-60 relative"
-      >
-        {banners.map((b) => {
-          const imageSrc = b.image.startsWith("/") ? b.image : `/${b.image}`;
+return (
+  <div className="w-screen -mx-5 overflow-hidden">
+    <Swiper
+      modules={[Pagination, Autoplay]}
+      pagination={{ clickable: true }}
+      autoplay={{ delay: 3000, disableOnInteraction: false }}
+      loop
+      className="h-48 md:h-60 w-screen"
+    >
+      {banners.map((b) => {
+        const imageSrc = b.image.startsWith("/")
+          ? b.image
+          : `/${b.image}`;
 
-          return (
-            <SwiperSlide key={b.id}>
-              <a
-                href={b.link || "#"}
-                className="relative block h-full"
-              >
-                <img
-                  src={imageSrc}
-                  alt={b.title || `Banner ${b.id}`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
+        return (
+          <SwiperSlide key={b.id}>
+            <a href={b.link || "#"} className="relative block h-full">
+              <img
+                src={imageSrc}
+                alt={b.title || `Banner ${b.id}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
 
-                {b.title && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-center py-2 text-sm md:text-base font-medium">
-                    {b.title}
-                  </div>
-                )}
-              </a>
-            </SwiperSlide>
-          );
-        })}
-      </Swiper>
-    </div>
-  );
+              {b.title && (
+                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-center py-2 text-sm md:text-base font-medium">
+                  {b.title}
+                </div>
+              )}
+            </a>
+          </SwiperSlide>
+        );
+      })}
+    </Swiper>
+  </div>
+);
 }
