@@ -147,7 +147,7 @@ export async function getSellerOrderById(
     SELECT
       o.id,
       o.order_number,
-      o.status,
+      o.fulfillment_status,
       o.payment_status,
       o.created_at,
 
