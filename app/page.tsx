@@ -22,9 +22,7 @@ import PiPriceWidget from "./components/PiPriceWidget";
 
 import { useCart } from "@/app/context/CartContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-
 import { formatPi } from "@/lib/pi";
-
 import type { Product } from "@/types/product";
 import type { Category } from "@/types/category";
 
@@ -189,8 +187,7 @@ export default function HomePage() {
   const router = useRouter();
   const { addToCart } = useCart();
   const { t } = useTranslation();
-  const [showSplash, setShowSplash] =
-    useState(true);
+  const [showSplash, setShowSplash] = useState(false);
 
   const [selectedCategory, setSelectedCategory] =
     useState<number | "all">("all");
@@ -250,7 +247,21 @@ export default function HomePage() {
 
     return () => clearTimeout(timer);
   }, []);
+  
+useEffect(() => {
+  const hasSeenSplash = sessionStorage.getItem("splash_seen");
 
+  if (!hasSeenSplash) {
+    setShowSplash(true);
+
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+      sessionStorage.setItem("splash_seen", "1");
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }
+}, []);
   /* =========================================================
      MESSAGE
   ========================================================= */
