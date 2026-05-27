@@ -9,10 +9,12 @@ import {
 export async function getSellerOrderCounts(sellerId: string) {
   const { rows } = await query(
     `
-    SELECT status, COUNT(*)::int AS total
-    FROM order_items
-    WHERE seller_id = $1
-    GROUP BY status
+    SELECT
+  fulfillment_status,
+  COUNT(*)::int AS total
+FROM order_items
+WHERE seller_id = $1
+GROUP BY fulfillment_status
     `,
     [sellerId]
   );
