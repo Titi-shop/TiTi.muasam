@@ -1432,5 +1432,145 @@ const handleDelete =
         </section>
       </div>
     </main>
+      {/* DELETE MODAL */}
+
+      {deleteTarget && (
+        <div
+          className="
+            fixed
+            inset-0
+            z-50
+            flex
+            items-end
+            bg-black/50
+            backdrop-blur-sm
+          "
+        >
+          <div
+            className="
+              w-full
+              rounded-t-3xl
+              p-5
+            "
+            style={{
+              backgroundColor:
+                "var(--card-bg)",
+            }}
+          >
+            <div
+              className="
+                mx-auto
+                mb-4
+                h-1.5
+                w-14
+                rounded-full
+                bg-gray-300
+              "
+            />
+
+            <h2
+              className="
+                text-lg
+                font-bold
+              "
+              style={{
+                color:
+                  "var(--foreground)",
+              }}
+            >
+              Delete Product
+            </h2>
+
+            <p
+              className="
+                mt-2
+                text-sm
+              "
+              style={{
+                color:
+                  "var(--muted-foreground)",
+              }}
+            >
+              Are you sure you want
+              to delete:
+            </p>
+
+            <p
+              className="
+                mt-2
+                line-clamp-2
+                text-sm
+                font-semibold
+              "
+              style={{
+                color:
+                  "var(--foreground)",
+              }}
+            >
+              {deleteTarget.name}
+            </p>
+
+            <div
+              className="
+                mt-6
+                flex
+                gap-3
+              "
+            >
+              {/* CANCEL */}
+
+              <button
+                onClick={() =>
+                  setDeleteTarget(
+                    null
+                  )
+                }
+                className="
+                  flex-1
+                  rounded-2xl
+                  py-3
+                  text-sm
+                  font-medium
+                "
+                style={{
+                  backgroundColor:
+                    "var(--soft-bg)",
+
+                  color:
+                    "var(--foreground)",
+                }}
+              >
+                Cancel
+              </button>
+
+              {/* DELETE */}
+
+              <button
+                onClick={
+                  handleDelete
+                }
+                disabled={
+                  deleting
+                }
+                className="
+                  flex-1
+                  rounded-2xl
+                  bg-red-500
+                  py-3
+                  text-sm
+                  font-medium
+                  text-white
+                  disabled:opacity-50
+                "
+              >
+                {deleting
+                  ? "Deleting..."
+                  : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
   );
 }
