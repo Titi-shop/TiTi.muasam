@@ -560,5 +560,10 @@
 "shipping_north_america": "北美",
 "shipping_rest_of_world": "全球其他地区",
   "submit_product": "发布商品",
-"upload_detail_image": "上传详情图片"
+"upload_detail_image": "上传详情图片",
+  "please_select_variant": "请先选择规格后再加入购物车",
+"future_marketplace": "未来市场",
+"shop_by_category": "按分类购物",
+"best_selling_products": "畅销商品",
+"limited_offers": "限时优惠"
 }
