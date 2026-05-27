@@ -917,12 +917,201 @@ return (
                   }  
                 </h3>  
 
-                {/* PRICE */}  
+                                      {/* PRICE */}
 
-                <div className="mt-1">  
+                      <div className="mt-2">
+                        {display.sale_price ? (
+                          <>
+                            <p
+                              className="
+                                text-xs
+                                line-through
+                              "
+                              style={{
+                                color:
+                                  "var(--muted-foreground)",
+                              }}
+                            >
+                              {formatPi(
+                                display.price
+                              )}
+                            </p>
 
-                  {display.sale_price ? (  
-                    <>  
-                      <p className="text-sm text-gray-400 line-through">  
-                        {formatPi(  
-                          display.price
+                            <p
+                              className="
+                                text-lg
+                                font-bold
+                              "
+                              style={{
+                                color:
+                                  "#ef4444",
+                              }}
+                            >
+                              {formatPi(
+                                display.sale_price
+                              )}
+                            </p>
+                          </>
+                        ) : (
+                          <p
+                            className="
+                              text-lg
+                              font-bold
+                            "
+                            style={{
+                              color:
+                                "#f97316",
+                            }}
+                          >
+                            {formatPi(
+                              display.price
+                            )}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* INFO */}
+
+                      <div
+                        className="
+                          mt-3
+                          flex
+                          flex-wrap
+                          gap-2
+                        "
+                      >
+                        <span
+                          className="
+                            rounded-full
+                            px-3
+                            py-1
+                            text-[11px]
+                            font-medium
+                          "
+                          style={{
+                            backgroundColor:
+                              "var(--soft-bg)",
+
+                            color:
+                              "var(--foreground)",
+                          }}
+                        >
+                          Stock:
+                          {" "}
+                          {
+                            product.stock
+                          }
+                        </span>
+
+                        <span
+                          className="
+                            rounded-full
+                            px-3
+                            py-1
+                            text-[11px]
+                            font-medium
+                          "
+                          style={{
+                            backgroundColor:
+                              "var(--soft-bg)",
+
+                            color:
+                              "var(--foreground)",
+                          }}
+                        >
+                          Sold:
+                          {" "}
+                          {
+                            product.sold
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ACTIONS */}
+
+                  <div
+                    className="
+                      flex
+                      border-t
+                    "
+                    style={{
+                      borderColor:
+                        "var(--border-color)",
+                    }}
+                  >
+                    <button
+                      onClick={() =>
+                        router.push(
+                          `/seller/edit/${product.id}`
+                        )
+                      }
+                      className="
+                        flex
+                        flex-1
+                        items-center
+                        justify-center
+                        gap-2
+                        py-3
+                        text-sm
+                        font-medium
+                        transition-all
+                        active:scale-[0.98]
+                      "
+                      style={{
+                        color:
+                          "var(--foreground)",
+                      }}
+                    >
+                      <Pencil
+                        size={16}
+                      />
+
+                      {t.edit}
+                    </button>
+
+                    <div
+                      className="w-px"
+                      style={{
+                        backgroundColor:
+                          "var(--border-color)",
+                      }}
+                    />
+
+                    <button
+                      onClick={() =>
+                        handleDelete(
+                          product.id
+                        )
+                      }
+                      className="
+                        flex
+                        flex-1
+                        items-center
+                        justify-center
+                        gap-2
+                        py-3
+                        text-sm
+                        font-medium
+                        text-red-500
+                        transition-all
+                        active:scale-[0.98]
+                      "
+                    >
+                      <Trash2
+                        size={16}
+                      />
+
+                      {t.delete}
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}
