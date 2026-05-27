@@ -634,6 +634,12 @@
 "future_marketplace": "Chợ tương lai",
 "shop_by_category": "Mua theo danh mục",
 "best_selling_products": "Sản phẩm bán chạy",
-"limited_offers": "Ưu đãi giới hạn"
+"limited_offers": "Ưu đãi giới hạn",
+
+  "smart_catalog": "Danh mục thông minh",
+  "explore_categories": "Khám phá danh mục",
+  "find_products_fast": "Tìm sản phẩm nhanh hơn với bộ lọc danh mục và khám phá thông minh",
+  "flash_sale": "Flash sale",
+  "new_arrivals": "Hàng mới"
 
 }
