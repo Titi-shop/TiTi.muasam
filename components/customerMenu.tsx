@@ -1,177 +1,519 @@
+"use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+
 import {
-User,
-Package,
-Wallet,
-HelpCircle,
-MessageCircle,
-Globe,
-MapPin,
-Store,
+  User,
+  Package,
+  Wallet,
+  HelpCircle,
+  MessageCircle,
+  Globe,
+  MapPin,
+  Store,
 } from "lucide-react";
+
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
+
 import { useAuth } from "@/context/AuthContext";
+
 import { getPiAccessToken } from "@/lib/piAuth";
 
+/* =========================
+   TYPES
+========================= */
+
+type MenuItem = {
+  label: string;
+  icon: React.ReactNode;
+  path?: string;
+  onClick?: () => void | Promise<void>;
+};
+
+/* =========================
+   COMPONENT
+========================= */
+
 export default function CustomerMenu() {
-const router = useRouter();
-const { t } = useTranslation();
-const { user, pilogin } = useAuth();
+  const router = useRouter();
 
-const [sellerLoading, setSellerLoading] = useState(false);
-const [sellerMessage, setSellerMessage] = useState<string | null>(null);
+  const { t } =
+    useTranslation();
 
-const isSeller = user?.role === "seller" || user?.role === "admin";
+  const {
+    user,
+    pilogin,
+  } = useAuth();
 
-async function handleSellerClick() {
-if (sellerLoading) return;
+  const [
+    sellerLoading,
+    setSellerLoading,
+  ] = useState(false);
 
-if (!user) {  
-  await pilogin();  
-  return;  
-}  
+  const [
+    sellerMessage,
+    setSellerMessage,
+  ] = useState<string | null>(
+    null
+  );
 
-if (isSeller) {  
-  router.push("/seller");  
-  return;  
-}  
+  const [
+    activeIndex,
+    setActiveIndex,
+  ] = useState<number | null>(
+    null
+  );
 
-try {  
-  setSellerLoading(true);  
-  setSellerMessage(null);  
+  const isSeller =
+    user?.role === "seller" ||
+    user?.role === "admin";
 
-  const token = await getPiAccessToken();  
+  /* =========================
+     SELLER ACTION
+  ========================= */
 
-  if (!token) {  
-    setSellerMessage(`⚠️ ${t.session_expired ?? "Session expired"}`);  
-    await pilogin();  
-    return;  
-  }  
+  async function handleSellerClick() {
+    if (sellerLoading) return;
 
-  const res = await fetch("/api/seller/register", {  
-    method: "POST",  
-    headers: {  
-      "Content-Type": "application/json",  
-      Authorization: `Bearer ${token}`,  
-    },  
-  });  
+    if (!user) {
+      await pilogin();
+      return;
+    }
 
-  const data: unknown = await res.json().catch(() => null);  
+    if (isSeller) {
+      router.push("/seller");
+      return;
+    }
 
-  if (!res.ok) {  
-    const err =  
-      typeof data === "object" &&  
-      data !== null &&  
-      "error" in data  
-        ? String((data as { error: string }).error)  
-        : t.register_failed ?? "Register failed";  
+    try {
+      setSellerLoading(true);
 
-    setSellerMessage(`❌ ${err}`);  
-    return;  
-  }  
+      setSellerMessage(null);
 
-  setSellerMessage(`✅ ${t.seller_request_sent ?? "Seller request sent"}`);  
-} catch (err) {  
-  console.error("SELLER REGISTER ERROR:", err);  
-  setSellerMessage(`❌ ${t.system_error ?? "System error"}`);  
-} finally {  
-  setSellerLoading(false);  
-}
+      const token =
+        await getPiAccessToken();
 
-}
+      if (!token) {
+        setSellerMessage(
+          `⚠️ ${
+            t.session_expired ??
+            "Session expired"
+          }`
+        );
 
-const customerMenuItems = [
-{ label: t.profile, icon: <User size={22} />, path: "/customer/profile" },
-{ label: t.my_orders, icon: <Package size={22} />, path: "/customer/orders" },
-{ label: t.pi_wallet, icon: <Wallet size={22} /> , path: "/account/wallet" },
-{ label: t.messages, icon: <MessageCircle size={22} /> },
-{ label: t.language, icon: <Globe size={22} /> },
-{
-label: t.shipping_address,
-icon: <MapPin size={22} />,
-path: "/customer/address",
-},
-{ label: t.support, icon: <HelpCircle size={22} /> },
-{
-label: isSeller
-? t.seller_center || "Quản lý bán hàng"
-: t.register_seller || "Đăng ký bán hàng",
-icon: <Store size={22} />,
-onClick: handleSellerClick,
-},
-];
+        await pilogin();
 
-return (
-<div
-  className="
-    mx-3 mt-6 mb-6 rounded-2xl p-5 shadow-lg border
-    bg-white border-gray-100
-    dark:bg-black dark:border-white/10
-  "
->
-<div className="grid grid-cols-4 gap-y-6 text-center">
-{customerMenuItems.map((item, i) => (
-<button
-key={i}
-onClick={() => {
-if (item.onClick) item.onClick();
-else if (item.path) router.push(item.path);
-}}
-disabled={sellerLoading && item.onClick !== undefined}
-className="
-  group relative flex flex-col items-center justify-start
-  h-[96px] rounded-2xl transition-all duration-200
-  text-gray-700 dark:text-white
-  hover:text-orange-500
-  disabled:opacity-60
-"
->
-<div
-  className="
-    flex items-center justify-center
-    w-12 h-12 rounded-full mb-2 shadow-sm border
-    bg-gray-100 border-gray-200
-    dark:bg-white dark:text-black dark:border-white
-    group-hover:border-orange-500
-  "
->
-{item.icon}
-</div>
+        return;
+      }
 
-<span
-  className="
-    text-[11px] font-medium leading-snug
-    text-center line-clamp-2 max-w-[72px]
-    text-gray-700 dark:text-white
-    group-hover:text-orange-500
-  "
->
-          {item.label}  
-        </span>  
-      </button>  
-    ))}  
-  </div>  
+      const res = await fetch(
+        "/api/seller/register",
+        {
+          method: "POST",
 
-  {sellerMessage && (  
-    <div  
-      className={`mt-4 text-center text-sm ${  
-        sellerMessage.startsWith("✅")  
-          ? "text-green-600"  
-          : "text-red-600"  
-      }`}  
-    >  
-      {sellerMessage}  
-    </div>  
-  )}  
+          headers: {
+            "Content-Type":
+              "application/json",
 
-  {!isSeller && !sellerMessage && (  
-    <div className="mt-4 text-center text-xs text-gray-500">  
-      {t.seller_note ||  
-        "Bạn có thể đăng ký bán hàng để mở gian hàng của mình."}  
-    </div>  
-  )}  
-</div>
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-);
- }
+      const data: unknown =
+        await res
+          .json()
+          .catch(() => null);
+
+      if (!res.ok) {
+        const err =
+          typeof data ===
+            "object" &&
+          data !== null &&
+          "error" in data
+            ? String(
+                (
+                  data as {
+                    error: string;
+                  }
+                ).error
+              )
+            : t.register_failed ??
+              "Register failed";
+
+        setSellerMessage(
+          `❌ ${err}`
+        );
+
+        return;
+      }
+
+      setSellerMessage(
+        `✅ ${
+          t.seller_request_sent ??
+          "Seller request sent"
+        }`
+      );
+    } catch (err) {
+      console.error(
+        "SELLER REGISTER ERROR:",
+        err
+      );
+
+      setSellerMessage(
+        `❌ ${
+          t.system_error ??
+          "System error"
+        }`
+      );
+    } finally {
+      setSellerLoading(false);
+    }
+  }
+
+  /* =========================
+     MENU ITEMS
+  ========================= */
+
+  const customerMenuItems: MenuItem[] =
+    [
+      {
+        label:
+          t.profile ?? "Profile",
+
+        icon: <User size={22} />,
+
+        path:
+          "/customer/profile",
+      },
+
+      {
+        label:
+          t.my_orders ??
+          "Orders",
+
+        icon: (
+          <Package size={22} />
+        ),
+
+        path:
+          "/customer/orders",
+      },
+
+      {
+        label:
+          t.pi_wallet ??
+          "Wallet",
+
+        icon: (
+          <Wallet size={22} />
+        ),
+
+        path:
+          "/account/wallet",
+      },
+
+      {
+        label:
+          t.messages ??
+          "Messages",
+
+        icon: (
+          <MessageCircle
+            size={22}
+          />
+        ),
+      },
+
+      {
+        label:
+          t.language ??
+          "Language",
+
+        icon: (
+          <Globe size={22} />
+        ),
+      },
+
+      {
+        label:
+          t.shipping_address ??
+          "Address",
+
+        icon: (
+          <MapPin size={22} />
+        ),
+
+        path:
+          "/customer/address",
+      },
+
+      {
+        label:
+          t.support ??
+          "Support",
+
+        icon: (
+          <HelpCircle
+            size={22}
+          />
+        ),
+      },
+
+      {
+        label: isSeller
+          ? t.seller_center ||
+            "Seller Center"
+          : t.register_seller ||
+            "Become Seller",
+
+        icon: (
+          <Store size={22} />
+        ),
+
+        onClick:
+          handleSellerClick,
+      },
+    ];
+
+  /* =========================
+     RENDER
+  ========================= */
+
+  return (
+    <section
+      className="
+        mx-4
+        mt-4
+        overflow-hidden
+        rounded-3xl
+        border
+        shadow-sm
+        transition-colors
+      "
+      style={{
+        backgroundColor:
+          "var(--card-bg)",
+
+        borderColor:
+          "var(--border-color)",
+      }}
+    >
+      {/* HEADER */}
+      <div className="px-5 py-4">
+        <h2
+          className="
+            text-[17px]
+            font-semibold
+          "
+          style={{
+            color:
+              "var(--foreground)",
+          }}
+        >
+          {t.account ??
+            "Account"}
+        </h2>
+
+        <p
+          className="
+            mt-0.5
+            text-xs
+          "
+          style={{
+            color:
+              "var(--muted-foreground)",
+          }}
+        >
+          {t.manage_account ??
+            "Manage your account settings"}
+        </p>
+      </div>
+
+      {/* DIVIDER */}
+      <div
+        className="h-px"
+        style={{
+          backgroundColor:
+            "var(--border-color)",
+        }}
+      />
+
+      {/* GRID */}
+      <div
+        className="
+          grid
+          grid-cols-3
+          gap-y-5
+          px-3
+          py-5
+          sm:grid-cols-4
+        "
+      >
+        {customerMenuItems.map(
+          (item, i) => {
+            const active =
+              activeIndex === i;
+
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={
+                  sellerLoading &&
+                  !!item.onClick
+                }
+                onClick={() => {
+                  setActiveIndex(
+                    i
+                  );
+
+                  if (
+                    item.onClick
+                  ) {
+                    item.onClick();
+                  } else if (
+                    item.path
+                  ) {
+                    router.push(
+                      item.path
+                    );
+                  }
+                }}
+                className="
+                  group
+                  flex
+                  flex-col
+                  items-center
+                  px-1
+                  transition-all
+                  active:scale-95
+                  disabled:opacity-60
+                "
+              >
+                {/* ICON */}
+                <div
+                  className="
+                    relative
+                    mb-2
+                    flex
+                    h-12
+                    w-12
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    shadow-sm
+                    transition-all
+                    duration-200
+                    group-active:scale-95
+                  "
+                  style={{
+                    backgroundColor:
+                      active
+                        ? "rgba(249,115,22,0.12)"
+                        : "var(--soft-bg)",
+
+                    borderColor:
+                      active
+                        ? "#f97316"
+                        : "var(--border-color)",
+
+                    color:
+                      active
+                        ? "#f97316"
+                        : "var(--foreground)",
+                  }}
+                >
+                  {item.icon}
+                </div>
+
+                {/* LABEL */}
+                <span
+                  className="
+                    line-clamp-2
+                    text-center
+                    text-[11px]
+                    font-medium
+                    leading-tight
+                  "
+                  style={{
+                    color:
+                      active
+                        ? "#f97316"
+                        : "var(--foreground)",
+                  }}
+                >
+                  {item.label}
+                </span>
+              </button>
+            );
+          }
+        )}
+      </div>
+
+      {/* MESSAGE */}
+      {sellerMessage && (
+        <>
+          <div
+            className="h-px"
+            style={{
+              backgroundColor:
+                "var(--border-color)",
+            }}
+          />
+
+          <div
+            className="
+              px-4
+              py-4
+              text-center
+              text-sm
+            "
+            style={{
+              color:
+                sellerMessage.startsWith(
+                  "✅"
+                )
+                  ? "#16a34a"
+                  : "#ef4444",
+            }}
+          >
+            {sellerMessage}
+          </div>
+        </>
+      )}
+
+      {/* FOOTER NOTE */}
+      {!isSeller &&
+        !sellerMessage && (
+          <>
+            <div
+              className="h-px"
+              style={{
+                backgroundColor:
+                  "var(--border-color)",
+              }}
+            />
+
+            <div
+              className="
+                px-5
+                py-4
+                text-center
+                text-xs
+              "
+              style={{
+                color:
+                  "var(--muted-foreground)",
+              }}
+            >
+              {t.seller_note ??
+                "You can register as a seller to open your own store."}
+            </div>
+          </>
+        )}
+    </section>
+  );
+      }
