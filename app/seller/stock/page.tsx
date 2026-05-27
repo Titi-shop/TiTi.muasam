@@ -1431,7 +1431,6 @@ const handleDelete =
           )}
         </section>
       </div>
-    </main>
       {/* DELETE MODAL */}
 
       {deleteTarget && (
