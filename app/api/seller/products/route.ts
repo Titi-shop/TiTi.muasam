@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 import { requireSeller } from "@/lib/auth/guard";
 import { getSellerProducts } from "@/lib/db/products";
-
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -12,41 +11,26 @@ export const dynamic = "force-dynamic";
 
 type SellerProductResponse = {
   id: string;
-
   name: string;
-
   price: number;
-
   sale_price: number | null;
-
   sale_start: string | null;
-
   sale_end: string | null;
-
   thumbnail: string |null;
-
   images: string[];
-
   stock: number;
-
   sold: number;
-
   rating_avg: number;
-
   is_active: boolean;
-
   min_price?: number;
-
   min_sale_price?: number | null;
 
   /* SHOP */
 
   shop_name: string | null;
-
   shop_banner: string | null;
-
   avatar_url: string | null;
-
+  shop_description: string | null;
   total_sales: number;
 };
 
@@ -255,6 +239,12 @@ export async function GET() {
                 ? row.avatar_url
                 : null,
 
+             shop_description:
+  typeof row.shop_description ===
+  "string"
+    ? row.shop_description
+    : null,
+             
             total_sales:
               Number(
                 row.total_sales ??
