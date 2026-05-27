@@ -672,7 +672,7 @@ export default function SellerStockPage() {
               fill
               priority
               unoptimized
-              className="object-cover"
+             className="object-cover object-center"
             />
 
             <div className="absolute inset-0 bg-black/5" />
