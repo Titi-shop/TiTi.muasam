@@ -103,7 +103,13 @@ onClick: handleSellerClick,
 ];
 
 return (
-<div className="bg-white mx-3 mt-6 p-5 rounded-2xl shadow-lg border border-gray-100 mb-6">
+<div
+  className="
+    mx-3 mt-6 mb-6 rounded-2xl p-5 shadow-lg border
+    bg-white border-gray-100
+    dark:bg-black dark:border-white/10
+  "
+>
 <div className="grid grid-cols-4 gap-y-6 text-center">
 {customerMenuItems.map((item, i) => (
 <button
