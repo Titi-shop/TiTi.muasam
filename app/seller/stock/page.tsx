@@ -1,7 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { Plus, Upload } from "lucide-react";
+
+import {
+  Plus,
+  Upload,
+  Package2,
+  ShoppingBag,
+  Star,
+  Trash2,
+  Pencil,
+} from "lucide-react";
+
 import {
   useState,
   useEffect,
@@ -174,7 +184,7 @@ export default function SellerStockPage() {
     });
 
   /* =====================================================
-     CACHE AVATAR
+     AVATAR CACHE
   ===================================================== */
 
   useEffect(() => {
@@ -226,10 +236,6 @@ export default function SellerStockPage() {
     useCallback(
       async () => {
         try {
-          console.log(
-            "📦 LOAD_PRODUCTS_START"
-          );
-
           const res =
             await apiAuthFetch(
               "/api/seller/products",
@@ -238,11 +244,6 @@ export default function SellerStockPage() {
                   "no-store",
               }
             );
-
-          console.log(
-            "📦 RESPONSE_STATUS:",
-            res.status
-          );
 
           if (!res.ok) {
             setMessage({
@@ -259,11 +260,6 @@ export default function SellerStockPage() {
           const raw: unknown =
             await res.json();
 
-          console.log(
-            "📦 RAW_RESPONSE:",
-            raw
-          );
-
           const payload =
             raw as {
               profile?: Record<
@@ -274,17 +270,10 @@ export default function SellerStockPage() {
               products?: unknown[];
             };
 
-          /* =========================================
-             PROFILE
-          ========================================= */
+          /* PROFILE */
 
           const profile =
             payload.profile;
-
-          console.log(
-            "👤 PROFILE:",
-            profile
-          );
 
           if (profile) {
             setShop({
@@ -332,9 +321,7 @@ export default function SellerStockPage() {
             });
           }
 
-          /* =========================================
-             PRODUCTS
-          ========================================= */
+          /* PRODUCTS */
 
           const list =
             Array.isArray(
@@ -342,11 +329,6 @@ export default function SellerStockPage() {
             )
               ? payload.products
               : [];
-
-          console.log(
-            "📦 PRODUCTS_LIST:",
-            list
-          );
 
           const mapped: SellerProduct[] =
             list.map(
@@ -438,20 +420,10 @@ export default function SellerStockPage() {
               }
             );
 
-          console.log(
-            "✅ MAPPED_PRODUCTS:",
-            mapped
-          );
-
           setProducts(
             mapped
           );
-        } catch (error) {
-          console.error(
-            "💥 LOAD_PRODUCTS_ERROR",
-            error
-          );
-
+        } catch {
           setMessage({
             text:
               t.load_products_error,
@@ -519,18 +491,11 @@ export default function SellerStockPage() {
           );
 
         if (!res.ok) {
-          throw new Error(
-            "UPLOAD_FAILED"
-          );
+          throw new Error();
         }
 
         const data =
           await res.json();
-
-        console.log(
-          "✅ BANNER_UPLOAD:",
-          data
-        );
 
         setShop(
           (
@@ -545,19 +510,16 @@ export default function SellerStockPage() {
 
         setMessage({
           text:
-            "Banner updated",
+            t.saved_successfully ??
+            "Saved successfully",
 
           type:
             "success",
         });
-      } catch (error) {
-        console.error(
-          "💥 BANNER_UPLOAD_ERROR",
-          error
-        );
-
+      } catch {
         setMessage({
           text:
+            t.upload_failed ??
             "Upload failed",
 
           type:
@@ -567,7 +529,7 @@ export default function SellerStockPage() {
     };
 
   /* =====================================================
-     DELETE PRODUCT
+     DELETE
   ===================================================== */
 
   const handleDelete =
@@ -594,36 +556,30 @@ export default function SellerStockPage() {
             }
           );
 
-        if (res.ok) {
-          setProducts(
-            (
-              prev
-            ) =>
-              prev.filter(
-                (
-                  p
-                ) =>
-                  p.id !==
-                  id
-              )
-          );
-
-          setMessage({
-            text:
-              t.delete_success,
-
-            type:
-              "success",
-          });
-        } else {
-          setMessage({
-            text:
-              t.delete_failed,
-
-            type:
-              "error",
-          });
+        if (!res.ok) {
+          throw new Error();
         }
+
+        setProducts(
+          (
+            prev
+          ) =>
+            prev.filter(
+              (
+                p
+              ) =>
+                p.id !==
+                id
+            )
+        );
+
+        setMessage({
+          text:
+            t.delete_success,
+
+          type:
+            "success",
+        });
       } catch {
         setMessage({
           text:
@@ -643,7 +599,21 @@ export default function SellerStockPage() {
     pageLoading
   ) {
     return (
-      <main className="p-6 text-center text-gray-500">
+      <main
+        className="
+          min-h-screen
+          flex
+          items-center
+          justify-center
+        "
+        style={{
+          backgroundColor:
+            "var(--background)",
+
+          color:
+            "var(--muted-foreground)",
+        }}
+      >
         Loading...
       </main>
     );
@@ -654,146 +624,479 @@ export default function SellerStockPage() {
   ===================================================== */
 
   return (
-    <main className="p-4 max-w-2xl mx-auto pb-28">
+    <main
+      className="
+        min-h-screen
+        pb-28
+      "
+      style={{
+        backgroundColor:
+          "var(--background)",
+      }}
+    >
+      <div
+        className="
+          mx-auto
+          max-w-2xl
+          p-4
+        "
+      >
+        {/* SHOP HEADER */}
 
-      {/* =========================================
-          SHOP HEADER
-      ========================================= */}
+        <section
+          className="
+            overflow-hidden
+            rounded-3xl
+            border
+            shadow-sm
+            transition-colors
+          "
+          style={{
+            backgroundColor:
+              "var(--card-bg)",
 
-      <div className="mb-10">
+            borderColor:
+              "var(--border-color)",
+          }}
+        >
+          {/* BANNER */}
 
-        {/* BANNER */}
-
-        <div className="relative w-full h-40 rounded-xl overflow-hidden">
-
-          <Image
-            src={banner}
-            alt="Shop banner"
-            fill
-            priority
-            unoptimized
-            className="object-cover"
-          />
-
-          {/* CHANGE BANNER */}
-
-          <label className="absolute top-3 left-3 bg-black/60 hover:bg-black/70 text-white text-xs px-3 py-1 rounded cursor-pointer flex items-center gap-1">
-
-            <Upload size={14} />
-
-            {t.change_banner}
-
-            <input
-              type="file"
-              hidden
-              accept="image/*"
-              onChange={
-                handleBannerUpload
-              }
-            />
-          </label>
-
-          {/* POST PRODUCT */}
-
-          <button
-            onClick={() =>
-              router.push(
-                "/seller/post"
-              )
-            }
-            className="absolute top-3 right-3 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-11 h-11 flex items-center justify-center shadow-lg"
+          <div
+            className="
+              relative
+              h-44
+              w-full
+            "
           >
-            <Plus size={20} />
-          </button>
-        </div>
-
-        {/* AVATAR */}
-
-        <div className="flex justify-center -mt-12">
-
-          <div className="w-24 h-24 bg-white rounded-full overflow-hidden shadow border-4 border-white flex items-center justify-center">
-
             <Image
-              src={avatar}
-              alt="Avatar"
-              width={96}
-              height={96}
+              src={banner}
+              alt="Banner"
+              fill
               priority
               unoptimized
-              className="object-cover w-full h-full"
+              className="object-cover"
             />
-          </div>
-        </div>
 
-        {/* SHOP NAME */}
+            {/* OVERLAY */}
 
-        <h2 className="text-center font-bold text-xl mt-3">
-          {shop.shop_name ||
-            t.my_store}
-        </h2>
+            <div className="absolute inset-0 bg-black/30" />
 
-        {/* STATS */}
+            {/* CHANGE BANNER */}
 
-        <div className="flex justify-center gap-6 text-sm text-gray-600 mt-2">
+            <label
+              className="
+                absolute
+                left-4
+                top-4
+                flex
+                cursor-pointer
+                items-center
+                gap-2
+                rounded-full
+                border
+                px-4
+                py-2
+                text-xs
+                font-medium
+                text-white
+                backdrop-blur-md
+                transition-all
+              "
+              style={{
+                borderColor:
+                  "rgba(255,255,255,0.25)",
 
-          <div className="flex items-center gap-1">
-            ⭐{" "}
-            <span>
-              {shop.rating ??
-                0}
-            </span>
-          </div>
+                backgroundColor:
+                  "rgba(0,0,0,0.35)",
+              }}
+            >
+              <Upload size={14} />
 
-          <div className="flex items-center gap-1">
-            📦{" "}
-            <span>
-              {
-                products.length
+              {t.change_banner}
+
+              <input
+                hidden
+                type="file"
+                accept="image/*"
+                onChange={
+                  handleBannerUpload
+                }
+              />
+            </label>
+
+            {/* ADD PRODUCT */}
+
+            <button
+              onClick={() =>
+                router.push(
+                  "/seller/post"
+                )
               }
-            </span>
+              className="
+                absolute
+                right-4
+                top-4
+                flex
+                h-12
+                w-12
+                items-center
+                justify-center
+                rounded-full
+                bg-orange-500
+                text-white
+                shadow-lg
+                transition-all
+                hover:bg-orange-600
+                active:scale-95
+              "
+            >
+              <Plus size={20} />
+            </button>
           </div>
 
-          <div className="flex items-center gap-1">
-            🛒{" "}
-            <span>
-              {shop.total_sales ??
-                0}
-            </span>
-          </div>
-        </div>
+          {/* PROFILE */}
 
-        {/* MESSAGE */}
-
-        {message.text && (
-          <p
-            className={`text-center mb-4 ${
-              message.type ===
-              "success"
-                ? "text-green-600"
-                : "text-red-600 font-medium"
-            }`}
+          <div
+            className="
+              relative
+              px-5
+              pb-6
+            "
           >
-            {message.text}
-          </p>
-        )}
+            {/* AVATAR */}
+
+            <div
+              className="
+                -mt-12
+                flex
+                justify-center
+              "
+            >
+              <div
+                className="
+                  h-24
+                  w-24
+                  overflow-hidden
+                  rounded-full
+                  border-4
+                  shadow-lg
+                "
+                style={{
+                  borderColor:
+                    "var(--card-bg)",
+
+                  backgroundColor:
+                    "var(--soft-bg)",
+                }}
+              >
+                <Image
+                  src={avatar}
+                  alt="Avatar"
+                  width={96}
+                  height={96}
+                  priority
+                  unoptimized
+                  className="
+                    h-full
+                    w-full
+                    object-cover
+                  "
+                />
+              </div>
+            </div>
+
+            {/* NAME */}
+
+            <h1
+              className="
+                mt-4
+                text-center
+                text-2xl
+                font-bold
+              "
+              style={{
+                color:
+                  "var(--foreground)",
+              }}
+            >
+              {shop.shop_name ||
+                t.my_store}
+            </h1>
+
+            {/* DESCRIPTION */}
+
+            {shop.shop_description && (
+              <p
+                className="
+                  mx-auto
+                  mt-2
+                  max-w-md
+                  text-center
+                  text-sm
+                  leading-relaxed
+                "
+                style={{
+                  color:
+                    "var(--muted-foreground)",
+                }}
+              >
+                {
+                  shop.shop_description
+                }
+              </p>
+            )}
+
+            {/* STATS */}
+
+            <div
+              className="
+                mt-5
+                grid
+                grid-cols-3
+                gap-3
+              "
+            >
+              <div
+                className="
+                  rounded-2xl
+                  border
+                  p-3
+                  text-center
+                "
+                style={{
+                  backgroundColor:
+                    "var(--soft-bg)",
+
+                  borderColor:
+                    "var(--border-color)",
+                }}
+              >
+                <div
+                  className="
+                    mb-1
+                    flex
+                    justify-center
+                  "
+                  style={{
+                    color:
+                      "#f59e0b",
+                  }}
+                >
+                  <Star size={18} />
+                </div>
+
+                <p
+                  className="
+                    text-lg
+                    font-bold
+                  "
+                  style={{
+                    color:
+                      "var(--foreground)",
+                  }}
+                >
+                  {shop.rating ??
+                    0}
+                </p>
+
+                <p
+                  className="
+                    text-xs
+                  "
+                  style={{
+                    color:
+                      "var(--muted-foreground)",
+                  }}
+                >
+                  Rating
+                </p>
+              </div>
+
+              <div
+                className="
+                  rounded-2xl
+                  border
+                  p-3
+                  text-center
+                "
+                style={{
+                  backgroundColor:
+                    "var(--soft-bg)",
+
+                  borderColor:
+                    "var(--border-color)",
+                }}
+              >
+                <div
+                  className="
+                    mb-1
+                    flex
+                    justify-center
+                  "
+                  style={{
+                    color:
+                      "var(--foreground)",
+                  }}
+                >
+                  <Package2
+                    size={18}
+                  />
+                </div>
+
+                <p
+                  className="
+                    text-lg
+                    font-bold
+                  "
+                  style={{
+                    color:
+                      "var(--foreground)",
+                  }}
+                >
+                  {
+                    products.length
+                  }
+                </p>
+
+                <p
+                  className="
+                    text-xs
+                  "
+                  style={{
+                    color:
+                      "var(--muted-foreground)",
+                  }}
+                >
+                  Products
+                </p>
+              </div>
+
+              <div
+                className="
+                  rounded-2xl
+                  border
+                  p-3
+                  text-center
+                "
+                style={{
+                  backgroundColor:
+                    "var(--soft-bg)",
+
+                  borderColor:
+                    "var(--border-color)",
+                }}
+              >
+                <div
+                  className="
+                    mb-1
+                    flex
+                    justify-center
+                  "
+                  style={{
+                    color:
+                      "var(--foreground)",
+                  }}
+                >
+                  <ShoppingBag
+                    size={18}
+                  />
+                </div>
+
+                <p
+                  className="
+                    text-lg
+                    font-bold
+                  "
+                  style={{
+                    color:
+                      "var(--foreground)",
+                  }}
+                >
+                  {shop.total_sales ??
+                    0}
+                </p>
+
+                <p
+                  className="
+                    text-xs
+                  "
+                  style={{
+                    color:
+                      "var(--muted-foreground)",
+                  }}
+                >
+                  Sales
+                </p>
+              </div>
+            </div>
+
+            {/* MESSAGE */}
+
+            {message.text && (
+              <div
+                className={`
+                  mt-5
+                  rounded-2xl
+                  border
+                  px-4
+                  py-3
+                  text-sm
+                  font-medium
+                  ${
+                    message.type ===
+                    "success"
+                      ? "border-green-500/30 bg-green-500/10 text-green-500"
+                      : "border-red-500/30 bg-red-500/10 text-red-500"
+                  }
+                `}
+              >
+                {message.text}
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* EMPTY */}
 
         {products.length ===
           0 && (
-          <p className="text-center text-gray-400">
-            {
-              t.no_products
-            }
-          </p>
+          <div
+            className="
+              mt-6
+              rounded-3xl
+              border
+              p-10
+              text-center
+            "
+            style={{
+              backgroundColor:
+                "var(--card-bg)",
+
+              borderColor:
+                "var(--border-color)",
+            }}
+          >
+            <p
+              style={{
+                color:
+                  "var(--muted-foreground)",
+              }}
+            >
+              {
+                t.no_products
+              }
+            </p>
+          </div>
         )}
 
-        {/* =========================================
-            PRODUCT LIST
-        ========================================= */}
+        {/* PRODUCTS */}
 
-        <div className="space-y-4">
-
+        <div
+          className="
+            mt-6
+            space-y-4
+          "
+        >
           {products.map(
             (
               product
@@ -829,174 +1132,347 @@ export default function SellerStockPage() {
               const upcoming =
                 product.sale_price !==
                   null &&
-                start !==
-                  null &&
-                now <
-                  start;
+                start &&
+                now < start;
 
               const ended =
                 product.sale_price !==
                   null &&
-                end !==
-                  null &&
-                now >
-                  end;
+                end &&
+                now > end;
 
               return (
                 <div
                   key={
                     product.id
                   }
-                  onClick={() =>
-                    router.push(
-                      `/product/${product.id}`
-                    )
-                  }
-                  className="flex gap-3 p-3 bg-white rounded-xl shadow border hover:bg-gray-50 cursor-pointer"
+                  className="
+                    overflow-hidden
+                    rounded-3xl
+                    border
+                    shadow-sm
+                    transition-all
+                  "
+                  style={{
+                    backgroundColor:
+                      "var(--card-bg)",
+
+                    borderColor:
+                      "var(--border-color)",
+                  }}
                 >
+                  <div
+                    className="
+                      flex
+                      gap-4
+                      p-4
+                    "
+                  >
+                    {/* IMAGE */}
 
-                  {/* IMAGE */}
+                    <div
+                      className="
+                        relative
+                        h-28
+                        w-28
+                        overflow-hidden
+                        rounded-2xl
+                        flex-shrink-0
+                      "
+                    >
+                      {isSale && (
+                        <span
+                          className="
+                            absolute
+                            left-2
+                            top-2
+                            z-10
+                            rounded-full
+                            bg-red-500
+                            px-2
+                            py-1
+                            text-[10px]
+                            font-bold
+                            text-white
+                          "
+                        >
+                          SALE
+                        </span>
+                      )}
 
-                  <div className="w-24 h-24 relative rounded-lg overflow-hidden flex-shrink-0">
+                      {upcoming && (
+                        <span
+                          className="
+                            absolute
+                            left-2
+                            top-2
+                            z-10
+                            rounded-full
+                            bg-blue-500
+                            px-2
+                            py-1
+                            text-[10px]
+                            font-bold
+                            text-white
+                          "
+                        >
+                          UPCOMING
+                        </span>
+                      )}
 
-                    {isSale && (
-                      <span className="absolute top-1 left-1 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded z-10">
-                        SALE
-                      </span>
-                    )}
+                      {ended && (
+                        <span
+                          className="
+                            absolute
+                            left-2
+                            top-2
+                            z-10
+                            rounded-full
+                            bg-gray-500
+                            px-2
+                            py-1
+                            text-[10px]
+                            font-bold
+                            text-white
+                          "
+                        >
+                          ENDED
+                        </span>
+                      )}
 
-                    {upcoming && (
-                      <span className="absolute top-1 left-1 bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded z-10">
-                        UPCOMING
-                      </span>
-                    )}
-
-                    {ended && (
-                      <span className="absolute top-1 left-1 bg-gray-500 text-white text-xs font-bold px-2 py-0.5 rounded z-10">
-                        ENDED
-                      </span>
-                    )}
-
-                    {product.thumbnail ? (
-                      <Image
-                        src={
-                          product.thumbnail
-                        }
-                        alt={
-                          product.name
-                        }
-                        fill
-                        sizes="96px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                        {
-                          t.no_image
-                        }
-                      </div>
-                    )}
-                  </div>
-
-                  {/* CONTENT */}
-
-                  <div className="flex-1 min-w-0">
-
-                    <h3 className="font-semibold text-sm line-clamp-2">
-                      {
-                        product.name
-                      }
-                    </h3>
-
-                    {/* PRICE */}
-
-                    <div className="mt-1">
-
-                      {display.sale_price ? (
-                        <>
-                          <p className="text-sm text-gray-400 line-through">
-                            {formatPi(
-                              display.price
-                            )}{" "}
-                            π
-                          </p>
-
-                          <p className="text-[#ff6600] font-bold">
-                            {formatPi(
-                              display.sale_price
-                            )}{" "}
-                            π
-                          </p>
-                        </>
+                      {product.thumbnail ? (
+                        <Image
+                          src={
+                            product.thumbnail
+                          }
+                          alt={
+                            product.name
+                          }
+                          fill
+                          sizes="112px"
+                          className="object-cover"
+                        />
                       ) : (
-                        <p className="text-[#ff6600] font-bold">
-                          {formatPi(
-                            display.price
-                          )}{" "}
-                          π
-                        </p>
+                        <div
+                          className="
+                            flex
+                            h-full
+                            w-full
+                            items-center
+                            justify-center
+                            text-sm
+                          "
+                          style={{
+                            backgroundColor:
+                              "var(--soft-bg)",
+
+                            color:
+                              "var(--muted-foreground)",
+                          }}
+                        >
+                          {
+                            t.no_image
+                          }
+                        </div>
                       )}
                     </div>
 
-                    {/* SALE TIME */}
+                    {/* CONTENT */}
 
-                    {product.sale_start && (
-                      <p className="text-xs text-gray-500">
-                        {
-                          t.sale_start
-                        }
-                        :{" "}
-                        {new Date(
-                          product.sale_start
-                        ).toLocaleString()}
-                      </p>
-                    )}
-
-                    {product.sale_end && (
-                      <p className="text-xs text-gray-500">
-                        {
-                          t.sale_end
-                        }
-                        :{" "}
-                        {new Date(
-                          product.sale_end
-                        ).toLocaleString()}
-                      </p>
-                    )}
-
-                    {/* ACTIONS */}
-
-                    <div className="flex gap-4 mt-2">
-
-                      <button
-                        onClick={(
-                          e
-                        ) => {
-                          e.stopPropagation();
-
-                          router.push(
-                            `/seller/edit/${product.id}`
-                          );
+                    <div className="min-w-0 flex-1">
+                      <h3
+                        className="
+                          line-clamp-2
+                          text-sm
+                          font-semibold
+                        "
+                        style={{
+                          color:
+                            "var(--foreground)",
                         }}
-                        className="text-green-600 underline"
                       >
-                        {t.edit}
-                      </button>
+                        {
+                          product.name
+                        }
+                      </h3>
 
-                      <button
-                        onClick={(
-                          e
-                        ) => {
-                          e.stopPropagation();
+                      {/* PRICE */}
 
-                          handleDelete(
-                            product.id
-                          );
-                        }}
-                        className="text-red-600 underline"
+                      <div className="mt-2">
+                        {display.sale_price ? (
+                          <div>
+                            <p
+                              className="
+                                text-xs
+                                line-through
+                              "
+                              style={{
+                                color:
+                                  "var(--muted-foreground)",
+                              }}
+                            >
+                              {formatPi(
+                                display.price
+                              )}
+                            </p>
+
+                            <p
+                              className="
+                                text-lg
+                                font-bold
+                                text-red-500
+                              "
+                            >
+                              {formatPi(
+                                display.sale_price
+                              )}
+                            </p>
+                          </div>
+                        ) : (
+                          <p
+                            className="
+                              text-lg
+                              font-bold
+                              text-orange-500
+                            "
+                          >
+                            {formatPi(
+                              display.price
+                            )}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* STATS */}
+
+                      <div
+                        className="
+                          mt-3
+                          flex
+                          flex-wrap
+                          gap-2
+                        "
                       >
-                        {t.delete}
-                      </button>
+                        <span
+                          className="
+                            rounded-full
+                            px-3
+                            py-1
+                            text-xs
+                            font-medium
+                          "
+                          style={{
+                            backgroundColor:
+                              "var(--soft-bg)",
+
+                            color:
+                              "var(--foreground)",
+                          }}
+                        >
+                          Stock:
+                          {" "}
+                          {
+                            product.stock
+                          }
+                        </span>
+
+                        <span
+                          className="
+                            rounded-full
+                            px-3
+                            py-1
+                            text-xs
+                            font-medium
+                          "
+                          style={{
+                            backgroundColor:
+                              "var(--soft-bg)",
+
+                            color:
+                              "var(--foreground)",
+                          }}
+                        >
+                          Sold:
+                          {" "}
+                          {
+                            product.sold
+                          }
+                        </span>
+                      </div>
+
+                      {/* ACTIONS */}
+
+                      <div
+                        className="
+                          mt-4
+                          flex
+                          gap-2
+                        "
+                      >
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/seller/edit/${product.id}`
+                            )
+                          }
+                          className="
+                            flex
+                            flex-1
+                            items-center
+                            justify-center
+                            gap-2
+                            rounded-2xl
+                            border
+                            px-4
+                            py-2.5
+                            text-sm
+                            font-medium
+                            transition-all
+                            active:scale-95
+                          "
+                          style={{
+                            backgroundColor:
+                              "var(--soft-bg)",
+
+                            borderColor:
+                              "var(--border-color)",
+
+                            color:
+                              "var(--foreground)",
+                          }}
+                        >
+                          <Pencil
+                            size={16}
+                          />
+
+                          {t.edit}
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            handleDelete(
+                              product.id
+                            )
+                          }
+                          className="
+                            flex
+                            items-center
+                            justify-center
+                            rounded-2xl
+                            border
+                            border-red-500/30
+                            bg-red-500/10
+                            px-4
+                            text-red-500
+                            transition-all
+                            active:scale-95
+                          "
+                        >
+                          <Trash2
+                            size={18}
+                          />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
