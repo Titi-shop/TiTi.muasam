@@ -1,7 +1,5 @@
 "use client";
-
 import Image from "next/image";
-
 import {
   Plus,
   Upload,
@@ -17,18 +15,12 @@ import {
   useEffect,
   useCallback,
 } from "react";
-
 import { useRouter } from "next/navigation";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-
 import { useAuth } from "@/context/AuthContext";
-
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
-
 import { formatPi } from "@/lib/pi";
-
 import { isNowInRange } from "@/lib/utils/time";
-
 import type {
   SellerProduct,
 } from "@/types/Product";
@@ -39,17 +31,13 @@ import type {
 
 const DEFAULT_AVATAR =
   "/avatars/default-avatar.png";
-
 const DEFAULT_BANNER =
   "/banners/30FD1BCC-E31C-4702-9E63-8BF08C5E311C.png";
-
 /* =====================================================
    TYPES
 ===================================================== */
-
 interface Message {
   text: string;
-
   type:
     | "success"
     | "error"
@@ -58,21 +46,16 @@ interface Message {
 
 interface ShopProfile {
   shop_name: string | null;
-
   shop_banner: string | null;
-
   avatar_url: string | null;
-
   shop_description:
     | string
     | null;
 
   rating: number | null;
-
   total_reviews:
     | number
     | null;
-
   total_sales:
     | number
     | null;
@@ -166,19 +149,13 @@ export default function SellerStockPage() {
   const [shop, setShop] =
     useState<ShopProfile>({
       shop_name: null,
-
       shop_banner: null,
-
       avatar_url: null,
-
       shop_description:
         null,
-
       rating: null,
-
       total_reviews:
         null,
-
       total_sales: null,
     });
 
@@ -498,16 +475,10 @@ export default function SellerStockPage() {
         const data =
           await res.json();
 
-        setShop(
-          (
-            prev
-          ) => ({
-            ...prev,
-
-            shop_banner:
-              data.banner,
-          })
-        );
+        setShop((prev) => ({
+  ...prev,
+  shop_banner: `${data.banner}?t=${Date.now()}`,
+}));
 
         setMessage({
           text:
