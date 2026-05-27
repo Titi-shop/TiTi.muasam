@@ -399,6 +399,7 @@ export async function cancelOrderBySeller(
 /* =========================================================
    SELLER — CONFIRM ORDER
 ========================================================= */
+  
 export async function confirmOrderBySeller(
   orderId: string,
   sellerId: string,
@@ -443,14 +444,20 @@ export async function confirmOrderBySeller(
         return false;
       }
 
-      if (order.fulfillment_status !== "pending") {
+      /* ✅ STATUS MỚI */
+      if (
+        order.fulfillment_status !==
+        "pending_fulfillment"
+      ) {
         console.warn(
           "[ORDER][SELLER][CONFIRM][INVALID_STATUS]",
           {
             orderId,
-            status: order.fulfillment_status,
+            status:
+              order.fulfillment_status,
           }
         );
+
         return false;
       }
 
@@ -460,13 +467,21 @@ export async function confirmOrderBySeller(
         SET
           fulfillment_status = 'processing',
           confirmed_at = NOW(),
-          seller_message = COALESCE($3, seller_message),
+          seller_message = COALESCE(
+            $3,
+            seller_message
+          ),
           updated_at = NOW()
         WHERE order_id = $1
           AND seller_id = $2
-          AND fulfillment_status = 'pending'
+          AND fulfillment_status =
+              'pending_fulfillment'
         `,
-        [orderId, sellerId, sellerMessage ?? ""]
+        [
+          orderId,
+          sellerId,
+          sellerMessage ?? "",
+        ]
       );
 
       if (res.rowCount === 0) {
@@ -474,9 +489,11 @@ export async function confirmOrderBySeller(
           "[ORDER][SELLER][CONFIRM][NO_ITEMS]",
           { orderId }
         );
+
         return false;
       }
 
+      /* ✅ sync đúng function */
       await syncOrderFulfillmentStatus(
         client,
         orderId
@@ -491,6 +508,7 @@ export async function confirmOrderBySeller(
     });
 
   } catch (err) {
+
     console.error(
       "[ORDER][SELLER][CONFIRM][DB_ERROR]",
       {
