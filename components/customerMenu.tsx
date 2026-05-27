@@ -119,13 +119,34 @@ if (item.onClick) item.onClick();
 else if (item.path) router.push(item.path);
 }}
 disabled={sellerLoading && item.onClick !== undefined}
-className="flex flex-col items-center justify-start h-[96px] text-gray-700 hover:text-orange-500 transition disabled:opacity-60"
+className="
+  group relative flex flex-col items-center justify-start
+  h-[96px] rounded-2xl transition-all duration-200
+  text-gray-700 dark:text-white
+  hover:text-orange-500
+  disabled:opacity-60
+"
 >
-<div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 shadow-sm mb-2">
+<div
+  className="
+    flex items-center justify-center
+    w-12 h-12 rounded-full mb-2 shadow-sm border
+    bg-gray-100 border-gray-200
+    dark:bg-white dark:text-black dark:border-white
+    group-hover:border-orange-500
+  "
+>
 {item.icon}
 </div>
 
-<span className="text-[11px] font-medium leading-snug text-center line-clamp-2 max-w-[72px]">  
+<span
+  className="
+    text-[11px] font-medium leading-snug
+    text-center line-clamp-2 max-w-[72px]
+    text-gray-700 dark:text-white
+    group-hover:text-orange-500
+  "
+>
           {item.label}  
         </span>  
       </button>  
