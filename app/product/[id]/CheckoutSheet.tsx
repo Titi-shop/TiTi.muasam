@@ -926,26 +926,33 @@ export default function CheckoutSheet({
           }}
         >
           <button
-            onClick={handlePay}
-            disabled={processing}
-            className="
-              w-full py-3
-              rounded-xl
-              text-white
-              font-semibold
-              transition
-            "
-            style={{
-              backgroundColor:
-                processing
-                  ? "#9CA3AF"
-                  : "var(--primary)",
-            }}
-          >
-            {processing
-              ? t.processing
-              : t.pay_now}
-          </button>
+  onClick={handlePay}
+  disabled={processing}
+  className="
+    w-full py-3
+    rounded-xl
+    font-semibold
+    transition-all
+    border-2
+  "
+  style={{
+    backgroundColor: processing
+      ? "#9CA3AF"
+      : "#f97316", // orange primary
+
+    borderColor: processing
+      ? "#9CA3AF"
+      : "#f97316",
+
+    color: "#fff",
+
+    boxShadow: processing
+      ? "none"
+      : "0 10px 25px rgba(249,115,22,0.35)",
+  }}
+>
+  {processing ? t.processing : t.pay_now}
+</button>
         </div>
       </div>
     </div>
