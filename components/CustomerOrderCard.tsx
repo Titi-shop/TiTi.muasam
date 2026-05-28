@@ -93,30 +93,34 @@ export default function CustomerOrderCard({
   "
 >
       
-      {/* HEADER */}
-      <div
+   {/* HEADER */}
+<div
   className="
     flex items-center justify-between gap-3
-    border-b border-orange-500/10
+    border-b border-orange-500/20
     bg-[var(--card-secondary)]
-    px-4 py-3 text-sm
+    px-4 py-3
+    text-sm
   "
 >
-        className="truncate font-semibold text-[var(--foreground)]"
-          #{order.order_number ?? order.id.slice(0, 8)}
-        </span>
+  <span className="truncate font-semibold text-[var(--foreground)]">
+    #{order.order_number ?? order.id.slice(0, 8)}
+  </span>
 
-        <span className="
-  shrink-0 rounded-full
-  border border-orange-500/30
-  bg-orange-500/10
-  px-2.5 py-1
-  text-xs font-semibold
-  text-orange-500
-">
-          {t[`order_${status}`] ?? status}
-        </span>
-      </div>
+  <span
+    className="
+      shrink-0 rounded-full
+      border border-orange-500/30
+      bg-orange-500/10
+      px-2.5 py-1
+      text-xs font-semibold
+      text-orange-500
+    "
+  >
+    {t[`order_${status}`] ?? status}
+  </span>
+</div>
+      
 
       {/* ITEMS */}
       <div className="divide-y divide-orange-500/10">
