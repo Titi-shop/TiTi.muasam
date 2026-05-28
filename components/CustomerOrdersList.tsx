@@ -237,7 +237,7 @@ function Inner({
               className={`px-4 py-3 text-sm border-b-2 ${
                 tab === key
                   ? "border-orange-500 text-orange-500 dark:text-orange-400 font-semibold"
-                  : "border-transparent text-gray-600 dark:text-gray-400""
+                  : "border-transparent text-gray-600 dark:text-gray-400"
               }`}
             >
               {label} ({counts[key]})
