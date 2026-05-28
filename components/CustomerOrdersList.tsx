@@ -245,42 +245,36 @@ function Inner({
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300">
 
-{/* TABS */}
-<div
-  className="
-    sticky top-0 z-20
-    border-b border-orange-500/40
-    bg-white text-black
-    dark:bg-black dark:text-white
-    overflow-x-auto
-    scrollbar-hide
-  "
->
-  <div className="flex min-w-max gap-2 px-3 py-2">
-    {tabs.map(([key, label]) => {
-      const active = tab === key;
+      {/* TABS */}
+      <div className="sticky top-0 z-10 bg-[var(--card-bg)] border-b border-[var(--border)]">
 
-      return (
-        <button
-          key={key}
-          type="button"
-          onClick={() => setTab(key)}
-          className={`
-            shrink-0 rounded-xl border px-4 py-2 text-sm font-medium transition-all duration-200
-
-            ${
-              active
-                ? "border-orange-500 text-orange-500 dark:text-orange-400"
-                : "border-transparent text-black dark:text-white"
-            }
-          `}
+        <div
+          className="
+            flex
+            gap-2
+            overflow-x-auto
+            whitespace-nowrap
+            px-2
+            scrollbar-hide
+            touch-pan-x
+            [-webkit-overflow-scrolling:touch]
+          "
         >
-          {label} ({counts[key]})
-        </button>
-      );
-    })}
-  </div>
-</div>
+          {tabs.map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`shrink-0 px-4 py-3 text-sm border-b-2 transition ${
+                tab === key
+                  ? "border-orange-500 text-orange-500 font-semibold"
+                  : "border-transparent text-[var(--text-muted)]"
+              }`}
+            >
+              {label} ({counts[key]})
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* LIST */}
       <div className="p-4 space-y-4 bg-[var(--background)]">
