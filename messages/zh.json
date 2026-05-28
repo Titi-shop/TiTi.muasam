@@ -648,7 +648,11 @@
   "explore_categories": "探索分类",
   "find_products_fast": "通过分类筛选和智能推荐更快找到商品",
   "flash_sale": "限时抢购",
-  "new_arrivals": "新品上架"
+  "new_arrivals": "新品上架",
+  
+  "processing_orders": "处理中订单",
+  "returns_orders": "退货订单"
+
 
 
   
