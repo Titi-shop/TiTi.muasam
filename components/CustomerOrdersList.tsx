@@ -227,7 +227,7 @@ function Inner({
   /* ================= UI ================= */
 
   return (
-  <div className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
+  <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300">
     <div className="sticky top-0 z-10 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 overflow-x-auto whitespace-nowrap">
       <div className="flex min-w-max px-2">
         {tabs.map(([key, label]) => (
