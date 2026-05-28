@@ -2,18 +2,14 @@
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
-
 import useSWR from "swr";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { useAuth } from "@/context/AuthContext";
 import { getPiAccessToken } from "@/lib/piAuth";
 import { formatPi } from "@/lib/pi";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-
 import CustomerOrdersList from "@/components/CustomerOrdersList";
-
 import {
   ORDER_STATUS,
   type OrderStatus,
@@ -322,262 +318,207 @@ export default function CustomerOrdersPage() {
   /* ================= UI ================= */
 
   return (
-    <main className="min-h-screen bg-gray-100 pb-32">
+  <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] pb-32 transition-colors duration-300">
 
-      {toast && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-black text-white px-4 py-2 rounded-full text-sm">
-          {toast}
-        </div>
-      )}
+    {toast && (
+      <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-black text-white px-4 py-2 rounded-full text-sm">
+        {toast}
+      </div>
+    )}
 
-      <header className="bg-primary px-4 py-4 text-white">
-        <div className="rounded-xl bg-primary-dark p-4">
-          <p className="text-sm">{t.orders ?? "Orders"}</p>
-          <p className="text-xs mt-1">
-            {mergedOrders.length} · π{formatPi(totalPi)}
-          </p>
-        </div>
-      </header>
+    <header className="px-4 py-4">
+      <div className="rounded-xl bg-[var(--card-bg)] p-4 shadow-sm border border-[var(--border)]">
+        <p className="text-sm">{t.orders ?? "Orders"}</p>
+        <p className="text-xs mt-1 text-[var(--text-muted)]">
+          {mergedOrders.length} · π{formatPi(totalPi)}
+        </p>
+      </div>
+    </header>
 
-      <Suspense fallback={<div className="p-4 text-sm text-center">Loading...</div>}>
-        <CustomerOrdersList
-          initialTab="all"
-          orders={mergedOrders}
-          reviewedMap={reviewedMap}
-          onDetail={(id) => router.push(`/customer/orders/${id}`)}
-          onCancel={setShowCancelFor}
-          onReceived={setConfirmReceivedFor}
-          onReview={setActiveReviewId}
-        />
-      </Suspense>
+    <Suspense fallback={
+      <div className="p-4 text-sm text-center text-[var(--text-muted)]">
+        Loading...
+      </div>
+    }>
+      <CustomerOrdersList
+        initialTab="all"
+        orders={mergedOrders}
+        reviewedMap={reviewedMap}
+        onDetail={(id) => router.push(`/customer/orders/${id}`)}
+        onCancel={setShowCancelFor}
+        onReceived={setConfirmReceivedFor}
+        onReview={setActiveReviewId}
+      />
+    </Suspense>
 
-      {/* CANCEL POPUP */}
-      {showCancelFor && (
-        <div className="fixed inset-0 z-50">
-          <div onClick={resetCancel} className="absolute inset-0 bg-black/40" />
+    {/* CANCEL POPUP */}
+    {showCancelFor && (
+      <div className="fixed inset-0 z-50">
+        <div onClick={resetCancel} className="absolute inset-0 bg-black/40" />
 
-          <div className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+80px)]">
-            <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-300" />
+        <div className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-[var(--card-bg)] text-[var(--foreground)] p-5 pb-[calc(env(safe-area-inset-bottom)+80px)] border-t border-[var(--border)]">
+          <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-300" />
 
-            <h3 className="text-center text-lg font-semibold">
-              {t.cancel_order ?? "Cancel Order"}
-            </h3>
+          <h3 className="text-center text-lg font-semibold">
+            {t.cancel_order ?? "Cancel Order"}
+          </h3>
 
-            <div className="mt-5 space-y-2">
-              {CANCEL_REASON_KEYS.map(key => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setSelectedReason(key)}
-                  className={`w-full rounded-xl border px-4 py-3 text-left ${
-                    selectedReason === key
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-gray-200"
-                  }`}
-                >
-                  {t[key] ?? key}
-                </button>
-              ))}
-            </div>
-
-            {selectedReason === "cancel_reason_other" && (
-              <textarea
-                rows={3}
-                value={customReason}
-                onChange={e => setCustomReason(e.target.value)}
-                className="mt-3 w-full rounded-xl border p-3"
-                placeholder={t.enter_cancel_reason ?? "Enter reason"}
-              />
-            )}
-
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <button type="button" onClick={resetCancel} className="rounded-xl border py-3">
-                {t.close ?? "Close"}
-              </button>
-
+          <div className="mt-5 space-y-2">
+            {CANCEL_REASON_KEYS.map(key => (
               <button
+                key={key}
                 type="button"
-                disabled={processingId === showCancelFor}
-                onClick={() => handleCancel(showCancelFor)}
-                className="rounded-xl bg-primary py-3 text-white"
+                onClick={() => setSelectedReason(key)}
+                className={`w-full rounded-xl border px-4 py-3 text-left transition ${
+                  selectedReason === key
+                    ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
+                    : "border-[var(--border)]"
+                }`}
               >
-                {t.confirm ?? "Confirm"}
+                {t[key] ?? key}
               </button>
-            </div>
+            ))}
           </div>
-        </div>
-      )}
 
-
-      {/* REVIEW POPUP */}
-
-      {activeReviewId && (
-        <div className="fixed inset-0 z-50">
-          <div
-            onClick={
-              resetReview
-            }
-            className="absolute inset-0 bg-black/40"
-          />
-
-          <div className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-y-auto rounded-t-3xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+80px)]">
-            <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-300" />
-
-            <h3 className="text-center text-lg font-semibold">
-              {t.review_orders ??
-                "Review"}
-            </h3>
-
-            <div className="mt-5 flex justify-center gap-2">
-              {[1, 2, 3, 4, 5].map(
-                (
-                  star
-                ) => (
-                  <button
-                    key={
-                      star
-                    }
-                    type="button"
-                    onClick={() =>
-                      setRating(
-                        star
-                      )
-                    }
-                    className={
-                      star <=
-                      rating
-                        ? "text-3xl text-yellow-500"
-                        : "text-3xl text-gray-300"
-                    }
-                  >
-                    ★
-                  </button>
-                )
-              )}
-            </div>
-
+          {selectedReason === "cancel_reason_other" && (
             <textarea
-              rows={4}
-              value={comment}
-              onChange={(
-                e
-              ) =>
-                setComment(
-                  e.target
-                    .value
-                )
-              }
-              placeholder={
-                t.default_review_comment ??
-                "Write review..."
-              }
-              className="mt-4 w-full rounded-xl border p-3"
+              rows={3}
+              value={customReason}
+              onChange={e => setCustomReason(e.target.value)}
+              className="mt-3 w-full rounded-xl border border-[var(--border)] p-3 bg-transparent"
+              placeholder={t.enter_cancel_reason ?? "Enter reason"}
             />
+          )}
 
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={
-                  resetReview
-                }
-                className="rounded-xl border py-3"
-              >
-                {t.close ??
-                  "Close"}
-              </button>
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={resetCancel}
+              className="rounded-xl border border-[var(--border)] py-3"
+            >
+              {t.close ?? "Close"}
+            </button>
 
-              <button
-                type="button"
-                disabled={
-                  processingId ===
-                  activeReviewId
-                }
-                onClick={() => {
-                  const order =
-                    mergedOrders.find(
-                      (
-                        item
-                      ) =>
-                        item.id ===
-                        activeReviewId
-                    );
-
-                  if (order) {
-                    void handleReview(
-                      order
-                    );
-                  }
-                }}
-                className="rounded-xl bg-primary py-3 text-white"
-              >
-                {t.submit_review ??
-                  "Submit"}
-              </button>
-            </div>
+            <button
+              type="button"
+              disabled={processingId === showCancelFor}
+              onClick={() => handleCancel(showCancelFor)}
+              className="rounded-xl bg-[var(--color-primary)] py-3 text-white"
+            >
+              {t.confirm ?? "Confirm"}
+            </button>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
-      {/* RECEIVED POPUP */}
+    {/* REVIEW POPUP */}
+    {activeReviewId && (
+      <div className="fixed inset-0 z-50">
+        <div onClick={resetReview} className="absolute inset-0 bg-black/40" />
 
-      {confirmReceivedFor && (
-        <div className="fixed inset-0 z-50">
-          <div
-            onClick={() =>
-              setConfirmReceivedFor(
-                null
-              )
-            }
-            className="absolute inset-0 bg-black/40"
+        <div className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-y-auto rounded-t-3xl bg-[var(--card-bg)] text-[var(--foreground)] p-5 pb-[calc(env(safe-area-inset-bottom)+80px)] border-t border-[var(--border)]">
+          <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-300" />
+
+          <h3 className="text-center text-lg font-semibold">
+            {t.review_orders ?? "Review"}
+          </h3>
+
+          <div className="mt-5 flex justify-center gap-2">
+            {[1, 2, 3, 4, 5].map(star => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => setRating(star)}
+                className={
+                  star <= rating
+                    ? "text-3xl text-yellow-500"
+                    : "text-3xl text-gray-400"
+                }
+              >
+                ★
+              </button>
+            ))}
+          </div>
+
+          <textarea
+            rows={4}
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            placeholder={t.default_review_comment ?? "Write review..."}
+            className="mt-4 w-full rounded-xl border border-[var(--border)] p-3 bg-transparent"
           />
 
-          <div className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+80px)]">
-            <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-300" />
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={resetReview}
+              className="rounded-xl border border-[var(--border)] py-3"
+            >
+              {t.close ?? "Close"}
+            </button>
 
-            <h3 className="text-center text-lg font-semibold">
-              {t.received ??
-                "Received"}
-            </h3>
+            <button
+              type="button"
+              disabled={processingId === activeReviewId}
+              onClick={() => {
+                const order = mergedOrders.find(
+                  item => item.id === activeReviewId
+                );
 
-            <p className="mt-2 text-center text-sm text-gray-500">
-              {t.confirm_received_order ??
-                "Confirm that you received this order?"}
-            </p>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  setConfirmReceivedFor(
-                    null
-                  )
-                }
-                className="rounded-xl border py-3"
-              >
-                {t.cancel ??
-                  "Cancel"}
-              </button>
-
-              <button
-                type="button"
-                onClick={async () => {
-                  await handleReceived(
-                    confirmReceivedFor
-                  );
-
-                  setConfirmReceivedFor(
-                    null
-                  );
-                }}
-                className="rounded-xl bg-green-600 py-3 text-white"
-              >
-                {t.ok ??
-                  "OK"}
-              </button>
-            </div>
+                if (order) void handleReview(order);
+              }}
+              className="rounded-xl bg-[var(--color-primary)] py-3 text-white"
+            >
+              {t.submit_review ?? "Submit"}
+            </button>
           </div>
         </div>
-      )}
-    </main>
-  );
+      </div>
+    )}
+
+    {/* RECEIVED POPUP */}
+    {confirmReceivedFor && (
+      <div className="fixed inset-0 z-50">
+        <div
+          onClick={() => setConfirmReceivedFor(null)}
+          className="absolute inset-0 bg-black/40"
+        />
+
+        <div className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-[var(--card-bg)] text-[var(--foreground)] p-5 pb-[calc(env(safe-area-inset-bottom)+80px)] border-t border-[var(--border)]">
+          <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-300" />
+
+          <h3 className="text-center text-lg font-semibold">
+            {t.received ?? "Received"}
+          </h3>
+
+          <p className="mt-2 text-center text-sm text-[var(--text-muted)]">
+            {t.confirm_received_order ?? "Confirm that you received this order?"}
+          </p>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setConfirmReceivedFor(null)}
+              className="rounded-xl border border-[var(--border)] py-3"
+            >
+              {t.cancel ?? "Cancel"}
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                await handleReceived(confirmReceivedFor);
+                setConfirmReceivedFor(null);
+              }}
+              className="rounded-xl bg-green-600 py-3 text-white"
+            >
+              {t.ok ?? "OK"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </main>
+);
 }
