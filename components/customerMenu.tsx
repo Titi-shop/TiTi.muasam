@@ -13,11 +13,8 @@ import {
   MapPin,
   Store,
 } from "lucide-react";
-
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-
 import { useAuth } from "@/context/AuthContext";
-
 import { getPiAccessToken } from "@/lib/piAuth";
 
 /* =========================
@@ -189,92 +186,59 @@ export default function CustomerMenu() {
       },
 
       {
-        label:
-          t.my_orders ??
-          "Orders",
+  label: t.my_orders ?? "Orders",
+  icon: (active) => (
+    <Package size={22} color={active ? "#f97316" : "currentColor"} />
+  ),
+  path: "/customer/orders",
+},
 
-        icon: (
-          <Package size={22} />
-        ),
+{
+  label: t.pi_wallet ?? "Wallet",
+  icon: (active) => (
+    <Wallet size={22} color={active ? "#f97316" : "currentColor"} />
+  ),
+  path: "/account/wallet",
+},
 
-        path:
-          "/customer/orders",
-      },
+{
+  label: t.messages ?? "Messages",
+  icon: (active) => (
+    <MessageCircle size={22} color={active ? "#f97316" : "currentColor"} />
+  ),
+},
 
-      {
-        label:
-          t.pi_wallet ??
-          "Wallet",
+{
+  label: t.language ?? "Language",
+  icon: (active) => (
+    <Globe size={22} color={active ? "#f97316" : "currentColor"} />
+  ),
+},
 
-        icon: (
-          <Wallet size={22} />
-        ),
+{
+  label: t.shipping_address ?? "Address",
+  icon: (active) => (
+    <MapPin size={22} color={active ? "#f97316" : "currentColor"} />
+  ),
+  path: "/customer/address",
+},
 
-        path:
-          "/account/wallet",
-      },
+{
+  label: t.support ?? "Support",
+  icon: (active) => (
+    <HelpCircle size={22} color={active ? "#f97316" : "currentColor"} />
+  ),
+},
 
-      {
-        label:
-          t.messages ??
-          "Messages",
-
-        icon: (
-          <MessageCircle
-            size={22}
-          />
-        ),
-      },
-
-      {
-        label:
-          t.language ??
-          "Language",
-
-        icon: (
-          <Globe size={22} />
-        ),
-      },
-
-      {
-        label:
-          t.shipping_address ??
-          "Address",
-
-        icon: (
-          <MapPin size={22} />
-        ),
-
-        path:
-          "/customer/address",
-      },
-
-      {
-        label:
-          t.support ??
-          "Support",
-
-        icon: (
-          <HelpCircle
-            size={22}
-          />
-        ),
-      },
-
-      {
-        label: isSeller
-          ? t.seller_center ||
-            "Seller Center"
-          : t.register_seller ||
-            "Become Seller",
-
-        icon: (
-          <Store size={22} />
-        ),
-
-        onClick:
-          handleSellerClick,
-      },
+{
+  label: isSeller
+    ? t.seller_center || "Seller Center"
+    : t.register_seller || "Become Seller",
+  icon: (active) => (
+    <Store size={22} color={active ? "#f97316" : "currentColor"} />
+  ),
+  onClick: handleSellerClick,
+},
     ];
 
   /* =========================
