@@ -14,7 +14,7 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 type OrderStatus =
   | "pending_fulfillment"
   | "processing"
-  | "shipping"
+  | "shiped"
   | "completed"
   | "cancelled"
   | "refunded";
@@ -27,13 +27,13 @@ interface OrderItem {
   quantity: number;
   unit_price: number;
   total_price: number;
-  status: string;
+  fulfillment_status: string;
 }
 
 interface Order {
   id: string;
   order_number: string;
-  status: OrderStatus;
+  fulfillment_status: OrderStatus;
   total: number;
   created_at: string;
   seller_message?: string;
