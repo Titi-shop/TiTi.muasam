@@ -45,7 +45,7 @@ type Order = {
 };
 
 /* =======================================================
-   STATE MACHINE
+   NORMALIZE STATUS
 ======================================================= */
 
 function normalizeStatus(order: Order): OrderStatus {
@@ -87,9 +87,7 @@ function normalizeStatus(order: Order): OrderStatus {
 
   if (
     legacy &&
-    Object.values(ORDER_STATUS).includes(
-      legacy as OrderStatus
-    )
+    Object.values(ORDER_STATUS).includes(legacy as OrderStatus)
   ) {
     return legacy as OrderStatus;
   }
@@ -114,13 +112,13 @@ type Props = {
   reviewedMap?: Record<string, boolean>;
 };
 
-export default function CustomerOrdersList(
-  props: Props
-) {
+export default function CustomerOrdersList(props: Props) {
   return (
     <Suspense
       fallback={
-        <div className="p-4 h-12 rounded-xl bg-[var(--card-bg)] animate-pulse" />
+        <div className="p-4">
+          <div className="h-12 rounded-2xl bg-gray-200 dark:bg-gray-800 animate-pulse" />
+        </div>
       }
     >
       <Inner {...props} />
@@ -145,9 +143,7 @@ function Inner({
   const { t } = useTranslation();
   const searchParams = useSearchParams();
 
-  const urlTab = searchParams.get(
-    "tab"
-  ) as OrderTab | null;
+  const urlTab = searchParams.get("tab") as OrderTab | null;
 
   const safeTab: OrderTab =
     urlTab &&
@@ -162,8 +158,7 @@ function Inner({
       ? urlTab
       : initialTab;
 
-  const [tab, setTab] =
-    useState<OrderTab>(safeTab);
+  const [tab, setTab] = useState<OrderTab>(safeTab);
 
   useEffect(() => {
     setTab(safeTab);
@@ -243,44 +238,54 @@ function Inner({
   /* ================= UI ================= */
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300">
-
+    <div className="min-h-screen bg-white text-black dark:bg-black dark:text-white transition-colors duration-300">
+      
       {/* TABS */}
-      <div className="sticky top-0 z-10 bg-[var(--card-bg)] border-b border-[var(--border)]">
+      <div
+        className="
+          sticky top-0 z-20
+          border-b border-orange-500/40
+          bg-white dark:bg-black
+          overflow-x-auto
+          scrollbar-hide
+        "
+      >
+        <div className="flex min-w-max gap-2 px-3 py-2">
+          {tabs.map(([key, label]) => {
+            const active = tab === key;
 
-        <div
-          className="
-            flex
-            gap-2
-            overflow-x-auto
-            whitespace-nowrap
-            px-2
-            scrollbar-hide
-            touch-pan-x
-            [-webkit-overflow-scrolling:touch]
-          "
-        >
-          {tabs.map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`shrink-0 px-4 py-3 text-sm border-b-2 transition ${
-                tab === key
-                  ? "border-orange-500 text-orange-500 font-semibold"
-                  : "border-transparent text-[var(--text-muted)]"
-              }`}
-            >
-              {label} ({counts[key]})
-            </button>
-          ))}
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTab(key)}
+                className={`
+                  shrink-0 rounded-xl border px-4 py-2 text-sm font-medium transition-all
+                  ${
+                    active
+                      ? "border-orange-500 bg-orange-500 text-white"
+                      : "border-orange-500/40 bg-white text-orange-600 dark:bg-black dark:text-orange-400"
+                  }
+                `}
+              >
+                {label} ({counts[key]})
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* LIST */}
-      <div className="p-4 space-y-4 bg-[var(--background)]">
-
+      <div className="space-y-4 bg-gray-50 p-4 dark:bg-black">
         {filtered.length === 0 ? (
-          <div className="rounded-xl bg-[var(--card-bg)] p-8 text-center text-sm text-[var(--text-muted)] border border-[var(--border)]">
+          <div
+            className="
+              rounded-2xl border border-orange-500/30
+              bg-white p-8 text-center text-sm
+              text-gray-500
+              dark:bg-black dark:text-gray-400
+            "
+          >
             {t.no_orders ?? "No orders"}
           </div>
         ) : (
@@ -288,28 +293,16 @@ function Inner({
             <CustomerOrderCard
               key={order.id}
               order={order}
-              reviewed={
-                reviewedMap?.[order.id] ?? false
-              }
-              onDetail={() =>
-                onDetail(order.id)
-              }
-              onCancel={() =>
-                onCancel?.(order.id)
-              }
-              onReceived={() =>
-                onReceived?.(order.id)
-              }
-              onBuyAgain={() =>
-                onBuyAgain?.(order.id)
-              }
-              onReview={() =>
-                onReview?.(order.id)
-              }
+              reviewed={reviewedMap?.[order.id] ?? false}
+              onDetail={() => onDetail(order.id)}
+              onCancel={() => onCancel?.(order.id)}
+              onReceived={() => onReceived?.(order.id)}
+              onBuyAgain={() => onBuyAgain?.(order.id)}
+              onReview={() => onReview?.(order.id)}
             />
           ))
         )}
       </div>
     </div>
   );
-  }
+}
