@@ -229,7 +229,19 @@ function Inner({
   return (
   <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300">
     <div className="sticky top-0 z-10 bg-[var(--card-bg)] border-b border-[var(--border)]">
-      <div className="flex min-w-max px-2">
+  <div
+    className="
+      flex
+      w-full
+      gap-2
+      overflow-x-auto
+      whitespace-nowrap
+      px-2
+      scrollbar-hide
+      touch-pan-x
+      [-webkit-overflow-scrolling:touch]
+    "
+  >
         {tabs.map(([key, label]) => (
           <button
             key={key}
@@ -267,6 +279,5 @@ function Inner({
         ))
       )}
     </div>
-  </div>
 );
 }
