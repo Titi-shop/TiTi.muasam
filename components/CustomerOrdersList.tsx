@@ -244,16 +244,14 @@ function Inner({
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300">
-
-    {/* TABS */}
+{/* TABS */}
 <div
   className="
     sticky top-0 z-20
-    border-b border-[var(--nav-border)]
-    bg-[var(--nav-bg)]
-    text-[var(--nav-text)]
     overflow-x-auto
     scrollbar-hide
+    border-b border-orange-500/20
+    bg-[var(--background)]
     transition-colors duration-300
   "
 >
@@ -267,23 +265,23 @@ function Inner({
           type="button"
           onClick={() => setTab(key)}
           className={`
-            shrink-0 rounded-xl border px-4 py-2
-            text-sm font-medium transition-all duration-200
+  shrink-0 rounded-xl border px-4 py-2
+  text-sm font-medium transition-all duration-200
 
-            ${
-              active
-                ? `
-                    border-[var(--color-primary)]
-                    text-[var(--color-primary)]
-                    bg-[var(--card-secondary)]
-                  `
-                : `
-                    border-transparent
-                    text-[var(--nav-text)]
-                    bg-[var(--card-bg)]
-                  `
-            }
-          `}
+  ${
+    active
+      ? `
+          border-orange-500
+          text-orange-500
+          bg-[var(--card-bg)]
+        `
+      : `
+          border-orange-500/20
+          bg-[var(--card-bg)]
+          text-[var(--foreground)]
+        `
+  }
+`}
         >
           {label} ({counts[key]})
         </button>
