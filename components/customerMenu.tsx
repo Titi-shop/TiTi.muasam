@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -374,17 +372,24 @@ export default function CustomerMenu() {
                     group-active:scale-95
                   "
                   style={{
-  backgroundColor: active ? "#fff" : "var(--soft-bg)",
-  borderColor: active ? "#f97316" : "var(--border-color)",
-}}
+                    backgroundColor:
+                      active
+                        ? "rgba(249,115,22,0.12)"
+                        : "var(--soft-bg)",
+
+                    borderColor:
+                      active
+                        ? "#f97316"
+                        : "var(--border-color)",
+
+                    color:
+                      active
+                        ? "#f97316"
+                        : "var(--foreground)",
+                  }}
                 >
-                 <div
-  style={{
-    color: active ? "#f97316" : "var(--foreground)",
-  }}
->
-  {item.icon(active)}
-</div>
+                 {item.icon(active)}
+                </div>
 
                 {/* LABEL */}
                 <span
