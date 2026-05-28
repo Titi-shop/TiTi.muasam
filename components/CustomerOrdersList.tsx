@@ -228,7 +228,7 @@ function Inner({
 
   return (
   <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300">
-    <div className="sticky top-0 z-10 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 overflow-x-auto whitespace-nowrap">
+    <div className="sticky top-0 z-10 bg-[var(--card-bg)] border-b border-[var(--border)]">
       <div className="flex min-w-max px-2">
         {tabs.map(([key, label]) => (
           <button
@@ -247,9 +247,9 @@ function Inner({
     </div>
 
     {/* LIST */}
-    <div className="p-4 space-y-4 bg-gray-50 dark:bg-black">
+    <div className="p-4 space-y-4 bg-[var(--background)]">
       {filtered.length === 0 ? (
-        <div className="text-center text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900 p-8 rounded-xl">
+        <div className="text-center text-sm text-[var(--text-muted)] bg-white dark:bg-gray-900 p-8 rounded-xl">
           {t.no_orders ?? "No orders"}
         </div>
       ) : (
