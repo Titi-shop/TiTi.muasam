@@ -20,19 +20,12 @@ import {
 
 interface PiPriceResponse {
   symbol: string;
-
   price_usd: number;
-
   change_24h: number;
-
   high_24h?: number;
-
   low_24h?: number;
-
   volume_24h?: number;
-
   updated_at?: string;
-
   source?: string;
 }
 
@@ -247,15 +240,16 @@ export default function PiPriceWidget() {
   ===================================================== */
 
   return (
-    <div
-      className="
-        relative overflow-hidden
-        rounded-[34px]
-        border border-white/10
-        bg-[#081120]
-        shadow-[0_30px_80px_rgba(0,0,0,0.45)]
-      "
-    >
+  <div
+    className={`
+      relative overflow-hidden
+      rounded-[34px]
+      border border-white/10
+      bg-[#0b1120]
+      shadow-[0_25px_80px_rgba(0,0,0,0.45)]
+      backdrop-blur-xl
+    `}
+  >
       {/* BG */}
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(249,115,22,0.15),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.15),transparent_35%)]" />
