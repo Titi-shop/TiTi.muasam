@@ -643,7 +643,8 @@
   "new_arrivals": "Hàng mới",
   
   "processing_orders": "Đơn đang xử lý",
-  "returns_orders": "Đơn trả hàng"
+  "returns_orders": "Đơn trả hàng",
+  "order_processing": "Đang xử lý"
 
 
 }
