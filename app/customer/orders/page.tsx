@@ -385,7 +385,15 @@ if (loading || isLoading) {
       <div className="fixed inset-0 z-50">
         <div onClick={resetCancel} className="absolute inset-0 bg-black/40" />
 
-        <div className="absolute bottom-0 left-0 right-0 rounded-t-3xl bg-[var(--card-bg)] text-[var(--foreground)] p-5 pb-[calc(env(safe-area-inset-bottom)+80px)] border-t border-[var(--border)]">
+        <div className="
+  absolute bottom-0 left-0 right-0
+  rounded-t-3xl
+  border-t border-orange-500/30
+  bg-[var(--card-bg)]
+  p-5
+  pb-[calc(env(safe-area-inset-bottom)+80px)]
+  text-[var(--foreground)]
+">
           <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-300" />
 
           <h3 className="text-center text-lg font-semibold">
@@ -414,7 +422,22 @@ if (loading || isLoading) {
               rows={3}
               value={customReason}
               onChange={e => setCustomReason(e.target.value)}
-              className="mt-3 w-full rounded-xl border border-[var(--border)] p-3 bg-transparent"
+              className={`
+  w-full rounded-2xl border px-4 py-3 text-left transition-all
+  ${
+    selectedReason === key
+      ? `
+        border-orange-500
+        bg-orange-500/10
+        text-orange-500
+      `
+      : `
+        border-orange-500/20
+        bg-[var(--card-secondary)]
+        text-[var(--foreground)]
+      `
+  }
+`}
               placeholder={t.enter_cancel_reason ?? "Enter reason"}
             />
           )}
