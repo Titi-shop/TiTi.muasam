@@ -640,6 +640,10 @@
   "explore_categories": "Khám phá danh mục",
   "find_products_fast": "Tìm sản phẩm nhanh hơn với bộ lọc danh mục và khám phá thông minh",
   "flash_sale": "Flash sale",
-  "new_arrivals": "Hàng mới"
+  "new_arrivals": "Hàng mới",
+  
+  "processing_orders": "Đơn đang xử lý",
+  "returns_orders": "Đơn trả hàng"
+
 
 }
