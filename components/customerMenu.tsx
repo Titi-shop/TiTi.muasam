@@ -23,7 +23,7 @@ import { getPiAccessToken } from "@/lib/piAuth";
 
 type MenuItem = {
   label: string;
-  icon: React.ReactNode;
+  icon: (active: boolean) => React.ReactNode;
   path?: string;
   onClick?: () => void | Promise<void>;
 };
@@ -176,15 +176,15 @@ export default function CustomerMenu() {
   const customerMenuItems: MenuItem[] =
     [
       {
-        label:
-          t.profile ?? "Profile",
-
-        icon: <User size={22} />,
-
-        path:
-          "/customer/profile",
-      },
-
+  label: t.profile ?? "Profile",
+  icon: (active) => (
+    <User
+      size={22}
+      color={active ? "#f97316" : "currentColor"}
+    />
+  ),
+  path: "/customer/profile",
+},
       {
   label: t.my_orders ?? "Orders",
   icon: (active) => (
@@ -390,7 +390,7 @@ export default function CustomerMenu() {
                         : "var(--foreground)",
                   }}
                 >
-                  {item.icon}
+                 {item.icon(active)}
                 </div>
 
                 {/* LABEL */}
