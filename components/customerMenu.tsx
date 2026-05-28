@@ -374,24 +374,17 @@ export default function CustomerMenu() {
                     group-active:scale-95
                   "
                   style={{
-                    backgroundColor:
-                      active
-                        ? "rgba(249,115,22,0.12)"
-                        : "var(--soft-bg)",
-
-                    borderColor:
-                      active
-                        ? "#f97316"
-                        : "var(--border-color)",
-
-                    color:
-                      active
-                        ? "#f97316"
-                        : "var(--foreground)",
-                  }}
+  backgroundColor: active ? "#fff" : "var(--soft-bg)",
+  borderColor: active ? "#f97316" : "var(--border-color)",
+}}
                 >
-                 {item.icon(active)}
-                </div>
+                 <div
+  style={{
+    color: active ? "#f97316" : "var(--foreground)",
+  }}
+>
+  {item.icon(active)}
+</div>
 
                 {/* LABEL */}
                 <span
