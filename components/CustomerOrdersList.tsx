@@ -227,9 +227,8 @@ function Inner({
   /* ================= UI ================= */
 
   return (
-    <>
-      {/* TABS */}
-      <div className="sticky top-0 z-10 bg-white border-b overflow-x-auto whitespace-nowrap">
+  <div className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
+      <div className="sticky top-0 z-10 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 overflow-x-auto whitespace-nowrap">
         <div className="flex min-w-max px-2">
           {tabs.map(([key, label]) => (
             <button
@@ -237,8 +236,8 @@ function Inner({
               onClick={() => setTab(key)}
               className={`px-4 py-3 text-sm border-b-2 ${
                 tab === key
-                  ? "border-orange-500 text-orange-500 font-semibold"
-                  : "border-transparent text-gray-500"
+                  ? "border-orange-500 text-orange-500 dark:text-orange-400 font-semibold"
+                  : "border-transparent text-gray-600 dark:text-gray-400""
               }`}
             >
               {label} ({counts[key]})
@@ -248,9 +247,9 @@ function Inner({
       </div>
 
       {/* LIST */}
-      <div className="p-4 space-y-4">
+     <div className="p-4 space-y-4 bg-gray-50 dark:bg-black">
         {filtered.length === 0 ? (
-          <div className="text-center text-sm text-gray-400 bg-white p-8 rounded-xl">
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900 p-8 rounded-xl">
             {t.no_orders ?? "No orders"}
           </div>
         ) : (
@@ -268,6 +267,7 @@ function Inner({
           ))
         )}
       </div>
-    </>
+    </div>
+)
   );
 }
