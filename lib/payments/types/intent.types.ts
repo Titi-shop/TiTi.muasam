@@ -1,15 +1,8 @@
-import type {
-  PricingResult,
-} from "@/lib/payments/pricing.engine";
+import type { PricingResult } from "@/lib/payments/pricing.engine";
 
 /* =========================================================
    CREATE INTENT
 ========================================================= */
-
-export type RawInput = {
-  userId: string;
-  raw: unknown;
-};
 
 export type ShippingInput = {
   name: string;
@@ -22,41 +15,79 @@ export type ShippingInput = {
   postal_code?: string | null;
 };
 
-export type CreateIntentNormalizedInput =
-  {
-    userId: string;
-    productId: string;
-    variantId: string | null;
-    quantity: number;
-    country: string;
-    zone: string;
-    shipping: ShippingInput;
-  };
+export type CreatePiPaymentIntentInput = {
+  userId: string;
+  productId: string;
+  variantId: string | null;
+  quantity: number;
+  country: string;
+  zone: string;
+  shipping: ShippingInput;
+  pricing: PricingResult;
+};
 
-export type CreateIntentServiceResult =
-  {
+export type CreateIntentResult = {
+  ok: boolean;
+  payment_intent_id: string;
+  amount: number;
+  currency: "PI";
+  merchant_wallet: string;
+  memo: string;
+  metadata: {
     payment_intent_id: string;
-    pi_payment_id: string;
-    amount: number;
-    memo: string;
-    metadata: Record<
-      string,
-      unknown
-    >;
-    to_address: string;
   };
+};
 
-export type CreatePiPaymentIntentParams =
-  {
-    userId: string;
-    productId: string;
-    variantId: string | null;
-    quantity: number;
-    country: string;
-    zone: string;
-    shipping: ShippingInput;
-    pricing: PricingResult;
-  };
+/* =========================================================
+   RAW INPUT (nếu có pipeline normalize)
+========================================================= */
+
+export type RawInput = {
+  userId: string;
+  raw: unknown;
+};
+
+/* =========================================================
+   NORMALIZED INPUT (SERVICE LAYER)
+========================================================= */
+
+export type CreateIntentNormalizedInput = {
+  userId: string;
+  productId: string;
+  variantId: string | null;
+  quantity: number;
+  country: string;
+  zone: string;
+  shipping: ShippingInput;
+};
+
+/* =========================================================
+   SERVICE RESULT
+========================================================= */
+
+export type CreateIntentServiceResult = {
+  payment_intent_id: string;
+  pi_payment_id: string;
+  amount: number;
+  memo: string;
+  metadata: Record<string, unknown>;
+  to_address: string;
+};
+
+/* =========================================================
+   CREATE PI PAYMENT INTENT PARAMS
+========================================================= */
+
+export type CreatePiPaymentIntentParams = {
+  userId: string;
+  productId: string;
+  variantId: string | null;
+  quantity: number;
+  country: string;
+  zone: string;
+  shipping: ShippingInput;
+  pricing: PricingResult;
+};
 
 /* =========================================================
    SUBMIT PAYMENT
@@ -68,13 +99,12 @@ export type SubmitPaymentBody = {
   txid: string;
 };
 
-export type SubmitPaymentNormalizedInput =
-  {
-    paymentIntentId: string;
-    piPaymentId: string;
-    txid: string;
-    userId: string;
-  };
+export type SubmitPaymentNormalizedInput = {
+  paymentIntentId: string;
+  piPaymentId: string;
+  txid: string;
+  userId: string;
+};
 
 export type SubmitVerifyResult =
   | {
