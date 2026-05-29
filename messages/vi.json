@@ -664,11 +664,63 @@
   
   "select_country": "Chọn quốc gia",
   "district": "Quận / Huyện",
-  "ward": "Phường / Xã"
+  "ward": "Phường / Xã",
+
+"change_banner": "Đổi ảnh bìa",
+"my_store": "Cửa hàng của tôi",
+"manage_products_sales": "Quản lý sản phẩm và doanh số",
+
+"rating": "Đánh giá",
+"products": "Sản phẩm",
+"sales": "Doanh số",
+
+"load_products_error": "Không thể tải sản phẩm",
+"delete_success": "Xóa sản phẩm thành công",
+"delete_failed": "Xóa sản phẩm thất bại",
+
+"banner_updated": "Cập nhật ảnh bìa thành công",
+"upload_failed": "Tải ảnh thất bại",
+
+"loading": "Đang tải...",
+
+"edit": "Chỉnh sửa",
+"delete": "Xóa",
+"cancel": "Hủy",
+"confirm": "Xác nhận",
+
+"product_active": "Đang bán",
+"product_hidden": "Đã ẩn",
+
+"stock": "Kho",
+"sold": "Đã bán",
+
+"price": "Giá",
+"sale_price": "Giá giảm",
+
+"add_product": "Thêm sản phẩm",
+"edit_product": "Chỉnh sửa sản phẩm",
+
+"confirm_delete_product": "Bạn có chắc muốn xóa sản phẩm này?",
+"deleting": "Đang xóa...",
+
+"no_products": "Chưa có sản phẩm nào",
+
+"shop_description_default": "Quản lý sản phẩm và doanh số",
+
+"uploading": "Đang tải ảnh...",
+"save": "Lưu",
+"saved": "Đã lưu",
+
+"total_products": "Tổng sản phẩm",
+"total_sales": "Tổng doanh số",
+"total_reviews": "Tổng đánh giá",
+
+"view_shop": "Xem cửa hàng",
+"create_product": "Tạo sản phẩm",
+
+"inactive": "Ngừng bán",
+"active": "Đang hoạt động"
 
 
-
-
-
-
+  
 }
