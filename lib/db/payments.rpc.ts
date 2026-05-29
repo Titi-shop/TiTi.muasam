@@ -2,96 +2,15 @@
 import crypto from "crypto";
 import { query } from "@/lib/db";
 import { getRpcTransaction } from "@/lib/rpc/client";
+import type {
+  RpcAuditResult,
+  RpcVerifyStage,
+  RpcVerifyReason,
+} from "@/lib/payments/types";
 
-/* =========================================================
-   TYPES
-========================================================= */
-
-type VerifyRpcParams = {
-  paymentIntentId: string;
-  piPaymentId: string | null;
-  txid: string;
-};
-
-type RpcVerifyResult = {
-  ok: boolean;
-
-  audited: boolean;
-
-  verified: boolean;
-
-  amount: number | null;
-
-  sender: string | null;
-
-  receiver: string | null;
-
-  ledger: number | null;
-
-  confirmed: boolean;
-
-  txStatus: string | null;
-
-  chainReference: string | null;
-
-  payload: unknown;
-
-  reason: string | null;
-  stage: string;
-  createdAt: string | null;
-  memo: string | null;
-};
-
-type PaymentIntentRow = {
-  id: string;
-  total_amount: string;
-  merchant_wallet: string | null;
-};
-
-type InsertRpcLogInput = {
-  paymentIntentId: string;
-  piPaymentId: string | null;
-rpcReachable: boolean;
-
-parseLayer: string | null;
-
-hasMeta: boolean;
-hasEvents: boolean;
-
-senderFound: boolean;
-receiverFound: boolean;
-  amountFound: boolean;
-  txid: string;
-  verified: boolean;
-  stage: string;
-  reason: string | null;
-
-  amount: number | null;
-  expectedAmount: number | null;
-
-  sender: string | null;
-  receiver: string | null;
-  expectedReceiver: string | null;
-
-  amountMatch: boolean;
-  receiverMatch: boolean;
-  senderMatch: boolean;
-
-  mismatchReason: string | null;
-  fraudReason: string | null;
-
-  verificationHash: string | null;
-
-  ledger: number | null;
-
-  txStatus: string | null;
-  chainReference: string | null;
-
-  payload: unknown;
-   createdAt: string | null;
-
-memo: string | null;
-};
+import type {
+  InsertRpcLogInput,
+} from "@/lib/payments/types/rpc.db.types";
 
 /* =========================================================
    LOGGER
