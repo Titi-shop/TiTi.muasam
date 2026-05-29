@@ -291,70 +291,32 @@ export default function CartPage() {
   ===================================================== */
 
   const handleCheckout = () => {
-    if (
-      processing ||
-      !validateCheckout()
-    ) {
-      return;
-    }
+  if (processing || !validateCheckout()) {
+    return;
+  }
 
-    const item =
-      selectedItems[0];
+  const item = selectedItems[0];
 
-    if (!item) {
-      return;
-    }
+  if (!item) {
+    return;
+  }
 
-    setProcessing(true);
+  console.log("[CART][REDIRECT_TO_CHECKOUT]", {
+    productId: item.product_id ?? item.id,
+    quantity: item.quantity,
+    variantId: item.variant?.id ?? null,
+  });
 
-    try {
-      const payload: CheckoutPayload =
-        {
-          productId:
-            item.product_id ??
-            item.id,
-
-          quantity:
-            item.quantity,
-
-          selectedVariantId:
-            item.variant?.id ??
-            null,
-
-          fromCart: true,
-        };
-
-      localStorage.setItem(
-        "checkout_payload",
-        JSON.stringify(payload)
-      );
-
-      console.log(
-        "[CART][CHECKOUT_REDIRECT]",
-        payload
-      );
-
-      router.push(
-        `/product/${
-          item.product_id ??
-          item.id
-        }?checkout=1`
-      );
-
-    } catch (err) {
-      console.error(
-        "[CART][CHECKOUT_ERROR]",
-        err
-      );
-
-      showMessage(
-        t.transaction_failed ??
-          "Transaction failed"
-      );
-
-      setProcessing(false);
-    }
-  };
+  router.push(
+    `/product/${
+      item.product_id ?? item.id
+    }?checkout=1&qty=${item.quantity}${
+      item.variant?.id
+        ? `&variant=${item.variant.id}`
+        : ""
+    }`
+  );
+};
 
   /* =====================================================
      EMPTY
