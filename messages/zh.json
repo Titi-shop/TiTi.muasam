@@ -652,7 +652,26 @@
   
   "processing_orders": "处理中订单",
   "returns_orders": "退货订单",
-  "order_processing": "处理中"
+  "order_processing": "处理中",
+
+
+  
+  "wallet_balance": "钱包余额",
+  "wallet_deposit": "充值",
+  "wallet_withdraw": "提现",
+  "wallet_pay": "支付",
+
+  "wallet_total_in": "总收入",
+  "wallet_total_out": "总支出",
+
+  "wallet_transactions": "交易记录",
+  "wallet_no_transactions": "暂无交易记录",
+
+  "wallet_ref_order": "订单支付",
+  "wallet_ref_refund": "退款",
+  "wallet_ref_withdraw": "提现",
+  "wallet_ref_deposit": "充值"
+
 
 
 
