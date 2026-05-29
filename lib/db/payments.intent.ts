@@ -8,12 +8,11 @@ import type {
 import type {
   PricingResult,
 } from "@/lib/payments/pricing.engine";
+
 import type {
   CreatePiPaymentIntentParams,
   CreateIntentResult,
-  ShippingInput,
 } from "@/lib/payments/types";
-
 /* =========================================================
    GLOBAL WALLET
 ========================================================= */
