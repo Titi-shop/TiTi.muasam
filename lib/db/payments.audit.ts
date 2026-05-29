@@ -2,102 +2,15 @@
 import { query } from "@/lib/db";
 import { createHash } from "crypto";
 
-/* =========================================================
-   TYPES
-========================================================= */
-
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: JsonValue }
-  | JsonValue[];
-
-export type AuditSeverity = "info" | "warn" | "error" | "critical";
-
-export type AuditStage =
-  | "INTENT"
-  | "PI_VERIFY"
-  | "RPC_VERIFY"
-  | "PI_COMPLETE"
-  | "ORDER"
-  | "FULFILLMENT"
-  | "SHIPMENT"
-  | "LEDGER"
-  | "FINALIZE"
-  | "MANUAL";
-
-export type AuditActorType =
-  | "system"
-  | "api"
-  | "cron"
-  | "admin"
-  | "pi_api"
-  | "rpc"
-  | "ledger";
-
-/* =========================================================
-   WRITE PARAMS
-========================================================= */
-
-type WriteAuditParams = {
-  paymentIntentId: string;
-
-  eventCode: string;
-  stage: AuditStage;
-
-  severity?: AuditSeverity;
-  actorType?: AuditActorType;
-  actorId?: string | null;
-
-  source?: string | null;
-  requestId?: string | null;
-
-  orderId?: string | null;
-  escrowId?: string | null;
-
-  piPaymentId?: string | null;
-  txid?: string | null;
-
-  oldPaymentStatus?: string | null;
-  newPaymentStatus?: string | null;
-
-  oldSettlementState?: string | null;
-  newSettlementState?: string | null;
-
-  reconcileAttempt?: number;
-
-  note?: string | null;
-  payload?: JsonValue;
-};
-
-type AuditPiVerifiedParams = {
-  source?: string;
-  txid?: string;
-  piPaymentId?: string;
-  actorId?: string;
-  amount?: number;
-  receiverWallet?: string;
-  senderWallet?: string;
-};
-
-type AuditRpcVerifiedParams = {
-  source?: string;
-  txid?: string;
-  piPaymentId?: string;
-  amount?: number;
-  ledger?: number | null;
-  receiver?: string | null;
-  sender?: string | null;
-  chainReference?: string | null;
-};
-
-type AuditPiCompletedParams = {
-  source?: string;
-  txid?: string;
-  piPaymentId?: string;
-};
+import type {
+  AuditSeverity,
+  AuditStage,
+  AuditActorType,
+  WriteAuditParams,
+  AuditPiVerifiedParams,
+  AuditRpcVerifiedParams,
+  AuditPiCompletedParams,
+} from "@/lib/payments/types";
 
 /* =========================================================
    HELPERS
