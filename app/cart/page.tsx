@@ -1,15 +1,21 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import Image from "next/image";
 import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 
 import { useCart } from "@/app/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-
 import { getPiAccessToken } from "@/lib/piAuth";
 import { formatPi } from "@/lib/pi";
+
+/* =====================================================
+   TYPES
+===================================================== */
 
 interface ShippingInfo {
   name: string;
@@ -33,61 +39,145 @@ interface Message {
   type: "error" | "success";
 }
 
+interface CheckoutPayload {
+  productId: string;
+  quantity: number;
+  selectedVariantId?: string | null;
+  fromCart: boolean;
+}
+
+/* =====================================================
+   PAGE
+===================================================== */
+
 export default function CartPage() {
   const router = useRouter();
+
   const { t } = useTranslation();
 
-  const { cart, updateQty, removeFromCart, clearCart } = useCart();
-  const { user, piReady, pilogin } = useAuth();
+  const {
+    cart,
+    updateQty,
+    removeFromCart,
+  } = useCart();
 
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [shipping, setShipping] = useState<ShippingInfo | null>(null);
-  const [processing, setProcessing] = useState(false);
-  const [message, setMessage] = useState<Message | null>(null);
+  const {
+    user,
+    pilogin,
+  } = useAuth();
 
-  const showMessage = (text: string, type: "error" | "success" = "error") => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage(null), 4000);
+  const [selectedIds, setSelectedIds] =
+    useState<string[]>([]);
+
+  const [shipping, setShipping] =
+    useState<ShippingInfo | null>(null);
+
+  const [processing, setProcessing] =
+    useState(false);
+
+  const [message, setMessage] =
+    useState<Message | null>(null);
+
+  /* =====================================================
+     MESSAGE
+  ===================================================== */
+
+  const showMessage = (
+    text: string,
+    type: "error" | "success" = "error"
+  ) => {
+    setMessage({
+      text,
+      type,
+    });
+
+    setTimeout(() => {
+      setMessage(null);
+    }, 4000);
   };
 
+  /* =====================================================
+     SELECTED ITEMS
+  ===================================================== */
+
   const selectedItems = useMemo(
-    () => cart.filter((i) => selectedIds.includes(i.id)),
+    () =>
+      cart.filter((item) =>
+        selectedIds.includes(item.id)
+      ),
     [cart, selectedIds]
   );
 
-  const total = useMemo(
-    () =>
-      selectedItems.reduce((sum, item) => {
+  /* =====================================================
+     TOTAL
+  ===================================================== */
+
+  const total = useMemo(() => {
+    return selectedItems.reduce(
+      (sum, item) => {
         const unit =
-          typeof item.sale_price === "number" ? item.sale_price : item.price;
-        return sum + unit * item.quantity;
-      }, 0),
-    [selectedItems]
-  );
+          typeof item.sale_price ===
+          "number"
+            ? item.sale_price
+            : item.price;
+
+        return (
+          sum + unit * item.quantity
+        );
+      },
+      0
+    );
+  }, [selectedItems]);
+
+  /* =====================================================
+     LOAD ADDRESS
+  ===================================================== */
 
   useEffect(() => {
     async function loadAddress() {
       try {
-        const token = await getPiAccessToken();
-        const res = await fetch("/api/address", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const token =
+          await getPiAccessToken();
+
+        if (!token) return;
+
+        const res = await fetch(
+          "/api/address",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (!res.ok) return;
 
-        const data: { items?: AddressItem[] } = await res.json();
-        const def = data.items?.find((a) => a.is_default);
+        const data: {
+          items?: AddressItem[];
+        } = await res.json();
+
+        const def = data.items?.find(
+          (a) => a.is_default
+        );
+
         if (!def) return;
 
         setShipping({
           name: def.full_name,
           phone: def.phone,
-          address_line: def.address_line,
+          address_line:
+            def.address_line,
           country: def.country,
-          postal_code: def.postal_code ?? null,
+          postal_code:
+            def.postal_code ??
+            null,
         });
-      } catch {
-        //
+
+      } catch (err) {
+        console.error(
+          "[CART][LOAD_ADDRESS_ERROR]",
+          err
+        );
       }
     }
 
@@ -96,385 +186,444 @@ export default function CartPage() {
     }
   }, [user]);
 
-  useEffect(() => {
-  if (!user) return;
-  if (!shipping) return; // ✅ QUAN TRỌNG
-  if (processing) return;
-
-  if (typeof window === "undefined") return;
-
-  const pending = localStorage.getItem("pending_checkout");
-
-  if (!pending) return;
-
-  // ✅ tránh loop
-  localStorage.removeItem("pending_checkout");
-
-  setTimeout(() => {
-    handlePay();
-  }, 300);
-}, [user, shipping, processing]);
-
-  
+  /* =====================================================
+     TOGGLE
+  ===================================================== */
 
   const toggleItem = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id]
     );
   };
 
-  const validateBeforePay = (): boolean => {
+  /* =====================================================
+     VALIDATE
+  ===================================================== */
 
-    if (!window.Pi || !piReady) {
-  showMessage(t.pi_not_ready || "Pi is not ready");
-  return false;
-}
+  const validateCheckout =
+    (): boolean => {
+      if (!user) {
+        pilogin?.();
 
-    
-  if (!window.Pi || !piReady) {
-    showMessage(t.pi_not_ready || "Pi is not ready");
-    return false;
-  }
+        showMessage(
+          t.please_login ??
+            "Please login first"
+        );
 
-    if (!user) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("pending_checkout", "1");
-  }
+        return false;
+      }
 
-  pilogin?.(); // ✅ mở login Pi
+      if (!shipping) {
+        showMessage(
+          t.please_add_shipping_address ??
+            "Please add shipping address"
+        );
 
-  showMessage(
-    t.please_login || "Please login first",
-    "error"
-  );
+        return false;
+      }
 
-  return false;
-}
+      if (
+        selectedItems.length === 0
+      ) {
+        showMessage(
+          t.please_select_product ??
+            "Please select a product"
+        );
 
-  if (!shipping) {
-    showMessage(
-      t.please_add_shipping_address || "Please add a shipping address"
-    );
-    return false;
-  }
+        return false;
+      }
 
-  if (selectedItems.length === 0) {
-    showMessage(t.please_select_product || "Please select a product");
-    return false;
-  }
+      if (
+        selectedItems.length > 1
+      ) {
+        showMessage(
+          t.only_one_product_supported ??
+            "Only 1 product supported"
+        );
 
-  if (selectedItems.length > 1) {
-    showMessage(
-      t.only_one_product_supported || "Only 1 product is supported at a time"
-    );
-    return false;
-  }
+        return false;
+      }
 
-  const item = selectedItems[0];
+      const item =
+        selectedItems[0];
 
-  if (!item) {
-    showMessage(t.invalid_product || "Invalid product");
-    return false;
-  }
+      if (!item) {
+        showMessage(
+          t.invalid_product ??
+            "Invalid product"
+        );
 
-  // ✅ check stock
-  if (item.variant && item.variant.stock <= 0) {
-  showMessage(t.out_of_stock || "Out of stock");
-  return false;
-}
+        return false;
+      }
 
-  if (!item.variant && item.stock !== undefined && item.stock <= 0) {
-    showMessage(t.out_of_stock || "Out of stock");
-    return false;
-  }
+      const stock =
+        item.variant?.stock ??
+        item.stock ??
+        0;
 
-  // ✅ check quantity
-  if (item.quantity < 1 || item.quantity > 100) {
-    showMessage(t.invalid_quantity || "Invalid quantity");
-    return false;
-  }
+      if (stock <= 0) {
+        showMessage(
+          t.out_of_stock ??
+            "Out of stock"
+        );
 
-  return true;
-};
+        return false;
+      }
 
-  const handlePay = async () => {
-  if (!validateBeforePay()) return;
+      if (
+        item.quantity < 1
+      ) {
+        showMessage(
+          t.invalid_quantity ??
+            "Invalid quantity"
+        );
 
-  const item = selectedItems[0]; // ✅ FIX QUAN TRỌNG
+        return false;
+      }
 
-  const unit =
-    typeof item.sale_price === "number" ? item.sale_price : item.price;
+      return true;
+    };
 
-  const quantity = item.quantity;
-  const totalPrice = Number((unit * quantity).toFixed(6));
+  /* =====================================================
+     CHECKOUT
+  ===================================================== */
 
-  if (processing) return;
-  setProcessing(true);
+  const handleCheckout = () => {
+    if (
+      processing ||
+      !validateCheckout()
+    ) {
+      return;
+    }
 
-  try {
-    await window.Pi?.createPayment(
-      {
-        amount: totalPrice,
-        memo: t.payment_memo_order || "Order payment",
-        metadata: {
-          shipping,
-          product: {
-            id: item.id,
-            name: item.name,
-            image: item.thumbnail || "",
-            price: unit,
-          },
-          quantity,
-        },
-      },
+    const item =
+      selectedItems[0];
+
+    if (!item) {
+      return;
+    }
+
+    setProcessing(true);
+
+    try {
+      const payload: CheckoutPayload =
         {
-          onReadyForServerApproval: async (paymentId, callback) => {
-            try {
-              const token = await getPiAccessToken();
-              const res = await fetch("/api/pi/approve", {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ paymentId }),
-              });
+          productId:
+            item.product_id ??
+            item.id,
 
-              if (!res.ok) {
-                setProcessing(false);
-                showMessage(
-                  t.payment_approve_failed || "Payment approval failed",
-                  "error"
-                );
-                return;
-              }
+          quantity:
+            item.quantity,
 
-              callback();
-            } catch {
-              setProcessing(false);
-              showMessage(
-                t.payment_approve_error || "Payment approval error",
-                "error"
-              );
-            }
-          },
+          selectedVariantId:
+            item.variant?.id ??
+            null,
 
-          onReadyForServerCompletion: async (paymentId, txid) => {
-            try {
-              const token = await getPiAccessToken();
-              const res = await fetch("/api/pi/complete", {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  paymentId,
-                  txid,
-                  product_id: item.id,
-                  quantity,
-                }),
-              });
+          fromCart: true,
+        };
 
-              if (!res.ok) {
-                setProcessing(false);
-                showMessage(
-                  t.payment_complete_failed || "Payment completion failed",
-                  "error"
-                );
-                return;
-              }
-
-              clearCart();
-              setSelectedIds([]);
-              setProcessing(false);
-              router.push("/customer/pending");
-              showMessage(t.payment_success || "Payment successful", "success");
-            } catch {
-              setProcessing(false);
-              showMessage(t.payment_failed || "Payment failed", "error");
-            }
-          },
-
-          onCancel: () => {
-            setProcessing(false);
-            showMessage(
-              t.payment_cancelled || "Payment was cancelled",
-              "error"
-            );
-          },
-
-          onError: () => {
-            setProcessing(false);
-            showMessage(t.payment_failed || "Payment failed", "error");
-          },
-        }
+      localStorage.setItem(
+        "checkout_payload",
+        JSON.stringify(payload)
       );
-    } catch {
+
+      console.log(
+        "[CART][CHECKOUT_REDIRECT]",
+        payload
+      );
+
+      router.push(
+        `/product/${
+          item.product_id ??
+          item.id
+        }?checkout=1`
+      );
+
+    } catch (err) {
+      console.error(
+        "[CART][CHECKOUT_ERROR]",
+        err
+      );
+
+      showMessage(
+        t.transaction_failed ??
+          "Transaction failed"
+      );
+
       setProcessing(false);
-      showMessage(t.transaction_failed || "Transaction failed", "error");
     }
   };
 
+  /* =====================================================
+     EMPTY
+  ===================================================== */
+
   if (cart.length === 0) {
     return (
-      <main className="p-8 text-center">
-        <p className="text-gray-500 mb-3">{t.empty_cart}</p>
-        <Link href="/" className="text-orange-600">
-          {t.back_to_shop}
+      <main className="flex min-h-[60vh] flex-col items-center justify-center px-6">
+
+        <p className="mb-3 text-sm text-muted">
+          {t.empty_cart ??
+            "Cart is empty"}
+        </p>
+
+        <Link
+          href="/"
+          className="text-sm font-semibold text-primary"
+        >
+          {t.back_to_shop ??
+            "Back to shop"}
         </Link>
+
       </main>
     );
   }
 
+  /* =====================================================
+     UI
+  ===================================================== */
+
   return (
-    <main className="min-h-screen bg-gray-50 pb-36 relative">
+    <main className="min-h-screen bg-[var(--background)] pb-40">
+
+      {/* =====================================================
+          MESSAGE
+      ===================================================== */}
+
       {message && (
         <div
-          className={`fixed top-16 left-1/2 z-50 -translate-x-1/2 rounded px-4 py-2 shadow-lg ${
-            message.type === "error"
+          className={`fixed left-1/2 top-20 z-50 -translate-x-1/2 rounded-xl px-4 py-2 text-sm shadow-lg ${
+            message.type ===
+            "error"
               ? "bg-red-500 text-white"
-              : "bg-green-500 text-white"
+              : "bg-green-600 text-white"
           }`}
         >
           {message.text}
         </div>
       )}
 
-      <div className="bg-white divide-y">
+      {/* =====================================================
+          LIST
+      ===================================================== */}
+
+      <div className="bg-card">
+
         {cart.map((item) => {
-  const unit =
-    typeof item.sale_price === "number"
-      ? item.sale_price
-      : item.price;
+          const unit =
+            typeof item.sale_price ===
+            "number"
+              ? item.sale_price
+              : item.price;
 
-  const hasSale =
-    typeof item.sale_price === "number" &&
-    item.sale_price < item.price;
+          const hasSale =
+            typeof item.sale_price ===
+              "number" &&
+            item.sale_price <
+              item.price;
 
-  const maxStock = item.variant?.stock ?? item.stock ?? 99;
+          const maxStock =
+            item.variant?.stock ??
+            item.stock ??
+            99;
 
-  return (
-    <div key={item.id} className="flex items-center gap-3 p-4">
-      <input
-        type="checkbox"
-        checked={selectedIds.includes(item.id)}
-        onChange={() => toggleItem(item.id)}
-      />
-
-      {/* IMAGE + SALE */}
-      <div className="relative">
-        <img
-          src={item.thumbnail || "/placeholder.png"}
-          alt={item.name}
-          className="h-16 w-16 rounded object-cover"
-        />
-
-        {hasSale && (
-          <div className="absolute top-0 left-0 bg-red-500 text-white text-[10px] px-1 rounded-br">
-            SALE
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1">
-        <p className="text-sm font-medium line-clamp-2">
-          {item.name}
-        </p>
-
-        {/* PRICE */}
-        <div className="mt-1 flex items-center gap-2">
-          {hasSale && (
-            <span className="text-xs text-gray-400 line-through">
-              {formatPi(item.price)} π
-            </span>
-          )}
-
-          <span className="text-sm font-semibold text-orange-600">
-            {formatPi(unit)} π
-          </span>
-        </div>
-
-        {/* QTY + TOTAL */}
-        <div className="mt-2 flex items-center justify-between">
-
-          {/* QTY CONTROL */}
-          <div className="flex items-center border rounded-lg overflow-hidden">
-
-            {/* - */}
-            <button
-              onClick={() =>
-                updateQty(item.id, item.quantity - 1)
-              }
-              disabled={item.quantity <= 1}
-              className="px-3 py-1 text-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-30"
+          return (
+            <div
+              key={item.id}
+              className="flex gap-3 border-b border-black/5 p-4"
             >
-              −
-            </button>
 
-            {/* QTY */}
-            <div className="px-4 text-sm font-medium">
-              {item.quantity}
+              {/* CHECKBOX */}
+              <div className="pt-5">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(
+                    item.id
+                  )}
+                  onChange={() =>
+                    toggleItem(item.id)
+                  }
+                  className="h-4 w-4 accent-[var(--color-primary)]"
+                />
+              </div>
+
+              {/* IMAGE */}
+              <div className="relative">
+
+                <Image
+                  src={
+                    item.thumbnail ||
+                    "/placeholder.png"
+                  }
+                  alt={item.name}
+                  width={88}
+                  height={88}
+                  className="h-[88px] w-[88px] rounded-xl border border-black/5 object-cover"
+                />
+
+                {hasSale && (
+                  <div className="absolute left-0 top-0 rounded-br-lg bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    SALE
+                  </div>
+                )}
+
+              </div>
+
+              {/* CONTENT */}
+              <div className="min-w-0 flex-1">
+
+                <p className="line-clamp-2 text-sm font-semibold">
+                  {item.name}
+                </p>
+
+                {/* PRICE */}
+                <div className="mt-2 flex items-center gap-2">
+
+                  {hasSale && (
+                    <span className="text-xs text-muted line-through">
+                      π
+                      {formatPi(
+                        item.price
+                      )}
+                    </span>
+                  )}
+
+                  <span className="pi-price text-sm">
+                    π
+                    {formatPi(unit)}
+                  </span>
+
+                </div>
+
+                {/* QTY */}
+                <div className="mt-3 flex items-center justify-between gap-3">
+
+                  <div className="flex items-center overflow-hidden rounded-xl border border-black/10">
+
+                    <button
+                      onClick={() =>
+                        updateQty(
+                          item.id,
+                          item.quantity -
+                            1
+                        )
+                      }
+                      disabled={
+                        item.quantity <=
+                        1
+                      }
+                      className="bg-gray-100 px-3 py-1 text-lg disabled:opacity-30"
+                    >
+                      −
+                    </button>
+
+                    <div className="px-4 text-sm font-semibold">
+                      {item.quantity}
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        updateQty(
+                          item.id,
+                          Math.min(
+                            item.quantity +
+                              1,
+                            maxStock
+                          )
+                        )
+                      }
+                      disabled={
+                        item.quantity >=
+                        maxStock
+                      }
+                      className="bg-gray-100 px-3 py-1 text-lg disabled:opacity-30"
+                    >
+                      +
+                    </button>
+
+                  </div>
+
+                  <div className="text-right">
+
+                    <p className="pi-price text-sm">
+                      π
+                      {formatPi(
+                        unit *
+                          item.quantity
+                      )}
+                    </p>
+
+                    {item.quantity >=
+                      maxStock && (
+                      <p className="mt-1 text-[10px] text-red-500">
+                        Max stock reached
+                      </p>
+                    )}
+
+                  </div>
+
+                </div>
+
+                {/* DELETE */}
+                <button
+                  onClick={() =>
+                    removeFromCart(
+                      item.id
+                    )
+                  }
+                  className="mt-2 text-xs text-red-500"
+                >
+                  {t.delete ??
+                    "Delete"}
+                </button>
+
+              </div>
+
             </div>
+          );
+        })}
 
-            {/* + */}
-            <button
-              onClick={() =>
-                updateQty(
-                  item.id,
-                  Math.min(item.quantity + 1, maxStock)
-                )
-              }
-              disabled={item.quantity >= maxStock}
-              className="px-3 py-1 text-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-30"
-            >
-              +
-            </button>
-          </div>
+      </div>
 
-          {/* TOTAL */}
-          <div className="text-right">
-            <p className="font-semibold text-orange-600">
-              {formatPi(unit * item.quantity)} π
-            </p>
+      {/* =====================================================
+          FOOTER
+      ===================================================== */}
 
-            {/* STOCK WARNING */}
-            {item.quantity >= maxStock && (
-              <p className="text-[10px] text-red-500">
-                Max stock reached
-              </p>
-            )}
-          </div>
+      <div className="fixed bottom-0 left-0 right-0 border-t border-black/5 bg-card px-5 pb-8 pt-4">
+
+        <div className="mb-4 flex items-center justify-between">
+
+          <span className="text-sm text-muted">
+            {t.total ??
+              "Total"}
+          </span>
+
+          <span className="pi-price text-lg">
+            π{formatPi(total)}
+          </span>
+
         </div>
 
-        {/* DELETE */}
         <button
-          onClick={() => removeFromCart(item.id)}
-          className="text-xs text-red-500 mt-1"
+          onClick={handleCheckout}
+          disabled={processing}
+          className={`w-full rounded-2xl py-3 text-sm font-bold text-white transition active:scale-95 ${
+            processing
+              ? "bg-gray-400"
+              : "bg-primary"
+          }`}
         >
-          {t.delete}
+          {processing
+            ? t.processing ??
+              "Processing..."
+            : t.pay_now ??
+              "Checkout"}
         </button>
-      </div>
-    </div>
-  );
-})}
+
       </div>
 
-      <div className="fixed bottom-7 left-0 right-0 border-t bg-white p-5 pb-8">
-        <div className="mb-3 flex justify-between">
-          <span>{t.total}</span>
-          <span className="font-bold text-orange-600">{formatPi(total)} π</span>
-        </div>
-          <button
-  onClick={handlePay}
-  disabled={processing}
-  className={`w-full rounded-lg py-3 text-white ${
-    processing ? "bg-gray-400" : "bg-orange-600"
-  }`}
->
-  {processing ? t.processing : t.pay_now}
-        </button>
-      </div>
     </main>
   );
-}
+    }
