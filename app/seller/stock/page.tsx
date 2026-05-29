@@ -805,7 +805,7 @@ const handleDelete =
                     "var(--muted-foreground)",
                 }}
               >
-                {shop.shop_description ||
+                {t.shop_description ||
                   "Manage your products and sales"}
               </p>
             </div>
@@ -863,7 +863,7 @@ const handleDelete =
                       "var(--muted-foreground)",
                   }}
                 >
-                  Rating
+                  {t.rating}
                 </p>
               </div>
 
@@ -945,7 +945,7 @@ const handleDelete =
                       "var(--foreground)",
                   }}
                 >
-                  {shop.total_sales ??
+                  {t.total_sales ??
                     0}
                 </p>
 
@@ -958,7 +958,7 @@ const handleDelete =
                       "var(--muted-foreground)",
                   }}
                 >
-                  Sales
+                  {t.sales}
                 </p>
               </div>
             </div>
@@ -1489,8 +1489,7 @@ const handleDelete =
                   "var(--muted-foreground)",
               }}
             >
-              Are you sure you want
-              to delete:
+              {t.confirm_delete_product}
             </p>
 
             <p
