@@ -29,8 +29,7 @@ import type {
   RunPaymentSettlementInput,
   PaymentSettlementResult,
   RpcAuditResult,
-} from "@/lib/payments/payment.types";
-
+} from "@/lib/payments/types";
 /* =========================================================
    EMPTY RPC
 ========================================================= */
