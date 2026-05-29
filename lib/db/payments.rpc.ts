@@ -2,16 +2,25 @@
 import crypto from "crypto";
 import { query } from "@/lib/db";
 import { getRpcTransaction } from "@/lib/rpc/client";
+
 import type {
-  RpcAuditResult,
-  RpcVerifyStage,
-  RpcVerifyReason,
-} from "@/lib/payments/types";
+  RpcVerifyResult,
+  PaymentIntentRow,
+} from "@/lib/payments/types/rpc.types";
 
 import type {
   InsertRpcLogInput,
 } from "@/lib/payments/types/rpc.db.types";
 
+/* =========================================================
+   INPUT TYPE (local only)
+========================================================= */
+
+type VerifyRpcParams = {
+  paymentIntentId: string;
+  piPaymentId: string | null;
+  txid: string;
+};
 /* =========================================================
    LOGGER
 ========================================================= */
