@@ -1,8 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 export default function SplashScreen() {
+  const { t } = useTranslation();
+
   return (
     <div
       className="
@@ -138,7 +141,8 @@ export default function SplashScreen() {
               uppercase
             "
           >
-            Smart Marketplace
+            {t.smart_marketplace ??
+              "Smart Marketplace"}
           </p>
         </div>
 
@@ -173,10 +177,11 @@ export default function SplashScreen() {
           </div>
 
           <p className="mt-4 text-xs text-[var(--text-muted)]">
-            Loading experience...
+            {t.loading_experience ??
+              "Loading experience..."}
           </p>
         </div>
       </div>
     </div>
   );
-            }
+}
