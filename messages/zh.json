@@ -675,7 +675,59 @@
 
   "select_country": "选择国家",
   "district": "区 / 县",
-  "ward": "街道 / 乡"
+  "ward": "街道 / 乡",
+
+"change_banner": "更换横幅",
+"my_store": "我的店铺",
+"manage_products_sales": "管理商品和销售",
+"rating": "评分",
+"products": "商品",
+"sales": "销量",
+"load_products_error": "加载商品失败",
+"delete_success": "删除商品成功",
+"delete_failed": "删除商品失败",
+
+"banner_updated": "横幅更新成功",
+"upload_failed": "上传图片失败",
+"loading": "加载中...",
+
+"edit": "编辑",
+"delete": "删除",
+"cancel": "取消",
+"confirm": "确认",
+
+"product_active": "销售中",
+"product_hidden": "已隐藏",
+
+"stock": "库存",
+"sold": "已售",
+
+"price": "价格",
+"sale_price": "折扣价",
+
+"add_product": "添加商品",
+"edit_product": "编辑商品",
+
+"confirm_delete_product": "确定删除此商品吗？",
+"deleting": "删除中...",
+
+"no_products": "暂无商品",
+
+"shop_description_default": "管理商品和销售",
+
+"uploading": "上传中...",
+"save": "保存",
+"saved": "已保存",
+
+"total_products": "商品总数",
+"total_sales": "总销量",
+"total_reviews": "总评价",
+
+"view_shop": "查看店铺",
+"create_product": "创建商品",
+
+"inactive": "已停售",
+"active": "正常营业"
 
 
 
