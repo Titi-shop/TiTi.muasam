@@ -670,7 +670,12 @@
   "wallet_ref_order": "订单支付",
   "wallet_ref_refund": "退款",
   "wallet_ref_withdraw": "提现",
-  "wallet_ref_deposit": "充值"
+  "wallet_ref_deposit": "充值",
+  
+
+  "select_country": "选择国家",
+  "district": "区 / 县",
+  "ward": "街道 / 乡"
 
 
 
