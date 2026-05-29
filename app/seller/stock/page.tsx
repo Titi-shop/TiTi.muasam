@@ -805,8 +805,7 @@ const handleDelete =
                     "var(--muted-foreground)",
                 }}
               >
-                {shop.shop_description ||
-                  "Manage your products and sales"}
+                {shop.shop_description || t.manage_products_sales}
               </p>
             </div>
 
@@ -1316,10 +1315,10 @@ const handleDelete =
                               "var(--foreground)",
                           }}
                         >
-                          Stock:
+                          t.stock:
                           {" "}
                           {
-                            t.stock
+                            Stock
                           }
                         </span>
 
@@ -1339,10 +1338,10 @@ const handleDelete =
                               "var(--foreground)",
                           }}
                         >
-                          sold:
+                          t.sold:
                           {" "}
                           {
-                            t.sold
+                            sold
                           }
                         </span>
                       </div>
