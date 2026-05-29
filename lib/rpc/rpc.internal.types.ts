@@ -1,6 +1,6 @@
-type JsonObj = Record<string, unknown>;
+export type JsonObj = Record<string, unknown>;
 
-type RpcEnvelope = {
+export type RpcEnvelope = {
   jsonrpc?: string;
   id?: string | number;
   result?: JsonObj;
