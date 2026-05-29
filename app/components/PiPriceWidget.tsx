@@ -13,6 +13,8 @@ import {
   useState,
 } from "react";
 
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
+
 /* =========================================================
    TYPES
 ========================================================= */
@@ -29,6 +31,8 @@ interface PiPriceResponse {
 ========================================================= */
 
 export default function PiPriceWidget() {
+  const { t } = useTranslation();
+
   const [price, setPrice] = useState<number>(0);
 
   const [change, setChange] = useState<number>(0);
@@ -249,7 +253,8 @@ export default function PiPriceWidget() {
                     text-white/40
                   `}
                 >
-                  Live Market
+                  {t.live_market ??
+                    "Live Market"}
                 </p>
 
                 <h2 className="text-2xl font-black text-white">
@@ -335,8 +340,10 @@ export default function PiPriceWidget() {
 
           <span className="text-xs text-white/50">
             {connected
-              ? "Realtime Connected"
-              : "Disconnected"}
+              ? t.realtime_connected ??
+                "Realtime Connected"
+              : t.disconnected ??
+                "Disconnected"}
           </span>
         </div>
 
@@ -419,11 +426,13 @@ export default function PiPriceWidget() {
             `}
           >
             <span className="mx-6">
-              PI NETWORK LIVE MARKET
+              {t.pi_network_live_market ??
+                "PI NETWORK LIVE MARKET"}
             </span>
 
             <span className="mx-6 text-orange-300">
-              REALTIME PRICE
+              {t.realtime_price ??
+                "REALTIME PRICE"}
             </span>
 
             <span className="mx-6 text-emerald-400">
@@ -431,7 +440,8 @@ export default function PiPriceWidget() {
             </span>
 
             <span className="mx-6">
-              24H CHANGE
+              {t.change_24h ??
+                "24H CHANGE"}
             </span>
 
             <span
@@ -445,7 +455,8 @@ export default function PiPriceWidget() {
             </span>
 
             <span className="mx-6">
-              PI NETWORK LIVE MARKET
+              {t.pi_network_live_market ??
+                "PI NETWORK LIVE MARKET"}
             </span>
           </div>
         </div>
@@ -466,4 +477,4 @@ export default function PiPriceWidget() {
       `}</style>
     </div>
   );
-}
+    }
