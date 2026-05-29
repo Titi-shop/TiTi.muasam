@@ -53,3 +53,34 @@ export type RpcAuditResult = {
 
   payload: unknown;
 };
+
+export type PaymentIntentRow = {
+  id: string;
+  total_amount: string;
+  merchant_wallet: string | null;
+};
+
+export type RpcVerifyResult = {
+  ok: boolean;
+  audited: boolean;
+  verified: boolean;
+
+  amount: number | null;
+  sender: string | null;
+  receiver: string | null;
+
+  ledger: number | null;
+  confirmed: boolean;
+  txStatus: string | null;
+  chainReference: string | null;
+
+  payload: unknown;
+
+  reason: RpcVerifyReason;
+  stage: RpcVerifyStage;
+
+  createdAt: string | null;
+  memo: string | null;
+};
+
+
