@@ -1,7 +1,6 @@
 "use client";
-
 export const dynamic = "force-dynamic";
-
+import Image from "next/image";
 import useSWR from "swr";
 import { useParams, useRouter } from "next/navigation";
 import { getPiAccessToken } from "@/lib/piAuth";
@@ -9,121 +8,277 @@ import { formatPi } from "@/lib/pi";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
-/* ================= TYPES ================= */
+/* =====================================================
+   TYPES
+===================================================== */
 
 type OrderStatus =
   | "pending_fulfillment"
   | "processing"
-  | "shiped"
+  | "shipping"
   | "completed"
   | "cancelled"
   | "refunded";
 
+interface ApiOrderItem {
+  id: string;
+  product_id: string | null;
+  product_name: string | null;
+  thumbnail: string | null;
+
+  quantity: number | string | null;
+
+  unit_price: number | string | null;
+  total_price: number | string | null;
+  fulfillment_status: string | null;
+}
+
+interface ApiOrder {
+  id: string;
+  order_number: string;
+
+  fulfillment_status: OrderStatus;
+
+  total: number | string;
+
+  created_at: string;
+
+  seller_message?: string | null;
+  seller_cancel_reason?: string | null;
+
+  shipping_name?: string | null;
+  shipping_phone?: string | null;
+
+  shipping_address_line?: string | null;
+  shipping_ward?: string | null;
+  shipping_district?: string | null;
+  shipping_region?: string | null;
+
+  shipping_country?: string | null;
+  shipping_postal_code?: string | null;
+
+  order_items?: ApiOrderItem[] | null;
+}
+
 interface OrderItem {
   id: string;
+
+  product_id: string;
+
   product_name: string;
-  product_id: string; // 
+
   thumbnail: string;
+
   quantity: number;
+
   unit_price: number;
   total_price: number;
+
   fulfillment_status: string;
 }
 
 interface Order {
   id: string;
+
   order_number: string;
+
   fulfillment_status: OrderStatus;
+
   total: number;
+
   created_at: string;
-  seller_message?: string;
-  seller_cancel_reason?: string;
-  order_items: OrderItem[];
+
+  seller_message: string | null;
+  seller_cancel_reason: string | null;
+
   shipping_name: string;
-shipping_phone: string;
-shipping_address_line: string;
-shipping_ward?: string | null;
-shipping_district?: string | null;
-shipping_region?: string | null;
-  shipping_country?: string | null;
-  shipping_postal_code?: string | null;
+  shipping_phone: string;
+
+  shipping_address_line: string;
+
+  shipping_ward: string | null;
+  shipping_district: string | null;
+  shipping_region: string | null;
+
+  shipping_country: string | null;
+  shipping_postal_code: string | null;
+
+  order_items: OrderItem[];
 }
 
-/* ================= FETCHER ================= */
+interface OrderApiResponse {
+  ok: boolean;
+  order?: ApiOrder;
+  error?: string;
+}
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function parseNumber(value: number | string | null | undefined): number {
+  const n = Number(value ?? 0);
+
+  return Number.isFinite(n) ? n : 0;
+}
+
+function getStatusColor(status: string): string {
+  switch (status) {
+    case "pending_fulfillment":
+      return "text-orange-500";
+
+    case "processing":
+      return "text-blue-500";
+
+    case "shipping":
+      return "text-purple-500";
+
+    case "completed":
+      return "text-green-600";
+
+    case "cancelled":
+      return "text-red-500";
+
+    case "refunded":
+      return "text-gray-500";
+
+    default:
+      return "text-gray-400";
+  }
+}
+
+/* =====================================================
+   FETCHER
+===================================================== */
 
 const fetcher = async (url: string): Promise<Order | null> => {
   try {
+    console.log("[ORDER_DETAIL][FETCH_START]", {
+      url,
+    });
+
     const token = await getPiAccessToken();
-    if (!token) return null;
+
+    if (!token) {
+      console.warn("[ORDER_DETAIL][NO_TOKEN]");
+
+      return null;
+    }
 
     const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
       cache: "no-store",
     });
 
-    if (!res.ok) return null;
+    console.log("[ORDER_DETAIL][FETCH_RESPONSE]", {
+      status: res.status,
+      ok: res.ok,
+    });
 
-    const data = await res.json();
+    if (!res.ok) {
+      return null;
+    }
 
-    return {
+    const json: OrderApiResponse = await res.json();
+
+    console.log("[ORDER_DETAIL][FETCH_JSON]", {
+      ok: json?.ok,
+      hasOrder: !!json?.order,
+    });
+
+    if (!json?.ok || !json.order) {
+      return null;
+    }
+
+    const data = json.order;
+
+    const order: Order = {
       id: data.id,
+
       order_number: data.order_number,
+
       fulfillment_status: data.fulfillment_status,
-      total: Number(data.total ?? 0),
+
+      total: parseNumber(data.total),
+
       created_at: data.created_at,
-      shipping_name: data.shipping_name ?? "",
-shipping_phone: data.shipping_phone ?? "",
-shipping_address_line: data.shipping_address_line ?? "",
-shipping_ward: data.shipping_ward ?? null,
-shipping_district: data.shipping_district ?? null,
-shipping_region: data.shipping_region ?? null,
-shipping_country: data.shipping_country ?? null,
-shipping_postal_code: data.shipping_postal_code ?? null,
-     
+
       seller_message: data.seller_message ?? null,
       seller_cancel_reason: data.seller_cancel_reason ?? null,
 
-      order_items: (data.order_items || []).map((i: any) => ({
-        id: i.id,
-        product_id: i.product_id ?? "", 
-        product_name: i.product_name ?? "",
-        thumbnail: i.thumbnail ?? "",
-        quantity: Number(i.quantity ?? 0),
-        unit_price: Number(i.unit_price ?? 0),
-        total_price: Number(i.total_price ?? 0),
-        fulfillment_status: i.fulfillment_status ?? "pending_fulfillment",
-      })),
+      shipping_name: data.shipping_name ?? "",
+      shipping_phone: data.shipping_phone ?? "",
+
+      shipping_address_line: data.shipping_address_line ?? "",
+
+      shipping_ward: data.shipping_ward ?? null,
+      shipping_district: data.shipping_district ?? null,
+      shipping_region: data.shipping_region ?? null,
+
+      shipping_country: data.shipping_country ?? null,
+      shipping_postal_code: data.shipping_postal_code ?? null,
+
+      order_items: (data.order_items ?? []).map(
+        (item): OrderItem => ({
+          id: item.id,
+
+          product_id: item.product_id ?? "",
+
+          product_name: item.product_name ?? "",
+
+          thumbnail: item.thumbnail ?? "",
+
+          quantity: parseNumber(item.quantity),
+
+          unit_price: parseNumber(item.unit_price),
+
+          total_price: parseNumber(item.total_price),
+
+          fulfillment_status:
+            item.fulfillment_status ??
+            "pending_fulfillment",
+        })
+      ),
     };
-  } catch {
+
+    console.log("[ORDER_DETAIL][FETCH_SUCCESS]", {
+      orderId: order.id,
+      itemsCount: order.order_items.length,
+    });
+
+    return order;
+
+  } catch (err) {
+    console.error("[ORDER_DETAIL][FETCH_ERROR]", {
+      message:
+        err instanceof Error
+          ? err.message
+          : "UNKNOWN_ERROR",
+
+      stack:
+        err instanceof Error
+          ? err.stack
+          : undefined,
+    });
+
     return null;
   }
 };
 
-/* ================= STATUS COLOR ================= */
-
-function getStatusColor(status: string) {
-  switch (fulfillment_status) {
-    case "pending_fulfillment":
-      return "text-orange-500";
-    case "processing":
-      return "text-blue-500";
-    case "shipping":
-      return "text-purple-500";
-    case "completed":
-      return "text-green-600";
-    case "cancelled":
-      return "text-red-500";
-    default:
-      return "text-gray-500";
-  }
-}
-
-/* ================= PAGE ================= */
+/* =====================================================
+   PAGE
+===================================================== */
 
 export default function OrderDetailPage() {
   const { t } = useTranslation();
+
   const router = useRouter();
+
   const params = useParams();
+
   const { user, loading: authLoading } = useAuth();
 
   const orderId =
@@ -133,187 +288,247 @@ export default function OrderDetailPage() {
       ? params.id[0]
       : "";
 
-  const { data: order, isLoading } = useSWR(
-    user && orderId ? `/api/orders/${orderId}` : null,
+  const {
+    data: order,
+    isLoading,
+  } = useSWR<Order | null>(
+    user && orderId
+      ? `/api/orders/${orderId}`
+      : null,
     fetcher
   );
 
-  /* ================= STATE ================= */
+  /* =====================================================
+     LOADING
+  ===================================================== */
 
   if (isLoading || authLoading) {
     return (
-      <p className="text-center mt-10 text-gray-400">
-        {t.loading_order ?? "Đang tải..."}
+      <p className="mt-10 text-center text-gray-400">
+        {t.loading_order ?? "Đang tải đơn hàng..."}
       </p>
     );
   }
+
+  /* =====================================================
+     NOT FOUND
+  ===================================================== */
 
   if (!order) {
     return (
-      <p className="text-center mt-10 text-red-500">
-        {t.order_not_found ?? "Không tìm thấy đơn"}
+      <p className="mt-10 text-center text-red-500">
+        {t.order_not_found ??
+          "Không tìm thấy đơn hàng"}
       </p>
     );
   }
 
-  /* ================= UI ================= */
+  /* =====================================================
+     UI
+  ===================================================== */
 
   return (
     <main className="min-h-screen bg-gray-100 pb-20">
 
       {/* HEADER */}
-      <div className="bg-white p-4 border-b">
+      <div className="border-b bg-white p-4">
+
         <button
           onClick={() => router.back()}
-          className="text-sm mb-2"
+          className="mb-2 text-sm"
         >
           ← {t.back ?? "Quay lại"}
         </button>
 
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
+
           <p className="font-semibold">
             #{order.order_number}
           </p>
 
-          <span className={`text-sm font-medium ${getStatusColor(order.status)}`}>
-            {t[`order_fulfillment_status${order.fulfillment_status}`] ?? order.fulfillment_status}
+          <span
+            className={`text-sm font-medium ${getStatusColor(
+              order.fulfillment_status
+            )}`}
+          >
+            {t[
+              `order_fulfillment_status_${order.fulfillment_status}`
+            ] ?? order.fulfillment_status}
           </span>
+
         </div>
 
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="mt-1 text-xs text-gray-400">
           {new Date(order.created_at).toLocaleString()}
         </p>
+
       </div>
+
       {/* SHIPPING */}
-<div className="bg-white mt-3 p-4 border-b">
-  <p className="font-semibold text-sm mb-2">
-    📍 {t.shipping_address ?? "Địa chỉ nhận hàng"}
-  </p>
+      <div className="mt-3 border-b bg-white p-4">
 
-  <p className="text-sm">
-    {order.shipping_name} · {order.shipping_phone}
-  </p>
+        <p className="mb-2 text-sm font-semibold">
+          📍{" "}
+          {t.shipping_address ??
+            "Địa chỉ nhận hàng"}
+        </p>
 
-  <p className="text-xs text-gray-600 mt-1">
-    {[
-      order.shipping_address_line,
-      order.shipping_ward,
-      order.shipping_district,
-      order.shipping_region,
-    ]
-      .filter(Boolean)
-      .join(", ")}
-  </p>
+        <p className="text-sm">
+          {order.shipping_name} ·{" "}
+          {order.shipping_phone}
+        </p>
 
-  {(order.shipping_country || order.shipping_postal_code) && (
-    <p className="text-xs text-gray-400">
-      {order.shipping_country}
-      {order.shipping_postal_code && ` · ${order.shipping_postal_code}`}
-    </p>
-  )}
-</div>
+        <p className="mt-1 text-xs text-gray-600">
+          {[
+            order.shipping_address_line,
+            order.shipping_ward,
+            order.shipping_district,
+            order.shipping_region,
+          ]
+            .filter(Boolean)
+            .join(", ")}
+        </p>
+
+        {(order.shipping_country ||
+          order.shipping_postal_code) && (
+          <p className="text-xs text-gray-400">
+            {order.shipping_country}
+
+            {order.shipping_postal_code &&
+              ` · ${order.shipping_postal_code}`}
+          </p>
+        )}
+
+      </div>
 
       {/* SELLER MESSAGE */}
       {order.seller_message && (
-        <div className="bg-green-50 text-green-700 text-sm px-4 py-3 border-b">
+        <div className="border-b bg-green-50 px-4 py-3 text-sm text-green-700">
           ✔ {order.seller_message}
         </div>
       )}
 
       {order.seller_cancel_reason && (
-        <div className="bg-red-50 text-red-600 text-sm px-4 py-3 border-b">
+        <div className="border-b bg-red-50 px-4 py-3 text-sm text-red-600">
           ✖ {order.seller_cancel_reason}
         </div>
       )}
 
       {/* PRODUCTS */}
-      <div className="mt-3 bg-white divide-y">
-        {order.order_items.map((item) => (
-          <div key={item.id} className="flex gap-3 p-4">
+      <div className="mt-3 divide-y bg-white">
 
-            <img
-              src={item.thumbnail || "/placeholder.png"}
-              className="w-20 h-20 rounded object-cover border"
+        {order.order_items.map((item) => (
+          <div
+            key={item.id}
+            className="flex gap-3 p-4"
+          >
+
+            <Image
+              src={
+                item.thumbnail ||
+                "/placeholder.png"
+              }
+              alt={item.product_name}
+              width={80}
+              height={80}
+              className="h-20 w-20 rounded border object-cover"
             />
 
             <div className="flex-1">
-              <p className="text-sm font-medium line-clamp-2">
+
+              <p className="line-clamp-2 text-sm font-medium">
                 {item.product_name}
               </p>
 
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="mt-1 text-xs text-gray-500">
                 x{item.quantity}
               </p>
 
-              <p className="text-xs mt-1">
+              <p className="mt-1 text-xs">
                 Status:{" "}
-                <span className="text-orange-500">
-                  {item.status}
+                <span
+                  className={getStatusColor(
+                    item.fulfillment_status
+                  )}
+                >
+                  {item.fulfillment_status}
                 </span>
               </p>
 
-              <p className="text-sm font-semibold mt-2">
-                π{formatPi(item.total_price)}
+              <p className="mt-2 text-sm font-semibold">
+                π
+                {formatPi(item.total_price)}
               </p>
+
             </div>
 
           </div>
         ))}
+
       </div>
 
-    {/* ACTION */}
-<div className="p-4 space-y-3">
+      {/* ACTION */}
+      <div className="space-y-3 p-4">
 
-  {/* ================= COMPLETED ================= */}
-  {order.status === "completed" && (
-    <div className="space-y-2">
+        {/* COMPLETED */}
+        {order.fulfillment_status ===
+          "completed" && (
+          <div className="space-y-2">
 
-      {/* RETURN */}
-      <button
-        onClick={() =>
-          router.push(`/customer/orders/${order.id}/return`)
-        }
-        className="w-full py-2 rounded-lg border border-orange-500 text-orange-500 font-medium active:scale-95 transition"
-      >
-        ↩ {t.request_return ?? "Trả hàng / Hoàn tiền"}
-      </button>
+            <button
+              onClick={() =>
+                router.push(
+                  `/customer/orders/${order.id}/return`
+                )
+              }
+              className="w-full rounded-lg border border-orange-500 py-2 font-medium text-orange-500 transition active:scale-95"
+            >
+              ↩{" "}
+              {t.request_return ??
+                "Trả hàng / Hoàn tiền"}
+            </button>
 
-      {/* BUY AGAIN */}
-      {order.order_items?.length > 0 && (
-        <button
-          onClick={() =>
-            router.push(`/product/${order.order_items[0]?.product_id}`)
-          }
-          className="w-full py-2 rounded-lg border border-gray-300 text-gray-700 active:scale-95 transition"
-        >
-          {t.buy_again ?? "Mua lại"}
-        </button>
-      )}
-    </div>
-  )}
+            {order.order_items.length > 0 && (
+              <button
+                onClick={() =>
+                  router.push(
+                    `/product/${order.order_items[0]?.product_id}`
+                  )
+                }
+                className="w-full rounded-lg border border-gray-300 py-2 text-gray-700 transition active:scale-95"
+              >
+                {t.buy_again ?? "Mua lại"}
+              </button>
+            )}
 
-  {/* ================= CANCELLED ================= */}
-  {order.status === "cancelled" && (
-    <div className="space-y-2">
-      <button className="w-full py-2 border rounded-lg">
-        {t.view_cancel_detail ?? "Xem chi tiết huỷ"}
-      </button>
+          </div>
+        )}
 
-      {order.order_items?.length > 0 && (
-        <button
-          onClick={() =>
-            router.push(`/product/${order.order_items[0]?.product_id}`)
-          }
-          className="w-full py-2 border border-orange-500 text-orange-500 rounded-lg"
-        >
-          {t.buy_again ?? "Mua lại"}
-        </button>
-      )}
-    </div>
-  )}
+        {/* CANCELLED */}
+        {order.fulfillment_status ===
+          "cancelled" && (
+          <div className="space-y-2">
 
-</div>
+            <button className="w-full rounded-lg border py-2">
+              {t.view_cancel_detail ??
+                "Xem chi tiết huỷ"}
+            </button>
 
+            {order.order_items.length > 0 && (
+              <button
+                onClick={() =>
+                  router.push(
+                    `/product/${order.order_items[0]?.product_id}`
+                  )
+                }
+                className="w-full rounded-lg border border-orange-500 py-2 text-orange-500"
+              >
+                {t.buy_again ?? "Mua lại"}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </main>
   );
 }
