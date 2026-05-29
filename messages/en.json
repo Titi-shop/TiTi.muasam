@@ -604,14 +604,8 @@
 "submit": "Post Product",
 "submitting": "Posting...",
 
-"shipping_fee": "🚚 Shipping Fee",
-"domestic_country": "Domestic Country",
-"domestic_price": "Domestic Shipping Fee",
-
 "shipping_sea": "Southeast Asia",
 "shipping_asia": "Asia",
-"shipping_europe": "Europe",
-"shipping_north_america": "North America",
 "shipping_rest_of_world": "Worldwide",
 
 "variants": "Product Variants",
