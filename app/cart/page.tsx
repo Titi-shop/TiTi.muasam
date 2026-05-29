@@ -355,8 +355,7 @@ export default function CartPage() {
 
       {/* FOOTER */}
 
-      <div className="fixed bottom-0 left-0 right-0 border-t border-black/5 bg-card px-5 pb-8 pt-4">
-        <div className="mb-4 flex items-center justify-between">
+     <div className="fixed bottom-16 left-0 right-0 border-t border-black/5 bg-card px-5 pb-6 pt-4">   <div className="mb-4 flex items-center justify-between">
           <span className="text-sm text-muted">
             {t.total ??
               "Total"}
