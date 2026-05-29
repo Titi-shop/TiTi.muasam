@@ -2,62 +2,9 @@ const PI_RPC_URL =
   process.env.PI_RPC_URL?.trim() ||
   "https://rpc.testnet.minepi.com";
 
-/* =========================================================
-   TYPES
-========================================================= */
-
-type JsonObj = Record<string, unknown>;
-
-type RpcEnvelope = {
-  jsonrpc?: string;
-  id?: string | number;
-
-  result?: JsonObj;
-
-  error?: {
-    code?: number;
-    message?: string;
-  };
-};
-
-export type ParsedRpcTransaction = {
-  hash: string | null;
-
-  ledger: number | null;
-
-  amount: number | null;
-
-  sender: string | null;
-
-  receiver: string | null;
-
-  memo: string | null;
-
-  createdAt: string | null;
-
-  txStatus: string | null;
-
-  confirmed: boolean;
-
-  rpcReachable: boolean;
-
-  raw: unknown;
-
-  debug: {
-    amountFound: boolean;
-
-    senderFound: boolean;
-
-    receiverFound: boolean;
-
-    parseLayer: string;
-
-    hasMeta: boolean;
-
-    hasEvents: boolean;
-  };
-};
-
+import type {
+  ParsedRpcTransaction,
+} from "@/lib/payments/types/rpc.types";
 /* =========================================================
    LOG
 ========================================================= */
