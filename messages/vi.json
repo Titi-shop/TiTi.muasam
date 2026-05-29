@@ -721,8 +721,13 @@
 "delete_product": "Xóa sản phẩm",
 "confirm_delete_product": "Bạn có chắc muốn xóa sản phẩm này không?",
 "delete": "Xóa",
-  "manage_products_sales": "Quản lý sản phẩm và doanh số"
-
+  "manage_products_sales": "Quản lý sản phẩm và doanh số",
+  "live_market": "Thị trường trực tiếp",
+  "realtime_connected": "Đã kết nối thời gian thực",
+  "disconnected": "Mất kết nối",
+  "pi_network_live_market": "THỊ TRƯỜNG PI NETWORK TRỰC TIẾP",
+  "realtime_price": "GIÁ THỜI GIAN THỰC",
+  "change_24h": "BIẾN ĐỘNG 24H"
 
 
 
