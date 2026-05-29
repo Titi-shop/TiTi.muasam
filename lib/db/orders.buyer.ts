@@ -299,112 +299,216 @@ export async function getOrderByBuyerId(
   orderId: string,
   userId: string
 ): Promise<BuyerOrderRow | null> {
-  const { rows } = await query<BuyerOrderRow>(
-    `
-    SELECT
-      o.id,
-      o.order_number,
+  const startedAt = Date.now();
 
-      o.payment_status,
-      o.fulfillment_status,
+  try {
+    /* =====================================================
+       QUERY START
+    ===================================================== */
+    console.log("[DB][ORDER][BUYER_DETAIL][START]", {
+      orderId,
+      userId,
+      timestamp: new Date().toISOString(),
+    });
 
-      o.total,
-      o.currency,
+    /* =====================================================
+       EXECUTE QUERY
+    ===================================================== */
+    console.log("[DB][ORDER][BUYER_DETAIL][QUERY_EXECUTE]", {
+      orderId,
+      userId,
+    });
 
-      o.items_total,
-      o.subtotal,
-      o.discount,
-      o.shipping_fee,
-      o.tax,
+    const { rows } = await query<BuyerOrderRow>(
+      `
+      SELECT
+        o.id,
+        o.order_number,
 
-      o.created_at,
-      o.paid_at,
+        o.payment_status,
+        o.fulfillment_status,
 
-      o.fulfillment_started_at,
-      o.processing_at,
-      o.shipped_at,
-      o.delivered_at,
-      o.completed_at,
+        o.total,
+        o.currency,
 
-      o.cancelled_at,
-      o.cancel_reason,
+        o.items_total,
+        o.subtotal,
+        o.discount,
+        o.shipping_fee,
+        o.tax,
 
-      o.shipping_name,
-      o.shipping_phone,
-      o.shipping_address_line,
+        o.created_at,
+        o.paid_at,
 
-      o.shipping_ward,
-      o.shipping_district,
-      o.shipping_region,
+        o.fulfillment_started_at,
+        o.processing_at,
+        o.shipped_at,
+        o.delivered_at,
+        o.completed_at,
 
-      o.shipping_country,
-      o.shipping_postal_code,
+        o.cancelled_at,
+        o.cancel_reason,
 
-      o.shipping_provider,
-      o.shipping_zone,
+        o.shipping_name,
+        o.shipping_phone,
+        o.shipping_address_line,
 
-      o.buyer_note,
-      o.admin_note,
+        o.shipping_ward,
+        o.shipping_district,
+        o.shipping_region,
 
-      o.total_items,
-      o.total_quantity,
+        o.shipping_country,
+        o.shipping_postal_code,
 
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'id', oi.id,
+        o.shipping_provider,
+        o.shipping_zone,
 
-            'product_id', oi.product_id,
+        o.buyer_note,
+        o.admin_note,
 
-            'product_name', oi.product_name,
-            'product_slug', oi.product_slug,
+        o.total_items,
+        o.total_quantity,
 
-            'thumbnail', oi.thumbnail,
-            'images', oi.images,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', oi.id,
 
-            'variant_name', oi.variant_name,
-            'variant_value', oi.variant_value,
+              'product_id', oi.product_id,
 
-            'quantity', oi.quantity,
+              'product_name', oi.product_name,
+              'product_slug', oi.product_slug,
 
-            'unit_price', oi.unit_price,
-            'total_price', oi.total_price,
+              'thumbnail', oi.thumbnail,
+              'images', oi.images,
 
-            'currency', oi.currency,
+              'variant_name', oi.variant_name,
+              'variant_value', oi.variant_value,
 
-            'fulfillment_status', oi.fulfillment_status,
+              'quantity', oi.quantity,
 
-            'seller_message', oi.seller_message,
-            'seller_cancel_reason', oi.seller_cancel_reason,
+              'unit_price', oi.unit_price,
+              'total_price', oi.total_price,
 
-            'tracking_code', oi.tracking_code,
-            'shipping_provider', oi.shipping_provider,
+              'currency', oi.currency,
 
-            'shipped_at', oi.shipped_at,
-            'delivered_at', oi.delivered_at,
+              'fulfillment_status', oi.fulfillment_status,
 
-            'snapshot', oi.snapshot
-          )
-        ) FILTER (WHERE oi.id IS NOT NULL),
-        '[]'
-      ) AS order_items
+              'seller_message', oi.seller_message,
+              'seller_cancel_reason', oi.seller_cancel_reason,
 
-    FROM orders o
-    LEFT JOIN order_items oi
-      ON oi.order_id = o.id
+              'tracking_code', oi.tracking_code,
+              'shipping_provider', oi.shipping_provider,
 
-    WHERE o.id = $1
-      AND o.buyer_id = $2
-      AND o.deleted_at IS NULL
+              'shipped_at', oi.shipped_at,
+              'delivered_at', oi.delivered_at,
 
-    GROUP BY o.id
-    `,
-    [orderId, userId]
-  );
+              'snapshot', oi.snapshot
+            )
+          ) FILTER (WHERE oi.id IS NOT NULL),
+          '[]'
+        ) AS order_items
 
-  return rows[0] ?? null;
+      FROM orders o
+      LEFT JOIN order_items oi
+        ON oi.order_id = o.id
+
+      WHERE o.id = $1
+        AND o.buyer_id = $2
+        AND o.deleted_at IS NULL
+
+      GROUP BY o.id
+      `,
+      [orderId, userId]
+    );
+
+    /* =====================================================
+       QUERY RESULT
+    ===================================================== */
+    console.log("[DB][ORDER][BUYER_DETAIL][QUERY_SUCCESS]", {
+      orderId,
+      userId,
+      rowsCount: rows.length,
+      durationMs: Date.now() - startedAt,
+    });
+
+    const order = rows[0] ?? null;
+
+    /* =====================================================
+       NOT FOUND
+    ===================================================== */
+    if (!order) {
+      console.warn("[DB][ORDER][BUYER_DETAIL][NOT_FOUND]", {
+        orderId,
+        userId,
+        durationMs: Date.now() - startedAt,
+      });
+
+      return null;
+    }
+
+    /* =====================================================
+       SUCCESS
+    ===================================================== */
+    console.log("[DB][ORDER][BUYER_DETAIL][FOUND]", {
+      orderId: order.id,
+      orderNumber: order.order_number ?? null,
+
+      paymentStatus: order.payment_status ?? null,
+      fulfillmentStatus: order.fulfillment_status ?? null,
+
+      total: order.total ?? null,
+      currency: order.currency ?? null,
+
+      totalItems: order.total_items ?? 0,
+      totalQuantity: order.total_quantity ?? 0,
+
+      itemsCount: Array.isArray(order.order_items)
+        ? order.order_items.length
+        : 0,
+
+      createdAt: order.created_at ?? null,
+      paidAt: order.paid_at ?? null,
+
+      durationMs: Date.now() - startedAt,
+    });
+
+    return order;
+
+  } catch (err) {
+    /* =====================================================
+       ERROR
+    ===================================================== */
+    console.error("[DB][ORDER][BUYER_DETAIL][ERROR]", {
+      orderId,
+      userId,
+      durationMs: Date.now() - startedAt,
+
+      message:
+        err instanceof Error
+          ? err.message
+          : "UNKNOWN_ERROR",
+
+      stack:
+        err instanceof Error
+          ? err.stack
+          : undefined,
+    });
+
+    throw err;
+
+  } finally {
+    /* =====================================================
+       END
+    ===================================================== */
+    console.log("[DB][ORDER][BUYER_DETAIL][END]", {
+      orderId,
+      userId,
+      durationMs: Date.now() - startedAt,
+      timestamp: new Date().toISOString(),
+    });
+  }
 }
-
 /* =========================================================
    COMPLETE ORDER
 ========================================================= */
