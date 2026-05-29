@@ -736,11 +736,16 @@
 "cancel": "取消",
 
 "delete_product": "删除商品",
-
 "confirm_delete_product": "确定要删除此商品吗？",
-
 "delete": "删除",
-  "manage_products_sales": "管理商品和销售"
+  "manage_products_sales": "管理商品和销售",
+  "live_market": "实时市场",
+  "realtime_connected": "实时连接中",
+  "disconnected": "连接断开",
+  "pi_network_live_market": "PI NETWORK 实时市场",
+  "realtime_price": "实时价格",
+  "change_24h": "24小时变化"
+
 
 
 
