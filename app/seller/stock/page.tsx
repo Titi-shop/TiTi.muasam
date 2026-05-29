@@ -1318,7 +1318,7 @@ const handleDelete =
                           t.stock:
                           {" "}
                           {
-                            t.stock
+                            stock
                           }
                         </span>
 
