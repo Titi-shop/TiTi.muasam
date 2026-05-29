@@ -12,6 +12,15 @@ import {
   bindPiPaymentToIntent,
 } from "@/lib/db/payments.bind";
 
+import type {
+  AuthorizeInput,
+  AuthorizeResult,
+} from "@/lib/payments/types/authorize.types";
+
+import type {
+  PaymentIntentStatus,
+} from "@/lib/payments/types";
+
 /* =========================================================
    TYPES
 ========================================================= */
