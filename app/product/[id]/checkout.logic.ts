@@ -32,21 +32,15 @@ async function previewOrderDirect({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      country: shipping.country.toUpperCase(),
-      zone,
-      shipping: {
-        region: shipping.region,
-        district: shipping.district,
-        ward: shipping.ward,
-      },
-      items: [
-        {
-          product_id: item.id,
-          variant_id: variant_id ?? null,
-          quantity,
-        },
-      ],
-    }),
+  address_id: shipping.id,
+  items: [
+    {
+      product_id: item.id,
+      variant_id: variant_id ?? null,
+      quantity,
+    },
+  ],
+  }),
   });
 
   const data = await res.json().catch(() => null);
@@ -201,21 +195,11 @@ export function useCheckoutPay({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          product_id: item?.id,
-          variant_id: product.variant_id ?? null,
-          quantity,
-          country: shipping?.country,
-          zone,
-          shipping: {
-            name: shipping?.name,
-            phone: shipping?.phone,
-            address_line: shipping?.address_line,
-            ward: shipping?.ward,
-            district: shipping?.district,
-            region: shipping?.region,
-            postal_code: shipping?.postal_code,
-          },
-        }),
+  product_id: item?.id,
+  variant_id: product.variant_id ?? null,
+  quantity,
+  address_id: shipping?.id,
+}),
       });
 
       const intentData = await intentRes.json().catch(() => null);
