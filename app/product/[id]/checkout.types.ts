@@ -49,7 +49,6 @@ export type Region =
 ========================= */
 
 export interface ShippingInfo {
-   id: string;
   name: string;
   phone: string;
   address_line: string;
@@ -57,7 +56,11 @@ export interface ShippingInfo {
   district?: string;
   ward?: string;
   country: string;
-  postal_code?: string | null;
+}
+export interface Address {
+  id: string;
+  country: string;
+  region: string;
 }
 
 /* =========================
