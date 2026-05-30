@@ -23,42 +23,28 @@ export type PricingItemInput = {
 
 export type PricingInput = {
   items: PricingItemInput[];
-
   country: string;
-
   zone?: string | null;
 };
 
 export type PricingItemResult = {
   product_id: string;
-
   variant_id: string | null;
-
   name: string;
-
   quantity: number;
-
   unit_price: number;
-
   subtotal: number;
 };
 
 export type PricingResult = {
   items: PricingItemResult[];
-
   subtotal: number;
-
   shipping_fee: number;
-
   total: number;
-
   buyer_country: string;
-
   buyer_zone: string;
-
   snapshots: {
     products: Record<string, unknown>[];
-
     variants: Record<string, unknown>[];
   };
 };
@@ -69,45 +55,27 @@ export type PricingResult = {
 
 type ProductRow = {
   id: string;
-
   name: string;
-
   price: number;
-
   sale_price: number | null;
-
   sale_start: string | null;
-
   sale_end: string | null;
-
   stock?: number | null;
-
   is_active?: boolean | null;
-
   deleted_at?: string | null;
-
   is_unlimited?: boolean | null;
-
   is_digital?: boolean | null;
-
   seller_id?: string | null;
-
   sale_enabled?: boolean | null;
 };
 
 type VariantRow = {
   id: string;
-
   product_id: string;
-
   price: number;
-
   sale_price: number | null;
-
   stock?: number | null;
-
   is_active?: boolean | null;
-
   is_unlimited?: boolean | null;
 };
 
@@ -157,11 +125,8 @@ function isSaleWindow(
   }
 
   const now = Date.now();
-
   const s = new Date(start).getTime();
-
   const e = new Date(end).getTime();
-
   return now >= s && now <= e;
 }
 
@@ -227,9 +192,7 @@ function resolveVariantPrice(
 
 async function calculateShippingFee(params: {
   productId: string;
-
   buyerCountry: string;
-
   buyerZone: string;
 }): Promise<number> {
   const {
@@ -295,11 +258,8 @@ async function loadProduct(
 
   const normalized: ProductRow = {
     id: String(product.id),
-
     name: String(product.name),
-
     price: safeNumber(product.price),
-
     sale_price:
       product.sale_price !== null
         ? safeNumber(
@@ -382,7 +342,6 @@ async function loadVariant(
 
   const normalized: VariantRow = {
     id: String(variant.id),
-
     product_id: String(
       variant.product_id
     ),
@@ -464,11 +423,8 @@ export async function calculatePricing(
       )
     ) ??
     "rest_of_world";
-
   let subtotal = 0;
-
   let shippingFee = 0;
-
   const items: PricingItemResult[] =
     [];
 
@@ -479,7 +435,6 @@ export async function calculatePricing(
   const variantSnapshots:
     Record<string, unknown>[] =
     [];
-
   for (const raw of input.items) {
     if (
       !isUUID(raw.product_id)
@@ -497,7 +452,6 @@ export async function calculatePricing(
         "INVALID_VARIANT_ID"
       );
     }
-
     const quantity = safeQty(
       raw.quantity
     );
@@ -587,9 +541,7 @@ export async function calculatePricing(
           {
             productId:
               product.id,
-
             buyerCountry,
-
             buyerZone,
           }
         );
@@ -598,15 +550,11 @@ export async function calculatePricing(
     items.push({
       product_id:
         product.id,
-
       variant_id:
         raw.variant_id ??
         null,
-
       name: product.name,
-
       quantity,
-
       unit_price:
         unitPrice,
 
@@ -640,20 +588,15 @@ export async function calculatePricing(
 
   const result: PricingResult = {
     items,
-
     subtotal,
-
     shipping_fee:
       shippingFee,
-
     total,
-
     buyer_country:
       buyerCountry,
 
     buyer_zone:
       buyerZone,
-
     snapshots: {
       products:
         productSnapshots,
