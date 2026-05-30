@@ -386,19 +386,15 @@ onReadyForServerCompletion: async (
    SUCCESS UI
 ===================================================== */
 
-onClose();
-
-// tab Pending sẽ được active
-localStorage.setItem(
-  "open_orders_tab",
-  "pending"
-);
-
 showMessage(
   t.order_created_success ??
-    "Purchase successful! Your order has been created and is now being processed. You can check its status in Pending Orders.",
+  "Order created successfully. Please check Pending orders.",
   "success"
 );
+
+setTimeout(() => {
+  onClose();
+}, 1500);
   } catch (err) {
     console.error("🔥 [CHECKOUT] COMPLETION_FAIL", err);
 
