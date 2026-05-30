@@ -337,11 +337,11 @@ onReadyForServerCompletion: async (paymentId, txid, callback) => {
     }
 
     onClose();
-
-    showMessage(
-      t.order_created_success ??
-        "Order created successfully. Please check Pending orders."
-    );
+localStorage.setItem("open_orders_tab", "pending");
+showMessage(
+  t.order_created_success ??
+    " Purchase successful! Your order has been created and is being processed. You can track it in Pending Orders."
+);
 
     // optional Pi callback
     try {
