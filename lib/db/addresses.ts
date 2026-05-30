@@ -173,3 +173,20 @@ export async function updateAddress(
 
   return res.rows[0] ?? null;
 }
+export async function getAddressById(
+  userId: string,
+  addressId: string
+) {
+  const res = await query(
+    `
+    SELECT *
+    FROM addresses
+    WHERE id = $1
+      AND user_id = $2
+    LIMIT 1
+    `,
+    [addressId, userId]
+  );
+
+  return res.rows[0] ?? null;
+}
