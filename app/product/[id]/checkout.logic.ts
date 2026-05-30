@@ -314,7 +314,6 @@ t.payment_approve_failed ?? "payment_approve_failed"
 },
 
 onReadyForServerCompletion: async (paymentId, txid, callback) => {
-onReadyForServerCompletion: async (paymentId, txid, callback) => {
   if (completionLocked) return;
   completionLocked = true;
 
