@@ -4,322 +4,334 @@ import { useCallback } from "react";
 import { getPiAccessToken } from "@/lib/piAuth";
 import type { ShippingInfo, Region } from "./checkout.types";
 import type {
-ShippingInfo,
-Region,
-PreviewPayload,
-CheckoutItem,
-ValidateParams,
-UseCheckoutPayParams,
+  ShippingInfo,
+  Region,
+  PreviewPayload,
+  CheckoutItem,
+  ValidateParams,
+  UseCheckoutPayParams,
 } from "./checkout.types";
 
 /* =========================
-PREVIEW DIRECT
+   PREVIEW DIRECT
 ========================= */
 
 async function previewOrderDirect({
-shipping,
-zone,
-item,
-quantity,
-variant_id,
+  shipping,
+  zone,
+  item,
+  quantity,
+  variant_id,
 }: PreviewPayload) {
-const token = await getPiAccessToken();
+  const token = await getPiAccessToken();
 
-const res = await fetch("/api/orders/preview", {
-method: "POST",
-headers: {
-Authorization: `Bearer ${token}`,
-"Content-Type": "application/json",
-},
-body: JSON.stringify({
-country: shipping.country.toUpperCase(),
-zone,
-shipping: {
-region: shipping.region,
-district: shipping.district,
-ward: shipping.ward,
-},
-items: [
-{
-product_id: item.id,
-variant_id: variant_id ?? null,
-quantity,
-},
-],
-}),
-});
+  const res = await fetch("/api/orders/preview", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      country: shipping.country.toUpperCase(),
+      zone,
+      shipping: {
+        region: shipping.region,
+        district: shipping.district,
+        ward: shipping.ward,
+      },
+      items: [
+        {
+          product_id: item.id,
+          variant_id: variant_id ?? null,
+          quantity,
+        },
+      ],
+    }),
+  });
 
-const data = await res.json().catch(() => null);
+  const data = await res.json().catch(() => null);
 
-if (!res.ok) {
-throw new Error(data?.error || "PREVIEW_FAILED");
-}
+  if (!res.ok) {
+    throw new Error(data?.error || "PREVIEW_FAILED");
+  }
 
-return data as { total: number };
+  return data as { total: number };
 }
 
 /* =========================
-ERROR MAP
+   ERROR MAP
 ========================= */
 
 export const getErrorKey = (code?: string) => {
-const map: Record<string, string> = {
-UNSUPPORTED_COUNTRY: "unsupported_country",
-PREVIEW_FAILED: "order_preview_failed",
-INVALID_REGION: "invalid_region",
-SHIPPING_NOT_AVAILABLE: "shipping_not_available",
-OUT_OF_STOCK: "error_out_of_stock",
-INVALID_QUANTITY: "error_invalid_quantity",
-PI_APPROVE_FAILED: "payment_approve_failed",
-PI_COMPLETE_FAILED: "payment_complete_failed",
-INVALID_TXID: "payment_invalid_txid",
-PAYMENT_INTENT_FAILED: "payment_intent_failed",
-RECONCILE_FAILED: "reconcile_failed",
-SUBMIT_FAILED: "payment_submit_failed",
-};
+  const map: Record<string, string> = {
+    UNSUPPORTED_COUNTRY: "unsupported_country",
+    PREVIEW_FAILED: "order_preview_failed",
+    INVALID_REGION: "invalid_region",
+    SHIPPING_NOT_AVAILABLE: "shipping_not_available",
+    OUT_OF_STOCK: "error_out_of_stock",
+    INVALID_QUANTITY: "error_invalid_quantity",
+    PI_APPROVE_FAILED: "payment_approve_failed",
+    PI_COMPLETE_FAILED: "payment_complete_failed",
+    INVALID_TXID: "payment_invalid_txid",
+    PAYMENT_INTENT_FAILED: "payment_intent_failed",
+    RECONCILE_FAILED: "reconcile_failed",
+    SUBMIT_FAILED: "payment_submit_failed",
+  };
 
-return map[code || ""] || "unknown_error";
+  return map[code || ""] || "unknown_error";
 };
 
 /* =========================
-VALIDATE
+   VALIDATE
 ========================= */
 
 export function validateBeforePay({
-user,
-piReady,
-shipping,
-zone,
-item,
-quantity,
-maxStock,
-pilogin,
-showMessage,
-t,
+  user,
+  piReady,
+  shipping,
+  zone,
+  item,
+  quantity,
+  maxStock,
+  pilogin,
+  showMessage,
+  t,
 }: ValidateParams): boolean {
-if (!user) {
-localStorage.setItem("pending_checkout", "1");
-pilogin?.();
-showMessage(t.please_login ?? "please_login");
-return false;
-}
+  if (!user) {
+    localStorage.setItem("pending_checkout", "1");
+    pilogin?.();
+    showMessage(t.please_login ?? "please_login");
+    return false;
+  }
 
-if (!piReady) {
-showMessage(t.pi_not_ready ?? "pi_not_ready");
-return false;
-}
+  if (!piReady) {
+    showMessage(t.pi_not_ready ?? "pi_not_ready");
+    return false;
+  }
 
-if (!shipping) {
-showMessage(t.please_add_shipping_address ?? "no_address");
-return false;
-}
+  if (!shipping) {
+    showMessage(t.please_add_shipping_address ?? "no_address");
+    return false;
+  }
 
-if (!shipping.country) {
-showMessage(t.invalid_shipping_country ?? "invalid_country");
-return false;
-}
+  if (!shipping.country) {
+    showMessage(t.invalid_shipping_country ?? "invalid_country");
+    return false;
+  }
 
-if (!shipping.region) {
-showMessage(t.invalid_shipping_region ?? "invalid_region");
-return false;
-}
+  if (!shipping.region) {
+    showMessage(t.invalid_shipping_region ?? "invalid_region");
+    return false;
+  }
 
-if (!zone) {
-showMessage(t.shipping_required ?? "select_region");
-return false;
-}
+  if (!zone) {
+    showMessage(t.shipping_required ?? "select_region");
+    return false;
+  }
 
-if (!item || !item.id) {
-showMessage(t.invalid_product ?? "invalid_product");
-return false;
-}
+  if (!item || !item.id) {
+    showMessage(t.invalid_product ?? "invalid_product");
+    return false;
+  }
 
-if (quantity < 1 || quantity > maxStock) {
-showMessage(t.invalid_quantity ?? "invalid_quantity");
-return false;
-}
+  if (quantity < 1 || quantity > maxStock) {
+    showMessage(t.invalid_quantity ?? "invalid_quantity");
+    return false;
+  }
 
-if (item.stock <= 0) {
-showMessage(t.out_of_stock ?? "out_of_stock");
-return false;
-}
+  if (item.stock <= 0) {
+    showMessage(t.out_of_stock ?? "out_of_stock");
+    return false;
+  }
 
-return true;
+  return true;
 }
 
 /* =========================
-PAY
+   PAY
 ========================= */
 
 export function useCheckoutPay({
-item,
-quantity,
-total,
-shipping,
-unitPrice,
-processing,
-setProcessing,
-processingRef,
-t,
-user,
-router,
-onClose,
-zone,
-product,
-showMessage,
-validate,
-preview,
+  item,
+  quantity,
+  total,
+  shipping,
+  unitPrice,
+  processing,
+  setProcessing,
+  processingRef,
+  t,
+  user,
+  router,
+  onClose,
+  zone,
+  product,
+  showMessage,
+  validate,
+  preview,
 }: UseCheckoutPayParams) {
-return useCallback(async () => {
-if (processingRef.current || processing) return;
-if (!validate()) return;
+  return useCallback(async () => {
+    if (processingRef.current || processing) return;
+    if (!validate()) return;
 
-processingRef.current = true;
-setProcessing(true);
+    processingRef.current = true;
+    setProcessing(true);
 
-let completionLocked = false;
+    let completionLocked = false;
 
-try {
-let finalPreview = preview;
+    try {
+      let finalPreview = preview;
 
-if (!finalPreview && shipping && zone && item) {
-finalPreview = await previewOrderDirect({
-shipping,
-zone,
-item,
-quantity,
-variant_id: product.variant_id ?? null,
-});
-}
+      if (!finalPreview && shipping && zone && item) {
+        finalPreview = await previewOrderDirect({
+          shipping,
+          zone,
+          item,
+          quantity,
+          variant_id: product.variant_id ?? null,
+        });
+      }
 
-const token = await getPiAccessToken();
+      const token = await getPiAccessToken();
 
-const intentRes = await fetch("/api/payments/pi/create-intent", {
-method: "POST",
-headers: {
-Authorization: `Bearer ${token}`,
-"Content-Type": "application/json",
-},
-body: JSON.stringify({
-product_id: item?.id,
-variant_id: product.variant_id ?? null,
-quantity,
-country: shipping?.country,
-zone,
-shipping: {
-name: shipping?.name,
-phone: shipping?.phone,
-address_line: shipping?.address_line,
-ward: shipping?.ward,
-district: shipping?.district,
-region: shipping?.region,
-postal_code: shipping?.postal_code,
-},
-}),
-});
+      const intentRes = await fetch("/api/payments/pi/create-intent", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          product_id: item?.id,
+          variant_id: product.variant_id ?? null,
+          quantity,
+          country: shipping?.country,
+          zone,
+          shipping: {
+            name: shipping?.name,
+            phone: shipping?.phone,
+            address_line: shipping?.address_line,
+            ward: shipping?.ward,
+            district: shipping?.district,
+            region: shipping?.region,
+            postal_code: shipping?.postal_code,
+          },
+        }),
+      });
 
-const intentData = await intentRes.json().catch(() => null);
+      const intentData = await intentRes.json().catch(() => null);
 
-if (!intentRes.ok) {
-showMessage(
-t.payment_intent_failed ??
-intentData?.error ??
-"payment_intent_failed"
-);
-throw new Error(intentData?.error || "PAYMENT_INTENT_FAILED");
-}
+      if (!intentRes.ok) {
+        showMessage(
+          t.payment_intent_failed ??
+            intentData?.error ??
+            "payment_intent_failed"
+        );
+        throw new Error(intentData?.error || "PAYMENT_INTENT_FAILED");
+      }
 
-const paymentIntentId =
-intentData.payment_intent_id || intentData.paymentIntentId;
+      const paymentIntentId =
+        intentData.payment_intent_id || intentData.paymentIntentId;
 
-if (!paymentIntentId) {
-throw new Error("PAYMENT_INTENT_ID_MISSING");
-}
+      if (!paymentIntentId) {
+        throw new Error("PAYMENT_INTENT_ID_MISSING");
+      }
 
-const lockedAmount = Number(Number(intentData.amount || 0).toFixed(7));
-const lockedMemo =
-typeof intentData.memo === "string" && intentData.memo.trim()
-? intentData.memo.trim().slice(0, 120)
-: (t.payment_memo_order ?? "Order payment");
+      const lockedAmount = Number(Number(intentData.amount || 0).toFixed(7));
+      const lockedMemo =
+        typeof intentData.memo === "string" && intentData.memo.trim()
+          ? intentData.memo.trim().slice(0, 120)
+          : (t.payment_memo_order ?? "Order payment");
 
-console.log("🟢 [CHECKOUT] INTENT_OK", {
-paymentIntentId,
-lockedAmount,
-});
+      console.log("🟢 [CHECKOUT] INTENT_OK", {
+        paymentIntentId,
+        lockedAmount,
+      });
 
-if (!window.Pi || typeof window.Pi.createPayment !== "function") {
-throw new Error("PI_SDK_NOT_READY");
-}
+      if (!window.Pi || typeof window.Pi.createPayment !== "function") {
+        throw new Error("PI_SDK_NOT_READY");
+      }
 
-window.Pi.createPayment(
-{
-amount: lockedAmount,
-memo: lockedMemo,
-metadata: {
-payment_intent_id: paymentIntentId,
-},
-},
-{
-onReadyForServerApproval: async (paymentId, callback) => {
+      window.Pi.createPayment(
+        {
+          amount: lockedAmount,
+          memo: lockedMemo,
+          metadata: {
+            payment_intent_id: paymentIntentId,
+          },
+        },
+        {
+          onReadyForServerApproval: async (paymentId, callback) => {
+  try {
+    console.log("🟡 [CHECKOUT] APPROVAL_STAGE", {
+      paymentId,
+      paymentIntentId,
+    });
 
-try {
-console.log("🟡 [CHECKOUT] APPROVAL_STAGE", {
-paymentId,
-paymentIntentId,
-});
+    const token = await getPiAccessToken();
 
-const token = await getPiAccessToken();
+    const res = await fetch("/api/payments/pi/authorize", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        payment_intent_id: paymentIntentId,
+        pi_payment_id: paymentId,
+      }),
+    });
 
-const res = await fetch("/api/payments/pi/authorize", {
-method: "POST",
-headers: {
-Authorization: `Bearer ${token}`,
-"Content-Type": "application/json",
-},
-body: JSON.stringify({
-payment_intent_id: paymentIntentId,
-pi_payment_id: paymentId,
-}),
-});
+    const data = await res.json().catch(() => null);
 
-const data = await res.json().catch(() => null);
+    console.log("🟡 [CHECKOUT] AUTHORIZE_RESPONSE", {
+      status: res.status,
+      data,
+    });
 
-console.log("🟡 [CHECKOUT] AUTHORIZE_RESPONSE", {
-status: res.status,
-data,
-});
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.error || "AUTHORIZE_FAILED");
+    }
 
-if (!res.ok || !data?.success) {
-throw new Error(data?.error || "AUTHORIZE_FAILED");
-}
+    console.log("🟢 [CHECKOUT] AUTHORIZE_OK", {
+      paymentId,
+    });
 
-console.log("🟢 [CHECKOUT] AUTHORIZE_OK", {
-paymentId,
-});
+    callback();
+  } catch (err) {
+    console.error("🔥 [CHECKOUT] APPROVAL_FAIL", err);
 
-callback();
+    processingRef.current = false;
 
-} catch (err) {
-console.error("🔥 [CHECKOUT] APPROVAL_FAIL", err);
+    setProcessing(false);
 
-processingRef.current = false;
-
-setProcessing(false);
-
-showMessage(
-t.payment_approve_failed ?? "payment_approve_failed"
-);
-
-}
+    showMessage(
+      t.payment_approve_failed ?? "payment_approve_failed"
+    );
+  }
 },
 
+onReadyForServerCompletion: async (
+  paymentId,
+  txid,
+  callback
+) => {
+  if (completionLocked) {
+    console.warn("🟠 [CHECKOUT] COMPLETION_LOCKED");
+    return;
+  }
 
-  onReadyForServerCompletion: async (paymentId, txid, callback) => {
-  if (completionLocked) return;
   completionLocked = true;
 
   try {
+    console.log("🟡 [CHECKOUT] COMPLETION_STAGE", {
+      paymentId,
+      txid,
+      paymentIntentId,
+    });
+
     const token = await getPiAccessToken();
+
+    console.log("🟡 [CHECKOUT] SUBMIT_STAGE");
 
     const submitRes = await fetch("/api/payments/pi/submit", {
       method: "POST",
@@ -334,73 +346,106 @@ t.payment_approve_failed ?? "payment_approve_failed"
       }),
     });
 
-    const submitData = await submitRes.json().catch(() => null);
+    const submitData = await submitRes
+      .json()
+      .catch(() => null);
 
-    if (!submitRes.ok || !submitData?.order_id) {
-      throw new Error(submitData?.error || "SUBMIT_FAILED");
+    console.log("🟡 [CHECKOUT] SUBMIT_RESPONSE", {
+      status: submitRes.status,
+      data: submitData,
+    });
+
+    if (!submitRes.ok || !submitData?.success) {
+      throw new Error(
+        submitData?.error || "SUBMIT_FAILED"
+      );
     }
 
-    // ✅ CHỈ THÔNG BÁO + ĐÓNG CHECKOUT
-    onClose();
+    console.log("🟢 [CHECKOUT] SUBMIT_OK", {
+      orderId: submitData?.order_id,
+      amount: submitData?.amount,
+      piCompleted: submitData?.pi_completed,
+    });
 
-    showMessage(
-      t.order_created_success ??
-        "Order created successfully. Please check Pending orders."
-    );
+    /* =====================================================
+       PI SDK CALLBACK
+    ===================================================== */
 
-    // optional Pi callback
     try {
       callback();
-    } catch {}
 
+      console.log("🟢 [CHECKOUT] PI_CALLBACK_OK");
+    } catch (sdkErr) {
+      console.warn(
+        "🟠 [CHECKOUT] PI_CALLBACK_WARN",
+        sdkErr
+      );
+    }
+
+    /* =====================================================
+       SUCCESS UI
+    ===================================================== */
+
+    onClose();
+    router.replace("/customer/orders?tab=pending&ts=" + Date.now());
+
+    showMessage(
+      t.payment_success ?? "success",
+      "success"
+    );
   } catch (err) {
-    console.error("🔥 COMPLETION_FAIL", err);
-    showMessage(t.transaction_failed ?? "transaction_failed");
+    console.error("🔥 [CHECKOUT] COMPLETION_FAIL", err);
+
+    const key = getErrorKey(
+      (err as Error).message
+    );
+
+    showMessage(t[key] ?? key);
   } finally {
     processingRef.current = false;
+
     setProcessing(false);
   }
 },
-onCancel: () => {
-console.warn("🟡 [CHECKOUT] USER_CANCELLED");
-processingRef.current = false;
-setProcessing(false);
-showMessage(t.payment_cancelled ?? "cancelled");
-},
 
-onError: (err) => {    
-    console.error("🔥 [CHECKOUT] PI_SDK_ERROR", err);    
-    processingRef.current = false;    
-    setProcessing(false);    
-    showMessage(t.payment_failed ?? "payment_failed");    
-  },    
-}
+          onCancel: () => {
+            console.warn("🟡 [CHECKOUT] USER_CANCELLED");
+            processingRef.current = false;
+            setProcessing(false);
+            showMessage(t.payment_cancelled ?? "cancelled");
+          },
 
-);
-} catch (err) {
-console.error("🔥 [CHECKOUT] PAY_ERROR", err);
-processingRef.current = false;
-setProcessing(false);
-showMessage(t.transaction_failed ?? "transaction_failed");
-}
-
-}, [
-item,
-quantity,
-total,
-shipping,
-unitPrice,
-processing,
-setProcessing,
-processingRef,
-t,
-user,
-router,
-onClose,
-zone,
-product.variant_id,
-preview,
-validate,
-showMessage,
-]);
+          onError: (err) => {
+            console.error("🔥 [CHECKOUT] PI_SDK_ERROR", err);
+            processingRef.current = false;
+            setProcessing(false);
+            showMessage(t.payment_failed ?? "payment_failed");
+          },
+        }
+      );
+    } catch (err) {
+      console.error("🔥 [CHECKOUT] PAY_ERROR", err);
+      processingRef.current = false;
+      setProcessing(false);
+      showMessage(t.transaction_failed ?? "transaction_failed");
+    }
+  }, [
+    item,
+    quantity,
+    total,
+    shipping,
+    unitPrice,
+    processing,
+    setProcessing,
+    processingRef,
+    t,
+    user,
+    router,
+    onClose,
+    zone,
+    product.variant_id,
+    preview,
+    validate,
+    showMessage,
+  ]);
 }
