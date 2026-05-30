@@ -244,29 +244,6 @@ async function calculateShippingFee(params: {
   );
 }
 /* =========================================================
-   SHIPPING VALIDATION
-========================================================= */
-
-function validateSelectedZone(
-  buyerCountry: string,
-  actualZone: string,
-  selectedZone: string | null
-) {
-  if (!selectedZone) {
-    return;
-  }
-
-  if (selectedZone === "domestic") {
-    return;
-  }
-
-  if (selectedZone !== actualZone) {
-    throw new Error(
-      "INVALID_SHIPPING_ZONE"
-    );
-  }
-}
-/* =========================================================
    VALIDATE PRODUCT
 ========================================================= */
 
