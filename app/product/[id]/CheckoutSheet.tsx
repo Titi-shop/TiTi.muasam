@@ -137,22 +137,25 @@ export default function CheckoutSheet({
   /* =========================================================
      MESSAGE
   ========================================================= */
+const showMessage = (
+  text: string,
+  type: "error" | "success" = "error"
+) => {
+  console.log(
+    "[CHECKOUT MESSAGE]",
+    text,
+    type
+  );
 
-  const showMessage = (
-    text: string,
-    type:
-      | "error"
-      | "success" = "error"
-  ) => {
-    setMessage({
-      text,
-      type,
-    });
+  setMessage({
+    text,
+    type,
+  });
 
-    setTimeout(() => {
-      setMessage(null);
-    }, 4000);
-  };
+  setTimeout(() => {
+    setMessage(null);
+  }, 4000);
+};
 
   /* =========================================================
      ITEM
