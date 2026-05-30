@@ -620,13 +620,14 @@ if (!intentRow) {
   });
 
   await safeLedger(
-    paid,
-    paymentIntentId,
-    piPaymentId,
-    txid,
-    rpcVerified
-  );
-
+  paid,
+  paymentIntentId,
+  piPaymentId,
+  txid,
+  rpcVerified
+).catch((e) => {
+  console.error("[LEDGER_ASYNC_FAIL]", e);
+});
   console.log("[PAYMENT][SETTLEMENT] SUCCESS", {
     paymentIntentId,
     orderId: paid.orderId,
@@ -634,12 +635,13 @@ if (!intentRow) {
     rpcAudited: rpcVerified.confirmed ?? false
   });
 
-    return successResult(
-    paid.orderId,
-    paid.amount,
-    rpcVerified.ok,
-    source
-  );
+
+return successResult(
+  paid.orderId,
+  paid.amount,
+  rpcVerified.ok,
+  source
+);
 
   } catch (e) {
 
