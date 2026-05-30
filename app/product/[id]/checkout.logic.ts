@@ -313,7 +313,8 @@ t.payment_approve_failed ?? "payment_approve_failed"
 }
 },
 
-onReadyForServerCompletion: async (paymentId, txid, callback) => {
+
+  onReadyForServerCompletion: async (paymentId, txid, callback) => {
   if (completionLocked) return;
   completionLocked = true;
 
@@ -339,18 +340,15 @@ onReadyForServerCompletion: async (paymentId, txid, callback) => {
       throw new Error(submitData?.error || "SUBMIT_FAILED");
     }
 
-    const orderId = submitData.order_id;
-
-    // UI close
+    // ✅ CHỈ THÔNG BÁO + ĐÓNG CHECKOUT
     onClose();
 
-    // CHỈ CHUYỂN KHI ORDER ĐÃ TỒN TẠI
-    router.replace(
-      `/customer/orders/${orderId}?from=checkout&ts=${Date.now()}`
+    showMessage(
+      t.order_created_success ??
+        "Order created successfully. Please check Pending orders."
     );
 
-    showMessage(t.payment_success ?? "success", "success");
-
+    // optional Pi callback
     try {
       callback();
     } catch {}
