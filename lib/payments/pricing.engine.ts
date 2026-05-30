@@ -558,14 +558,11 @@ const selectedZone =
       !product.is_digital
     ) {
       shippingFee +=
-        await calculateShippingFee(
-          {
-            productId:
-              product.id,
-            buyerCountry,
-            buyerZone,
-          }
-        );
+  await calculateShippingFee({
+    productId: product.id,
+    buyerCountry,
+    buyerZone: actualZone,
+  });
     }
 
     items.push({
@@ -616,8 +613,7 @@ const selectedZone =
     buyer_country:
       buyerCountry,
 
-    buyer_zone:
-      buyerZone,
+    buyer_zone: actualZone,
     snapshots: {
       products:
         productSnapshots,
