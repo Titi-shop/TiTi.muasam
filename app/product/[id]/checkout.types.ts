@@ -69,6 +69,7 @@ export interface Address {
 ========================= */
 
 export interface AddressApiItem {
+  id: string; 
   is_default: boolean;
   full_name: string;
   phone: string;
