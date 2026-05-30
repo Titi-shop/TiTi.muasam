@@ -49,6 +49,7 @@ export type Region =
 ========================= */
 
 export interface ShippingInfo {
+  id: string;  
   name: string;
   phone: string;
   address_line: string;
