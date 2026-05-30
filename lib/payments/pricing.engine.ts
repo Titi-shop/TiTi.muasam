@@ -11,6 +11,10 @@ import {
   getZoneByCountry,
 } from "@/lib/db/shipping";
 
+import {
+  getAddressById,
+} from "@/lib/db/addresses";
+
 /* =========================================================
    TYPES
 ========================================================= */
@@ -22,9 +26,9 @@ export type PricingItemInput = {
 };
 
 export type PricingInput = {
+  user_id: string;
+  address_id: string;
   items: PricingItemInput[];
-  country: string;
-  zone?: string | null;
 };
 
 export type PricingItemResult = {
@@ -432,12 +436,24 @@ export async function calculatePricing(
     );
   }
 
-  const buyerCountry =
-    input.country
-      .trim()
-      .toUpperCase();
+  const address =
+  await getAddressById(
+    input.user_id,
+    input.address_id
+  );
 
-  const actualZone =
+if (!address) {
+  throw new Error(
+    "ADDRESS_NOT_FOUND"
+  );
+}
+
+const buyerCountry =
+  String(address.country)
+    .trim()
+    .toUpperCase();
+
+const actualZone =
   (await getZoneByCountry(
     buyerCountry
   )) ?? "rest_of_world";
