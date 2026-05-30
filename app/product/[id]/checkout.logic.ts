@@ -320,8 +320,7 @@ onReadyForServerCompletion: async (paymentId, txid, callback) => {
   try {
     const token = await getPiAccessToken();
 
-    // 1. fire submit (background)
-    fetch("/api/payments/pi/submit", {
+    const submitRes = await fetch("/api/payments/pi/submit", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -332,24 +331,26 @@ onReadyForServerCompletion: async (paymentId, txid, callback) => {
         pi_payment_id: paymentId,
         txid,
       }),
-    }).catch((e) => {
-      console.error("[CHECKOUT] SUBMIT_FAIL", e);
     });
 
-    // 2. đóng checkout UI ngay
+    const submitData = await submitRes.json().catch(() => null);
+
+    if (!submitRes.ok || !submitData?.order_id) {
+      throw new Error(submitData?.error || "SUBMIT_FAILED");
+    }
+
+    const orderId = submitData.order_id;
+
+    // UI close
     onClose();
 
-    // 3. chuyển sang processing page (KHÔNG dùng pending list)
+    // CHỈ CHUYỂN KHI ORDER ĐÃ TỒN TẠI
     router.replace(
-      "/customer/orders/processing?paymentIntentId=" +
-        paymentIntentId +
-        "&ts=" +
-        Date.now()
+      `/customer/orders/${orderId}?from=checkout&ts=${Date.now()}`
     );
 
     showMessage(t.payment_success ?? "success", "success");
 
-    // 4. Pi callback (không quan trọng UX nữa)
     try {
       callback();
     } catch {}
@@ -362,7 +363,6 @@ onReadyForServerCompletion: async (paymentId, txid, callback) => {
     setProcessing(false);
   }
 },
-
 onCancel: () => {
 console.warn("🟡 [CHECKOUT] USER_CANCELLED");
 processingRef.current = false;
