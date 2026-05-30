@@ -333,7 +333,7 @@ onReadyForServerCompletion: async (
 
     console.log("🟡 [CHECKOUT] SUBMIT_STAGE");
 
-    const submitRes = await fetch("/api/payments/pi/submit", {
+    fetch("/api/payments/pi/submit", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${token}`,
@@ -344,9 +344,15 @@ onReadyForServerCompletion: async (
     pi_payment_id: paymentId,
     txid,
   }),
-}).catch((e) => {
-  console.error("[CHECKOUT] SUBMIT_FAIL", e);
-});
+})
+  .then((res) => res.json().catch(() => null))
+  .then((data) => {
+    console.log("[CHECKOUT] SUBMIT_DONE", data);
+  })
+  .catch((e) => {
+    console.error("[CHECKOUT] SUBMIT_FAIL", e);
+  });
+    
     console.log("🟡 [CHECKOUT] SUBMIT_RESPONSE", {
       status: submitRes.status,
       data: submitData,
