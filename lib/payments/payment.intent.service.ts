@@ -143,48 +143,14 @@ if (!isUUID(addressId)) {
   throw new Error("INVALID_ADDRESS_ID");
 }
   const shippingRaw =
-    body.shipping &&
-    typeof body.shipping ===
-      "object"
-      ? (body.shipping as ShippingInput)
-      : null;
+  body.shipping &&
+  typeof body.shipping === "object"
+    ? (body.shipping as ShippingInput)
+    : null;
 
-  if (!isUUID(productId)) {
-    throw new Error(
-      "INVALID_PRODUCT_ID"
-    );
-  }
-
-  if (
-    variantId &&
-    !isUUID(variantId)
-  ) {
-    throw new Error(
-      "INVALID_VARIANT_ID"
-    );
-  }
-
- 
-  if (!shippingRaw) {
-    throw new Error(
-      "INVALID_SHIPPING"
-    );
-  }
-
-  const shipping =
-    normalizeShipping(
-      shippingRaw
-    );
-
-  if (
-    !shipping.name ||
-    !shipping.phone ||
-    !shipping.address_line
-  ) {
-    throw new Error(
-      "INCOMPLETE_SHIPPING"
-    );
-  }
+const shipping = shippingRaw
+  ? normalizeShipping(shippingRaw)
+  : null;
 
   return {
   userId,
