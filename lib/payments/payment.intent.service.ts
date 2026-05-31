@@ -142,15 +142,11 @@ const addressId =
 if (!isUUID(addressId)) {
   throw new Error("INVALID_ADDRESS_ID");
 }
-  const shippingRaw =
-  body.shipping &&
-  typeof body.shipping === "object"
-    ? (body.shipping as ShippingInput)
-    : null;
-
-const shipping = shippingRaw
-  ? normalizeShipping(shippingRaw)
-  : null;
+  
+const shipping = await getShippingByAddressId(
+  userId,
+  addressId
+);
 
   return {
   userId,
