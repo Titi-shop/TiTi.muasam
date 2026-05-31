@@ -1,11 +1,6 @@
 import crypto from "crypto";
 import { query, withTransaction } from "@/lib/db";
 import type {
-  PaymentIntentStatus,
-  SettlementState,
-} from "@/lib/payments/payment.types";
-
-import type {
   PricingResult,
 } from "@/lib/payments/pricing.engine";
 
