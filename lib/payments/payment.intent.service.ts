@@ -218,21 +218,13 @@ function buildPricingInput(
   input: NormalizedIntentInput
 ): PricingInput {
   return {
-    country:
-      input.country,
-
-    zone: input.zone,
-
+    user_id: input.userId,
+    address_id: input.addressId,
     items: [
       {
-        product_id:
-          input.productId,
-
-        variant_id:
-          input.variantId,
-
-        quantity:
-          input.quantity,
+        product_id: input.productId,
+        variant_id: input.variantId,
+        quantity: input.quantity,
       },
     ],
   };
