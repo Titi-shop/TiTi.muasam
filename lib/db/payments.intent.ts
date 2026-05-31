@@ -133,13 +133,14 @@ export async function createPiPaymentIntent({
     ===================================================== */
 
     const shippingSnapshot = {
-      buyer_shipping: shipping,
-      buyer_country: pricing.buyer_country,
-      buyer_zone: pricing.buyer_zone,
-      pricing_snapshot: pricing,
-      product_snapshot: pricing.snapshots.products[0] ?? null,
-      variant_snapshot: pricing.snapshots.variants[0] ?? null,
-    };
+  buyer_shipping: shipping,
+  buyer_country: pricing.buyer_country,
+  buyer_zone: pricing.buyer_zone,
+  pricing_snapshot: pricing,
+  product_snapshot:
+    pricing.items?.[0] ?? null,
+  variant_snapshot: null,
+};
 
     /* =====================================================
        5. INSERT INTENT
