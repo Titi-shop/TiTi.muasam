@@ -92,6 +92,18 @@ export function validateBeforePay({
   showMessage,
   t,
 }: ValidateParams): boolean {
+  console.log("🟡 [VALIDATE] START", {
+    user,
+    piReady,
+    shipping,
+    zone,
+    item,
+    quantity,
+  });
+
+  /* =========================
+     USER CHECK
+  ========================= */
   if (!user) {
     localStorage.setItem("pending_checkout", "1");
     pilogin?.();
@@ -99,11 +111,17 @@ export function validateBeforePay({
     return false;
   }
 
+  /* =========================
+     PI READY CHECK
+  ========================= */
   if (!piReady) {
     showMessage(t.pi_not_ready ?? "pi_not_ready");
     return false;
   }
 
+  /* =========================
+     SHIPPING CHECK
+  ========================= */
   if (!shipping) {
     showMessage(t.please_add_shipping_address ?? "no_address");
     return false;
@@ -114,26 +132,14 @@ export function validateBeforePay({
     return false;
   }
 
-  if (!shipping) {
-  showMessage(t.please_add_shipping_address ?? "no_address");
-  return false;
-}
+  /* ⚠️ IMPORTANT:
+     KHÔNG check province/district nữa
+     CHỈ cần country
+  */
 
-if (!shipping.country) {
-  showMessage(t.invalid_shipping_country ?? "invalid_country");
-  return false;
-}
-
-if (!zone) {
-  showMessage(t.shipping_required ?? "select_region");
-  return false;
-}
-
-  if (!zone) {
-  console.warn("[CHECKOUT] zone missing → fallback rest_of_world");
-  return true;
-  }
-
+  /* =========================
+     ITEM CHECK
+  ========================= */
   if (!item || !item.id) {
     showMessage(t.invalid_product ?? "invalid_product");
     return false;
@@ -149,9 +155,17 @@ if (!zone) {
     return false;
   }
 
+  /* =========================
+     ZONE CHECK (NON-BLOCKING)
+  ========================= */
+
+  if (!zone) {
+    console.warn("[CHECKOUT] zone missing → fallback rest_of_world");
+  }
+
+  console.log("🟢 [VALIDATE] PASSED");
   return true;
 }
-
 /* =========================
    PAY
 ========================= */
