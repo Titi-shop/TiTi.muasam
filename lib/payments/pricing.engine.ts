@@ -71,6 +71,8 @@ type ProductRow = {
   is_digital?: boolean | null;
   seller_id?: string | null;
   sale_enabled?: boolean | null;
+  domestic_country_code?: string | null;
+
 };
 
 type VariantRow = {
@@ -214,7 +216,7 @@ async function calculateShippingFee(params: {
     (r) =>
       r.zone === "domestic" &&
       (
-        r.domesticCountryCode ?? ""
+        r.domestic_country_code ?? ""
       ).toUpperCase() === buyerCountry
   );
 
@@ -270,6 +272,9 @@ async function loadProduct(
           )
         : null,
 
+    domestic_country_code:
+  product.domestic_country_code ?? null,
+    
     sale_start:
       product.sale_start !== null
         ? String(product.sale_start)
@@ -309,6 +314,16 @@ async function loadProduct(
       ),
   };
 
+  const product = await loadProduct(raw.product_id);
+
+if (product.domestic_country_code) {
+  const sellerCountry =
+    product.domestic_country_code.toUpperCase();
+
+  if (sellerCountry !== buyerCountry) {
+    throw new Error("COUNTRY_NOT_SUPPORTED_FOR_DOMESTIC");
+  }
+}
   if (
     normalized.is_active === false
   ) {
@@ -429,15 +444,11 @@ const buyerCountry =
   String(address.country)
     .trim()
     .toUpperCase();
-  if (buyerCountry !== input.country?.toUpperCase?.()) {
-  throw new Error("COUNTRY_MISMATCH");
-}
 
 const actualZone =
   (await getZoneByCountry(buyerCountry)) ?? "rest_of_world";
 
-const selectedZone =
-  input.zone?.trim().toLowerCase() ?? actualZone;
+const selectedZone = actualZone;
   let subtotal = 0;
   let shippingFee = 0;
   const items: PricingItemResult[] =
