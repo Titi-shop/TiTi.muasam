@@ -114,10 +114,20 @@ export function validateBeforePay({
     return false;
   }
 
-  if (!shipping.region) {
-    showMessage(t.invalid_shipping_region ?? "invalid_region");
-    return false;
-  }
+  if (!shipping) {
+  showMessage(t.please_add_shipping_address ?? "no_address");
+  return false;
+}
+
+if (!shipping.country) {
+  showMessage(t.invalid_shipping_country ?? "invalid_country");
+  return false;
+}
+
+if (!zone) {
+  showMessage(t.shipping_required ?? "select_region");
+  return false;
+}
 
   if (!zone) {
   console.warn("[CHECKOUT] zone missing → fallback rest_of_world");
