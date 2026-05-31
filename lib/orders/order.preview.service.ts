@@ -42,7 +42,9 @@ function safeQty(v: unknown): number {
   return Math.min(n, 100);
 }
 
-function normalizePreviewInput({
+
+
+  function normalizePreviewInput({
   userId,
   raw,
 }: RawInput): PreviewNormalizedInput {
@@ -51,14 +53,20 @@ function normalizePreviewInput({
   }
 
   const body = raw as Record<string, unknown>;
-const address_id =
-  typeof body.address_id === "string"
-    ? body.address_id.trim()
-    : "";
 
-if (!isUUID(address_id)) {
-  throw new Error("INVALID_ADDRESS_ID");
-}
+  const address_id =
+    typeof body.address_id === "string"
+      ? body.address_id.trim()
+      : "";
+
+  if (!isUUID(address_id)) {
+    throw new Error("INVALID_ADDRESS_ID");
+  }
+
+  /* =========================
+     FIX: EXTRACT ITEMS HERE
+  ========================= */
+  const rawItems = Array.isArray(body.items) ? body.items : [];
 
   if (!rawItems.length) {
     throw new Error("INVALID_ITEMS");
@@ -105,11 +113,11 @@ if (!isUUID(address_id)) {
   }
 
   return {
-  userId,
-  address_id,
-  items,
-};
-}
+    userId,
+    address_id,
+    items,
+  };
+  }
 
 /* =========================================================
    MAIN SERVICE
