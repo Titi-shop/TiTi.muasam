@@ -115,12 +115,9 @@ async function loadVariant(variantId: string, productId: string) {
 /* =========================================================
    SHIPPING
 ========================================================= */
-
-
     async function getShipping(
   productId: string,
-  buyerCountry: string,
-  buyerZone: string
+  buyerCountry: string
 ) {
   const rates =
     await getShippingRatesByProduct(
@@ -133,47 +130,50 @@ async function loadVariant(variantId: string, productId: string) {
     );
   }
 
-  const buyer =
+  const country =
     buyerCountry.toUpperCase();
 
-  /* ===== DOMESTIC ===== */
-
-  const domestic = rates.find(
-    (r) =>
-      r.zone === "domestic" &&
-      r.domestic_country_code?.toUpperCase() ===
-        buyer
-  );
+  // Domestic exact match
+  const domestic =
+    rates.find(
+      (r) =>
+        r.zone === "domestic" &&
+        r.domestic_country_code?.toUpperCase() ===
+          country
+    );
 
   if (domestic) {
-    return safeNumber(
-      domestic.price
-    );
+    return domestic.price;
   }
 
-  /* ===== REGION ===== */
-
-  const regional = rates.find(
-    (r) => r.zone === buyerZone
-  );
-
-  if (regional) {
-    return safeNumber(
-      regional.price
+  // Zone lookup
+  const buyerZone =
+    await getZoneByCountry(
+      country
     );
+
+  if (buyerZone) {
+    const zoneRate =
+      rates.find(
+        (r) =>
+          r.zone === buyerZone
+      );
+
+    if (zoneRate) {
+      return zoneRate.price;
+    }
   }
 
-  /* ===== GLOBAL ===== */
-
-  const global = rates.find(
-    (r) =>
-      r.zone === "rest_of_world"
-  );
+  // Global fallback
+  const global =
+    rates.find(
+      (r) =>
+        r.zone ===
+        "rest_of_world"
+    );
 
   if (global) {
-    return safeNumber(
-      global.price
-    );
+    return global.price;
   }
 
   throw new Error(
