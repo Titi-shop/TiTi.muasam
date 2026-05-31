@@ -1,5 +1,5 @@
 import { createPiPaymentIntent } from "@/lib/db/payments.intent";
-
+import { getAddressById } from "@/lib/db/addresses";
 import {
   calculatePricing,
   type PricingInput,
@@ -142,19 +142,12 @@ const addressId =
 if (!isUUID(addressId)) {
   throw new Error("INVALID_ADDRESS_ID");
 }
-const shipping: ShippingInput = {
-  name: "",
-  phone: "",
-  address_line: "",
-};
-
-  return {
+return {
   userId,
   addressId,
   productId,
   variantId,
   quantity,
-  shipping,
 };
 }
 
@@ -220,7 +213,25 @@ export async function createPiIntentFromRequest({
         raw,
       }
     );
+const address = await getAddressById(
+  normalized.userId,
+  normalized.addressId
+);
 
+if (!address) {
+  throw new Error("ADDRESS_NOT_FOUND");
+}
+
+const shipping: ShippingInput = {
+  name: String(address.name ?? ""),
+  phone: String(address.phone ?? ""),
+  address_line: String(address.address_line ?? ""),
+
+  ward: address.ward ?? null,
+  district: address.district ?? null,
+  region: address.region ?? null,
+  postal_code: address.postal_code ?? null,
+};
   vlog(
     "NORMALIZED",
     normalized
@@ -261,7 +272,7 @@ export async function createPiIntentFromRequest({
   productId: normalized.productId,
   variantId: normalized.variantId,
   quantity: normalized.quantity,
-  shipping: normalized.shipping,
+  shipping,
   pricing,
 });
   vlog(
