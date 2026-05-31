@@ -382,100 +382,70 @@ export async function getZoneByCountry(
    SHIPPING RESOLVER (FINAL FIXED)
 ========================================================= */
 
-export async function resolveShippingPrice({
+
+  export async function resolveShippingRateForBuyer({
   productId,
   buyerCountryCode,
 }: {
   productId: string;
   buyerCountryCode: string;
-}): Promise<number> {
-  console.log("🚀 RESOLVE SHIPPING");
-
-  const rates = await getShippingRatesByProduct(productId);
-
-  if (!rates.length) return 0;
-
-  const buyer = buyerCountryCode.toUpperCase();
-
-  /* ================= DOMESTIC FIRST ================= */
-  const domestic = rates.find(
-    (r) =>
-      r.zone === "domestic" &&
-      r.domestic_country_code?.toUpperCase() === buyer
-  );
-
-  if (domestic) {
-    console.log("🏠 DOMESTIC MATCH:", domestic.price);
-    return domestic.price;
-  }
-
-  /* ================= NORMAL ZONE ================= */
-  const zone = await getZoneByCountry(buyer);
-
-  console.log("🌍 ZONE:", zone);
-
-  if (zone) {
-    const match = rates.find((r) => r.zone === zone);
-    if (match) {
-      console.log("✅ ZONE MATCH:", match.price);
-      return match.price;
-    }
-  }
-
-  /* ================= FALLBACK ================= */
-  const fallback = rates.find(
-    (r) => r.zone === "rest_of_world"
-  );
-
-  console.log("🌎 FALLBACK:", fallback?.price || 0);
-
-  return fallback?.price || 0;
-}
-
-export async function resolveShippingRateForBuyer({
-  productId,
-  buyerCountryCode,
-}: {
-  productId: string;
-  buyerCountryCode: string;
-}): Promise<{
-  zone: Region;
-  price: number;
-}> {
-  const rates = await getShippingRatesByProduct(productId);
+}) {
+  const rates =
+    await getShippingRatesByProduct(
+      productId
+    );
 
   if (!rates.length) {
-    throw new Error("SHIPPING_NOT_AVAILABLE");
+    throw new Error(
+      "SHIPPING_NOT_AVAILABLE"
+    );
   }
 
-  const buyer = buyerCountryCode.toUpperCase();
+  const buyer =
+    buyerCountryCode.toUpperCase();
 
   /* ===== DOMESTIC ===== */
+
   const domestic = rates.find(
     (r) =>
       r.zone === "domestic" &&
-      r.domestic_country_code?.toUpperCase() === buyer
+      r.domestic_country_code?.toUpperCase() ===
+        buyer
   );
 
   if (domestic) {
     return {
-      zone: "domestic",
+      zone: "domestic" as const,
       price: domestic.price,
     };
   }
 
-  /* ===== DB COUNTRY MAP ===== */
-  const buyerZone = await getZoneByCountry(buyer);
+  /* ===== BUYER ZONE ===== */
 
-  if (buyerZone) {
-    const zoneRate = rates.find((r) => r.zone === buyerZone);
+  const buyerZone =
+    await getZoneByCountry(buyer);
 
-    if (zoneRate) {
-      return {
-        zone: buyerZone,
-        price: zoneRate.price,
-      };
-    }
+  if (!buyerZone) {
+    throw new Error(
+      "SHIPPING_NOT_AVAILABLE"
+    );
+  }
+
+  const zoneRate = rates.find(
+    (r) => r.zone === buyerZone
+  );
+
+  if (!zoneRate) {
+    throw new Error(
+      "SHIPPING_NOT_AVAILABLE"
+    );
+  }
+
+  return {
+    zone: buyerZone,
+    price: zoneRate.price,
+  };
+}
   }
 
   /* ===== GLOBAL FALLBACK ===== */
