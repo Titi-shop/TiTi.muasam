@@ -133,21 +133,15 @@ function normalizeCreateIntentInput({
 
   const quantity =
     safeQty(body.quantity);
+  
+const addressId =
+  typeof body.address_id === "string"
+    ? body.address_id.trim()
+    : "";
 
-  const country =
-    typeof body.country ===
-    "string"
-      ? body.country
-          .trim()
-          .toUpperCase()
-      : "";
-
-  const zone =
-    typeof body.zone ===
-    "string"
-      ? body.zone.trim()
-      : "";
-
+if (!isUUID(addressId)) {
+  throw new Error("INVALID_ADDRESS_ID");
+}
   const shippingRaw =
     body.shipping &&
     typeof body.shipping ===
@@ -204,14 +198,13 @@ function normalizeCreateIntentInput({
   }
 
   return {
-    userId,
-    productId,
-    variantId,
-    quantity,
-    country,
-    zone,
-    shipping,
-  };
+  userId,
+  addressId,
+  productId,
+  variantId,
+  quantity,
+  shipping,
+};
 }
 
 function buildPricingInput(
@@ -311,25 +304,19 @@ export async function createPiIntentFromRequest({
   ===================================================== */
 
   const dbResult =
-    await createPiPaymentIntent(
-      {
-        userId:
-          normalized.userId,
-        productId:
-          normalized.productId,
-        variantId:
-          normalized.variantId,
-        quantity:
-          normalized.quantity,
-        country:
-          normalized.country,
-        zone: pricing.buyer_zone,
-        shipping:
-          normalized.shipping,
-        pricing,
-      }
-    );
+   
+    await createPiPaymentIntent({
+  userId: normalized.userId,
+  productId: normalized.productId,
+  variantId: normalized.variantId,
+  quantity: normalized.quantity,
 
+  country: pricing.buyer_country,
+  zone: pricing.buyer_zone,
+
+  shipping: normalized.shipping,
+  pricing,
+});
   vlog(
     "DB_RESULT",
     dbResult
