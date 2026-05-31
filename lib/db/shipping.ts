@@ -381,74 +381,52 @@ export async function getZoneByCountry(
 /* =========================================================
    SHIPPING RESOLVER (FINAL FIXED)
 ========================================================= */
-
-
-  export async function resolveShippingRateForBuyer({
+export async function resolveShippingRateForBuyer({
   productId,
   buyerCountryCode,
 }: {
   productId: string;
   buyerCountryCode: string;
-}) {
-  const rates =
-    await getShippingRatesByProduct(
-      productId
-    );
+}): Promise<{
+  zone: Region;
+  price: number;
+}> {
+  const rates = await getShippingRatesByProduct(productId);
 
   if (!rates.length) {
-    throw new Error(
-      "SHIPPING_NOT_AVAILABLE"
-    );
+    throw new Error("SHIPPING_NOT_AVAILABLE");
   }
 
-  const buyer =
-    buyerCountryCode.toUpperCase();
-
-  /* ===== DOMESTIC ===== */
+  const buyer = buyerCountryCode.toUpperCase();
 
   const domestic = rates.find(
     (r) =>
       r.zone === "domestic" &&
-      r.domestic_country_code?.toUpperCase() ===
-        buyer
+      r.domestic_country_code?.toUpperCase() === buyer
   );
 
   if (domestic) {
     return {
-      zone: "domestic" as const,
+      zone: "domestic",
       price: domestic.price,
     };
   }
 
-  /* ===== BUYER ZONE ===== */
+  const buyerZone = await getZoneByCountry(buyer);
 
-  const buyerZone =
-    await getZoneByCountry(buyer);
-
-  if (!buyerZone) {
-    throw new Error(
-      "SHIPPING_NOT_AVAILABLE"
+  if (buyerZone) {
+    const zoneRate = rates.find(
+      (r) => r.zone === buyerZone
     );
+
+    if (zoneRate) {
+      return {
+        zone: buyerZone,
+        price: zoneRate.price,
+      };
+    }
   }
 
-  const zoneRate = rates.find(
-    (r) => r.zone === buyerZone
-  );
-
-  if (!zoneRate) {
-    throw new Error(
-      "SHIPPING_NOT_AVAILABLE"
-    );
-  }
-
-  return {
-    zone: buyerZone,
-    price: zoneRate.price,
-  };
-}
-  
-
-  /* ===== GLOBAL FALLBACK ===== */
   const globalRate = rates.find(
     (r) => r.zone === "rest_of_world"
   );
