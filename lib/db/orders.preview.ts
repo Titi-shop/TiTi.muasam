@@ -12,43 +12,30 @@ import {
 
 export type PreviewItemInput = {
   product_id: string;
-
   quantity: number;
-
   variant_id?: string | null;
 };
 
 export type PreviewOrderInput = {
   userId: string;
-
   items: PreviewItemInput[];
-
   country: string;
-
   zone?: string | null;
 };
 
 export type PreviewOrderResult = {
   items: {
     product_id: string;
-
     variant_id: string | null;
-
     name: string;
-
     price: number;
-
     quantity: number;
-
     total: number;
   }[];
 
   subtotal: number;
-
   shipping_fee: number;
-
   total: number;
-
   buyer_zone: string;
 };
 
@@ -112,60 +99,53 @@ function mapPricingToPreview(
    MAIN
 ========================================================= */
 
-export async function previewOrder(
-  input: PreviewOrderInput
-): Promise<PreviewOrderResult> {
+export async function previewOrder(input: PreviewOrderInput) {
   vlog("START", input);
 
   if (!input.userId) {
-    throw new Error(
-      "INVALID_USER"
-    );
+    throw new Error("INVALID_USER");
   }
 
-  const pricingInput: PricingInput =
-    {
-      items: input.items.map(
-        (item) => ({
-          product_id:
-            item.product_id,
+  // 1. GET BUYER COUNTRY FROM ADDRESS (IMPORTANT)
+  const address = await getAddressById(input.address_id, input.userId);
 
-          variant_id:
-            item.variant_id ??
-            null,
+  if (!address) {
+    throw new Error("ADDRESS_NOT_FOUND");
+  }
 
-          quantity:
-            item.quantity,
-        })
-      ),
+  const buyerCountry = address.country?.toUpperCase();
 
-      country: input.country,
+  // 2. GET SELLER COUNTRY FROM PRODUCT
+  const sellerCountry = await getSellerCountry(input.items[0].product_id);
 
-      zone:
-        input.zone ?? null,
-    };
+  // 3. DECIDE DOMESTIC OR NOT
+  const isDomestic =
+    buyerCountry === sellerCountry;
 
-  vlog(
-    "PRICING_INPUT",
-    pricingInput
-  );
+  let zone: string;
 
-  const pricing =
-    await calculatePricing(
-      pricingInput
-    );
+  if (isDomestic) {
+    zone = "domestic";
+  } else {
+    zone = await getZoneFromCountry(buyerCountry);
+  }
 
-  vlog(
-    "PRICING_RESULT",
-    pricing
-  );
+  // 4. BUILD PRICING INPUT
+  const pricingInput: PricingInput = {
+    items: input.items.map((item) => ({
+      product_id: item.product_id,
+      variant_id: item.variant_id ?? null,
+      quantity: item.quantity,
+    })),
 
-  const result =
-    mapPricingToPreview(
-      pricing
-    );
+    buyer_country: buyerCountry,
+    seller_country: sellerCountry,
+    zone,
+  };
 
-  vlog("SUCCESS", result);
+  vlog("PRICING_INPUT", pricingInput);
 
-  return result;
+  const pricing = await calculatePricing(pricingInput);
+
+  return mapPricingToPreview(pricing);
 }
