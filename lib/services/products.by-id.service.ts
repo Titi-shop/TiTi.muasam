@@ -105,92 +105,45 @@ function normalizeShippingRates(
 /* =====================================================
    GET PRODUCT
 ===================================================== */
-
-export async function getProductService(
-  id: string
-) {
-  console.log(
-    "[products.by-id.service][GET] START"
-  );
+export async function getProductService(id: string) {
+  console.log("[products.by-id.service][GET] START");
 
   try {
     if (!id) {
-      return {
-        error:
-          "INVALID_PRODUCT_ID",
-      };
+      return { error: "INVALID_PRODUCT_ID" };
     }
 
-    const product =
-      await getProductById(id);
-
+    const product = await getProductById(id);
     if (!product) {
-      return {
-        error:
-          "PRODUCT_NOT_FOUND",
-      };
+      return { error: "PRODUCT_NOT_FOUND" };
     }
 
-    const variants =
-      await getVariantsByProductId(
-        id
-      );
+    const shippingRates = await getShippingRatesByProduct(id);
 
-    const shippingRates =
-      await getShippingRatesByProduct(
-        id
-      );
+    // 👉 ONLY LOAD VARIANTS IF DB SAYS TRUE
+    const variants = product.has_variants
+      ? await getVariantsByProductId(id)
+      : [];
 
-    const enrichedVariants =
-      variants.map((variant) => ({
-        ...variant,
+    const enrichedVariants = variants.map((v) => ({
+      ...v,
+      final_price: calcVariantFinalPrice(v),
+    }));
 
-        final_price:
-          calcVariantFinalPrice(
-            variant
-          ),
-      }));
-
-    const prices =
-      enrichedVariants.map(
-        (variant) =>
-          Number(
-            variant.final_price
-          )
-      );
+    const prices = enrichedVariants.map((v) => Number(v.final_price));
 
     return {
       ...product,
-
-      has_variants:
-        variants.length > 0,
-
-      min_price:
-        prices.length > 0
-          ? Math.min(...prices)
-          : null,
-
-      max_price:
-        prices.length > 0
-          ? Math.max(...prices)
-          : null,
-
-      variants:
-        enrichedVariants,
-
-      shipping_rates:
-        shippingRates,
+      has_variants: product.has_variants,
+      variants: enrichedVariants,
+      min_price: prices.length ? Math.min(...prices) : null,
+      max_price: prices.length ? Math.max(...prices) : null,
+      shipping_rates: shippingRates,
     };
   } catch (error) {
-    console.error(
-      "[products.by-id.service][GET] ERROR",
-      error
-    );
+    console.error("[products.by-id.service][GET] ERROR", error);
 
-    return {
-      error:
-        "INTERNAL_SERVER_ERROR",
-    };
+    return { error: "INTERNAL_SERVER_ERROR" };
   }
 }
 
@@ -233,9 +186,7 @@ if (error) {
         body.variants ?? []
       );
 
-    const hasVariants =
-      variants.length > 0;
-
+    const hasVariants = Boolean(product?.has_variants ?? false);
     const finalPrice =
       hasVariants
         ? Math.min(
@@ -272,47 +223,24 @@ if (error) {
             body.stock ?? 0
           );
 
-    const payload: UpdateProductInput =
-      {
-        name: body.name,
-        description: body.description,
-        detail:   body.detail,
-        images:  body.images,
-        thumbnail:   body.thumbnail,
-        category_id:    body.category_id ??   null,
-        price:   finalPrice,
-        stock:  finalStock,
-        sale_price:   hasVariants   ? null
-            : (
-                body.sale_price ??
-                null
-              ),
+    const payload: UpdateProductInput = {
+  name: body.name,
+  description: body.description,
+  detail: body.detail,
+  images: body.images,
+  thumbnail: body.thumbnail,
+  category_id: body.category_id ?? null,
 
-        sale_enabled:
-          body.sale_enabled ??
-          false,
-
-        sale_stock:
-          Number(
-            body.sale_stock ??
-              0
-          ),
-
-        sale_start:
-          body.sale_start ??
-          null,
-
-        sale_end:
-          body.sale_end ??
-          null,
-
-        is_active:
-          body.is_active ??
-          true,
-
-        has_variants:
-          hasVariants,
-      };
+  price: finalPrice,
+  stock: finalStock,
+  sale_price: hasVariants ? null : body.sale_price ?? null,
+  sale_enabled: body.sale_enabled ?? false,
+  sale_stock: Number(body.sale_stock ?? 0),
+  sale_start: body.sale_start ?? null,
+  sale_end: body.sale_end ?? null,
+  is_active: body.is_active ?? true,
+  has_variants: hasVariants,
+};
 
     const updated =
       await updateProductBySeller(
@@ -340,16 +268,11 @@ if (error) {
        SHIPPING
     ===================== */
 
-    const cleanedRates =
-      normalizeShippingRates(
-        body
-      );
+    const cleanedRates = normalizeShippingRates(body);
 
-    await upsertShippingRates({
+await upsertShippingRates({
   productId: id,
-
-  rates:
-    cleanedRates,
+  rates: cleanedRates,
 });
 
     return {
@@ -401,15 +324,16 @@ export async function deleteProductService(
       };
     }
 
-    const product =
-      await getProductById(id);
+   const product = await getProductById(id);
+if (!product) {
+  return { error: "PRODUCT_NOT_FOUND" };
+}
 
-    if (!product) {
-      return {
-        error:
-          "PRODUCT_NOT_FOUND",
-      };
-    }
+const variants = normalizeVariants(body.variants ?? []);
+const hasVariants =
+  typeof body.variants !== "undefined"
+    ? variants.length > 0
+    : Boolean(product.has_variants);
 
     const paths: string[] = [];
 
