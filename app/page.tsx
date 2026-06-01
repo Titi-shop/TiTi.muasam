@@ -568,6 +568,8 @@ className="h-full w-full object-cover"
   
 {/* FLASH SALE */}
 
+{/* FLASH SALE */}
+
 <div className="flex gap-4 overflow-x-auto scrollbar-hide">
   {products
     .filter((p) => p.sale_price)
@@ -601,7 +603,6 @@ className="h-full w-full object-cover"
         </div>
       </div>
     ))}
-</div>
 </div>
   </section>  
   {/* PRODUCTS */}  
