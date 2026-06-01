@@ -562,72 +562,22 @@ ${
       </section>
 
       {/* FLASH SALE */}
+      <section className="p-4">
+        <div className="flex justify-between items-center bg-red-500 text-white p-3 rounded-xl">
+          <div className="flex items-center gap-2">
+            <Flame size={16} />
+            Flash Sale
+          </div>
 
-      <section className="mt-10 px-4">
-        <div className="overflow-hidden rounded-[32px] bg-gradient-to-r from-red-500 to-orange-500 p-5 text-white">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur-xl">
-                <Flame size={14} />
+          <div className="font-mono font-bold">{timeLeft}</div>
+        </div>
 
-                {t.flash_sale ||
-                  "Flash Sale"}
-              </div>
-
-              <h2 className="mt-3 text-2xl font-black">
-                {t.limited_offers ||
-                  "Limited offers"}
-              </h2>
+        <div className="flex gap-3 overflow-x-auto mt-3">
+          {flashSale.map((p) => (
+            <div key={p.id} className="min-w-[160px]">
+              <ProductCard product={p} onAddToCart={addToCart} />
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {products
-              .filter(
-                (p) => p.sale_price
-              )
-              .slice(0, 4)
-              .map((product) => (
-                <div
-                  key={product.id}
-                  onClick={() =>
-                    router.push(
-                      `/product/${product.id}`
-                    )
-                  }
-                  className="overflow-hidden rounded-2xl bg-white text-black"
-                >
-                  <Image
-                    src={getMainImage(product)}
-                    alt={product.name}
-                    width={300}
-                    height={300}
-                    className="h-36 w-full object-cover"
-                  />
-
-                  <div className="p-3">
-                    <p className="line-clamp-2 text-xs font-medium">
-                      {product.name}
-                    </p>
-
-                    <p className="mt-2 text-sm font-black text-red-500">
-                      {formatPi(
-                        product.final_price ||
-                          product.price
-                      )}{" "}
-                      π
-                    </p>
-
-                    <p className="text-[11px] text-gray-400 line-through">
-                      {formatPi(
-                        product.price
-                      )}{" "}
-                      π
-                    </p>
-                  </div>
-                </div>
-              ))}
-          </div>
+          ))}
         </div>
       </section>
 
