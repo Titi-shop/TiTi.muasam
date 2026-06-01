@@ -199,6 +199,20 @@ export async function listProductsService(
 
  return Promise.all(
   products.map(async (product) => {
+    console.log(
+  "🧪 [PRODUCT_SERVICE]",
+  {
+    id: product.id,
+    name: product.name,
+    has_variants: product.has_variants,
+    price: product.price,
+    sale_price: product.sale_price,
+    final_price: product.final_price,
+  }
+);
+
+const hasVariants =
+  product.has_variants === true;
     const hasVariants = product.has_variants === true;
 
     // =========================
@@ -220,7 +234,14 @@ export async function listProductsService(
     // CASE 2: HAS VARIANTS
     // =========================
     const variants = await getVariantsByProductId(product.id);
-
+console.log(
+  "🔵 [HAS_VARIANTS]",
+  {
+    id: product.id,
+    name: product.name,
+    variantCount: variants.length,
+  }
+);
     const enrichedVariants = variants.map((variant) => {
       const saleActive =
         variant.sale_enabled &&
