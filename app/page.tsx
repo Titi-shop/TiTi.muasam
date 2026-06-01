@@ -535,8 +535,6 @@ className="h-full w-full object-cover"
     </div>  
   </section>  
   {/* FLASH SALE */}
-
-<section className="mt-10 px-4">  
 <section className="mt-10 -mx-4 px-4 py-6 bg-gradient-to-r from-red-600 via-orange-500 to-red-500 text-white relative overflow-hidden">
 
   {/* glow background */}
@@ -564,7 +562,7 @@ className="h-full w-full object-cover"
     </button>
   </div>
 
-  {/* GRID DEALS */}
+  {/* GRID DEALS (CÂN ĐỀU + FULL WIDTH BLOCKS) */}
   <div className="grid grid-cols-2 gap-[6px]">
     {products
       .filter((p) => p.sale_price)
@@ -618,63 +616,38 @@ className="h-full w-full object-cover"
       })}
   </div>
 </section>
+
   {/* PRODUCTS */}  
 
-  <section className="mt-10 px-1">
-    <div className="mb-5">  
-      <h2 className="text-2xl font-black">  
-        {t.discover_products ||  
-          "Discover Products"}  
-      </h2>  
-
-      <p className="mt-1 text-sm text-gray-500">  
-        {t.curated_products_for_you ||  
-          "Curated products for you"}  
-      </p>  
-    </div>  
-
-    {loading ? (
-  <div className="grid grid-cols-2 gap-[6px] px-1">
-    {Array.from({ length: 8 }).map((_, i) => (
-      <ProductSkeleton key={i} />
-    ))}
+  <section className="mt-10 px-0">
+  <div className="px-4 mb-5">
+    <h2 className="text-2xl font-black">
+      {t.discover_products || "Discover Products"}
+    </h2>
+    <p className="mt-1 text-sm text-gray-500">
+      {t.curated_products_for_you || "Curated products for you"}
+    </p>
   </div>
-) : (
-  <div className="grid grid-cols-2 gap-[6px] px-1">
-    {filteredProducts.map((product) => (
-      <ProductCard
-        key={product.id}
-        product={product}
-        onAddToCart={handleAddToCart}
-        t={t}
-      />
-    ))}
-  </div>
-)}
-        {[...Array(6)].map((_, i) => (  
-          <div  
-            key={i}  
-            className="h-72 animate-pulse rounded-[28px] bg-white"  
-          />  
-        ))}  
-      </div>  
-    ) : (  
-      <div className="grid grid-cols-2 gap-[6px] px-0"> 
-        {filteredProducts.map(  
-          (product) => (  
-            <ProductCard  
-              key={product.id}  
-              product={product}  
-              onAddToCart={  
-                handleAddToCart  
-              }  
-              t={t}  
-            />  
-          )  
-        )}  
-      </div>  
-    )}  
-  </section>  
+
+  {loading ? (
+    <div className="grid grid-cols-2 gap-[6px] px-1">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <ProductSkeleton key={i} />
+      ))}
+    </div>
+  ) : (
+    <div className="grid grid-cols-2 gap-[6px] px-1">
+      {filteredProducts.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          onAddToCart={handleAddToCart}
+          t={t}
+        />
+      ))}
+    </div>
+  )}
+</section>
 </main>
 
 );
