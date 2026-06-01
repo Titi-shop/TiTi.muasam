@@ -297,8 +297,15 @@ body {
   overscroll-behavior-x: contain;
   touch-action: pan-x;
   scrollbar-width: none;
+
+  /* SNAP */
+  scroll-snap-type: x proximity;
 }
 
 .scroll-x::-webkit-scrollbar {
   display: none;
+}
+
+.scroll-x > * {
+  scroll-snap-align: start;
 }
