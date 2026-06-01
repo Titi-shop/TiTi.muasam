@@ -536,9 +536,9 @@ className="h-full w-full object-cover"
   </section>  
 {/* FLASH SALE */}
 <section className="mt-8 px-4">
-  <div className="rounded-2xl bg-gradient-to-r from-red-600 via-orange-500 to-red-500 p-4 text-white relative overflow-hidden">
+  <div className="rounded-2xl bg-gradient-to-r from-red-600 via-orange-500 to-red-500 text-white p-4 relative overflow-hidden">
 
-    {/* glow nhẹ - KHÔNG tràn viền */}
+    {/* background glow nhẹ */}
     <div className="absolute -top-6 -left-6 h-24 w-24 bg-white/10 rounded-full blur-2xl" />
     <div className="absolute bottom-0 right-0 h-24 w-24 bg-black/10 rounded-full blur-2xl" />
 
@@ -563,8 +563,14 @@ className="h-full w-full object-cover"
       </button>
     </div>
 
-    {/* SCROLL HORIZONTAL */}
-    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
+    {/* SCROLL PRODUCTS */}
+    <div
+      className="flex gap-2 overflow-x-auto pb-1"
+      style={{
+        WebkitOverflowScrolling: "touch",
+        scrollSnapType: "x mandatory",
+      }}
+    >
       {products
         .filter((p) => p.sale_price)
         .slice(0, 12)
@@ -575,7 +581,7 @@ className="h-full w-full object-cover"
             <div
               key={product.id}
               onClick={() => router.push(`/product/${product.id}`)}
-              className="min-w-[140px] snap-start bg-white text-black rounded-xl overflow-hidden shadow-sm active:scale-[0.97] transition"
+              className="min-w-[140px] flex-shrink-0 snap-start bg-white text-black rounded-xl overflow-hidden shadow-sm active:scale-[0.97] transition"
             >
               {/* IMAGE */}
               <div className="relative">
@@ -598,11 +604,9 @@ className="h-full w-full object-cover"
                   {product.name}
                 </p>
 
-                <div className="mt-1 flex items-center justify-between">
-                  <p className="text-sm font-black text-red-600">
-                    {formatPi(product.final_price || product.price)} π
-                  </p>
-                </div>
+                <p className="mt-1 text-sm font-black text-red-600">
+                  {formatPi(product.final_price || product.price)} π
+                </p>
 
                 <p className="text-[10px] text-gray-400 line-through">
                   {formatPi(product.price)} π
