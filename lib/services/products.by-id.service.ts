@@ -18,7 +18,6 @@ import {
 } from "@/lib/db/shipping";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-
 import {
   normalizeVariants,
   validateProductPayload,
@@ -54,26 +53,28 @@ type ShippingRateBody = {
   domestic_country_code?: string | null;
 };
 
-type VariantPricing = {
-  price: number;
-  sale_price: number | null;
-  final_price: number;
-  stock: number;
-  is_unlimited: boolean;
-};
+/* =====================================================
+   LOGGER
+===================================================== */
+
+function log(scope: string, message: string, data?: unknown) {
+  console.log(`[${scope}] ${message}`, data ?? "");
+}
 
 /* =====================================================
    HELPERS
 ===================================================== */
 
-function calcVariantFinalPrice(v: ProductVariantRecord): number {
+function calcVariantFinalPrice(variant: ProductVariantRecord): number {
   const saleActive =
-    v.sale_enabled &&
-    v.sale_price !== null &&
-    Number(v.sale_price) > 0 &&
-    Number(v.sale_price) < Number(v.price);
+    variant.sale_enabled &&
+    variant.sale_price !== null &&
+    Number(variant.sale_price) > 0 &&
+    Number(variant.sale_price) < Number(variant.price);
 
-  return saleActive ? Number(v.sale_price) : Number(v.price);
+  return saleActive
+    ? Number(variant.sale_price)
+    : Number(variant.price);
 }
 
 function normalizeShippingRates(
@@ -93,57 +94,78 @@ function normalizeShippingRates(
   }));
 }
 
-function isUUID(id: string): boolean {
-  return /^[0-9a-fA-F-]{36}$/.test(id);
-}
-
 /* =====================================================
    GET PRODUCT
 ===================================================== */
 
 export async function getProductService(id: string) {
+  log("PRODUCT.GET", "START", { id });
+
   try {
-    if (!isUUID(id)) {
+    if (!id) {
       return { error: "INVALID_PRODUCT_ID" };
     }
 
     const product = await getProductById(id);
+
     if (!product) {
       return { error: "PRODUCT_NOT_FOUND" };
     }
 
-    const shipping_rates = await getShippingRatesByProduct(id);
+    log("PRODUCT.GET", "FOUND", {
+      id,
+      has_variants: product.has_variants,
+    });
 
-    const variants: ProductVariantRecord[] =
-      product.has_variants
-        ? await getVariantsByProductId(id)
-        : [];
+    log("VARIANTS.LOAD", "START", { id });
+
+    const variants = product.has_variants
+      ? await getVariantsByProductId(id)
+      : [];
+
+    log("VARIANTS.LOAD", "DONE", {
+      count: variants.length,
+    });
 
     const enrichedVariants = variants.map((v) => ({
       ...v,
       final_price: calcVariantFinalPrice(v),
     }));
 
-    const prices: number[] = enrichedVariants.map((v) =>
+    const prices = enrichedVariants.map((v) =>
       Number(v.final_price)
     );
 
-    const min_price =
-      prices.length > 0 ? Math.min(...prices) : null;
+    const minPrice = prices.length
+      ? Math.min(...prices)
+      : null;
 
-    const max_price =
-      prices.length > 0 ? Math.max(...prices) : null;
+    const maxPrice = prices.length
+      ? Math.max(...prices)
+      : null;
+
+    log("PRICE.SUMMARY", "CALCULATED", {
+      minPrice,
+      maxPrice,
+    });
+
+    const shippingRates =
+      await getShippingRatesByProduct(id);
+
+    log("SHIPPING.LOAD", "DONE", {
+      count: shippingRates.length,
+    });
 
     return {
       ...product,
       has_variants: product.has_variants,
       variants: enrichedVariants,
-      min_price,
-      max_price,
-      shipping_rates,
+      min_price: minPrice,
+      max_price: maxPrice,
+      shipping_rates: shippingRates,
     };
-  } catch (error: unknown) {
-    console.error("[GET_PRODUCT_ERROR]", error);
+  } catch (error) {
+    log("PRODUCT.GET", "ERROR", error);
     return { error: "INTERNAL_SERVER_ERROR" };
   }
 }
@@ -157,46 +179,50 @@ export async function updateProductService(
   userId: string,
   body: ProductRequestBody
 ) {
+  log("PRODUCT.UPDATE", "START", { id });
+
   try {
-    if (!isUUID(id)) {
+    if (!id) {
       return { error: "INVALID_PRODUCT_ID" };
     }
 
-    const product = await getProductById(id);
-    if (!product) {
-      return { error: "PRODUCT_NOT_FOUND" };
-    }
-
-    const validationError = validateProductPayload({
+    const error = validateProductPayload({
       ...body,
       variants: body.variants ?? [],
     });
 
-    if (validationError) {
-      return { error: validationError };
+    if (error) {
+      return { error };
     }
 
     const variants = normalizeVariants(body.variants ?? []);
+    const hasVariants = variants.length > 0;
 
-    const hasVariants =
-      Array.isArray(body.variants)
-        ? variants.length > 0
-        : Boolean(product.has_variants);
+    log("VARIANTS.PROCESS", "DONE", {
+      count: variants.length,
+      hasVariants,
+    });
 
-    const finalPrice: number = hasVariants
+    const finalPrice = hasVariants
       ? Math.min(
           ...variants.map((v) =>
-            Number(v.final_price ?? v.price ?? 0)
+            Number(v.final_price)
           )
         )
-      : Number(body.price ?? product.price);
+      : Number(body.price ?? 0);
 
-    const finalStock: number = hasVariants
-      ? variants.reduce((sum, v) => {
-          const stock = Number(v.stock ?? 0);
-          return sum + (v.is_unlimited ? 0 : stock);
-        }, 0)
-      : Number(body.stock ?? product.stock);
+    const finalStock = hasVariants
+      ? variants.reduce(
+          (sum, v) =>
+            sum + Number(v.stock ?? 0),
+          0
+        )
+      : Number(body.stock ?? 0);
+
+    log("PRICE.STOCK", "CALCULATED", {
+      finalPrice,
+      finalStock,
+    });
 
     const payload: UpdateProductInput = {
       name: body.name,
@@ -205,35 +231,46 @@ export async function updateProductService(
       images: body.images,
       thumbnail: body.thumbnail,
       category_id: body.category_id ?? null,
-
       price: finalPrice,
       stock: finalStock,
-
-      sale_price: hasVariants ? null : body.sale_price ?? null,
+      sale_price: hasVariants
+        ? null
+        : body.sale_price ?? null,
       sale_enabled: body.sale_enabled ?? false,
       sale_stock: Number(body.sale_stock ?? 0),
       sale_start: body.sale_start ?? null,
       sale_end: body.sale_end ?? null,
-
       is_active: body.is_active ?? true,
       has_variants: hasVariants,
     };
 
-    const updated = await updateProductBySeller(userId, id, payload);
+    const updated = await updateProductBySeller(
+      userId,
+      id,
+      payload
+    );
 
     if (!updated) {
       return { error: "NOT_FOUND" };
     }
 
+    log("PRODUCT.UPDATE", "SUCCESS", { id });
+
     await replaceVariantsByProductId(id, variants);
 
-    const shipping_rates = body.shipping_rates
-      ? normalizeShippingRates(body)
-      : [];
+    log("VARIANTS.UPDATE", "DONE", {
+      count: variants.length,
+    });
+
+    const cleanedRates = normalizeShippingRates(body);
 
     await upsertShippingRates({
       productId: id,
-      rates: shipping_rates,
+      rates: cleanedRates,
+    });
+
+    log("SHIPPING.UPDATE", "DONE", {
+      count: cleanedRates.length,
     });
 
     return {
@@ -245,8 +282,8 @@ export async function updateProductService(
         has_variants: hasVariants,
       },
     };
-  } catch (error: unknown) {
-    console.error("[UPDATE_PRODUCT_ERROR]", error);
+  } catch (error) {
+    log("PRODUCT.UPDATE", "ERROR", error);
     return { error: "INTERNAL_SERVER_ERROR" };
   }
 }
@@ -259,33 +296,40 @@ export async function deleteProductService(
   id: string,
   userId: string
 ) {
+  log("PRODUCT.DELETE", "START", { id });
+
   try {
-    if (!isUUID(id)) {
+    if (!id) {
       return { error: "INVALID_PRODUCT_ID" };
     }
 
     const product = await getProductById(id);
+
     if (!product) {
       return { error: "PRODUCT_NOT_FOUND" };
     }
 
     const paths: string[] = [];
 
-    const collect = (url?: string | null): void => {
+    const collectPath = (url?: string | null) => {
       if (!url) return;
 
       const marker = "/products/";
       const index = url.indexOf(marker);
+
       if (index === -1) return;
 
       const path = url.substring(index + marker.length);
+
       if (path) paths.push(path);
     };
 
-    collect(product.thumbnail);
+    collectPath(product.thumbnail);
 
     if (Array.isArray(product.images)) {
-      product.images.forEach(collect);
+      for (const img of product.images) {
+        collectPath(img);
+      }
     }
 
     const result = await deleteProductById(id, userId);
@@ -294,13 +338,21 @@ export async function deleteProductService(
       return { error: "DELETE_FAILED" };
     }
 
+    log("PRODUCT.DELETE", "DELETED", { id });
+
     if (paths.length > 0) {
-      await supabaseAdmin.storage.from("products").remove(paths);
+      await supabaseAdmin.storage
+        .from("products")
+        .remove(paths);
+
+      log("STORAGE.DELETE", "DONE", {
+        count: paths.length,
+      });
     }
 
     return { success: true };
-  } catch (error: unknown) {
-    console.error("[DELETE_PRODUCT_ERROR]", error);
+  } catch (error) {
+    log("PRODUCT.DELETE", "ERROR", error);
     return { error: "INTERNAL_SERVER_ERROR" };
   }
 }
