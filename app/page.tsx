@@ -568,58 +568,88 @@ className="h-full w-full object-cover"
 
   {/* FLASH SALE */}  
 
-  <section className="mt-10 px-4">  
-    <div className="overflow-hidden rounded-[32px] bg-gradient-to-r from-red-500 to-orange-500 p-5 text-white">  
-      <div className="mb-5 flex items-center justify-between">  
-        <div>  
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur-xl">  
-            <Flame size={14} />  
-
-            {t.flash_sale ||  
-              "Flash Sale"}  
-          </div>  
-
-          <h2 className="mt-3 text-2xl font-black">  
-            {t.limited_offers ||  
-              "Limited offers"}  
-          </h2>  
-        </div>  
-      </div>  
-
-      <div className="flex gap-4 overflow-x-auto scrollbar-hide">
+<div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2">
   {products
     .filter((p) => p.sale_price)
     .slice(0, 10)
-    .map((product) => (
-      <div
-        key={product.id}
-        onClick={() => router.push(`/product/${product.id}`)
-        }
-        className="min-w-[160px] flex-shrink-0 overflow-hidden rounded-2xl bg-white text-black"
-      >
-        <Image
-          src={getMainImage(product)}
-          alt={product.name}
-          width={300}
-          height={300}
-          className="h-36 w-full object-cover"
-        />
+    .map((product) => {
+      const discount =
+        product.price > product.sale_price
+          ? Math.round(
+              ((product.price - product.sale_price) /
+                product.price) *
+                100
+            )
+          : 0;
 
-        <div className="p-3">
-          <p className="line-clamp-2 text-xs font-medium">
-            {product.name}
-          </p>
+      return (
+        <div
+          key={product.id}
+          onClick={() => router.push(`/product/${product.id}`)}
+          className="relative min-w-[170px] flex-shrink-0 snap-start overflow-hidden rounded-2xl bg-white text-black shadow-md transition-transform duration-300 active:scale-95 hover:shadow-xl"
+        >
+          {/* IMAGE */}
+          <div className="relative">
+            <Image
+              src={getMainImage(product)}
+              alt={product.name}
+              width={300}
+              height={300}
+              className="h-40 w-full object-cover"
+            />
 
-          <p className="mt-2 text-sm font-black text-red-500">
-            {formatPi(product.final_price || product.price)} π
-          </p>
+            {/* DISCOUNT BADGE */}
+            {discount > 0 && (
+              <div className="absolute left-2 top-2 rounded-full bg-red-500 px-2 py-1 text-[10px] font-bold text-white shadow">
+                -{discount}%
+              </div>
+            )}
 
-          <p className="text-[11px] text-gray-400 line-through">
-            {formatPi(product.price)} π
-          </p>
+            {/* FLASH ICON */}
+            <div className="absolute right-2 top-2 rounded-full bg-black/40 px-2 py-1 text-[10px] text-white backdrop-blur">
+              🔥 Sale
+            </div>
+          </div>
+
+          {/* CONTENT */}
+          <div className="p-3">
+            <p className="line-clamp-2 text-xs font-semibold leading-snug">
+              {product.name}
+            </p>
+
+            {/* PRICE */}
+            <div className="mt-2">
+              <p className="text-sm font-extrabold text-red-500">
+                {formatPi(product.final_price || product.price)} π
+              </p>
+
+              <p className="text-[11px] text-gray-400 line-through">
+                {formatPi(product.price)} π
+              </p>
+            </div>
+
+            {/* SOLD PROGRESS (LIKE SHOPEE) */}
+            <div className="mt-2">
+              <div className="h-1.5 w-full rounded-full bg-gray-200">
+                <div
+                  className="h-1.5 rounded-full bg-gradient-to-r from-orange-500 to-red-500"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      (product.sold || 0) % 100
+                    )}%`,
+                  }}
+                />
+              </div>
+
+              <p className="mt-1 text-[10px] text-gray-500">
+                {product.sold || 0} sold
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-    ))}
+      );
+    })}
 </div>
     </div>  
   </section>  
