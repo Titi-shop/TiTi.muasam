@@ -230,28 +230,27 @@ initialScale={initialScale}
 setInitialScale={setInitialScale}
       />
 
-      <CheckoutSheet
-        open={openCheckout}
-        onClose={() => setOpenCheckout(false)}
-        product={{
-          id: product.id,
-          selectedVariant,
-          name:
-            hasVariants && selectedVariant
-              ? `${product.name} - ${selectedVariant.option1}`
-              : product.name,
+<CheckoutSheet
+  open={openCheckout}
+  onClose={() => setOpenCheckout(false)}
+  product={{
+    id: product.id,
+    selectedVariant,
 
-          price: product.price,
-          salePrice: product.sale_price,
-          finalPrice: product.final_price,
+    name:
+      hasVariants && selectedVariant
+        ? `${product.name} - ${selectedVariant.option1}`
+        : product.name,
 
-          thumbnail: product.thumbnail,
-          stock,
-
-          shipping_rates: product.shipping_rates,
-          variant_id: selectedVariant?.id ?? null,
-        }}
-      />
+    price: product.price,
+    sale_price: product.sale_price,
+    final_price: product.final_price,
+    thumbnail: product.thumbnail,
+    stock,
+    shipping_rates: product.shipping_rates,
+    variant_id: selectedVariant?.id ?? null,
+  }}
+/>
     </>
   );
 }
