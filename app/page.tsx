@@ -853,9 +853,6 @@ ${
 
   </div>
 </section>
-
-  </div>
-</section>
                 
       {/* PRODUCTS */}
 
