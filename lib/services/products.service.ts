@@ -1,4 +1,3 @@
-lib/services/products.service.ts
 import {
   getAllProducts,
   getProductsByIds,
