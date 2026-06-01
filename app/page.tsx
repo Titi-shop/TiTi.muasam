@@ -74,112 +74,60 @@ return 0;
 PRODUCT CARD
 ========================================================= */
 
-function ProductCard({
-product,
-onAddToCart,
-t,
-}: {
-product: Product;
-onAddToCart: (product: Product) => void;
-t: Record<string, string>;
-}) {
-const router = useRouter();
-const discount = getDiscount(product);
-const isOut =
-!product.is_unlimited &&
-(product.stock ?? 0) <= 0;
+function ProductCard({ product, onAddToCart, t }: any) {
+  const router = useRouter();
 
-return (
-<div
-onClick={() =>
-router.push(/product/${product.id})
-}
-className="group overflow-hidden rounded-[30px] bg-[var(--card-bg)] text-[var(--foreground)] shadow-[0_10px_40px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+  return (
+    <div
+      onClick={() => router.push(`/product/${product.id}`)}
+      className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition active:scale-[0.99]"
+    >
+      {/* IMAGE */}
+      <div className="relative">
+        <Image
+          src={getMainImage(product)}
+          alt={product.name}
+          width={500}
+          height={500}
+          className="h-40 w-full object-cover"
+        />
 
-> 
+        {product.sale_price && (
+          <div className="absolute left-2 top-2 rounded bg-red-600 px-2 py-1 text-[10px] font-bold text-white">
+            -{getDiscount(product)}%
+          </div>
+        )}
+      </div>
 
-{/* IMAGE */}  
+      {/* CONTENT */}
+      <div className="p-2">
+        {/* NAME */}
+        <p className="line-clamp-2 text-[12px] font-medium text-gray-900">
+          {product.name}
+        </p>
 
-  <div className="relative overflow-hidden">  
-    <Image  
-      src={getMainImage(product)}  
-      alt={product.name}  
-      width={500}  
-      height={500}  
-      className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-105"  
-    />  
+        {/* RATING */}
+        <div className="mt-1 flex items-center gap-1 text-[11px] text-gray-500">
+          <Star size={12} className="fill-yellow-400 text-yellow-400" />
+          {product.rating_avg || 5}
+          <span>• {product.sold || 0} sold</span>
+        </div>
 
-    {/* BADGES */}  
+        {/* PRICE */}
+        <div className="mt-2">
+          <p className="text-sm font-bold text-red-600">
+            {formatPi(product.final_price || product.price)} π
+          </p>
 
-    {discount > 0 && (  
-      <div className="absolute left-3 top-3 rounded-full bg-gradient-to-r from-red-500 to-orange-500 px-3 py-1 text-xs font-bold text-white shadow-lg">  
-        -{discount}%  
-      </div>  
-    )}  
-
-    {isOut && (  
-      <div className="absolute bottom-3 left-3 rounded-full bg-black/80 px-3 py-1 text-xs font-semibold text-white backdrop-blur-xl">  
-        {t.out_of_stock || "Out of stock"}  
-      </div>  
-    )}  
-
-    {/* CART */}  
-
-    <button  
-      onClick={(e) => {  
-        e.preventDefault();  
-        e.stopPropagation();  
-
-        onAddToCart(product);  
-      }}  
-      className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-black shadow-xl backdrop-blur-xl transition-all active:scale-95"  
-    >  
-      <ShoppingCart size={18} />  
-    </button>  
-  </div>  
-
-  {/* CONTENT */}  
-
-  <div className="p-4">  
-    <h3 className="line-clamp-2 min-h-[42px] text-sm font-semibold">  
-      {product.name}  
-    </h3>  
-
-    <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">  
-      <Star  
-        size={14}  
-        className="fill-yellow-400 text-yellow-400"  
-      />  
-
-      {product.rating_avg || 5}  
-
-      <span>  
-        • {product.sold}{" "}  
-        {t.sold || "sold"}  
-      </span>  
-    </div>  
-
-    <div className="mt-4 flex items-end justify-between">  
-      <div>  
-        <p className="text-lg font-black text-red-500">  
-          {formatPi(  
-            product.final_price ||  
-              product.price  
-          )}{" "}  
-          π  
-        </p>  
-
-        {product.sale_price && (  
-          <p className="text-xs text-gray-400 line-through">  
-            {formatPi(product.price)} π  
-          </p>  
-        )}  
-      </div>  
-    </div>  
-  </div>  
-</div>
-
-);
+          {product.sale_price && (
+            <p className="text-[11px] text-gray-400 line-through">
+              {formatPi(product.price)} π
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /* =========================================================
