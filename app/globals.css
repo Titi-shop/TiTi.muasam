@@ -188,8 +188,6 @@ img {
   -webkit-user-drag: none;
   user-select: none;
   -webkit-touch-callout: none;
-
-  touch-action: pan-y pinch-zoom;
 }
 
 /* ===============================
@@ -287,3 +285,20 @@ body {
     color: var(--text-muted);
   }
      }
+/* ==================================
+   HORIZONTAL SCROLL SMOOTH
+================================== */
+
+.scroll-x {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  scrollbar-width: none;
+}
+
+.scroll-x::-webkit-scrollbar {
+  display: none;
+}
