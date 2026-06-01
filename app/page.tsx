@@ -191,7 +191,7 @@ export default function HomePage() {
 
   const [selectedCategory, setSelectedCategory] =
     useState<number | "all">("all");
-
+const [timeLeft, setTimeLeft] = useState("02:15:21");
   const [message, setMessage] = useState<{
     text: string;
     type: "error" | "success";
