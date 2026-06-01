@@ -191,7 +191,7 @@ export default function HomePage() {
 
   const [selectedCategory, setSelectedCategory] =
     useState<number | "all">("all");
-const [timeLeft, setTimeLeft] = useState("02:15:21");
+const [timeLeft, setTimeLeft] = useState("--:--:--");
   const [message, setMessage] = useState<{
     text: string;
     type: "error" | "success";
@@ -261,6 +261,44 @@ useEffect(() => {
 
     return () => clearTimeout(timer);
   }
+}, []);
+  useEffect(() => {
+const endTime =
+Date.now() + 2 * 60 * 60 * 1000; // 2 giờ
+
+const interval = setInterval(() => {
+const diff = endTime - Date.now();
+
+if (diff <= 0) {
+  setTimeLeft("00:00:00");
+  clearInterval(interval);
+  return;
+}
+
+const hours = Math.floor(
+  diff / (1000 * 60 * 60)
+);
+
+const minutes = Math.floor(
+  (diff % (1000 * 60 * 60)) /
+    (1000 * 60)
+);
+
+const seconds = Math.floor(
+  (diff % (1000 * 60)) / 1000
+);
+
+setTimeLeft(
+  `${String(hours).padStart(2, "0")}:${String(
+    minutes
+  ).padStart(2, "0")}:${String(
+    seconds
+  ).padStart(2, "0")}`
+);
+
+}, 1000);
+
+return () => clearInterval(interval);
 }, []);
   /* =========================================================
      MESSAGE
