@@ -7,61 +7,69 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
-import { ShoppingCart, Flame, TrendingUp } from "lucide-react";
+import {
+  ShoppingCart,
+  Flame,
+  Star,
+  TrendingUp,
+} from "lucide-react";
 
 import BannerCarousel from "./components/BannerCarousel";
 import PiPriceWidget from "./components/PiPriceWidget";
+import SplashScreen from "./components/SplashScreen";
 
 import { useCart } from "@/app/context/CartContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { formatPi } from "@/lib/pi";
+import type { Product } from "@/types/product";
+import type { Category } from "@/types/category";
 
-/* ================= FETCH ================= */
+/* ================= FETCHER ================= */
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("FETCH_FAILED");
-  return res.json();
-};
+const fetcher = (url: string) =>
+  fetch(url).then((r) => r.json());
 
 /* ================= HELPERS ================= */
 
-function getImage(p: any) {
-  return p.thumbnail || p.images?.[0] || "/placeholder.png";
-}
+const getImage = (p: Product) =>
+  p.thumbnail || "/placeholder.png";
 
-function getDiscount(p: any) {
-  if (p.sale_price && p.price > p.sale_price) {
-    return Math.round(((p.price - p.sale_price) / p.price) * 100);
-  }
-  return 0;
-}
+/* discount */
+const getDiscount = (p: Product) => {
+  if (!p.sale_price || p.price <= p.sale_price) return 0;
+  return Math.round(((p.price - p.sale_price) / p.price) * 100);
+};
 
-/* ================= CARD ================= */
+/* ================= PRODUCT CARD ================= */
 
-function ProductCard({ product, onAddToCart }: any) {
+function ProductCard({
+  product,
+  onAddToCart,
+}: {
+  product: Product;
+  onAddToCart: (p: Product) => void;
+}) {
   const router = useRouter();
   const discount = getDiscount(product);
 
   return (
     <div
       onClick={() => router.push(`/product/${product.id}`)}
-      className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer active:scale-[0.98]"
+      className="rounded-2xl bg-white shadow-sm overflow-hidden hover:shadow-lg transition"
     >
-      {/* IMAGE */}
       <div className="relative">
         <Image
           src={getImage(product)}
           alt={product.name}
-          width={300}
-          height={300}
-          className="w-full h-40 object-cover"
+          width={400}
+          height={400}
+          className="h-44 w-full object-cover"
         />
 
         {discount > 0 && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] px-2 py-1 rounded">
+          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
             -{discount}%
-          </div>
+          </span>
         )}
 
         <button
@@ -69,38 +77,34 @@ function ProductCard({ product, onAddToCart }: any) {
             e.stopPropagation();
             onAddToCart(product);
           }}
-          className="absolute top-2 right-2 bg-white p-2 rounded-full shadow"
+          className="absolute bottom-2 right-2 bg-white p-2 rounded-full shadow"
         >
-          <ShoppingCart size={14} />
+          <ShoppingCart size={16} />
         </button>
       </div>
 
-      {/* INFO */}
       <div className="p-3">
-        <p className="text-sm line-clamp-2 min-h-[38px]">
+        <p className="text-sm line-clamp-2 min-h-[40px]">
           {product.name}
         </p>
 
-        <p className="text-red-500 font-bold mt-1">
-          {formatPi(product.sale_price ?? product.price)} π
-        </p>
-
-        {product.sale_price && (
-          <p className="text-xs text-gray-400 line-through">
-            {formatPi(product.price)} π
-          </p>
-        )}
-
-        <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-red-500"
-            style={{ width: `${Math.min(product.sold ?? 0, 100)}%` }}
-          />
+        <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+          <Star size={14} className="text-yellow-400 fill-yellow-400" />
+          {product.rating_avg || 5}
+          <span>• {product.sold} sold</span>
         </div>
 
-        <p className="text-[10px] text-gray-500 mt-1">
-          {product.sold ?? 0} sold
-        </p>
+        <div className="mt-2">
+          <p className="font-bold text-red-500">
+            {formatPi(product.sale_price || product.price)} π
+          </p>
+
+          {product.sale_price && (
+            <p className="text-xs line-through text-gray-400">
+              {formatPi(product.price)} π
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -109,16 +113,28 @@ function ProductCard({ product, onAddToCart }: any) {
 /* ================= PAGE ================= */
 
 export default function HomePage() {
+  const router = useRouter();
   const { addToCart } = useCart();
   const { t } = useTranslation();
 
   const [timeLeft, setTimeLeft] = useState("--:--:--");
 
-  const { data: products = [] } = useSWR("/api/products", fetcher);
+  /* ================= DATA ================= */
 
-  /* ================= COUNTDOWN (GLOBAL ONLY) ================= */
+  const { data: products = [] } = useSWR<Product[]>(
+    "/api/products",
+    fetcher
+  );
+
+  const { data: categories = [] } = useSWR<Category[]>(
+    "/api/categories",
+    fetcher
+  );
+
+  /* ================= FLASH SALE TIMER (GLOBAL) ================= */
 
   useEffect(() => {
+    // 👉 backend-ready: nên thay bằng `sale_end_time` từ DB
     const end = Date.now() + 2 * 60 * 60 * 1000;
 
     const timer = setInterval(() => {
@@ -126,7 +142,6 @@ export default function HomePage() {
 
       if (diff <= 0) {
         setTimeLeft("00:00:00");
-        clearInterval(timer);
         return;
       }
 
@@ -135,94 +150,97 @@ export default function HomePage() {
       const s = Math.floor((diff % 60000) / 1000);
 
       setTimeLeft(
-        `${String(h).padStart(2, "0")}:${String(m).padStart(
-          2,
-          "0"
-        )}:${String(s).padStart(2, "0")}`
+        `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
       );
     }, 1000);
 
     return () => clearInterval(timer);
   }, []);
 
-  const flashSaleProducts = useMemo(
-    () => products.filter((p: any) => p.sale_price),
-    [products]
-  );
+  /* ================= FILTER ================= */
+
+  const trending = useMemo(() => {
+    return [...products]
+      .sort((a, b) => b.sold - a.sold)
+      .slice(0, 6);
+  }, [products]);
+
+  const flashSale = useMemo(() => {
+    return products.filter((p) => p.sale_price).slice(0, 8);
+  }, [products]);
+
+  /* ================= LOADING ================= */
+
+  if (!products.length) return <SplashScreen />;
+
+  /* ================= UI ================= */
 
   return (
-    <main className="bg-gray-50 min-h-screen pb-20">
+    <main className="pb-20 bg-gray-50">
+
       {/* HERO */}
-      <BannerCarousel />
+      <section className="bg-gradient-to-r from-black to-orange-600 text-white p-4">
+        <BannerCarousel />
 
-      <div className="px-3 mt-3">
-        <PiPriceWidget />
-      </div>
+        <div className="mt-3 flex justify-center">
+          <PiPriceWidget />
+        </div>
+      </section>
 
-      {/* FLASH SALE (STANDARD MARKETPLACE STYLE) */}
-      <section className="px-3 mt-5">
-        <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-xl p-3">
-          
-          {/* HEADER */}
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Flame size={16} />
-              <p className="font-bold text-sm">Flash Sale</p>
-            </div>
+      {/* CATEGORIES */}
+      <section className="p-4">
+        <h2 className="font-bold text-lg mb-2">Categories</h2>
 
-            <div className="bg-white text-red-600 font-bold px-3 py-1 rounded text-sm">
-              {timeLeft}
-            </div>
-          </div>
-
-          {/* PRODUCTS */}
-          <div className="flex gap-3 overflow-x-auto mt-3">
-            {flashSaleProducts.slice(0, 10).map((p: any) => (
-              <div
-                key={p.id}
-                className="min-w-[140px] bg-white text-black rounded-lg overflow-hidden"
-              >
-                <Image
-                  src={getImage(p)}
-                  alt={p.name}
-                  width={200}
-                  height={200}
-                  className="h-24 w-full object-cover"
-                />
-
-                <div className="p-2">
-                  <p className="text-xs line-clamp-2 min-h-[32px]">
-                    {p.name}
-                  </p>
-
-                  <p className="text-red-500 font-bold text-sm">
-                    {formatPi(p.sale_price ?? p.price)} π
-                  </p>
-
-                  <p className="text-[10px] text-gray-400 line-through">
-                    {formatPi(p.price)} π
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="flex gap-3 overflow-x-auto">
+          {categories.map((c) => (
+            <button key={c.id} className="px-4 py-2 bg-white rounded-full shadow text-sm">
+              {c.name}
+            </button>
+          ))}
         </div>
       </section>
 
       {/* TRENDING */}
-      <section className="px-3 mt-6">
+      <section className="p-4">
         <div className="flex items-center gap-2 mb-3">
           <TrendingUp size={16} />
-          <p className="font-bold">Trending</p>
+          <h2 className="font-bold">Trending</h2>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          {products.slice(0, 10).map((p: any) => (
-            <ProductCard
-              key={p.id}
-              product={p}
-              onAddToCart={addToCart}
-            />
+          {trending.map((p) => (
+            <ProductCard key={p.id} product={p} onAddToCart={addToCart} />
+          ))}
+        </div>
+      </section>
+
+      {/* FLASH SALE (CLEAN) */}
+      <section className="p-4">
+        <div className="flex justify-between items-center bg-red-500 text-white p-3 rounded-xl">
+          <div className="flex items-center gap-2">
+            <Flame size={16} />
+            Flash Sale
+          </div>
+
+          <div className="font-mono font-bold">{timeLeft}</div>
+        </div>
+
+        <div className="flex gap-3 overflow-x-auto mt-3">
+          {flashSale.map((p) => (
+            <div key={p.id} className="min-w-[160px]">
+              <ProductCard product={p} onAddToCart={addToCart} />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* GRID */}
+      <section className="p-4">
+        <h2 className="font-bold mb-3">All Products</h2>
+
+        <div className="grid grid-cols-2 gap-3">
+          {products.map((p) => (
+            <ProductCard key={p.id} product={p} onAddToCart={addToCart} />
           ))}
         </div>
       </section>
