@@ -566,11 +566,11 @@ ${
     <div>
       <div className="inline-flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-600">
         <Flame size={14} />
-        {t.flashSale?.title || "Flash Sale"}
+        {t.flashSale || "Flash Sale"}
       </div>
 
       <h2 className="mt-2 text-2xl font-black">
-        {t.flashSale?.subtitle || "Limited time deals"}
+        {t.flashSale_subtitle || "Limited time deals"}
       </h2>
     </div>
 
@@ -578,7 +578,7 @@ ${
       onClick={() => router.push("/flash-sale")}
       className="text-sm font-semibold text-gray-500"
     >
-      {t.flashSale?.viewAll || "View all"}
+      {t.flashSale_viewAll || "View all"}
     </button>
   </div>
 
@@ -626,7 +626,7 @@ ${
                 </p>
 
                 <span className="text-[10px] text-gray-500">
-                  {product.sold} {t.flashSale?.sold || "sold"}
+                  {product.sold} {t.sold || "sold"}
                 </span>
               </div>
 
