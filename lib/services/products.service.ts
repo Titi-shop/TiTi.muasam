@@ -1,3 +1,4 @@
+lib/services/products.service.ts
 import {
   getAllProducts,
   getProductsByIds,
@@ -40,22 +41,32 @@ type ShippingRateInput = {
 
 type ProductRequestBody = {
   id?: string;
+
   name: string;
+
   description?: string;
   detail?: string;
+
   images?: string[];
   thumbnail?: string;
+
   category_id?: number | null;
+
   price?: number;
   stock?: number;
+
   sale_price?: number | null;
   sale_start?: string | null;
   sale_end?: string | null;
+
   sale_stock?: number;
   sale_enabled?: boolean;
+
   is_active?: boolean;
+
   primary_shipping_country?: string;
   domestic_country_code?: string;
+
   shipping_rates?: {
     zone: string;
     price?: number;
@@ -245,44 +256,69 @@ export async function listProductsService(
               )
           );
 
-        const minPrice =
+        const minVariantPrice =
   enrichedVariants.length > 0
-    ? Math.min(...enrichedVariants.map(v => Number(v.price)))
+    ? Math.min(
+        ...enrichedVariants.map(v =>
+          Number(v.price)
+        )
+      )
     : Number(product.price);
 
-const minFinalPrice =
-  enrichedVariants.length > 0
-    ? Math.min(...enrichedVariants.map(v => Number(v.final_price)))
-    : Number(product.final_price);
-
-const hasSaleVariant =
-  enrichedVariants.some(
+const saleVariants =
+  enrichedVariants.filter(
     v =>
       v.sale_price !== null &&
-      Number(v.sale_price) > 0 &&
-      Number(v.sale_price) < Number(v.price)
+      Number(v.sale_price) > 0
   );
 
-const minSalePrice =
-  hasSaleVariant
+const minVariantSalePrice =
+  saleVariants.length > 0
     ? Math.min(
-        ...enrichedVariants
-          .filter(v => v.sale_price)
-          .map(v => Number(v.sale_price))
+        ...saleVariants.map(v =>
+          Number(v.sale_price)
+        )
       )
     : null;
+
+const minVariantFinalPrice =
+  prices.length > 0
+    ? Math.min(...prices)
+    : Number(product.final_price);
+
         return {
   ...product,
-  has_variants: variants.length > 0,
-  price: minPrice,
-  final_price: minFinalPrice,
-  sale_price: minSalePrice,
-  min_price: minFinalPrice,
-  max_price:
-    enrichedVariants.length > 0
-      ? Math.max(...enrichedVariants.map(v => Number(v.final_price)))
+
+  price:
+    variants.length > 0
+      ? minVariantPrice
+      : product.price,
+
+  sale_price:
+    variants.length > 0
+      ? minVariantSalePrice
+      : product.sale_price,
+
+  final_price:
+    variants.length > 0
+      ? minVariantFinalPrice
+      : product.final_price,
+
+  has_variants:
+    variants.length > 0,
+
+  min_price:
+    prices.length > 0
+      ? Math.min(...prices)
       : null,
+
+  max_price:
+    prices.length > 0
+      ? Math.max(...prices)
+      : null,
+
   variants: enrichedVariants,
+
   shipping_rates:
     shippingMap.get(product.id) ?? [],
 };
