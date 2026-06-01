@@ -115,18 +115,21 @@ export default function CheckoutSheet({
   ========================================================= */
 
   useEffect(() => {
-  console.log(
-    "[CHECKOUT PRODUCT]",
-    product
-  );
-}, [product]);
+  if (
+    process.env.NODE_ENV ===
+    "development"
+  ) {
+    console.log(
+      "[CHECKOUT PRODUCT]",
+      product
+    );
 
-      console.log(
-        "[CHECKOUT SHIPPING RATES]",
-        product?.shipping_rates
-      );
-    }
-  }, [product]);
+    console.log(
+      "[CHECKOUT SHIPPING RATES]",
+      product?.shipping_rates
+    );
+  }
+}, [product]);
 
   /* =========================================================
      MESSAGE
