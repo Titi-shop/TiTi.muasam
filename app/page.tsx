@@ -561,70 +561,194 @@ ${
         </div>
       </section>
 
-      {/* FLASH SALE */}
+{/* FLASH SALE */}
 
-      <section className="mt-10 px-4">
-        <div className="overflow-hidden rounded-[32px] bg-gradient-to-r from-red-500 to-orange-500 p-5 text-white">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur-xl">
-                <Flame size={14} />
+<section className="mt-10 px-4">
+  <div
+    className="
+      overflow-hidden
+      rounded-[32px]
+      bg-gradient-to-r
+      from-red-500
+      via-orange-500
+      to-red-600
+      p-5
+      text-white
+      shadow-2xl
+    "
+  >
+    {/* HEADER */}<div className="mb-5 flex items-center justify-between">
+  <div>
+    <div
+      className="
+        inline-flex
+        items-center
+        gap-2
+        rounded-full
+        bg-white/20
+        px-3
+        py-1
+        text-xs
+        font-bold
+        backdrop-blur-xl
+      "
+    >
+      <Flame size={14} />
+      {t.flash_sale || "Flash Sale"}
+    </div>
 
-                {t.flash_sale ||
-                  "Flash Sale"}
+    <h2 className="mt-3 text-2xl font-black">
+      {t.limited_offers || "Limited offers"}
+    </h2>
+
+    <p className="mt-1 text-sm text-white/80">
+      Best discounts available now
+    </p>
+  </div>
+
+  <div
+    className="
+      rounded-full
+      bg-white/20
+      px-4
+      py-2
+      text-xs
+      font-bold
+      backdrop-blur-xl
+    "
+  >
+    HOT
+  </div>
+</div>
+
+{/* PRODUCTS */}
+
+<div className="flex gap-4 overflow-x-auto pb-2">
+  {products
+    .filter(
+      (p) =>
+        p.sale_price &&
+        p.sale_price > 0
+    )
+    .slice(0, 10)
+    .map((product) => {
+      const discount =
+        product.sale_price &&
+        product.price > product.sale_price
+          ? Math.round(
+              ((product.price -
+                product.sale_price) /
+                product.price) *
+                100
+            )
+          : 0;
+
+      const salePrice =
+        product.final_price ??
+        product.sale_price ??
+        product.price;
+
+      return (
+        <div
+          key={product.id}
+          onClick={() =>
+            router.push(
+              `/product/${product.id}`
+            )
+          }
+          className="
+            min-w-[220px]
+            overflow-hidden
+            rounded-3xl
+            bg-white
+            text-black
+            shadow-xl
+            transition-all
+            duration-300
+            hover:-translate-y-1
+            hover:shadow-2xl
+            cursor-pointer
+          "
+        >
+          {/* IMAGE */}
+
+          <div className="relative">
+            <Image
+              src={getMainImage(product)}
+              alt={product.name}
+              width={300}
+              height={300}
+              className="
+                h-40
+                w-full
+                object-cover
+              "
+            />
+
+            {discount > 0 && (
+              <div
+                className="
+                  absolute
+                  left-3
+                  top-3
+                  rounded-full
+                  bg-red-500
+                  px-3
+                  py-1
+                  text-xs
+                  font-bold
+                  text-white
+                  shadow-lg
+                "
+              >
+                -{discount}%
               </div>
-
-              <h2 className="mt-3 text-2xl font-black">
-                {t.limited_offers ||
-                  "Limited offers"}
-              </h2>
-            </div>
+            )}
           </div>
 
-          <div className="flex gap-4 overflow-x-auto pb-2">
-  {products
-    .filter((p) => p.sale_price)
-    .slice(0, 10)
-    .map((product) => (
-      <div
-        key={product.id}
-        className="min-w-[220px]"
-      >
-        <div
-          onClick={() =>
-            router.push(`/product/${product.id}`)
-          }
-          className="overflow-hidden rounded-2xl bg-white text-black"
-        >
-          <Image
-            src={getMainImage(product)}
-            alt={product.name}
-            width={300}
-            height={300}
-            className="h-36 w-full object-cover"
-          />
+          {/* CONTENT */}
 
-          <div className="p-3">
-            <p className="line-clamp-2 text-xs font-medium">
+          <div className="p-4">
+            <p className="line-clamp-2 min-h-[40px] text-sm font-semibold">
               {product.name}
             </p>
 
-            <p className="mt-2 text-sm font-black text-red-500">
-              {formatPi(
-                product.final_price ??
-                product.sale_price ??
-                product.price
-              )} π
-            </p>
+            <div className="mt-3">
+              <p className="text-lg font-black text-red-500">
+                {formatPi(salePrice)} π
+              </p>
 
-            <p className="text-[11px] text-gray-400 line-through">
-              {formatPi(product.price)} π
-            </p>
+              <p className="text-xs text-gray-400 line-through">
+                {formatPi(product.price)} π
+              </p>
+            </div>
+
+            <div className="mt-3">
+              <div className="h-2 overflow-hidden rounded-full bg-gray-200">
+                <div
+                  className="h-full rounded-full bg-red-500"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      product.sold ?? 0
+                    )}%`,
+                  }}
+                />
+              </div>
+
+              <p className="mt-1 text-[11px] text-gray-500">
+                {product.sold ?? 0}{" "}
+                {t.sold || "sold"}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    ))}
+      );
+    })}
 </div>
+
+  </div>
+</section>
         </div>
       </section>
 
