@@ -92,11 +92,23 @@ const [initialScale, setInitialScale] =
 
         const data: ProductRecord[] = await res.json();
 
-        const filtered = data
-          .filter((p) => p.id !== product.id)
-          .slice(0, 10);
+       const filtered = data
+  .filter((p) => p.id !== product.id)
+  .slice(0, 10);
 
-        setRelated(filtered);
+setRelated(filtered);
+
+console.log(
+  "[RELATED PRODUCTS]",
+  filtered.map((p) => ({
+    name: p.name,
+    has_variants: p.has_variants,
+    price: p.price,
+    sale_price: p.sale_price,
+    final_price: p.final_price,
+    variants: p.variants?.length,
+  }))
+);
       } catch (err) {
         console.error("[RELATED ERROR]", err);
       }
