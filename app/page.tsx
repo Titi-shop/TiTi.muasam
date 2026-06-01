@@ -80,7 +80,7 @@ function ProductCard({ product, onAddToCart, t }: any) {
   return (
     <div
       onClick={() => router.push(`/product/${product.id}`)}
-      className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition active:scale-[0.99]"
+      className="overflow-hidden rounded-lg bg-white shadow-sm active:scale-[0.98] transition border border-gray-100"
     >
       {/* IMAGE */}
       <div className="relative">
@@ -89,7 +89,7 @@ function ProductCard({ product, onAddToCart, t }: any) {
           alt={product.name}
           width={500}
           height={500}
-          className="h-40 w-full object-cover"
+          className="h-44 w-full object-cover"
         />
 
         {product.sale_price && (
@@ -101,19 +101,16 @@ function ProductCard({ product, onAddToCart, t }: any) {
 
       {/* CONTENT */}
       <div className="p-2">
-        {/* NAME */}
         <p className="line-clamp-2 text-[12px] font-medium text-gray-900">
           {product.name}
         </p>
 
-        {/* RATING */}
         <div className="mt-1 flex items-center gap-1 text-[11px] text-gray-500">
           <Star size={12} className="fill-yellow-400 text-yellow-400" />
           {product.rating_avg || 5}
           <span>• {product.sold || 0} sold</span>
         </div>
 
-        {/* PRICE */}
         <div className="mt-2">
           <p className="text-sm font-bold text-red-600">
             {formatPi(product.final_price || product.price)} π
@@ -129,7 +126,6 @@ function ProductCard({ product, onAddToCart, t }: any) {
     </div>
   );
 }
-
 /* =========================================================
 PAGE
 ========================================================= */
@@ -281,7 +277,6 @@ t.out_of_stock || "Out of stock"
 return;
 }
 
-// 🔥 TYPE SAFE VARIANT CHECK (NO ANY)
 const hasVariant =
 Boolean(product.has_variants) ||
 (product.variants?.length ?? 0) > 0 ||
@@ -353,7 +348,8 @@ return (
   <div className="absolute bottom-0 left-0 h-44 w-44 rounded-full bg-red-500/20 blur-3xl" />  {/* subtle edge highlight */}
 
   <div className="pointer-events-none absolute inset-0 ring-1 ring-orange-400/30" />    <div className="relative z-10">  
-    <BannerCarousel />  <div className="mt-5 flex justify-center">  
+    <BannerCarousel /> 
+    <div className="mt-5 flex justify-center">  
   <PiPriceWidget />  
 </div>  
 
@@ -384,7 +380,8 @@ return (
 
   </div>  
 </section>  
-      {/* CATEGORIES */}  <section className="mt-6 px-4">  
+      {/* CATEGORIES */} 
+  <section className="mt-6 px-4">  
     <div className="mb-4 flex items-center justify-between">  
       <div>  
         <h2 className="text-2xl font-black">  
@@ -533,7 +530,8 @@ className="h-full w-full object-cover"
   {t.flashSale_viewAll || "View all"}  
 </button>
 
-  </div>    <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">  
+  </div>    
+  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">  
     {products  
       .filter((p) => p.sale_price)  
       .slice(0, 10)  
@@ -588,9 +586,10 @@ className="h-full w-full object-cover"
   })}
 
   </div>  
-</section>  {/* PRODUCTS */}  
+</section>  
+  {/* PRODUCTS */}  
 
-  <section className="mt-10 px-4">  
+  <section className="mt-10 px-1">
     <div className="mb-5">  
       <h2 className="text-2xl font-black">  
         {t.discover_products ||  
@@ -604,7 +603,7 @@ className="h-full w-full object-cover"
     </div>  
 
     {loading ? (  
-      <div className="grid grid-cols-2 gap-4">  
+      <div className="grid grid-cols-2 gap-[6px] px-0">  
         {[...Array(6)].map((_, i) => (  
           <div  
             key={i}  
@@ -613,7 +612,7 @@ className="h-full w-full object-cover"
         ))}  
       </div>  
     ) : (  
-      <div className="grid grid-cols-2 gap-4">  
+      <div className="grid grid-cols-2 gap-[6px] px-0"> 
         {filteredProducts.map(  
           (product) => (  
             <ProductCard  
