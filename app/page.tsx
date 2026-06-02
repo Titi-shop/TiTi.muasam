@@ -597,7 +597,7 @@ ${
 
       {/* PRODUCTS */}
 
-      <section className="mt-10 px-4">
+      <section className="mt-10 px-1">
         <div className="mb-5">
           <h2 className="text-2xl font-black">
             {t.discover_products ||
@@ -611,7 +611,7 @@ ${
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-[6px] px-0">
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
