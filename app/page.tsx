@@ -465,7 +465,7 @@ useEffect(() => {
 </section>
       
 {/* TRENDING */}
-<section className="mt-4 px-3">
+<section className="mt-3 px-3">
   <div className="mb-2 flex items-center justify-between">
     <div>
       <div className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-[2px] text-[9px] font-semibold text-orange-600">
@@ -494,7 +494,7 @@ useEffect(() => {
 
       {/* FLASH SALE */}
 
-<section className="mt-6 px-4">
+<section className="mt-2 px-4">
   <div className="rounded-2xl bg-gradient-to-r from-red-600 via-orange-500 to-red-500 text-white p-3 overflow-hidden">
 
     {/* HEADER */}
@@ -502,7 +502,7 @@ useEffect(() => {
       <div>
         <div className="inline-flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full text-[11px]">
           <Flame size={12} />
-          Flash Sale
+          {t.Flash_sale}
         </div>
 
         <h2 className="mt-1 text-sm font-bold">
@@ -514,7 +514,7 @@ useEffect(() => {
         onClick={() => router.push("/flash-sale")}
         className="text-[11px] bg-white/20 px-3 py-1 rounded-lg"
       >
-        View
+        {t.view}
       </button>
     </div>
 
@@ -572,7 +572,7 @@ useEffect(() => {
 
       {/* PRODUCTS */}
 
-      <section className="mt-10 px-0">
+      <section className="mt-2 px-0">
   <div className="px-4 mb-5">
     <h2 className="text-2xl font-black">
       {t.discover_products || "Discover Products"}
