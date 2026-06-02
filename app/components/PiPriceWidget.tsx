@@ -97,13 +97,9 @@ export default function PiPriceWidget() {
         }
 
         prevPriceRef.current = nextPrice;
-
         setPrice(nextPrice);
-
         setChange(nextChange);
-
         setConnected(true);
-
         setHistory((prev) => {
           const next = [...prev, nextPrice];
 
@@ -223,7 +219,7 @@ export default function PiPriceWidget() {
 
       {/* CONTENT */}
 
-      <div className="relative z-10 p-3">
+      <div className="relative z-10 p-0">
         {/* HEADER */}
 
         <div className="flex items-start justify-between gap-4">
