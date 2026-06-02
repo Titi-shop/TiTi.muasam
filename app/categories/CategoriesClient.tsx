@@ -465,7 +465,7 @@ bg-[var(--card-bg)] text-[var(--foreground)]`}
 
       {/* SORT */}
 
-      <section className="mt-6 overflow-x-auto px-4">
+      <section className="mt-2 overflow-x-auto px-4">
         <div className="flex gap-3">
           {[
             {
@@ -516,7 +516,7 @@ bg-[var(--card-bg)] text-[var(--foreground)]`}
 
       {/* PRODUCT GRID */}
 
-      <section className="mt-8 px-4">
+      <section className="mt-2 px-4">
         {filteredProducts.length === 0 ? (
           <div className="flex h-60 flex-col items-center justify-center rounded-[32px] bg-white text-center">
             <p className="text-lg font-bold">
