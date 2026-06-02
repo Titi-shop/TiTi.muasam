@@ -508,7 +508,7 @@ useEffect(() => {
 </section>
 
       {/* FLASH SALE */}
-<section className="mt-2 px-4">
+<section className="mt-2 px-4 relative z-10">
   <div className="rounded-2xl bg-gradient-to-r from-red-600 via-orange-500 to-red-500 text-white p-3 overflow-hidden">
 
     {/* HEADER */}
@@ -605,7 +605,7 @@ useEffect(() => {
   </div>
 
   {loading ? (
-    <div className="grid grid-cols-2 gap-[4px] px-1">
+    <div className="grid grid-cols-2 gap-[3px] px-1">
       {Array.from({ length: 8 }).map((_, i) => (
         <ProductSkeleton key={i} />
       ))}
