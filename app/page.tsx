@@ -526,7 +526,6 @@ useEffect(() => {
     </div>
   ))}
 </div>
-  </div>
 </section>
 
       {/* FLASH SALE */}
