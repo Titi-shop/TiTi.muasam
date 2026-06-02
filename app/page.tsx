@@ -463,7 +463,7 @@ useEffect(() => {
     })}
   </div>
 </section>
-      
+      <div className="flex flex-col gap-2">
 {/* TRENDING */}
 <section className="mt-3 px-3">
   <div className="mb-2 flex items-center justify-between">
