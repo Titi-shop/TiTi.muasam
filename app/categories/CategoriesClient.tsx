@@ -423,6 +423,7 @@ bg-[var(--card-bg)] text-[var(--foreground)]`}
 style={{
   background: "var(--card-secondary)",
 }}
+            >
               🛍️
             </div>
 
@@ -457,6 +458,7 @@ bg-[var(--card-bg)] text-[var(--foreground)]`}
 style={{
   background: "var(--card-secondary)",
 }}
+                  >
                     <Image
                       src={getImage(
                         category.icon
