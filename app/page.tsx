@@ -72,13 +72,21 @@ return 0;
 PRODUCT CARD
 ========================================================= */
 
-function ProductCard({ product, onAddToCart, t }: any) {
-const router = useRouter();
+function ProductCard({
+  product,
+  onAddToCart,
+  t,
+}: {
+  product: Product;
+  onAddToCart: (product: Product) => void;
+  t: Record<string, string>;
+}) {
+  const router = useRouter();
 
-return (
-<div
-onClick={() => router.push(`/product/${product.id}`)}
-className="
+  return (
+    <div
+      onClick={() => router.push(`/product/${product.id}`)}
+      className="
         flex flex-col
         overflow-hidden
         rounded-xl
@@ -88,51 +96,57 @@ className="
         active:scale-[0.98]
         transition-transform
         duration-150
+        cursor-pointer
       "
     >
-{/* IMAGE */}
-<div className="relative">
-<Image  
-src={getMainImage(product)}  
-alt={product.name}  
-width={500}  
-height={500}  
-className="h-44 w-full object-cover"  
-/>
+      {/* IMAGE */}
+      <div className="relative">
+        <Image
+          src={getMainImage(product)}
+          alt={product.name}
+          width={500}
+          height={500}
+          className="h-44 w-full object-cover"
+        />
 
-{product.sale_price && (  
-      <div className="absolute left-2 top-2 rounded bg-red-600 px-2 py-1 text-[10px] font-bold text-white">  
-        -{getDiscount(product)}%  
-      </div>  
-    )}  
-  </div>  
+        {/* DISCOUNT BADGE */}
+        {product.sale_price && (
+          <div className="absolute left-2 top-2 rounded-md bg-red-500 px-2 py-1 text-[10px] font-bold text-white shadow-sm">
+            -{getDiscount(product)}%
+          </div>
+        )}
+      </div>
 
-  {/* CONTENT */}  
-          <div className="p-2">
-        <p className="text-[12px] font-medium line-clamp-2 text-[var(--foreground)]">
+      {/* CONTENT */}
+      <div className="p-2 flex flex-col gap-1">
+        {/* NAME */}
+        <p className="text-[12px] font-medium line-clamp-2 text-[var(--foreground)] leading-snug">
           {product.name}
         </p>
-<div className="mt-1 flex items-center gap-1 text-[11px] text-[var(--text-muted)]">
-      <Star size={12} className="fill-yellow-400 text-yellow-400" />  
-      {product.rating_avg || 5}  
-      <span>• {product.sold || 0} sold</span>  
-    </div>  
 
-    <div className="mt-2">  
-      <p className="text-sm font-bold text-red-600">  
-        {formatPi(product.final_price || product.price)} π  
-      </p>  
+        {/* RATING + SOLD */}
+        <div className="flex items-center gap-1 text-[11px] text-[var(--text-muted)]">
+          <Star size={12} className="fill-yellow-400 text-yellow-400" />
+          <span>{product.rating_avg || 5}</span>
+          <span>•</span>
+          <span>{product.sold || 0} sold</span>
+        </div>
 
-      {product.sale_price && (  
-        <p className="text-[10px] text-[var(--text-muted)] line-through">  
-          {formatPi(product.price)} π  
-        </p>  
-      )}  
-    </div>  
-  </div>  
-</div>
+        {/* PRICE */}
+        <div className="mt-1">
+          <p className="text-sm font-bold text-[var(--color-primary)]">
+            {formatPi(product.final_price || product.price)} π
+          </p>
 
-);
+          {product.sale_price && (
+            <p className="text-[10px] text-[var(--text-muted)] line-through">
+              {formatPi(product.price)} π
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ProductSkeleton() {
