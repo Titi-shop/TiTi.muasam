@@ -303,13 +303,26 @@ export default function CategoriesClient() {
 
       {/* HEADER */}
 
-      <section className="sticky top-0 z-40 border-b border-white/30 bg-white/80 px-4 py-4 backdrop-blur-2xl">
+      <section
+  className="sticky top-0 z-40 px-4 py-4 backdrop-blur-2xl"
+  style={{
+    background: "color-mix(in srgb, var(--nav-bg) 80%, transparent)",
+    borderBottom: `1px solid var(--nav-border)`,
+  }}
+>
         <div className="flex items-center gap-3">
-          <div className="flex h-12 flex-1 items-center gap-3 rounded-2xl bg-gray-100 px-4">
+        <div
+  className="flex h-12 flex-1 items-center gap-3 rounded-2xl px-4"
+  style={{
+    background: "var(--card-secondary)",
+  }}
+>
             <Search
-              size={18}
-              className="text-gray-400"
-            />
+  size={18}
+  style={{
+    color: "var(--text-muted)",
+  }}
+/>
 
             <input
               type="text"
@@ -406,7 +419,10 @@ ${
 }
 bg-[var(--card-bg)] text-[var(--foreground)]`}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-base">
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-base"
+style={{
+  background: "var(--card-secondary)",
+}}
               🛍️
             </div>
 
@@ -437,7 +453,10 @@ ${
 }
 bg-[var(--card-bg)] text-[var(--foreground)]`}
                 >
-                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
+                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg"
+style={{
+  background: "var(--card-secondary)",
+}}
                     <Image
                       src={getImage(
                         category.icon
@@ -518,12 +537,22 @@ bg-[var(--card-bg)] text-[var(--foreground)]`}
 
       <section className="mt-2 px-0">
         {filteredProducts.length === 0 ? (
-          <div className="flex h-60 flex-col items-center justify-center rounded-[32px] bg-white text-center">
+          <div
+  className="flex h-60 flex-col items-center justify-center rounded-[32px] text-center"
+  style={{
+    background: "var(--card-bg)",
+  }}
+>
             <p className="text-lg font-bold">
               🛒
             </p>
 
-            <p className="mt-2 text-sm text-gray-500">
+            <p
+  className="mt-2 text-sm"
+  style={{
+    color: "var(--text-muted)",
+  }}
+>
               {t.no_products ||
                 "No products"}
             </p>
@@ -541,13 +570,14 @@ bg-[var(--card-bg)] text-[var(--foreground)]`}
     group
     overflow-hidden
     rounded-xl
-    bg-white
-    border border-black/5
     shadow-sm
-    transition-all
-    duration-200
   "
+  style={{
+    background: "var(--card-bg)",
+    border: "1px solid var(--nav-border)",
+  }}
 >
+
                     <div className="relative overflow-hidden">
                       <Image
                         src={getImage(
@@ -584,10 +614,12 @@ w-9
 items-center
 justify-center
 rounded-xl
-bg-white
-text-black
 shadow-lg
 "
+style={{
+  background: "var(--card-bg)",
+  color: "var(--foreground)",
+}}
                       >
                         <ShoppingCart
                           size={18}
@@ -600,7 +632,12 @@ shadow-lg
                         {product.name}
                       </h3>
 
-                      <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                      <div
+  className="mt-3 flex items-center gap-2 text-xs"
+  style={{
+    color: "var(--text-muted)",
+  }}
+>
                         <Star
                           size={14}
                           className="fill-yellow-400 text-yellow-400"
@@ -621,7 +658,12 @@ shadow-lg
 
                       <div className="mt-4 flex items-end justify-between">
                         <div>
-                          <p className="text-lg font-black text-red-500">
+                        <p
+  className="text-lg font-black"
+  style={{
+    color: "var(--color-primary)",
+  }}
+>
                    {formatPi(
               product.final_price ||
     product.sale_price ||
@@ -631,7 +673,12 @@ shadow-lg
 
                           {product.sale_price &&
                         product.sale_price < product.price && (
-                            <p className="text-xs text-gray-400 line-through">
+                            <p
+  className="text-xs line-through"
+  style={{
+    color: "var(--text-muted)",
+  }}
+>
                               {formatPi(
                                 product.price
                               )}{" "}
