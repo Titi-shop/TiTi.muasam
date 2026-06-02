@@ -71,55 +71,60 @@ function getDiscount(product: Product) {
 /* =========================================================
    PRODUCT CARD
 ========================================================= */
-
- function ProductCard({ product, onAddToCart }: any) {
+function ProductCard({
+  product,
+  onAddToCart,
+  t,
+  compact = false,
+}: {
+  product: Product;
+  onAddToCart?: (p: Product) => void;
+  t: Record<string, string>;
+  compact?: boolean;
+}) {
   const router = useRouter();
 
   return (
     <div
       onClick={() => router.push(`/product/${product.id}`)}
-      className="
-        flex flex-col
-        overflow-hidden
-        rounded-xl
-        bg-[var(--card-bg)]
-        border border-black/5
-        shadow-sm
-        active:scale-[0.98]
-        transition-transform
-        duration-150
-      "
+      className={`
+        flex flex-col overflow-hidden rounded-xl
+        bg-[var(--card-bg)] border border-black/5
+        shadow-sm active:scale-[0.98]
+        transition-transform duration-150
+        ${compact ? "h-[230px]" : "h-[270px]"}
+      `}
     >
       {/* IMAGE */}
-      <div className="relative">
+      <div className={compact ? "relative h-[120px]" : "relative h-[160px]"}>
         <Image
           src={getMainImage(product)}
           alt={product.name}
           width={500}
           height={500}
-          className="h-36 w-full object-cover"
+          className="h-full w-full object-cover"
         />
 
         {product.sale_price && (
-          <div className="absolute left-2 top-2 rounded-md bg-red-600 px-2 py-[2px] text-[10px] font-bold text-white">
+          <div className="absolute left-2 top-2 rounded bg-red-600 px-2 py-[2px] text-[9px] font-bold text-white">
             -{getDiscount(product)}%
           </div>
         )}
       </div>
 
       {/* CONTENT */}
-      <div className="p-2">
-        <p className="text-[12px] font-medium line-clamp-2 text-[var(--foreground)]">
+      <div className="p-2 flex flex-col justify-between flex-1">
+        <p className="text-[11px] font-medium line-clamp-2 leading-tight">
           {product.name}
         </p>
 
-        <div className="mt-1 flex items-center gap-1 text-[11px] text-[var(--text-muted)]">
-          <Star size={12} className="fill-yellow-400 text-yellow-400" />
+        <div className="mt-1 flex items-center gap-1 text-[10px] text-[var(--text-muted)]">
+          <Star size={11} className="fill-yellow-400 text-yellow-400" />
           {product.rating_avg || 5}
           <span>• {product.sold || 0}</span>
         </div>
 
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-auto flex items-end justify-between">
           <p className="text-sm font-bold text-red-500">
             {formatPi(product.final_price || product.price)} π
           </p>
@@ -133,7 +138,9 @@ function getDiscount(product: Product) {
       </div>
     </div>
   );
- }
+}
+ 
+
 function ProductSkeleton() {
   return (
     <div className="overflow-hidden rounded-lg bg-white border border-gray-100">
@@ -473,51 +480,47 @@ useEffect(() => {
     })}
   </div>
 </section>
+  
+
       {/* TRENDING */}
+<section className="mt-6 px-3">
+  <div className="mb-3 flex items-center justify-between">
+    <div>
+      <div className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-[2px] text-[10px] font-semibold text-orange-600">
+        <TrendingUp size={12} />
+        {t.trending_now || "Trending"}
+      </div>
 
-      <section className="mt-10 px-4">
-        <div className="mb-5 flex items-center justify-between">
-          <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600">
-              <TrendingUp size={14} />
+      <h2 className="mt-1 text-base font-bold leading-tight">
+        {t.best_selling_products || "Best selling"}
+      </h2>
+    </div>
 
-              {t.trending_now ||
-                "Trending Now"}
-            </div>
+    <button
+      onClick={() => router.push("/categories")}
+      className="text-[11px] text-gray-500"
+    >
+      {t.view_all || "View"}
+    </button>
+  </div>
 
-            <h2 className="text-2xl font-black">
-              {t.best_selling_products ||
-                "Best selling products"}
-            </h2>
-          </div>
-
-          <button
-            onClick={() =>
-              router.push("/categories")
-            }
-            className="text-sm font-semibold text-gray-500"
-          >
-            {t.view_all || "View all"}
-          </button>
-        </div>
-
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {trendingProducts.map((product) => (
-            <div
-              key={product.id}
-              className="min-w-[240px]"
-            >
-              <ProductCard
-                product={product}
-                onAddToCart={
-                  handleAddToCart
-                }
-                t={t}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
+  {/* SCROLL LIST - GAP TIGHT */}
+  <div className="flex gap-2 overflow-x-auto pb-1 scroll-x">
+    {trendingProducts.map((product) => (
+      <div
+        key={product.id}
+        className="min-w-[160px] flex-shrink-0"
+      >
+        <ProductCard
+          product={product}
+          onAddToCart={handleAddToCart}
+          t={t}
+          compact
+        />
+      </div>
+    ))}
+  </div>
+</section>
 
       {/* FLASH SALE */}
 
