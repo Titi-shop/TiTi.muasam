@@ -1,494 +1,497 @@
 "use client";
 
 import {
-  Activity,
-  TrendingDown,
-  TrendingUp,
+Activity,
+TrendingDown,
+TrendingUp,
 } from "lucide-react";
 
 import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+useEffect,
+useMemo,
+useRef,
+useState,
 } from "react";
 
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 /* =========================================================
-   TYPES
+TYPES
 ========================================================= */
 
 interface PiPriceResponse {
-  symbol: string;
-  price_usd: number;
-  change_24h: number | null;
-  updated_at?: string;
+symbol: string;
+price_usd: number;
+change_24h: number | null;
+updated_at?: string;
 }
 
 /* =========================================================
-   COMPONENT
+COMPONENT
 ========================================================= */
 
 export default function PiPriceWidget() {
-  const { t } = useTranslation();
+const { t } = useTranslation();
 
-  const [price, setPrice] = useState<number>(0);
-  const [change, setChange] = useState<number>(0);
-  const [history, setHistory] = useState<number[]>([]);
-  const [flash, setFlash] = useState<
-    "up" | "down" | null
-  >(null);
+const [price, setPrice] = useState<number>(0);
+const [change, setChange] = useState<number>(0);
+const [history, setHistory] = useState<number[]>([]);
+const [flash, setFlash] = useState<
+"up" | "down" | null
 
-  const [connected, setConnected] =
-    useState<boolean>(false);
+> (null);
 
-  const prevPriceRef = useRef<number>(0);
 
-  /* =========================================================
-     FETCH
-  ========================================================= */
 
-  useEffect(() => {
-    let mounted = true;
+const [connected, setConnected] =
+useState<boolean>(false);
 
-    async function fetchPrice() {
-      try {
-        const res = await fetch("/api/pi-price", {
-          cache: "no-store",
-        });
+const prevPriceRef = useRef<number>(0);
 
-        if (!res.ok) {
-          setConnected(false);
-          return;
-        }
+/* =========================================================
+FETCH
+========================================================= */
 
-        const data: PiPriceResponse =
-          await res.json();
+useEffect(() => {
+let mounted = true;
 
-        if (!mounted) return;
+async function fetchPrice() {  
+  try {  
+    const res = await fetch("/api/pi-price", {  
+      cache: "no-store",  
+    });  
 
-        const nextPrice = Number(
-          data.price_usd ?? 0
-        );
+    if (!res.ok) {  
+      setConnected(false);  
+      return;  
+    }  
 
-        const nextChange = Number(
-          data.change_24h ?? 0
-        );
+    const data: PiPriceResponse =  
+      await res.json();  
 
-        const oldPrice =
-          prevPriceRef.current;
+    if (!mounted) return;  
 
-        if (oldPrice > 0) {
-          if (nextPrice > oldPrice) {
-            setFlash("up");
-          }
+    const nextPrice = Number(  
+      data.price_usd ?? 0  
+    );  
 
-          if (nextPrice < oldPrice) {
-            setFlash("down");
-          }
+    const nextChange = Number(  
+      data.change_24h ?? 0  
+    );  
 
-          setTimeout(() => {
-            setFlash(null);
-          }, 450);
-        }
+    const oldPrice =  
+      prevPriceRef.current;  
 
-        prevPriceRef.current = nextPrice;
-        setPrice(nextPrice);
-        setChange(nextChange);
-        setConnected(true);
-        setHistory((prev) => {
-          const next = [...prev, nextPrice];
+    if (oldPrice > 0) {  
+      if (nextPrice > oldPrice) {  
+        setFlash("up");  
+      }  
 
-          return next.slice(-80);
-        });
-      } catch (err) {
-        console.error(
-          "PI_PRICE_WIDGET_ERROR",
-          err
-        );
+      if (nextPrice < oldPrice) {  
+        setFlash("down");  
+      }  
 
-        setConnected(false);
-      }
-    }
+      setTimeout(() => {  
+        setFlash(null);  
+      }, 450);  
+    }  
 
-    fetchPrice();
+    prevPriceRef.current = nextPrice;  
+    setPrice(nextPrice);  
+    setChange(nextChange);  
+    setConnected(true);  
+    setHistory((prev) => {  
+      const next = [...prev, nextPrice];  
 
-    const interval = setInterval(
-      fetchPrice,
-      2500
-    );
+      return next.slice(-80);  
+    });  
+  } catch (err) {  
+    console.error(  
+      "PI_PRICE_WIDGET_ERROR",  
+      err  
+    );  
 
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, []);
+    setConnected(false);  
+  }  
+}  
 
-  /* =========================================================
-     STATES
-  ========================================================= */
+fetchPrice();  
 
-  const isUp = change >= 0;
+const interval = setInterval(  
+  fetchPrice,  
+  2500  
+);  
 
-  const graphColor = isUp
-    ? "#34d399"
-    : "#f87171";
+return () => {  
+  mounted = false;  
+  clearInterval(interval);  
+};
 
-  const textColor = isUp
-    ? "text-emerald-400"
-    : "text-red-400";
+}, []);
 
-  /* =========================================================
-     CHART
-  ========================================================= */
+/* =========================================================
+STATES
+========================================================= */
 
-  const chartPath = useMemo(() => {
-    if (history.length < 2) return "";
+const isUp = change >= 0;
 
-    const width = 600;
-    const height = 70;
-    const max = Math.max(...history);
-    const min = Math.min(...history);
+const graphColor = isUp
+? "#34d399"
+: "#f87171";
 
-    return history
-      .map((value, index) => {
-        const x =
-          (index /
-            (history.length - 1)) *
-          width;
+const textColor = isUp
+? "text-emerald-400"
+: "text-red-400";
 
-        const y =
-          height -
-          ((value - min) /
-            (max - min || 1)) *
-            height;
+/* =========================================================
+CHART
+========================================================= */
 
-        return `${
-          index === 0 ? "M" : "L"
-        } ${x} ${y}`;
-      })
-      .join(" ");
-  }, [history]);
+const chartPath = useMemo(() => {
+if (history.length < 2) return "";
 
-  /* =========================================================
-     UI
-  ========================================================= */
+const width = 600;  
 
-  return (
-    <div
-      className={`
-        relative overflow-hidden
-        rounded-2xl
-        border border-white/10
-        bg-[#0b1120]
-        shadow-[0_25px_80px_rgba(0,0,0,0.45)]
-        backdrop-blur-xl
-      `}
-    >
-      {/* BG */}
+const height = 70;  
 
-      <div
-        className={`
-          absolute inset-0
-          bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),
-          linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)]
-          bg-[size:22px_22px]
-        `}
-      />
+const max = Math.max(...history);  
 
-      {/* GLOW */}
+const min = Math.min(...history);  
 
-      <div
-        className={`
-          absolute -right-20 -top-20
-          h-64 w-64 rounded-full blur-3xl
-          ${
-            isUp
-              ? "bg-emerald-500/20"
-              : "bg-red-500/20"
-          }
-        `}
-      />
+return history  
+  .map((value, index) => {  
+    const x =  
+      (index /  
+        (history.length - 1)) *  
+      width;  
 
-      {/* CONTENT */}
+    const y =  
+      height -  
+      ((value - min) /  
+        (max - min || 1)) *  
+        height;  
 
-      <div className="relative z-10 p-3">
-        {/* HEADER */}
+    return `${  
+      index === 0 ? "M" : "L"  
+    } ${x} ${y}`;  
+  })  
+  .join(" ");
 
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <div
-                className={`
-                  flex h-9 w-9 items-center justify-center
-                  rounded-2xl
-                  border border-white/10
-                  bg-white/10
-                  backdrop-blur-xl
-                `}
-              >
-                 <Activity size={18} 
-                  className="text-orange-400"
-                />
-              </div>
+}, [history]);
 
-              <div>
-                <p
-                  className={`
-                    text-[10px]
-                    font-bold uppercase
-                    tracking-[0.28em]
-                    text-white/40
-                  `}
-                >
-                  {t.live_market ??
-                    "Live Market"}
-                </p>
+/* =========================================================
+UI
+========================================================= */
 
-                <h2 className="text-2xl font-black text-white">
-                  PI / USDT
-                </h2>
-              </div>
-            </div>
-
-            {/* PRICE */}
-
-            <div className="mt-3 flex items-end gap-3">
-              <div
-                className={`
-                  text-2xl font-black tracking-tight
-                  transition-all duration-300
-                  ${textColor}
-                  ${
-                    flash === "up"
-                      ? "scale-105"
-                      : ""
-                  }
-                  ${
-                    flash === "down"
-                      ? "scale-95"
-                      : ""
-                  }
-                `}
-              >
-                $
-                {price.toLocaleString(
-                  undefined,
-                  {
-                    minimumFractionDigits: 4,
-                    maximumFractionDigits: 4,
-                  }
-                )}
-              </div>
-
-              <span className="mb-1 text-xs text-white/40">
-                USD
-              </span>
-            </div>
-          </div>
-
-          {/* CHANGE */}
-
-          <div
-            className={`
-              flex items-center gap-2
-              rounded-2xl
-              px-2.5 py-1.5
-              text-xs font-bold
-              ${
-                isUp
-                  ? "bg-emerald-500/15 text-emerald-400"
-                  : "bg-red-500/15 text-red-400"
-              }
-            `}
-          >
-            {isUp ? (
-              <TrendingUp size={16} />
-            ) : (
-              <TrendingDown size={16} />
-            )}
-
-            {change.toFixed(2)}%
-          </div>
-        </div>
-
-        {/* STATUS */}
-
-        <div className="mt-2 flex items-center gap-1.5">
-          <span
-            className={`
-              h-2 w-2 rounded-full
-              ${
-                connected
-                  ? "bg-emerald-400 animate-pulse"
-                  : "bg-red-400"
-              }
-            `}
-          />
-
-          <span className="text-xs text-white/50">
-            {connected
-              ? t.realtime_connected ??    "Realtime Connected"    : t.disconnected ?? "Disconnected"}
-          </span>
-        </div>
-
-        {/* CHART */}
-
-        <div
-          className={`
-            relative mt-3 overflow-hidden
-            rounded-xl
-            border border-white/5
-            bg-black/20
-            p-2
-            backdrop-blur-xl
-          `}
-        >
-          <svg
-            viewBox="0 0 600 70"
-            preserveAspectRatio="none"
-            className="h-[70px] w-full"
-          >
-            <defs>
-              <linearGradient
-                id="priceGradient"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop
-                  offset="0%"
-                  stopColor={graphColor}
-                  stopOpacity="0.35"
-                />
-
-                <stop
-                  offset="100%"
-                  stopColor={graphColor}
-                  stopOpacity="0"
-                />
-              </linearGradient>
-            </defs>
-
-            {/* AREA */}
-
-            <path
-              d={`${chartPath} L 600 70 L 0 140 Z`}
-              fill="url(#priceGradient)"
-            />
-
-            {/* LINE */}
-
-            <path
-              d={chartPath}
-              fill="none"
-              stroke={graphColor}
-              strokeWidth="4"
-              strokeLinecap="round"
-              className="drop-shadow-[0_0_12px_rgba(255,255,255,0.35)]"
-            />
-          </svg>
-        </div>
-
-{/* TICKER */}
-
+return (
 <div
-  className="
-    mt-3
-    overflow-hidden
-    border-t border-white/5
-    py-2
-  "
+className={  relative overflow-hidden   rounded-2xl   border border-white/10   bg-[#0b1120]   shadow-[0_25px_80px_rgba(0,0,0,0.45)]   backdrop-blur-xl  }
 >
-  <div className="ticker-track text-[11px] font-semibold text-white/70">
-    {/* LOOP 1 */}
+{/* BG */}
 
-    <span className="mx-4">
-      {t.pi_network_live_market ??
-        "PI NETWORK LIVE MARKET"}
-    </span>
+<div  
+    className={`  
+      absolute inset-0  
+      bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),  
+      linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)]  
+      bg-[size:22px_22px]  
+    `}  
+  />  
 
-    <span className="mx-4 text-orange-300">
-      {t.realtime_price ??
-        "REALTIME PRICE"}
-    </span>
+  {/* GLOW */}  
 
-    <span className="mx-4 text-emerald-400">
-      ▲ ${price.toFixed(4)}
-    </span>
+  <div  
+    className={`  
+      absolute -right-20 -top-20  
+      h-64 w-64 rounded-full blur-3xl  
+      ${  
+        isUp  
+          ? "bg-emerald-500/20"  
+          : "bg-red-500/20"  
+      }  
+    `}  
+  />  
 
-    <span className="mx-4">
-      {t.change_24h ??
-        "24H CHANGE"}
-    </span>
+  {/* CONTENT */}  
 
-    <span
-      className={`mx-4 ${
-        isUp
-          ? "text-emerald-400"
-          : "text-red-400"
-      }`}
-    >
-      {change.toFixed(2)}%
-    </span>
+  <div className="relative z-10 p-0">  
+    {/* HEADER */}  
 
-    {/* LOOP 2 */}
+    <div className="flex items-start justify-between gap-4">  
+      <div>  
+        <div className="flex items-center gap-3">  
+          <div  
+            className={`  
+              flex h-9 w-9 items-center justify-center  
+              rounded-2xl  
+              border border-white/10  
+              bg-white/10  
+              backdrop-blur-xl  
+            `}  
+          >  
+             <Activity size={18}   
+              className="text-orange-400"  
+            />  
+          </div>  
 
-    <span className="mx-4">
-      {t.pi_network_live_market ??
-        "PI NETWORK LIVE MARKET"}
-    </span>
+          <div>  
+            <p  
+              className={`  
+                text-[10px]  
+                font-bold uppercase  
+                tracking-[0.28em]  
+                text-white/40  
+              `}  
+            >  
+              {t.live_market ??  
+                "Live Market"}  
+            </p>  
 
-    <span className="mx-4 text-orange-300">
-      {t.realtime_price ??
-        "REALTIME PRICE"}
-    </span>
+            <h2 className="text-2xl font-black text-white">  
+              PI / USDT  
+            </h2>  
+          </div>  
+        </div>  
 
-    <span className="mx-4 text-emerald-400">
-      ▲ ${price.toFixed(4)}
-    </span>
+        {/* PRICE */}  
 
-    <span className="mx-4">
-      {t.change_24h ??
-        "24H CHANGE"}
-    </span>
+        <div className="mt-3 flex items-end gap-3">  
+          <div  
+            className={`  
+              text-2xl font-black tracking-tight  
+              transition-all duration-300  
+              ${textColor}  
+              ${  
+                flash === "up"  
+                  ? "scale-105"  
+                  : ""  
+              }  
+              ${  
+                flash === "down"  
+                  ? "scale-95"  
+                  : ""  
+              }  
+            `}  
+          >  
+            $  
+            {price.toLocaleString(  
+              undefined,  
+              {  
+                minimumFractionDigits: 4,  
+                maximumFractionDigits: 4,  
+              }  
+            )}  
+          </div>  
 
-    <span
-      className={`mx-4 ${
-        isUp
-          ? "text-emerald-400"
-          : "text-red-400"
-      }`}
-    >
-      {change.toFixed(2)}%
-    </span>
-  </div>
-</div>
+          <span className="mb-1 text-xs text-white/40">  
+            USD  
+          </span>  
+        </div>  
+      </div>  
 
-{/* STYLE */}
+      {/* CHANGE */}  
 
-<style jsx>{`
-  .ticker-track {
-    display: inline-flex;
-    width: max-content;
-    white-space: nowrap;
-    animation: ticker 18s linear infinite;
-    will-change: transform;
-  }
+      <div  
+        className={`  
+          flex items-center gap-2  
+          rounded-2xl  
+          px-2.5 py-1.5  
+          text-xs font-bold  
+          ${  
+            isUp  
+              ? "bg-emerald-500/15 text-emerald-400"  
+              : "bg-red-500/15 text-red-400"  
+          }  
+        `}  
+      >  
+        {isUp ? (  
+          <TrendingUp size={16} />  
+        ) : (  
+          <TrendingDown size={16} />  
+        )}  
 
-  @keyframes ticker {
-    from {
-      transform: translateX(0);
-    }
+        {change.toFixed(2)}%  
+      </div>  
+    </div>  
 
-    to {
-      transform: translateX(-50%);
-    }
-  }
-`}</style>
-      </div>
-    </div>
-  );
+    {/* STATUS */}  
+
+    <div className="mt-2 flex items-center gap-1.5">  
+      <span  
+        className={`  
+          h-2 w-2 rounded-full  
+          ${  
+            connected  
+              ? "bg-emerald-400 animate-pulse"  
+              : "bg-red-400"  
+          }  
+        `}  
+      />  
+
+      <span className="text-xs text-white/50">  
+        {connected  
+          ? t.realtime_connected ??    "Realtime Connected"    : t.disconnected ?? "Disconnected"}  
+      </span>  
+    </div>  
+
+    {/* CHART */}  
+
+    <div  
+      className={`  
+        relative mt-3 overflow-hidden  
+        rounded-xl  
+        border border-white/5  
+        bg-black/20  
+        p-2  
+        backdrop-blur-xl  
+      `}  
+    >  
+      <svg  
+        viewBox="0 0 600 70"  
+        preserveAspectRatio="none"  
+        className="h-[70px] w-full"  
+      >  
+        <defs>  
+          <linearGradient  
+            id="priceGradient"  
+            x1="0"  
+            y1="0"  
+            x2="0"  
+            y2="1"  
+          >  
+            <stop  
+              offset="0%"  
+              stopColor={graphColor}  
+              stopOpacity="0.35"  
+            />  
+
+            <stop  
+              offset="100%"  
+              stopColor={graphColor}  
+              stopOpacity="0"  
+            />  
+          </linearGradient>  
+        </defs>  
+
+        {/* AREA */}  
+
+        <path  
+          d={`${chartPath} L 600 70 L 0 140 Z`}  
+          fill="url(#priceGradient)"  
+        />  
+
+        {/* LINE */}  
+
+        <path  
+          d={chartPath}  
+          fill="none"  
+          stroke={graphColor}  
+          strokeWidth="4"  
+          strokeLinecap="round"  
+          className="drop-shadow-[0_0_12px_rgba(255,255,255,0.35)]"  
+        />  
+      </svg>  
+    </div>  
+
+    {/* TICKER */}  
+
+    <div className="ticker-track whitespace-nowrap text-[11px] font-semibold text-white/70">
+
+{/* LOOP 1 */}
+
+  <span className="mx-6">  
+    {t.pi_network_live_market ??  
+      "PI NETWORK LIVE MARKET"}  
+  </span>    <span className="mx-6 text-orange-300">  
+    {t.realtime_price ??  
+      "REALTIME PRICE"}  
+  </span>    <span className="mx-6 text-emerald-400">  
+    ▲ ${price.toFixed(4)}  
+  </span>    <span className="mx-6">  
+    {t.change_24h ??  
+      "24H CHANGE"}  
+  </span>  <span
+className={mx-6 ${   isUp   ? "text-emerald-400"   : "text-red-400"   }}
+
+> 
+
+{change.toFixed(2)}%
+
+  </span>  {/* LOOP 2 */}
+
+  <span className="mx-6">  
+    {t.pi_network_live_market ??  
+      "PI NETWORK LIVE MARKET"}  
+  </span>    <span className="mx-6 text-orange-300">  
+    {t.realtime_price ??  
+      "REALTIME PRICE"}  
+  </span>    <span className="mx-6 text-emerald-400">  
+    ▲ ${price.toFixed(4)}  
+  </span>    <span className="mx-6">  
+    {t.change_24h ??  
+      "24H CHANGE"}  
+  </span>  <span
+className={mx-6 ${   isUp   ? "text-emerald-400"   : "text-red-400"   }}
+
+> 
+
+{change.toFixed(2)}%
+
+  </span>  
+</div>  <span className="mx-6 text-orange-300">  
+          {t.realtime_price ??  
+            "REALTIME PRICE"}  
+        </span>  
+
+        <span className="mx-6 text-emerald-400">  
+          ▲ ${price.toFixed(4)}  
+        </span>  
+
+        <span className="mx-6">  
+          {t.change_24h ??  
+            "24H CHANGE"}  
+        </span>  
+
+        <span  
+          className={`mx-6 ${  
+            isUp  
+              ? "text-emerald-400"  
+              : "text-red-400"  
+          }`}  
+        >  
+          {change.toFixed(2)}%  
+        </span>  
+
+        <span className="mx-6">  
+          {t.pi_network_live_market ??  
+            "PI NETWORK LIVE MARKET"}  
+        </span>  
+      </div>  
+    </div>  
+  </div>  
+
+  {/* STYLE */}  
+
+  <style jsx>{`
+
+.ticker-track {
+display: flex;
+width: max-content;
+animation: ticker 20s linear infinite;
 }
+
+@keyframes ticker {
+from {
+transform: translateX(0);
+}
+
+to {  
+  transform: translateX(-50%);  
+}
+
+}
+`}</style>
+</div>
+</div>
+);
+  }
