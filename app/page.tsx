@@ -127,7 +127,7 @@ function ProductCard({
       {/* CONTENT */}
       <div className="flex flex-col flex-1 p-2">
         {/* NAME */}
-        <p className="text-[12.5px] font-medium leading-snug line-clamp-2">
+        <p className="min-h-[34px] text-[13px] font-semibold leading-snug line-clamp-2">
           {product.name}
         </p>
 
@@ -141,7 +141,12 @@ function ProductCard({
         {/* PRICE */}
         <div className="mt-auto flex items-end justify-between">
           <div className="flex flex-col">
-            <p className="text-sm font-bold text-red-500">
+            <p
+  className="text-sm font-black"
+  style={{
+    color: "var(--color-primary)",
+  }}
+>
               {formatPi(product.final_price || product.price)} π
             </p>
 
@@ -510,7 +515,8 @@ useEffect(() => {
 
   <div className="flex gap-1 overflow-x-auto pb-1">
     {trendingProducts.map((product) => (
-      <div key={product.id} className="min-w-[150px]">
+      <div key={product.id} 
+        <div className="min-w-[170px] max-w-[170px]">
         <ProductCard product={product} compact />
       </div>
     ))}
@@ -577,13 +583,14 @@ useEffect(() => {
               transition
             "
           >
-            <Image
-              src={getMainImage(product)}
-              alt={product.name}
-              width={300}
-              height={300}
-              className="h-24 w-full object-cover"
-            />
+<div className="relative aspect-square w-full">
+  <Image
+    src={getMainImage(product)}
+    alt={product.name}
+    fill
+    className="object-cover"
+  />
+</div>
 
             <div className="p-2">
               <p className="text-[11px] line-clamp-2">
