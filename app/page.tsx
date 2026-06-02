@@ -480,7 +480,7 @@ useEffect(() => {
   </div>
 </section>
 {/* TRENDING */}
-<section className="mt-3 px-3">
+<section className="mt-3 px-0">
   <div className="mb-2 flex items-center justify-between">
     <div>
       <div className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-[2px] text-[9px] font-semibold text-orange-600">
@@ -508,7 +508,7 @@ useEffect(() => {
 </section>
 
       {/* FLASH SALE */}
-<section className="mt-2 px-4 relative z-10">
+<section className="mt-2 px-1 relative z-10">
   <div className="rounded-2xl bg-gradient-to-r from-red-600 via-orange-500 to-red-500 text-white p-3 overflow-hidden">
 
     {/* HEADER */}
