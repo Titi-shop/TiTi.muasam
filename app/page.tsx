@@ -1,5 +1,8 @@
+Hướng dẫn mình chỉnh lại file này .
 "use client";
+
 export const dynamic = "force-dynamic";
+
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -72,81 +75,58 @@ return 0;
 PRODUCT CARD
 ========================================================= */
 
-function ProductCard({
-  product,
-  onAddToCart,
-  t,
-}: {
-  product: Product;
-  onAddToCart: (product: Product) => void;
-  t: Record<string, string>;
-}) {
-  const router = useRouter();
+function ProductCard({ product, onAddToCart, t }: any) {
+const router = useRouter();
 
-  return (
-    <div
-      onClick={() => router.push(`/product/${product.id}`)}
-      className="
-        flex flex-col
-        overflow-hidden
-        rounded-xl
-        bg-[var(--card-bg)]
-        border border-black/5
-        shadow-sm
-        active:scale-[0.98]
-        transition-transform
-        duration-150
-        cursor-pointer
-      "
-    >
-      {/* IMAGE */}
-      <div className="relative">
-        <Image
-          src={getMainImage(product)}
-          alt={product.name}
-          width={500}
-          height={500}
-          className="h-44 w-full object-cover"
-        />
+return (
+<div
+onClick={() => router.push(/product/${product.id})}
+className="overflow-hidden rounded-lg bg-white shadow-sm active:scale-[0.98] transition border border-gray-100"
+>
+{/* IMAGE */}
+<div className="relative">
+<Image  
+src={getMainImage(product)}  
+alt={product.name}  
+width={500}  
+height={500}  
+className="h-44 w-full object-cover"  
+/>
 
-        {/* DISCOUNT BADGE */}
-        {product.sale_price && (
-          <div className="absolute left-2 top-2 rounded-md bg-red-500 px-2 py-1 text-[10px] font-bold text-white shadow-sm">
-            -{getDiscount(product)}%
-          </div>
-        )}
-      </div>
+{product.sale_price && (  
+      <div className="absolute left-2 top-2 rounded bg-red-600 px-2 py-1 text-[10px] font-bold text-white">  
+        -{getDiscount(product)}%  
+      </div>  
+    )}  
+  </div>  
 
-      {/* CONTENT */}
-      <div className="p-2 flex flex-col gap-1">
-        {/* NAME */}
-        <p className="text-[12px] font-medium line-clamp-2 text-[var(--foreground)] leading-snug">
-          {product.name}
-        </p>
+  {/* CONTENT */}  
+  <div className="p-2">  
+    <p className="line-clamp-2 text-[12px] font-medium text-gray-900">  
+      {product.name}  
+    </p>  
 
-        {/* RATING + SOLD */}
-        <div className="flex items-center gap-1 text-[11px] text-[var(--text-muted)]">
-          <Star size={12} className="fill-yellow-400 text-yellow-400" />
-          <span>{product.rating_avg || 5}</span>
-          <span>•</span>
-          <span>{product.sold || 0} sold</span>
-        </div>
+    <div className="mt-1 flex items-center gap-1 text-[11px] text-gray-500">  
+      <Star size={12} className="fill-yellow-400 text-yellow-400" />  
+      {product.rating_avg || 5}  
+      <span>• {product.sold || 0} sold</span>  
+    </div>  
 
-        {/* PRICE */}
-        <div className="mt-1">
-          <p className="text-sm font-bold text-[var(--color-primary)]">
-            {formatPi(product.final_price || product.price)} π
-          </p>
+    <div className="mt-2">  
+      <p className="text-sm font-bold text-red-600">  
+        {formatPi(product.final_price || product.price)} π  
+      </p>  
 
-          {product.sale_price && (
-            <p className="text-[10px] text-[var(--text-muted)] line-through">
-              {formatPi(product.price)} π
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+      {product.sale_price && (  
+        <p className="text-[11px] text-gray-400 line-through">  
+          {formatPi(product.price)} π  
+        </p>  
+      )}  
+    </div>  
+  </div>  
+</div>
+
+);
 }
 
 function ProductSkeleton() {
@@ -161,10 +141,12 @@ return (
   <div className="p-2 space-y-2">  
     <div className="h-3 w-full bg-gray-200 rounded animate-pulse" />  
     <div className="h-3 w-3/4 bg-gray-200 rounded animate-pulse" />  
+
     <div className="flex items-center gap-2 mt-2">  
       <div className="h-3 w-12 bg-gray-200 rounded animate-pulse" />  
       <div className="h-3 w-16 bg-gray-200 rounded animate-pulse" />  
     </div>  
+
     <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mt-2" />  
   </div>  
 </div>
@@ -372,7 +354,8 @@ UI
 return (
 
 <main className="min-h-screen pb-28 bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300">  
-{/* MESSAGE */}  {message && (
+{/* MESSAGE */}  
+  {message && (
 <div
 className={fixed left-1/2 top-20 z-50 -translate-x-1/2 rounded-2xl px-5 py-3 text-sm font-medium shadow-2xl backdrop-blur-xl ${     message.type === "error"     ? "bg-red-500 text-white"     : "bg-green-500 text-white"     }}
 >
@@ -389,17 +372,21 @@ className={fixed left-1/2 top-20 z-50 -translate-x-1/2 rounded-2xl px-5 py-3 tex
     <BannerCarousel />   
     <div className="mt-5 flex justify-center">    
   <PiPriceWidget />    
-</div>    <div className="mt-8">    
+</div>   
+    <div className="mt-8">    
   <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold backdrop-blur-xl">    
     <Sparkles size={14} />    
     {t.future_marketplace || "Future Marketplace"}    
-  </div>      <h1 className="mt-5 max-w-xl text-4xl font-black leading-tight">    
+  </div>    
+      <h1 className="mt-5 max-w-xl text-4xl font-black leading-tight">    
     {t.discover_modern_products ||    
       "Discover modern commerce experiences"}    
-  </h1>      <p className="mt-4 max-w-md text-sm text-white/80">    
+  </h1>    
+      <p className="mt-4 max-w-md text-sm text-white/80">    
     {t.smart_shopping_discovery ||    
       "Trending products, curated collections and next generation shopping."}    
-  </p>    <button
+  </p>   
+      <button
 onClick={() => router.push("/categories")}
 className="mt-6 flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-black shadow-lg active:scale-95 transition"
 
@@ -409,7 +396,8 @@ className="mt-6 flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm f
 <ChevronRight size={16} />
 
   </button>    
-</div>    </div>    
+</div>  
+  </div>    
 </section>    
       {/* CATEGORIES */}   
   <section className="mt-6 px-4">    
@@ -483,7 +471,8 @@ width={80}
 height={80}  
 className="h-full w-full object-cover"  
 />  
-</div>  <span className="line-clamp-2 text-center text-[11px] font-semibold">    
+</div> 
+        <span className="line-clamp-2 text-center text-[11px] font-semibold">    
               {t[category.key] ||    
                 category.key}    
             </span>    
@@ -534,8 +523,8 @@ className="h-full w-full object-cover"
     </div>    
   ))}    
 </div>
+
   </section>    
-    {/* FLASH SALE */}
 <section className="mt-6 px-4">
   <div className="rounded-2xl bg-gradient-to-r from-red-600 via-orange-500 to-red-500 text-white p-3 overflow-hidden">
 
@@ -544,11 +533,11 @@ className="h-full w-full object-cover"
       <div>
         <div className="inline-flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full text-[11px]">
           <Flame size={12} />
-          {t.Flash_sale}
+          Flash Sale
         </div>
 
         <h2 className="mt-1 text-sm font-bold">
-          {t.flashSale_subtitle || "Limited time deals"}
+          Limited time deals
         </h2>
       </div>
 
@@ -556,7 +545,7 @@ className="h-full w-full object-cover"
         onClick={() => router.push("/flash-sale")}
         className="text-[11px] bg-white/20 px-3 py-1 rounded-lg"
       >
-        {t.View}
+        View
       </button>
     </div>
 
@@ -610,7 +599,7 @@ className="h-full w-full object-cover"
         ))}
     </div>
   </div>
-</section>  
+</section>
 {/* PRODUCTS */}
 
   <section className="mt-10 px-0">  
@@ -621,7 +610,8 @@ className="h-full w-full object-cover"
     <p className="mt-1 text-sm text-gray-500">  
       {t.curated_products_for_you || "Curated products for you"}  
     </p>  
-  </div>  {loading ? (
+  </div>  
+    {loading ? (
 <div className="grid grid-cols-2 gap-[6px] px-1">
 {Array.from({ length: 8 }).map((_, i) => (
 <ProductSkeleton key={i} />
@@ -641,5 +631,6 @@ t={t}
 )}
 
 </section>  
-</main>  );
+</main>  
+    );
 }
