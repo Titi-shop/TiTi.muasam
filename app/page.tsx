@@ -73,27 +73,30 @@ function getDiscount(product: Product) {
 =========================================================*/
 function ProductCard({
   product,
-  compact = false,
+  onAddToCart,
+  t,
 }: {
   product: Product;
-  compact?: boolean;
+  onAddToCart?: (p: Product) => void;
+  t: Record<string, string>;
 }) {
   const router = useRouter();
 
   return (
     <div
       onClick={() => router.push(`/product/${product.id}`)}
-      className={`
-        flex flex-col overflow-hidden rounded-lg
+      className="
+        flex flex-col overflow-hidden rounded-xl
         bg-[var(--card-bg)]
         border border-black/5
-        shadow-sm active:scale-[0.98]
+        shadow-sm
+        active:scale-[0.98]
         transition
-        ${compact ? "h-[210px]" : "h-[250px]"}
-      `}
+        h-[285px]
+      "
     >
-      {/* IMAGE */}
-      <div className={compact ? "h-[110px]" : "h-[140px]"}>
+      {/* IMAGE (CAO HƠN) */}
+      <div className="relative h-[170px]">
         <Image
           src={getMainImage(product)}
           alt={product.name}
@@ -101,26 +104,36 @@ function ProductCard({
           height={500}
           className="h-full w-full object-cover"
         />
+
+        {product.sale_price && (
+          <div className="absolute left-2 top-2 rounded bg-red-600 px-2 py-[2px] text-[10px] font-bold text-white">
+            -{getDiscount(product)}%
+          </div>
+        )}
       </div>
 
-      {/* CONTENT */}
-      <div className="p-2 flex flex-col flex-1 justify-between">
-        <p className="text-[10px] leading-tight line-clamp-2">
+      {/* CONTENT (RÕ + THOÁNG + DỄ ĐỌC) */}
+      <div className="p-2 flex flex-col flex-1">
+        <p className="text-[12px] font-semibold line-clamp-2 leading-snug text-[var(--foreground)]">
           {product.name}
         </p>
 
-        <div className="text-[9px] text-gray-500 flex items-center gap-1">
-          <Star size={10} />
-          {product.rating_avg || 5} • {product.sold || 0}
+        <div className="mt-1 flex items-center gap-1 text-[11px] text-[var(--text-muted)]">
+          <Star size={12} className="fill-yellow-400 text-yellow-400" />
+          <span className="font-medium">
+            {product.rating_avg || 5}
+          </span>
+          <span>• {product.sold || 0} sold</span>
         </div>
 
-        <div className="mt-auto flex justify-between items-end">
-          <p className="text-xs font-bold text-red-500">
+        {/* PRICE AREA (TÁCH RÕ RÀNG) */}
+        <div className="mt-auto pt-2 flex items-end justify-between">
+          <p className="text-sm font-bold text-red-500">
             {formatPi(product.final_price || product.price)} π
           </p>
 
           {product.sale_price && (
-            <p className="text-[9px] line-through text-gray-400">
+            <p className="text-[10px] text-[var(--text-muted)] line-through">
               {formatPi(product.price)}
             </p>
           )}
@@ -463,7 +476,6 @@ useEffect(() => {
     })}
   </div>
 </section>
-      <div className="flex flex-col gap-2">
 {/* TRENDING */}
 <section className="mt-3 px-3">
   <div className="mb-2 flex items-center justify-between">
