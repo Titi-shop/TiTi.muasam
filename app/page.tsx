@@ -86,26 +86,36 @@ function ProductCard({
 
   return (
     <div
-      onClick={() => router.push(`/product/${product.id}`)}
-      className={`
-        flex flex-col overflow-hidden rounded-xl
-        bg-[var(--card-bg)]
-        border border-black/5
-        shadow-sm
-        active:scale-[0.98]
-        transition-transform duration-150
-        ${compact ? "h-[260px]" : "h-[300px]"}
-      `}
-    >
+  onClick={() => router.push(`/product/${product.id}`)}
+  className={`
+    flex flex-col overflow-hidden rounded-2xl
+    bg-[var(--card-bg)]
+    border
+    shadow-sm
+    hover:shadow-md
+    active:scale-[0.98]
+    transition-all
+    duration-200
+    ${compact ? "h-[270px]" : "h-[320px]"}
+  `}
+  style={{
+    borderColor: "var(--nav-border)",
+  }}
+>
       {/* IMAGE - FIX PROPORTION */}
-      <div className="relative w-full h-[180px]">
-        <Image
-          src={getMainImage(product)}
-          alt={product.name}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 50vw, 25vw"
-        />
+      <div className="relative aspect-square w-full overflow-hidden bg-[var(--card-secondary)]">
+  <Image
+    src={getMainImage(product)}
+    alt={product.name}
+    fill
+    sizes="(max-width:768px) 50vw, 25vw"
+    className="
+      object-cover
+      transition-transform
+      duration-500
+      group-hover:scale-105
+    "
+  />
 
         {product.sale_price && (
           <div className="absolute left-2 top-2 rounded bg-red-600 px-2 py-[2px] text-[10px] font-bold text-white">
