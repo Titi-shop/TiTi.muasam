@@ -508,7 +508,6 @@ useEffect(() => {
 </section>
 
       {/* FLASH SALE */}
-
 <section className="mt-2 px-4">
   <div className="rounded-2xl bg-gradient-to-r from-red-600 via-orange-500 to-red-500 text-white p-3 overflow-hidden">
 
@@ -533,14 +532,22 @@ useEffect(() => {
       </button>
     </div>
 
-    {/* SCROLL */}
+    {/* SCROLL FIX */}
     <div
       className="
         flex gap-3
         overflow-x-auto
-        pb-1
-        scroll-x
+        overflow-y-hidden
+        pb-2
+        -mx-1 px-1
+
+        snap-x snap-mandatory
+        touch-pan-x
+        scroll-smooth
       "
+      style={{
+        WebkitOverflowScrolling: "touch",
+      }}
     >
       {products
         .filter((p) => p.sale_price)
