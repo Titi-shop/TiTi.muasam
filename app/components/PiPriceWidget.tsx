@@ -147,11 +147,8 @@ export default function PiPriceWidget() {
     if (history.length < 2) return "";
 
     const width = 600;
-
     const height = 70;
-
     const max = Math.max(...history);
-
     const min = Math.min(...history);
 
     return history
@@ -459,7 +456,6 @@ export default function PiPriceWidget() {
   >
     {change.toFixed(2)}%
   </span>
-</div>
 
             <span className="mx-6 text-orange-300">
               {t.realtime_price ??
