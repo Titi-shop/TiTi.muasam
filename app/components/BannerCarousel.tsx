@@ -36,7 +36,7 @@ export default function BannerCarousel() {
   if (loading || banners.length === 0) return null;
 
   return (
-    <div className="w-screen -mx-2 overflow-hidden">
+    <div className="w-screen -mx-5 overflow-hidden">
       <Swiper
         modules={[Pagination, Autoplay]}
         pagination={{ clickable: true }}
