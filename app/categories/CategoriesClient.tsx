@@ -516,7 +516,7 @@ bg-[var(--card-bg)] text-[var(--foreground)]`}
 
       {/* PRODUCT GRID */}
 
-      <section className="mt-2 px-4">
+      <section className="mt-2 px-1">
         {filteredProducts.length === 0 ? (
           <div className="flex h-60 flex-col items-center justify-center rounded-[32px] bg-white text-center">
             <p className="text-lg font-bold">
@@ -529,14 +529,25 @@ bg-[var(--card-bg)] text-[var(--foreground)]`}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-[2px]">
             {filteredProducts.map(
               (product) => (
                 <Link
                   key={product.id}
                   href={`/product/${product.id}`}
                 >
-                  <div className="group overflow-hidden rounded-[28px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                  <div
+  className="
+    group
+    overflow-hidden
+    rounded-xl
+    bg-white
+    border border-black/5
+    shadow-sm
+    transition-all
+    duration-200
+  "
+>
                     <div className="relative overflow-hidden">
                       <Image
                         src={getImage(
@@ -547,8 +558,8 @@ bg-[var(--card-bg)] text-[var(--foreground)]`}
                         }
                         width={500}
                         height={500}
-                        className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
+                      
+                       className="   aspect-square  w-full  object-cover "/>
 
                       {product.sale_price && (
                         <div className="absolute left-3 top-3 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
@@ -563,7 +574,20 @@ bg-[var(--card-bg)] text-[var(--foreground)]`}
                             product
                           )
                         }
-                        className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-black shadow-xl"
+                        className="
+absolute
+bottom-2
+right-2
+flex
+h-9
+w-9
+items-center
+justify-center
+rounded-xl
+bg-white
+text-black
+shadow-lg
+"
                       >
                         <ShoppingCart
                           size={18}
@@ -571,7 +595,7 @@ bg-[var(--card-bg)] text-[var(--foreground)]`}
                       </button>
                     </div>
 
-                    <div className="p-4">
+                    <div className="p-2.5">
                       <h3 className="line-clamp-2 min-h-[40px] text-sm font-semibold">
                         {product.name}
                       </h3>
