@@ -410,89 +410,69 @@ useEffect(() => {
   </div>
 </section>
       {/* CATEGORIES */}
+<section className="mt-4 px-3">
+  <div className="mb-2 flex items-center justify-between">
+    <div>
+      <h2 className="text-lg font-bold leading-tight">
+        {t.categories || "Categories"}
+      </h2>
 
-      <section className="mt-6 px-4">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-black">
-              {t.categories ||
-                "Categories"}
-            </h2>
+      <p className="text-[11px] text-[var(--text-muted)]">
+        {t.shop_by_category || "Shop by category"}
+      </p>
+    </div>
+  </div>
 
-            <p className="mt-1 text-sm"
-          style={{ color: "var(--text-muted, #9ca3af)" }}>
-              {t.shop_by_category ||
-                "Shop by category"}
-            </p>
+  <div className="flex gap-2 overflow-x-auto pb-1 scroll-x">
+    {/* ALL */}
+    <button
+      onClick={() => setSelectedCategory("all")}
+      className={`flex min-w-[70px] flex-col items-center gap-1 rounded-xl px-2 py-2 transition border ${
+        selectedCategory === "all"
+          ? "border-[var(--color-primary)]"
+          : "border-transparent"
+      }`}
+    >
+      <div className="h-10 w-10 rounded-lg bg-gray-100" />
+
+      <span className="text-[10px] font-medium">
+        {t.all || "All"}
+      </span>
+    </button>
+
+    {/* ITEMS */}
+    {categories.map((category) => {
+      const active =
+        Number(selectedCategory) === Number(category.id);
+
+      return (
+        <button
+          key={category.id}
+          onClick={() => setSelectedCategory(Number(category.id))}
+          className={`flex min-w-[72px] flex-col items-center gap-1 rounded-xl px-2 py-2 transition border ${
+            active
+              ? "border-[var(--color-primary)]"
+              : "border-transparent"
+          }`}
+        >
+          <div className="h-10 w-10 overflow-hidden rounded-lg bg-gray-100">
+            <Image
+              src={category.icon || "/placeholder.png"}
+              alt={category.key}
+              width={60}
+              height={60}
+              className="h-full w-full object-cover"
+            />
           </div>
-        </div>
 
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          <button
-            onClick={() =>
-              setSelectedCategory("all")
-            }
-           className={`flex min-w-[82px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all border-2
-${
-  selectedCategory === "all"
-    ? "border-[var(--color-primary)]"
-    : "border-transparent"
-}
-`}
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-2xl">
-  
-            </div>
-
-            <span className="text-xs font-semibold">
-              {t.all || "All"}
-            </span>
-          </button>
-
-          {categories.map((category) => {
-            const active =
-              Number(selectedCategory) ===
-              Number(category.id);
-
-            return (
-              <button
-                key={category.id}
-                onClick={() =>
-                  setSelectedCategory(
-                    Number(category.id)
-                  )
-                }
-                className={`flex min-w-[90px] flex-col items-center gap-2 rounded-[24px] px-4 py-4 transition-all border-2
-      ${
-  active
-    ? "border-[var(--color-primary)]"
-    : "border-transparent"
-}
-`}
-              >
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-gray-100">
-                  <Image
-                    src={
-                      category.icon ||
-                      "/placeholder.png"
-                    }
-                    alt={category.key}
-                    width={80}
-                    height={80}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-
-                <span className="line-clamp-2 text-center text-[11px] font-semibold">
-                  {t[category.key] ||
-                    category.key}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
+          <span className="text-[10px] font-medium line-clamp-1">
+            {t[category.key] || category.key}
+          </span>
+        </button>
+      );
+    })}
+  </div>
+</section>
       {/* TRENDING */}
 
       <section className="mt-10 px-4">
