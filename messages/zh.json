@@ -596,34 +596,43 @@
   "best_discounts_available_now": "当前最佳折扣优惠",
   "hot": "热门",
   "sales": "销量",
+
+
   "electronics": "电子产品",
-  "mens_fashion": "男装时尚",
-  "womens_fashion": "女装时尚",
-  "shoes_bags": "鞋包配饰",
-  "beauty_perfume": "美妆香水",
-  "food_beverages": "食品饮料",
-  "groceries": "日用杂货",
-  "mother_baby": "母婴用品",
-  "home_kitchen": "家居厨房",
-  "health_wellness": "健康保健",
-  "sports_outdoors": "运动户外",
-  "automotive": "汽车用品",
-  "pet_supplies": "宠物用品",
-  "appliances": "家用电器",
-  "books_stationery": "图书文具",
-  "watches_jewelry": "钟表珠宝",
-  "gaming": "游戏娱乐",
-  "cameras": "相机摄影",
-  "toys_hobbies": "玩具爱好",
+  "smartphones": "智能手机",
+  "computers": "电脑",
+  "gaming": "游戏设备",
+  "cameras": "相机",
+  "mens_fashion": "男士时尚",
+  "womens_fashion": "女士时尚",
+  "kids_fashion": "儿童时尚",
+  "shoes_bags": "鞋包",
+  "watches_jewelry": "手表与珠宝",
+
+  "beauty": "美容美妆",
+  "perfume": "香水",
+  "skincare": "护肤",
+  "makeup": "彩妆",
+  "food_beverages": "食品与饮料",
+  "groceries": "日用品",
+  "snacks": "零食",
+  "coffee_tea": "咖啡与茶",
+  "health_wellness": "健康与保健",
+  "vitamins": "维生素",
+  "sports_outdoors": "运动与户外",
+  "home_kitchen": "家居与厨房",
   "furniture": "家具",
+  "home_decor": "家居装饰",
+  "appliances": "家用电器",
+  "mother_baby": "母婴",
+  "toys_hobbies": "玩具与爱好",
+  "pet_supplies": "宠物用品",
+  "automotive": "汽车用品",
+  "books": "图书",
   "office_supplies": "办公用品",
+  "travel_accessories": "旅行配件",
   "luxury": "奢侈品",
   "digital_products": "数字产品",
-  "travel_accessories": "旅行配件"
+  "gift_ideas": "礼品推荐"
 
-
-
-
-
-  
 }
