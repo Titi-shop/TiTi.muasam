@@ -151,7 +151,7 @@ export default function PiPriceWidget() {
   }, [history]);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0b1120] shadow-[0_25px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+  <div className="pi-widget relative overflow-hidden rounded-2xl border border-white/10 bg-[#0b1120] shadow-[0_25px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:22px_22px]" />
 
       <div
