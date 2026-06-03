@@ -354,7 +354,6 @@ console.log(
         2
       )
     );
-const variants = normalizeVariants(body.variants ?? []);
 const hasVariants = variants.length > 0;
 const finalPrice = calcFinalPrice(
   variants,
