@@ -20,13 +20,13 @@ import { getPiAccessToken } from "@/lib/piAuth";
 
 export type CartItem = {
   id: string;
-
   product_id: string;
   variant_id: string | null;
+
   name: string;
   slug: string;
-  price: string;
-  sale_price: string;
+  price: number;
+  sale_price: number | null;
   quantity: number;
   thumbnail: string;
   images: string[];
@@ -38,10 +38,12 @@ type AddCartPayload = {
   product_id: string;
   variant_id?: string | null;
   quantity?: number;
-  name?: string;
-  price?: string;
-  sale_price?: string;
-  thumbnail?: string;
+  name: string;
+  slug: string;
+  price: number;
+  sale_price?: number | null;
+  thumbnail: string;
+  images?: string[];
 };
 
 type CartContextType = {
@@ -564,29 +566,25 @@ export function CartProvider({
               }
             } else {
               local.push({
-                id,
+  id,
 
-                product_id:
-                  normalized.product_id,
+  product_id: normalized.product_id,
+  variant_id: normalized.variant_id,
 
-                variant_id:
-                  normalized.variant_id,
+  name: payload.name,
+  slug: payload.slug,
 
-                name: "",
-                slug: "",
+  price: payload.price ?? 0,
+  sale_price: payload.sale_price ?? null,
 
-                price: "0",
-                sale_price: "0",
+  quantity: normalized.quantity,
 
-                quantity:
-                  normalized.quantity,
-                thumbnail: "",
-                images: [],
-                is_price_changed:
-                  false,
-                is_out_of_stock:
-                  false,
-              });
+  thumbnail: payload.thumbnail ?? "",
+  images: payload.images ?? [],
+
+  is_price_changed: false,
+  is_out_of_stock: false,
+});
             }
             saveGuestCart(local);
             setCart([...local]);
