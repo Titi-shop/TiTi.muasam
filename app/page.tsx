@@ -436,29 +436,32 @@ useEffect(() => {
     </div>
   </div>
 </section>
-      {/* CATEGORIES */}
+
+{/* CATEGORY */}
+
 <section className="mt-3 px-3">
-  <div className="mb-3 flex items-center justify-between">
+  <div className="mb-2 flex items-center justify-between">
     <div>
       <h2 className="text-base font-bold leading-tight">
         {t.categories || "Categories"}
       </h2>
 
-      <p className="text-[11px] text-[var(--text-muted)]">
+      <p className="text-[10px] text-[var(--text-muted)]">
         {t.shop_by_category || "Shop by category"}
       </p>
     </div>
   </div>
 
-  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+
     {/* ALL */}
 
     <button
       onClick={() => setSelectedCategory("all")}
-      className={`flex min-w-[82px] flex-col items-center gap-2 rounded-2xl px-2 py-3 transition-all duration-200 ${
+      className={`flex min-w-[72px] flex-col items-center gap-1.5 rounded-xl px-2 py-2 transition-all duration-200 ${
         selectedCategory === "all"
-          ? "scale-105 shadow-lg"
-          : "opacity-90"
+          ? "scale-[1.03] shadow-md"
+          : ""
       }`}
       style={{
         background:
@@ -472,11 +475,7 @@ useEffect(() => {
       }}
     >
       <div
-        className={`flex h-14 w-14 items-center justify-center rounded-2xl text-[30px] ${
-          selectedCategory === "all"
-            ? "bg-white/20"
-            : ""
-        }`}
+        className="flex h-11 w-11 items-center justify-center rounded-xl"
         style={{
           background:
             selectedCategory === "all"
@@ -484,11 +483,13 @@ useEffect(() => {
               : "var(--card-secondary)",
         }}
       >
-        🛍️
+        <span className="text-[22px]">
+          🛍️
+        </span>
       </div>
 
       <span
-        className="text-[11px] font-semibold text-center leading-tight"
+        className="text-[10px] font-medium text-center leading-tight"
         style={{
           color:
             selectedCategory === "all"
@@ -500,22 +501,25 @@ useEffect(() => {
       </span>
     </button>
 
-    {/* CATEGORY */}
+    {/* CATEGORIES */}
 
     {categories.map((category) => {
       const active =
-        Number(selectedCategory) === Number(category.id);
+        Number(selectedCategory) ===
+        Number(category.id);
 
       return (
         <button
           key={category.id}
           onClick={() =>
-            setSelectedCategory(Number(category.id))
+            setSelectedCategory(
+              Number(category.id)
+            )
           }
-          className={`flex min-w-[82px] flex-col items-center gap-2 rounded-2xl px-2 py-3 transition-all duration-200 ${
+          className={`flex min-w-[72px] flex-col items-center gap-1.5 rounded-xl px-2 py-2 transition-all duration-200 ${
             active
-              ? "scale-105 shadow-lg"
-              : "opacity-90"
+              ? "scale-[1.03] shadow-md"
+              : ""
           }`}
           style={{
             background: active
@@ -527,25 +531,28 @@ useEffect(() => {
           }}
         >
           <div
-            className="flex h-14 w-14 items-center justify-center rounded-2xl text-[30px]"
+            className="flex h-11 w-11 items-center justify-center rounded-xl"
             style={{
               background: active
                 ? "rgba(255,255,255,0.15)"
                 : "var(--card-secondary)",
             }}
           >
-            {category.icon}
+            <span className="text-[22px]">
+              {category.icon}
+            </span>
           </div>
 
           <span
-            className="line-clamp-2 text-center text-[11px] font-semibold leading-tight"
+            className="line-clamp-2 text-center text-[10px] font-medium leading-tight"
             style={{
               color: active
                 ? "#fff"
                 : "var(--foreground)",
             }}
           >
-            {t[category.key] || category.key}
+            {t[category.key] ||
+              category.key}
           </span>
         </button>
       );
