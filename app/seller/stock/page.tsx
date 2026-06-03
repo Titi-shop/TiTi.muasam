@@ -1518,12 +1518,15 @@ const handleDelete =
                   )
                 }
                 className="
-                  flex-1
-                  rounded-2xl
-                  py-3
-                  text-sm
-                  font-medium
-                "
+  flex-1
+  rounded-2xl
+  py-3
+  text-sm
+  font-medium
+  bg-orange-100
+  text-orange-600
+  active:scale-95
+"
                 style={{
                   backgroundColor:
                     "var(--soft-bg)",
@@ -1545,19 +1548,21 @@ const handleDelete =
                   deleting
                 }
                 className="
-                  flex-1
-                  rounded-2xl
-                  bg-red-500
-                  py-3
-                  text-sm
-                  font-medium
-                  text-white
-                  disabled:opacity-50
-                "
+  flex-1
+  rounded-2xl
+  py-3
+  text-sm
+  font-medium
+  text-white
+  bg-[var(--color-primary)]
+  hover:bg-[var(--color-primary-dark)]
+  disabled:opacity-50
+  active:scale-95
+"
               >
                 {deleting
-                  ? "Deleting..."
-                  : "Delete"}
+               ? t.deleting
+               : t.delete}
               </button>
             </div>
           </div>
