@@ -297,122 +297,225 @@ console.log(
    CREATE PRODUCT
 ========================================================= */
 
-export async function createProductService(
+
+        export async function createProductService(
   req: Request,
   userId: string
 ) {
-  const body =
-  (await req.json()) as ProductRequestBody;
+  try {
+    const body =
+      (await req.json()) as ProductRequestBody;
 
-/* =========================
-   VALIDATE PRODUCT
-========================= */
-
-const error =
-  validateProductPayload(body);
-
-if (error) {
-  return { error };
-}
-
-const variants =
-  normalizeVariants(
-    body.variants ?? []
-  );
-  
-  const finalPrice =
-    calcFinalPrice(
-      variants,
-      Number(body.price ?? 0)
+    console.log(
+      "📦 CREATE_PRODUCT_BODY",
+      JSON.stringify(body, null, 2)
     );
 
-  const stock = calcStock(
-    variants,
-    Number(body.stock ?? 0)
-  );
+    /* =========================
+       VALIDATE PRODUCT
+    ========================= */
 
-  const product =
-    await createProduct(
-      userId,
+    const error =
+      validateProductPayload(body);
+
+    console.log(
+      "🧪 VALIDATION_RESULT",
       {
-        name: body.name,
-
-        description:
-          body.description ??
-          "",
-
-        detail:
-          body.detail ?? "",
-
-        images:
-          body.images ?? [],
-
-        thumbnail:
-          body.thumbnail ?? "",
-
-        category_id:
-          getCategoryId(body),
-
-        price: finalPrice,
-
-        stock,
-
-        sale_price:
-          body.sale_price ??
-          null,
-
-        sale_start:
-          body.sale_start ??
-          null,
-
-        sale_end:
-          body.sale_end ??
-          null,
-
-        sale_stock:
-          Number(
-            body.sale_stock ?? 0
-          ),
-
+        error,
         sale_enabled:
-          Boolean(
-            body.sale_enabled
-          ),
-
-        is_active:
-          body.is_active !==
-          false,
+          body.sale_enabled,
+        sale_start:
+          body.sale_start,
+        sale_end:
+          body.sale_end,
+        variantCount:
+          body.variants?.length ?? 0,
       }
     );
 
-  if (variants.length > 0) {
-    await replaceVariantsByProductId(
-      product.id,
-      variants
+    if (error) {
+      console.error(
+        "❌ PRODUCT_VALIDATION_FAILED",
+        error
+      );
+
+      return { error };
+    }
+
+    const variants =
+      normalizeVariants(
+        body.variants ?? []
+      );
+
+    console.log(
+      "🧪 NORMALIZED_VARIANTS",
+      JSON.stringify(
+        variants,
+        null,
+        2
+      )
     );
-  }
 
-  const cleanedRates =
-    normalizeShippingRates(
-      body,
-      body.primary_shipping_country
+    const finalPrice =
+      calcFinalPrice(
+        variants,
+        Number(body.price ?? 0)
+      );
+
+    const stock =
+      calcStock(
+        variants,
+        Number(body.stock ?? 0)
+      );
+
+    console.log(
+      "🚀 CREATE_PRODUCT_DB",
+      {
+        finalPrice,
+        stock,
+        sale_enabled:
+          body.sale_enabled,
+        sale_price:
+          body.sale_price,
+        sale_start:
+          body.sale_start,
+        sale_end:
+          body.sale_end,
+        variantCount:
+          variants.length,
+      }
     );
 
-  if (cleanedRates.length > 0) {
-    await upsertShippingRates({
-      productId: product.id,
-      rates: cleanedRates,
-    });
+    const product =
+      await createProduct(
+        userId,
+        {
+          name: body.name,
+
+          description:
+            body.description ??
+            "",
+
+          detail:
+            body.detail ??
+            "",
+
+          images:
+            body.images ?? [],
+
+          thumbnail:
+            body.thumbnail ??
+            "",
+
+          category_id:
+            getCategoryId(body),
+
+          price: finalPrice,
+
+          stock,
+
+          sale_price:
+            body.sale_price ??
+            null,
+
+          sale_start:
+            body.sale_start ??
+            null,
+
+          sale_end:
+            body.sale_end ??
+            null,
+
+          sale_stock:
+            Number(
+              body.sale_stock ?? 0
+            ),
+
+          sale_enabled:
+            Boolean(
+              body.sale_enabled
+            ),
+
+          is_active:
+            body.is_active !==
+            false,
+        }
+      );
+
+    console.log(
+      "✅ PRODUCT_CREATED",
+      {
+        id: product.id,
+      }
+    );
+
+    if (variants.length > 0) {
+      console.log(
+        "🧪 REPLACE_VARIANTS_START",
+        {
+          productId:
+            product.id,
+          count:
+            variants.length,
+        }
+      );
+
+      await replaceVariantsByProductId(
+        product.id,
+        variants
+      );
+
+      console.log(
+        "✅ REPLACE_VARIANTS_DONE"
+      );
+    }
+
+    const cleanedRates =
+      normalizeShippingRates(
+        body,
+        body.primary_shipping_country
+      );
+
+    console.log(
+      "🧪 SHIPPING_RATES",
+      cleanedRates
+    );
+
+    if (
+      cleanedRates.length > 0
+    ) {
+      await upsertShippingRates({
+        productId:
+          product.id,
+        rates:
+          cleanedRates,
+      });
+
+      console.log(
+        "✅ SHIPPING_SAVED"
+      );
+    }
+
+    return {
+      success: true,
+      data: {
+        id: product.id,
+      },
+    };
+  } catch (error) {
+    console.error(
+      "💥 CREATE_PRODUCT_SERVICE_ERROR",
+      error
+    );
+
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "UNKNOWN_ERROR",
+    };
   }
-
-  return {
-    success: true,
-
-    data: {
-      id: product.id,
-    },
-  };
-}
+        }
 
 /* =========================================================
    UPDATE PRODUCT
