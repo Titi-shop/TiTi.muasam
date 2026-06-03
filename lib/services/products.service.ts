@@ -383,60 +383,26 @@ const stock = calcStock(
     );
 
     const product =
-      await createProduct(
-        userId,
-        {
-          name: body.name,
+      await createProduct(userId, {
+  name: body.name,
 
-          description:
-            body.description ??
-            "",
+  description: body.description ?? "",
+  detail: body.detail ?? "",
+  images: body.images ?? [],
+  thumbnail: body.thumbnail ?? "",
+  category_id: getCategoryId(body),
+  price: finalPrice,
+  stock,
+  sale_price: body.sale_price ?? null,
 
-          detail:
-            body.detail ??
-            "",
+  sale_start: body.sale_start ?? null,
+  sale_end: body.sale_end ?? null,
 
-          images:
-            body.images ?? [],
-
-          thumbnail:
-            body.thumbnail ??
-            "",
-
-          category_id:
-            getCategoryId(body),
-
-          price: finalPrice,
-
-          stock,
-
-          sale_price:
-            body.sale_price ??
-            null,
-
-          sale_start:
-            body.sale_start ??
-            null,
-
-          sale_end:
-            body.sale_end ??
-            null,
-
-          sale_stock:
-            Number(
-              body.sale_stock ?? 0
-            ),
-
-          sale_enabled:
-            Boolean(
-              body.sale_enabled
-            ),
-
-          is_active:
-            body.is_active !==
-            false,
-        }
-      );
+  sale_stock: Number(body.sale_stock ?? 0),
+  sale_enabled: Boolean(body.sale_enabled),
+  is_active: body.is_active !== false,
+  has_variants: hasVariants, 
+});
 
     console.log(
       "✅ PRODUCT_CREATED",
@@ -598,9 +564,8 @@ const stock = hasVariants
             body.sale_stock ?? 0
           ),
 
-        is_active:
-          body.is_active ??
-          true,
+        is_active: body.is_active ?? true,
+        has_variants: hasVariants,
       }
     );
 
