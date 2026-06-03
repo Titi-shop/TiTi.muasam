@@ -1523,8 +1523,8 @@ const handleDelete =
   py-3
   text-sm
   font-medium
-  bg-orange-100
-  text-orange-600
+  bg-[var(--card-secondary)]
+  text-[var(--foreground)]
   active:scale-95
 "
                 style={{
