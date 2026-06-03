@@ -858,22 +858,53 @@ style={{
 </>
 )}
       {/* SALE TIME */}
-      
-            <div className="grid grid-cols-2 gap-2">
+<div className="grid grid-cols-2 gap-2">
   <input
     type="datetime-local"
     value={form.sale_start || ""}
-    onChange={(e) =>
-      form.setSale_start(e.target.value)
-    }
+    onChange={(e) => {
+      setErrors((prev) => ({
+        ...prev,
+        sale_start: false,
+      }));
+
+      form.setSale_start(e.target.value);
+    }}
+    className={`border p-2 rounded ${
+      errors.sale_start ? "border-red-500" : ""
+    }`}
+    style={{
+      ...inputStyle,
+      colorScheme: document?.documentElement?.classList.contains(
+        "theme-dark"
+      )
+        ? "dark"
+        : "light",
+    }}
   />
 
   <input
     type="datetime-local"
     value={form.sale_end || ""}
-    onChange={(e) =>
-      form.setSale_end(e.target.value)
-    }
+    onChange={(e) => {
+      setErrors((prev) => ({
+        ...prev,
+        sale_end: false,
+      }));
+
+      form.setSale_end(e.target.value);
+    }}
+    className={`border p-2 rounded ${
+      errors.sale_end ? "border-red-500" : ""
+    }`}
+    style={{
+      ...inputStyle,
+      colorScheme: document?.documentElement?.classList.contains(
+        "theme-dark"
+      )
+        ? "dark"
+        : "light",
+    }}
   />
 </div>
   
