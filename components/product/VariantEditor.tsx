@@ -1,11 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-
 import type { ProductVariant } from "@/types/product";
-
 interface Props {
   variants: ProductVariant[];
 
@@ -34,9 +31,7 @@ const parseNumberInput = (
   if (value.trim() === "") {
     return "";
   }
-
   const parsed = Number(value);
-
   return Number.isNaN(parsed)
     ? ""
     : parsed;
@@ -88,12 +83,12 @@ const hydrateVariant = (
   );
 
   const final_price =
-    sale_enabled &&
-    sale_price !== null &&
-    sale_price > 0 &&
-    sale_price < price
-      ? sale_price
-      : price;
+  sale_enabled &&
+  sale_price !== null &&
+  sale_price > 0 &&
+  sale_price < price
+    ? sale_price
+    : price;
 
   const stock = Number(
     v.stock ?? 0
@@ -136,13 +131,10 @@ const hydrateVariant = (
 
     sale_enabled,
 
-    sale_price:
-      sale_enabled &&
-      sale_price !== null &&
-      sale_price > 0 &&
-      sale_price < price
-        ? sale_price
-        : null,
+   sale_price:
+  sale_enabled
+    ? sale_price
+    : null,
 
     sale_stock,
     sale_sold: Number(
