@@ -483,17 +483,18 @@ if (!hasSaleTime) {
          PAYLOAD
       ========================= */
       const hasVariantSale = normalizedVariants.some(
-        console.log(
+  (v) =>
+    Boolean(v.sale_enabled) &&
+    Number(v.sale_price) > 0
+);
+
+console.log(
   "🧪 VARIANT SALE CHECK",
   {
     hasVariants,
     hasVariantSale,
     variants: normalizedVariants,
   }
-);
-  (v) =>
-    Boolean(v.sale_enabled) &&
-    Number(v.sale_price) > 0
 );
 
 console.log("🧪 FORM CATEGORY:", form.category_id);
