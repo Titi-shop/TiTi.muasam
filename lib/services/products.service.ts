@@ -354,16 +354,17 @@ console.log(
         2
       )
     );
-const hasVariants =
-  body.has_variants === true &&
-  variants.length > 0;
-    const finalPrice = hasVariants
-  ? 0
-  : Number(body.price ?? 0);
+const variants = normalizeVariants(body.variants ?? []);
+const hasVariants = variants.length > 0;
+const finalPrice = calcFinalPrice(
+  variants,
+  Number(body.price ?? 0)
+);
 
-const stock = hasVariants
-  ? 0
-  : Number(body.stock ?? 0);
+const stock = calcStock(
+  variants,
+  Number(body.stock ?? 0)
+);
     console.log(
       "🚀 CREATE_PRODUCT_DB",
       {
