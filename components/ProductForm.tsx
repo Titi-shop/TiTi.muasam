@@ -483,6 +483,14 @@ if (!hasSaleTime) {
          PAYLOAD
       ========================= */
       const hasVariantSale = normalizedVariants.some(
+        console.log(
+  "🧪 VARIANT SALE CHECK",
+  {
+    hasVariants,
+    hasVariantSale,
+    variants: normalizedVariants,
+  }
+);
   (v) =>
     Boolean(v.sale_enabled) &&
     Number(v.sale_price) > 0
@@ -557,6 +565,11 @@ const payload: ProductPayload = {
 
 console.log("🧪 FORM CATEGORY:", form.category_id);
 console.log("📦 PRODUCT PAYLOAD:", payload);
+console.log(
+  "📦 PRODUCT PAYLOAD",
+  JSON.stringify(payload, null, 2)
+);
+
 await onSubmit(payload);
     } catch (error) {
       console.error(error);
