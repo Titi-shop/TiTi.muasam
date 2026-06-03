@@ -308,14 +308,10 @@ if (
       ========================= */
 
       if (
-  !hasVariants &&
-  Number(form.price) < 0.00001
+  hasVariants &&
+  form.sale_enabled
 ) {
-  setErrors({
-    price: true,
-  });
-  setSubmitting(false);
-  return;
+  form.setSale_enabled(false);
       }
 
       /* =========================
@@ -529,10 +525,13 @@ const payload: ProductPayload = {
     : Number(form.stock || 0),
 
   sale_enabled:
-  !hasVariants &&
-  form.sale_enabled &&
-  hasSaleTime &&
-  hasSalePrice,
+  hasVariants
+    ? false
+    : (
+        form.sale_enabled &&
+        hasSaleTime &&
+        hasSalePrice
+      ),
 
   sale_price:
     hasVariants
@@ -858,48 +857,24 @@ style={{
       )}
 
       {/* SALE TIME */}
-      {form.sale_enabled && (
-        <div className="grid grid-cols-2 gap-2">
-          <input
-            type="datetime-local"
-            value={form.sale_start || ""}
-            onChange={(e) => {
-              setErrors((prev) => ({
-                ...prev,
-                sale_start: false,
-              }));
+      
+            <div className="grid grid-cols-2 gap-2">
+  <input
+    type="datetime-local"
+    value={form.sale_start || ""}
+    onChange={(e) =>
+      form.setSale_start(e.target.value)
+    }
+  />
 
-              form.setSale_start(
-                e.target.value
-              );
-            }}
-            className={`border p-2 rounded ${
-              errors.sale_start
-                ? "border-red-500"
-                : ""
-            }`}
-          />
-
-          <input
-            type="datetime-local"
-            value={form.sale_end || ""}
-            onChange={(e) => {
-              setErrors((prev) => ({
-                ...prev,
-                sale_end: false,
-              }));
-
-              form.setSale_end(
-                e.target.value
-              );
-            }}
-            className={`border p-2 rounded ${
-              errors.sale_end
-                ? "border-red-500"
-                : ""
-            }`}
-          />
-        </div>
+  <input
+    type="datetime-local"
+    value={form.sale_end || ""}
+    onChange={(e) =>
+      form.setSale_end(e.target.value)
+    }
+  />
+</div>
       )}
     </>
 )}
