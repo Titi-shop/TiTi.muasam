@@ -61,6 +61,21 @@ export default function ProductForm({
   sale_start?: boolean;
   sale_end?: boolean;
 }>({});
+
+  const inputClass =
+  "w-full border p-2 rounded transition-colors";
+
+const inputStyle = {
+  background: "var(--card-bg)",
+  color: "var(--foreground)",
+  borderColor: "var(--nav-border)",
+};
+
+const cardStyle = {
+  background: "var(--card-bg)",
+  color: "var(--foreground)",
+  borderColor: "var(--nav-border)",
+};
   /* =========================
      HELPERS
   ========================= */
@@ -215,7 +230,12 @@ setErrors((prev) => ({
 
   if (loading || !user) {
     return (
-      <div className="p-8 text-center">
+      <div
+  className="p-8 text-center"
+  style={{
+    color: "var(--foreground)",
+  }}
+>
         {t.loading}
       </div>
     );
@@ -421,9 +441,7 @@ if (!hasSaleTime) {
   ).map(([zone, price]) => ({
     zone:
       zone as ShippingRate["zone"],
-
     price: Number(price || 0),
-
     domestic_country_code:
       zone === "domestic"
         ? form.domestic_country_code
@@ -488,20 +506,13 @@ const payload: ProductPayload = {
 
   description: form.description,
   detail: form.detail,
-
   images: form.images,
   thumbnail: form.images[0] || null,
-
   is_active: form.is_active,
-
-  /* ADD THIS */
   has_variants: hasVariants,
-
   shipping_rates: shippingRatesPayload,
-
   domestic_country_code:
   form.domestic_country_code || null,
-  
   price: hasVariants
     ? undefined
     : Number(form.price),
@@ -581,11 +592,12 @@ await onSubmit(payload);
         : ""
     );
   }}
-  className={`w-full border p-2 rounded ${
-    errors.category
-      ? "border-red-500"
-      : ""
-  }`}
+ className={`w-full border p-2 rounded ${
+  errors.category ? "border-red-500" : ""
+}`}
+style={{
+  ...inputStyle,
+}}
 >
   <option value="">
     {t.select_category}
@@ -618,10 +630,11 @@ await onSubmit(payload);
   }}
   placeholder={t.product_name}
   className={`w-full border p-2 rounded ${
-    errors.name
-      ? "border-red-500"
-      : ""
-  }`}
+  errors.name ? "border-red-500" : ""
+}`}
+style={{
+  ...inputStyle,
+}}
 />
 
       {/* IMAGES */}
@@ -636,6 +649,9 @@ await onSubmit(payload);
                 src={img}
                 alt=""
                 className="h-24 w-full object-cover rounded-lg border"
+style={{
+  borderColor: "var(--nav-border)",
+}}
               />
 
               <button
@@ -647,7 +663,11 @@ await onSubmit(payload);
                     )
                   )
                 }
-                className="absolute top-1 right-1 bg-black/60 text-white px-2 rounded text-xs opacity-0 group-hover:opacity-100"
+               className="absolute top-1 right-1 px-2 rounded text-xs opacity-0 group-hover:opacity-100"
+style={{
+  background: "rgba(0,0,0,.65)",
+  color: "#fff",
+}}
               >
                 ✕
               </button>
@@ -656,11 +676,14 @@ await onSubmit(payload);
         </div>
 
         <label
-  className={`flex flex-col items-center justify-center border-2 border-dashed h-28 rounded-xl cursor-pointer hover:bg-gray-50 ${
-    errors.images
-      ? "border-red-500"
-      : ""
-  }`}
+  className="flex flex-col items-center justify-center border-2 border-dashed h-28 rounded-xl cursor-pointer transition-colors"
+  style={{
+    background: "var(--card-bg)",
+    borderColor: errors.images
+      ? "#ef4444"
+      : "var(--nav-border)",
+    color: "var(--foreground)",
+  }}
 >
           {uploading
             ? t.uploading
@@ -722,11 +745,15 @@ await onSubmit(payload);
               )
             }
             placeholder={t.stock}
-            className="w-full border p-2 rounded"
+           className={inputClass}
+            style={inputStyle}
           />
 
           {/* SALE ENABLE */}
-          <label className="flex justify-between border p-2 rounded">
+          <label
+  className="flex justify-between border p-2 rounded"
+  style={cardStyle}
+>
             <span>{t.enable_sale}</span>
 
             <input
@@ -877,7 +904,10 @@ await onSubmit(payload);
   }
 />
       {/* ACTIVE */}
-      <label className="flex justify-between border p-3 rounded">
+      <label
+  className="flex justify-between border p-3 rounded"
+  style={cardStyle}
+>
         <span>{t.active}</span>
 
         <input
@@ -906,7 +936,8 @@ await onSubmit(payload);
           )
         }
         placeholder={t.description}
-        className="w-full border p-2 rounded min-h-[80px]"
+       className="w-full border p-2 rounded min-h-[80px]"
+style={inputStyle}
       />
 
       {/* DETAIL */}
@@ -918,11 +949,19 @@ await onSubmit(payload);
           )
         }
         placeholder={t.product_detail}
-        className="w-full border p-2 rounded min-h-[120px]"
+       className="w-full border p-2 rounded min-h-[120px]"
+style={inputStyle}
       />
 
       {/* DETAIL IMAGE */}
-      <label className="border-2 border-dashed h-20 flex items-center justify-center rounded cursor-pointer">
+      <label
+  className="border-2 border-dashed h-20 flex items-center justify-center rounded cursor-pointer"
+  style={{
+    background: "var(--card-bg)",
+    borderColor: "var(--nav-border)",
+    color: "var(--foreground)",
+  }}
+>
         {t.upload_detail_image}
 
         <input
@@ -942,14 +981,22 @@ await onSubmit(payload);
 
       {/* SUBMIT */}
       <button
-        type="submit"
-        disabled={submitting}
-        className={`w-full py-3 rounded text-white transition-all duration-200 ${
-          submitting
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-orange-500 active:scale-95"
-        }`}
-      >
+  type="submit"
+  disabled={submitting}
+  className="w-full py-3 rounded transition-all duration-200 active:scale-95"
+  style={{
+    background: submitting
+      ? "var(--text-muted)"
+      : "var(--color-primary)",
+    color:
+      document?.documentElement?.classList.contains(
+        "theme-dark"
+      )
+        ? "#000"
+        : "#fff",
+    opacity: submitting ? 0.7 : 1,
+  }}
+>
         {submitting
           ? t.submitting
           : t.submit_product}
