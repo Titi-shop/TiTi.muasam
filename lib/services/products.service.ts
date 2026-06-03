@@ -539,7 +539,9 @@ const variants =
   normalizeVariants(
     body.variants ?? []
   );
-
+const hasVariants =
+  body.has_variants === true &&
+  variants.length > 0;
  const finalPrice = hasVariants
   ? 0
   : Number(body.price ?? 0);
