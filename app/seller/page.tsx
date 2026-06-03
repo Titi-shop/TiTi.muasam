@@ -94,7 +94,7 @@ return (
 {Array.from({ length: 3 }).map((_, i) => (
 <div  
 key={i}  
-className="h-24 bg-gray-200 rounded-xl animate-pulse"  
+className="h-24 rounded-xl animate-pulse bg-card"
 />
 ))}
 </main>
@@ -103,18 +103,32 @@ className="h-24 bg-gray-200 rounded-xl animate-pulse"
 
 if (!isSeller) {
 return (
-<div className="flex justify-center mt-16 text-gray-500 text-sm">
+<div className="flex justify-center mt-16 text-sm text-muted">
 {t.no_permission ?? "No permission"}
 </div>
 );
 }
 
 return (
-<main className="max-w-4xl mx-auto px-4 py-8 space-y-8 bg-gray-100 min-h-screen">
-
+<main
+  className="max-w-4xl mx-auto px-4 py-8 space-y-8 min-h-screen transition-colors"
+  style={{
+    background: "var(--background)",
+    color: "var(--foreground)",
+  }}
+>
 {/* HEADER */}  
-  <div className="bg-white border border-gray-200 rounded-xl p-3 mb-4">  
- <h2 className="text-xs font-semibold text-gray-700 tracking-wide">  
+  <div
+  className="rounded-xl p-3 mb-4 border"
+  style={{
+    background: "var(--card-bg)",
+    borderColor: "var(--nav-border)",
+  }}
+>
+<h2
+  className="text-xs font-semibold tracking-wide"
+  style={{ color: "var(--foreground)" }}
+> 
 {t.order_status ?? "ORDER STATUS"}  
    </h2>  
    </div>  
@@ -149,7 +163,13 @@ return (
 
   {/* ORDER STATUS */}  
   <section>  
-    <div className="bg-gray-200 border border-gray-300 rounded-xl p-3 mb-4">  
+    <div
+  className="rounded-xl p-3 mb-4 border"
+  style={{
+    background: "var(--card-secondary)",
+    borderColor: "var(--nav-border)",
+  }}
+> 
       <h2 className="text-xs font-semibold text-gray-700 tracking-wide">  
         {t.order_status ?? "ORDER STATUS"}  
       </h2>  
@@ -219,8 +239,13 @@ badge?: number;
 }) {
 return (
 <Link href={href} className="block">
-<div className="relative bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm h-[96px] flex flex-col justify-center hover:shadow-md transition">
-
+<div
+  className="relative rounded-xl p-4 text-center shadow-sm h-[96px] flex flex-col justify-center hover:shadow-md transition border"
+  style={{
+    background: "var(--card-bg)",
+    borderColor: "var(--nav-border)",
+  }}
+>
 {badge !== undefined && badge > 0 && (
 <span className="absolute top-2 right-2 text-[10px] bg-primary text-white px-2 py-0.5 rounded-full">
 {badge}
@@ -228,7 +253,13 @@ return (
 )}
 
   <div className="flex flex-col items-center gap-2">  
-    <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-700">  
+    <div
+  className="w-9 h-9 rounded-full flex items-center justify-center"
+  style={{
+    background: "var(--card-secondary)",
+    color: "var(--foreground)",
+  }}
+>
       {icon}  
     </div>  <span className="text-[12px] font-medium text-gray-700 text-center leading-tight">  
   {label}  
