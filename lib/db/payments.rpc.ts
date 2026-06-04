@@ -40,7 +40,16 @@ function fail(tag: string, data?: unknown) {
 /* =========================================================
    HELPERS
 ========================================================= */
+function normalizeRpcAmount(amount: number | null): number | null {
+  if (amount === null) return null;
 
+  // Pi RPC trả về stroop (10^7)
+  if (amount > 1_000_000) {
+    return amount / 10_000_000;
+  }
+
+  return amount;
+}
 function isUUID(value: unknown): value is string {
   return (
     typeof value === "string" &&
@@ -106,9 +115,7 @@ async function getPaymentIntent(
   );
 
   const row = rs.rows[0] ?? null;
-
   log("DB_FETCH_INTENT_RESULT", row);
-
   return row;
 }
 
@@ -313,8 +320,11 @@ export async function verifyRpcPaymentForReconcile({
     throw new Error("PAYMENT_INTENT_NOT_FOUND");
   }
 
-  const expectedAmount = Number(intent.total_amount);
-
+  const expectedAmountRaw = Number(intent.total_amount);
+const expectedAmount =
+  expectedAmountRaw > 1_000_000
+    ? expectedAmountRaw / 10_000_000
+    : expectedAmountRaw;
   const expectedReceiver = normalizeWallet(
     intent.merchant_wallet
   );
@@ -345,13 +355,10 @@ export async function verifyRpcPaymentForReconcile({
   log("RPC_TRACE", {
     rpcReachable: rpcTx.rpcReachable,
     confirmed: rpcTx.confirmed,
-
     amountFound: rpcTx.debug.amountFound,
     senderFound: rpcTx.debug.senderFound,
     receiverFound: rpcTx.debug.receiverFound,
-
     parseLayer: rpcTx.debug.parseLayer,
-
     hasMeta: rpcTx.debug.hasMeta,
     hasEvents: rpcTx.debug.hasEvents,
   });
@@ -360,10 +367,11 @@ export async function verifyRpcPaymentForReconcile({
      MATCH FLAGS
   ===================================================== */
 
-  const amountMatch =
-    rpcTx.amount !== null &&
-    sameAmount(rpcTx.amount, expectedAmount);
+  const normalizedRpcAmount = normalizeRpcAmount(rpcTx.amount);
 
+const amountMatch =
+  normalizedRpcAmount !== null &&
+  sameAmount(normalizedRpcAmount, expectedAmount);
   const receiverMatch =
     !!rpcTx.receiver &&
     normalizeWallet(rpcTx.receiver) ===
@@ -531,33 +539,19 @@ memo: rpcTx.memo ?? null,
 
   return {
   ok: verified,
-
   audited: true,
-
   verified,
-
   amount: rpcTx.amount,
-
   sender: rpcTx.sender,
-
   receiver: rpcTx.receiver,
-
   ledger: rpcTx.ledger,
-
   confirmed: rpcTx.confirmed,
-
   txStatus,
-
   chainReference: rpcTx.hash,
-
   payload: rpcTx.raw,
-
   reason,
-
   stage,
-
   createdAt: rpcTx.createdAt ?? null,
-
   memo: rpcTx.memo ?? null,
 };
 }
