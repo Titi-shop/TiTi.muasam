@@ -553,6 +553,10 @@ export async function completeOrderByBuyer(
       return "INVALID_STATUS";
     }
 
+    /* ==========================================
+       UPDATE ORDER ITEMS
+    ========================================== */
+
     await client.query(
       `
       UPDATE order_items
@@ -566,10 +570,28 @@ export async function completeOrderByBuyer(
       [orderId]
     );
 
-    await syncOrderFulfillmentStatus(
-  client,
-  orderId
-);
+    /* ==========================================
+       UPDATE ORDER
+    ========================================== */
+
+    await client.query(
+      `
+      UPDATE orders
+      SET
+        fulfillment_status = 'delivered',
+        delivered_at = NOW(),
+        updated_at = NOW()
+      WHERE id = $1
+      `,
+      [orderId]
+    );
+
+    console.log("[ORDER][BUYER_RECEIVED]", {
+      orderId,
+      from: "shipped",
+      to: "delivered",
+    });
+
     return "SUCCESS";
   });
 }
