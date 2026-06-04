@@ -105,10 +105,10 @@ export default function CustomerOrderActions({
 
       {/* COMPLETED */}
       {isCompleted && (
-        <span className={`${base} bg-gray-100 text-gray-600`}>
-          Completed
-        </span>
-      })
+  <span className={`${base} bg-gray-100 text-gray-600`}>
+    Completed
+  </span>
+)}
     </div>
   );
           }
