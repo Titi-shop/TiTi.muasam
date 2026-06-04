@@ -126,7 +126,7 @@ export default function OrdersList({
         "Shippid",
     ],
     [
-      "delivered"
+      "delivered",
       t.delivered_orders??
         "delivered",
       ],
