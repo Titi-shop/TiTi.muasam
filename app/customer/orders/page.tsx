@@ -364,16 +364,16 @@ showToast(
     }
 
     setReviewedMap(prev => ({
-      ...prev,
-      [order.id]: true,
-    }));
+  ...prev,
+  [order.id]: true,
+}));
 
-    resetReview();
-
-    showToast(
-      t.review_success ??
-      "Review success"
-    );
+await mutate();
+resetReview();
+showToast(
+  t.review_success ??
+  "Review success"
+);
   } catch {
     showToast(
       t.review_failed ??
@@ -629,26 +629,51 @@ if (loading || isLoading) {
             </button>
 
             <button
-              type="button"
-              disabled={processingId === activeReviewId}
-              onClick={() => {
-                const order = mergedOrders.find(
-                  item => item.id === activeReviewId
-                );
+  type="button"
+  disabled={
+    processingId === activeReviewId
+  }
+  onClick={() => {
+    if (processingId) return;
 
-                if (order) void handleReview(order);
-              }}
-              className="
-  rounded-2xl
-  border border-orange-500
-  bg-orange-500
-  py-3
-  font-semibold
-  text-white
-"
-            >
-              {t.submit_review ?? "Submit"}
-            </button>
+    const order = mergedOrders.find(
+      item => item.id === activeReviewId
+    );
+
+    if (order) {
+      void handleReview(order);
+    }
+  }}
+  className={`
+    rounded-2xl
+    py-3
+    font-semibold
+    text-white
+    transition
+    ${
+      processingId === activeReviewId
+        ? `
+          bg-orange-400
+          opacity-70
+          cursor-not-allowed
+        `
+        : `
+          bg-orange-500
+          active:scale-95
+        `
+    }
+  `}
+>
+  {processingId === activeReviewId
+    ? (
+        t.processing ??
+        "Submitting..."
+      )
+    : (
+        t.submit_review ??
+        "Submit"
+      )}
+</button>
           </div>
         </div>
       </div>
