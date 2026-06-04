@@ -257,8 +257,25 @@ export default function CustomerOrdersPage() {
 
       if (!res.ok) throw new Error();
 
-      await mutate();
-      showToast(t.received_success ?? "Completed");
+mutate(
+  prev =>
+    prev?.map(order =>
+      order.id === orderId
+        ? {
+            ...order,
+            fulfillment_status:
+              ORDER_STATUS.COMPLETED,
+          }
+        : order
+    ),
+  false
+);
+
+await mutate();
+
+showToast(
+  t.received_success ?? "Completed"
+);
     } catch {
       showToast(t.action_failed ?? "Failed");
     } finally {
@@ -266,9 +283,9 @@ export default function CustomerOrdersPage() {
     }
   }
 
-  async function handleReview(order: Order) {
-    setProcessingId(order.id);
-
+  async function handleReceived(orderId: string) {
+  if (processingId) return;
+  setProcessingId(orderId);
     try {
       const token = await getPiAccessToken();
       if (!token) return showToast(t.login_required ?? "Login required");
@@ -579,15 +596,27 @@ if (loading || isLoading) {
             </button>
 
             <button
-              type="button"
-              onClick={async () => {
-                await handleReceived(confirmReceivedFor);
-                setConfirmReceivedFor(null);
-              }}
-              className="rounded-xl bg-green-600 py-3 text-white"
-            >
-              {t.ok ?? "OK"}
-            </button>
+  type="button"
+  disabled={processingId === confirmReceivedFor}
+  onClick={async () => {
+    if (processingId) return;
+
+    await handleReceived(confirmReceivedFor);
+    setConfirmReceivedFor(null);
+  }}
+  className={`
+    rounded-xl py-3 text-white transition
+    ${
+      processingId === confirmReceivedFor
+        ? "bg-green-400 opacity-70 cursor-not-allowed"
+        : "bg-green-600 active:scale-95"
+    }
+  `}
+>
+  {processingId === confirmReceivedFor
+    ? (t.processing ?? "Processing...")
+    : (t.ok ?? "OK")}
+</button>
           </div>
         </div>
       </div>
