@@ -23,13 +23,15 @@ import {
 type OrderTab =
   | "all"
   | "pending"
+  | "pending_fulfillment"
   | "processing"
-  | "shipping"
+  | "shipped"
+  | "delivered"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "refunded";
 
 type FulfillmentStatus = OrderStatus;
-
 type PaymentStatus =
   | "pending"
   | "paid"
@@ -53,48 +55,21 @@ function normalizeStatus(order: Order): OrderStatus {
   const p = order.payment_status;
   const legacy = order.status;
 
-  if (f === ORDER_STATUS.PENDING_FULFILLMENT) {
-    return ORDER_STATUS.PENDING;
-  }
+  if (f) return f as OrderStatus;
 
-  if (p === "pending") {
-    return ORDER_STATUS.PENDING;
-  }
-
-  if (f === ORDER_STATUS.PROCESSING) {
-    return ORDER_STATUS.PROCESSING;
-  }
-
-  if (
-    f === ORDER_STATUS.SHIPPED ||
-    f === ORDER_STATUS.DELIVERED
-  ) {
-    return ORDER_STATUS.SHIPPED;
-  }
-
-  if (f === ORDER_STATUS.COMPLETED) {
-    return ORDER_STATUS.COMPLETED;
-  }
-
-  if (
-    f === ORDER_STATUS.CANCELLED ||
-    f === ORDER_STATUS.REFUNDED ||
-    p === "failed" ||
-    p === "refunded"
-  ) {
-    return ORDER_STATUS.CANCELLED;
-  }
+  if (p === "pending") return "pending";
+  if (p === "paid") return "pending_fulfillment";
+  if (p === "failed") return "cancelled";
+  if (p === "refunded") return "refunded";
 
   if (
     legacy &&
-    Object.values(ORDER_STATUS).includes(
-      legacy as OrderStatus
-    )
+    Object.values(ORDER_STATUS).includes(legacy as OrderStatus)
   ) {
     return legacy as OrderStatus;
   }
 
-  return ORDER_STATUS.PENDING;
+  return "pending";
 }
 
 /* =======================================================
@@ -172,73 +147,50 @@ function Inner({
   /* ================= TABS ================= */
 
   const tabs: Array<[OrderTab, string]> = [
-    ["all", t.all ?? "All"],
-    ["pending", t.order_pending ?? "Pending"],
-    ["processing", t.order_processing ?? "Processing"],
-    ["shipping", t.order_shipping ?? "Shipping"],
-    ["completed", t.order_completed ?? "Completed"],
-    ["cancelled", t.order_cancelled ?? "Cancelled"],
-  ];
+  ["all", t.all ?? "All"],
+  ["pending", t.order_pending ?? "Pending"],
+  ["pending_fulfillment", t.order_paid ?? "Paid"],
+  ["processing", t.order_processing ?? "Processing"],
+  ["shipped", t.order_shipped ?? "Shipped"],
+  ["delivered", t.order_delivered ?? "Delivered"],
+  ["completed", t.order_completed ?? "Completed"],
+  ["cancelled", t.order_cancelled ?? "Cancelled"],
+  ["refunded", t.order_refunded ?? "Refunded"],
+];
 
   /* ================= COUNTS ================= */
 
   const counts = useMemo(() => {
-    const map: Record<OrderTab, number> = {
-      all: orders.length,
-      pending: 0,
-      processing: 0,
-      shipping: 0,
-      completed: 0,
-      cancelled: 0,
-    };
+  const map: Record<OrderTab, number> = {
+    all: orders.length,
+    pending: 0,
+    pending_fulfillment: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0,
+    completed: 0,
+    cancelled: 0,
+    refunded: 0,
+  };
 
-    for (const o of orders) {
-      const s = normalizeStatus(o);
+  for (const o of orders) {
+    const s = normalizeStatus(o);
+    map[s]++;
+  }
 
-      switch (s) {
-        case ORDER_STATUS.PENDING:
-          map.pending++;
-          break;
-
-        case ORDER_STATUS.PROCESSING:
-          map.processing++;
-          break;
-
-        case ORDER_STATUS.SHIPPED:
-          map.shipping++;
-          break;
-
-        case ORDER_STATUS.COMPLETED:
-          map.completed++;
-          break;
-
-        case ORDER_STATUS.CANCELLED:
-          map.cancelled++;
-          break;
-      }
-    }
-
-    return map;
-  }, [orders]);
+  return map;
+}, [orders]);
 
   /* ================= FILTER ================= */
 
   const filtered = useMemo(() => {
-    if (tab === "all") return orders;
+  if (tab === "all") return orders;
 
-    return orders.filter((o) => {
-      const s = normalizeStatus(o);
-
-      if (tab === "shipping") {
-        return (
-          s === ORDER_STATUS.SHIPPED ||
-          s === ORDER_STATUS.DELIVERED
-        );
-      }
-
-      return s === tab;
-    });
-  }, [orders, tab]);
+  return orders.filter((o) => {
+    const s = normalizeStatus(o);
+    return s === tab;
+  });
+}, [orders, tab]);
 
   /* ================= UI ================= */
 
