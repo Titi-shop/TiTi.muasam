@@ -15,8 +15,9 @@ import OrderCard from "./OrderCard";
 
 export type OrderStatus =
   | "pending"
-  | "confirmed"
-  | "shipping"
+  | "processing"
+  | "shippid"
+  | "delivered"
   | "completed"
   | "returned"
   | "cancelled";
@@ -115,15 +116,20 @@ export default function OrdersList({
         "Pending",
     ],
     [
-      "confirmed",
-      t.confirmed_orders ??
-        "Confirmed",
+      "processing",
+      t.processing_orders ??
+        "processing",
     ],
     [
-      "shipping",
-      t.shipping_orders ??
-        "Shipping",
+      "shippid",
+      t.shippid_orders ??
+        "Shippid",
     ],
+    [
+      "delivered"
+      t.delivered_orders??
+        "delivered",
+      ],
     [
       "completed",
       t.completed_orders ??
@@ -152,8 +158,9 @@ export default function OrdersList({
     > = {
       all: orders.length,
       pending: 0,
-      confirmed: 0,
-      shipping: 0,
+      processing: 0,
+      shippid: 0,
+      delivered: 0,
       completed: 0,
       returned: 0,
       cancelled: 0,
