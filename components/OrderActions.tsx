@@ -130,7 +130,7 @@ export default function OrderActions({
         </>
       )}
 
-      {/* CONFIRMED */}
+      {/* PROCESSING */}
       {status ===
         "processing" &&
         onShipping && (
@@ -149,40 +149,40 @@ export default function OrderActions({
           </button>
         )}
 
-      {/* SHIPPING */}
-      {status === "shipped" && (
-        <span className="px-3 py-2 text-xs rounded-xl bg-blue-50 text-blue-600 font-medium">
-          {t.order_shipping ??
-            "Shipping"}
-        </span>
-      )}
+      {/* SHIPPED */}
+{status === "shipped" && (
+  <span className="px-3 py-2 text-xs rounded-xl bg-blue-50 text-blue-600 font-medium">
+    {t.order_shipping ?? "Shipping"}
+  </span>
+)}
 
-      {/* COMPLETED */}
-      {status ===
-        "completed" && (
-        <span className="px-3 py-2 text-xs rounded-xl bg-green-50 text-green-600 font-medium">
-          {t.order_completed ??
-            "Completed"}
-        </span>
-      )}
+{/* DELIVERED */}
+{status === "delivered" && (
+  <span className="px-3 py-2 text-xs rounded-xl bg-cyan-50 text-cyan-600 font-medium">
+    {t.order_delivered ?? "Delivered"}
+  </span>
+)}
 
-      {/* CANCELLED */}
-      {status ===
-        "cancelled" && (
-        <span className="px-3 py-2 text-xs rounded-xl bg-red-50 text-red-500 font-medium">
-          {t.order_cancelled ??
-            "Cancelled"}
-        </span>
-      )}
+{/* COMPLETED */}
+{status === "completed" && (
+  <span className="px-3 py-2 text-xs rounded-xl bg-green-50 text-green-600 font-medium">
+    {t.order_completed ?? "Completed"}
+  </span>
+)}
 
-      {/* RETURNED */}
-      {status ===
-        "returned" && (
-        <span className="px-3 py-2 text-xs rounded-xl bg-orange-50 text-orange-600 font-medium">
-          {t.order_returned ??
-            "Returned"}
-        </span>
-      )}
+{/* CANCELLED */}
+{status === "cancelled" && (
+  <span className="px-3 py-2 text-xs rounded-xl bg-red-50 text-red-500 font-medium">
+    {t.order_cancelled ?? "Cancelled"}
+  </span>
+)}
+
+{/* REFUNDED */}
+{status === "refunded" && (
+  <span className="px-3 py-2 text-xs rounded-xl bg-orange-50 text-orange-600 font-medium">
+    {t.order_refunded ?? "Refunded"}
+  </span>
+)}
     </div>
   );
 }
