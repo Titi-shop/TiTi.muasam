@@ -271,10 +271,27 @@ mutate(
   false
 );
 
+mutate(
+  prev =>
+    prev?.map(order =>
+      order.id === orderId
+        ? {
+            ...order,
+            fulfillment_status:
+              ORDER_STATUS.CANCELLED,
+          }
+        : order
+    ),
+  false
+);
+
 await mutate();
 
+resetCancel();
+
 showToast(
-  t.received_success ?? "Completed"
+  t.cancel_success ??
+  "Cancelled"
 );
     } catch {
       showToast(t.action_failed ?? "Failed");
@@ -469,13 +486,35 @@ if (loading || isLoading) {
             </button>
 
             <button
-              type="button"
-              disabled={processingId === showCancelFor}
-              onClick={() => handleCancel(showCancelFor)}
-              className="rounded-xl bg-[var(--color-primary)] py-3 text-white"
-            >
-              {t.confirm ?? "Confirm"}
-            </button>
+  type="button"
+  disabled={
+    processingId === showCancelFor
+  }
+  onClick={() => {
+    if (processingId) return;
+
+    void handleCancel(showCancelFor);
+  }}
+  className={`
+    rounded-xl py-3 text-white transition
+    ${
+      processingId === showCancelFor
+        ? `
+          bg-orange-400
+          opacity-70
+          cursor-not-allowed
+        `
+        : `
+          bg-[var(--color-primary)]
+          active:scale-95
+        `
+    }
+  `}
+>
+  {processingId === showCancelFor
+    ? (t.cancelling ?? "Cancelling...")
+    : (t.confirm ?? "Confirm")}
+</button>
           </div>
         </div>
       </div>
