@@ -450,7 +450,7 @@ function SellerOrdersContent() {
         ""
       );
 
-      await mutate();
+      await mutate(undefined, { revalidate: true });
 
       showToast(
         t.confirm_success ??
