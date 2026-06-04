@@ -557,7 +557,7 @@ export async function completeOrderByBuyer(
       `
       UPDATE order_items
       SET
-        fulfillment_status = 'completed',
+        fulfillment_status = 'delivered',
         delivered_at = NOW(),
         updated_at = NOW()
       WHERE order_id = $1
@@ -566,8 +566,10 @@ export async function completeOrderByBuyer(
       [orderId]
     );
 
-    await syncOrderStatus(client, orderId);
-
+    await syncOrderFulfillmentStatus(
+  client,
+  orderId
+);
     return "SUCCESS";
   });
 }
@@ -637,8 +639,10 @@ export async function cancelOrderByBuyer(
       [orderId, reason ?? null]
     );
 
-    await syncOrderStatus(client, orderId);
-
+    await syncOrderFulfillmentStatus(
+  client,
+  orderId
+);
     return "SUCCESS";
   });
 }
