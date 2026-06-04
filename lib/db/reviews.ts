@@ -14,7 +14,7 @@ export type ReviewRow = {
 
 type OrderCheckRow = {
   buyer_id: string;
-  status: string;
+  fulfillment_status: string;
 };
 
 type OrderItemRow = {
@@ -33,11 +33,14 @@ export async function getOrderForReview(
 ): Promise<OrderCheckRow | null> {
   const res = await query<OrderCheckRow>(
     `
-    select o.buyer_id, o.status
+    select
+      o.buyer_id,
+      o.fulfillment_status
     from orders o
-    join order_items oi on oi.order_id = o.id
+    join order_items oi
+      on oi.order_id = o.id
     where o.id = $1
-    and oi.product_id = $2
+      and oi.product_id = $2
     limit 1
     `,
     [orderId, productId]
@@ -115,10 +118,14 @@ export async function createReview(
     throw new Error("FORBIDDEN_ORDER");
   }
 
-  const status = order.status.toLowerCase();
+  const status =
+  order.fulfillment_status.toLowerCase();
 
-  if (status !== "completed" && status !== "received") {
-    throw new Error("ORDER_NOT_REVIEWABLE");
+  if (
+  status !== "delivered" &&
+  status !== "completed"
+) {
+  throw new Error("ORDER_NOT_REVIEWABLE");
   }
 
   /* ===== GET ITEM ===== */
