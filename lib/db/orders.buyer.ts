@@ -614,12 +614,12 @@ export async function cancelOrderByBuyer(
   return withTransaction(async (client) => {
     const { rows } = await client.query<{
       buyer_id: string;
-      payment_status: OrderPaymentStatus;
+      fulfillment_status: OrderFulfillmentStatus;
     }>(
       `
       SELECT
         buyer_id,
-        payment_status
+        fulfillment_status
       FROM orders
       WHERE id = $1
       LIMIT 1
@@ -637,9 +637,23 @@ export async function cancelOrderByBuyer(
       return "FORBIDDEN";
     }
 
-    if (order.payment_status !== "pending") {
+    /* ==========================================
+       CHỈ CHO HỦY KHI CHƯA SHIP
+    ========================================== */
+
+    if (
+      ![
+        "pending",
+        "pending_fulfillment",
+        "processing",
+      ].includes(order.fulfillment_status)
+    ) {
       return "INVALID_STATUS";
     }
+
+    /* ==========================================
+       UPDATE ORDER ITEMS
+    ========================================== */
 
     await client.query(
       `
@@ -661,10 +675,26 @@ export async function cancelOrderByBuyer(
       [orderId, reason ?? null]
     );
 
-    await syncOrderFulfillmentStatus(
-  client,
-  orderId
-);
+    /* ==========================================
+       UPDATE ORDER
+    ========================================== */
+
+    await client.query(
+      `
+      UPDATE orders
+      SET
+        fulfillment_status = 'cancelled',
+        cancelled_at = NOW(),
+        cancel_reason = COALESCE(
+          $2,
+          cancel_reason
+        ),
+        updated_at = NOW()
+      WHERE id = $1
+      `,
+      [orderId, reason ?? null]
+    );
+
     return "SUCCESS";
   });
 }
