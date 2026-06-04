@@ -182,10 +182,13 @@ memo
 
   $21::jsonb,
 
+  COALESCE(
   CASE
     WHEN $4 = true THEN now()
     ELSE NULL
   END,
+  now()
+),
 
   now(),
   now(),
