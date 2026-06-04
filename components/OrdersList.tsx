@@ -1,81 +1,43 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
+import { useEffect, useMemo, useState } from "react";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import OrderCard from "./OrderCard";
 
 /* ======================================================
-   TYPES
+   TYPES (SELLER VIEW ONLY)
 ====================================================== */
 
 export type OrderStatus =
   | "pending"
-  | "pending_fulfillment"
   | "processing"
   | "shipped"
   | "delivered"
   | "completed"
-  | "returned"
-  | "cancelled";
+  | "cancelled"
+  | "refunded";
 
-export type OrderTab =
-  | "all"
-  | OrderStatus;
-
-export interface OrderItem {
-  id: string;
-  product_id: string | null;
-  product_name: string;
-  thumbnail: string;
-  images: string[] | null;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-  status: OrderStatus;
-}
+export type OrderTab = "all" | OrderStatus;
 
 export interface Order {
   id: string;
-  order_number: string;
-  created_at: string;
   status: OrderStatus;
-
-  shipping_name?: string;
-  shipping_phone?: string;
-  shipping_address?: string;
-
+  created_at: string;
   total: number;
-  order_items: OrderItem[];
 }
 
 /* ======================================================
-   PROPS
+   COMPONENT
 ====================================================== */
 
 type Props = {
   orders: Order[];
   onClick: (id: string) => void;
-
   initialTab?: OrderTab;
   onTabChange?: (tab: OrderTab) => void;
-
-  renderActions?: (
-    order: Order
-  ) => React.ReactNode;
-
-  renderExtra?: (
-    order: Order
-  ) => React.ReactNode;
+  renderActions?: (order: Order) => React.ReactNode;
+  renderExtra?: (order: Order) => React.ReactNode;
 };
-
-/* ======================================================
-   COMPONENT
-====================================================== */
 
 export default function OrdersList({
   orders,
@@ -87,58 +49,25 @@ export default function OrdersList({
 }: Props) {
   const { t } = useTranslation();
 
-  /* ======================================================
-     TAB STATE
-  ====================================================== */
-
-  const [tab, setTab] =
-    useState<OrderTab>(
-      initialTab
-    );
+  const [tab, setTab] = useState<OrderTab>(initialTab);
 
   useEffect(() => {
     setTab(initialTab);
   }, [initialTab]);
 
   /* ======================================================
-     TABS
+     TABS (SELLER ONLY)
   ====================================================== */
 
-  const tabs: Array<
-    [OrderTab, string]
-  > = [
-    [
-      "all",
-      t.all ?? "All",
-    ],
-    [
-  "pending",
-  t.pending_orders ?? "Pending",
-],
-[
-  "pending_fulfillment",
-  t.confirmed_orders ?? "Confirmed",
-],
-[
-  "processing",
-  t.processing_orders ?? "Processing",
-],
-[
-  "shipped",
-  t.shipping_orders ?? "Shipped",
-],
-[
-  "completed",
-  t.completed_orders ?? "Completed",
-],
-[
-  "returned",
-  t.returned_orders ?? "Returned",
-],
-[
-  "cancelled",
-  t.cancelled_orders ?? "Cancelled",
-],
+  const tabs: Array<[OrderTab, string]> = [
+    ["all", t.all ?? "All"],
+    ["pending", t.pending ?? "Pending"],
+    ["processing", t.processing ?? "Processing"],
+    ["shipped", t.shipped ?? "Shipped"],
+    ["delivered", t.delivered ?? "Delivered"],
+    ["completed", t.completed ?? "Completed"],
+    ["cancelled", t.cancelled ?? "Cancelled"],
+    ["refunded", t.refunded ?? "Refunded"],
   ];
 
   /* ======================================================
@@ -146,26 +75,20 @@ export default function OrdersList({
   ====================================================== */
 
   const counts = useMemo(() => {
-    const map: Record<OrderStatus, number> = {
-  all: orders.length,
-  pending: 0,
-  pending_fulfillment: 0,
-  processing: 0,
-  shipped: 0,
-  completed: 0,
-  returned: 0,
-  cancelled: 0,
-};
+    const map: Record<OrderTab, number> = {
+      all: orders.length,
+      pending: 0,
+      processing: 0,
+      shipped: 0,
+      delivered: 0,
+      completed: 0,
+      cancelled: 0,
+      refunded: 0,
+    };
 
-    for (const order of orders) {
-      if (
-        typeof map[
-          order.status
-        ] === "number"
-      ) {
-        map[
-          order.status
-        ] += 1;
+    for (const o of orders) {
+      if (o.status in map) {
+        map[o.status as OrderTab]++;
       }
     }
 
@@ -173,29 +96,17 @@ export default function OrdersList({
   }, [orders]);
 
   /* ======================================================
-     FILTERED
+     FILTER
   ====================================================== */
 
   const filtered = useMemo(() => {
-    if (tab === "all") {
-      return orders;
-    }
-
-    return orders.filter(
-      (order) =>
-        order.status === tab
-    );
+    if (tab === "all") return orders;
+    return orders.filter((o) => o.status === tab);
   }, [orders, tab]);
 
-  /* ======================================================
-     HANDLER
-  ====================================================== */
-
-  function handleTabChange(
-    nextTab: OrderTab
-  ) {
-    setTab(nextTab);
-    onTabChange?.(nextTab);
+  function handleTabChange(next: OrderTab) {
+    setTab(next);
+    onTabChange?.(next);
   }
 
   /* ======================================================
@@ -206,82 +117,48 @@ export default function OrdersList({
     <section className="w-full">
       {/* TABS */}
       <div className="sticky top-0 z-20 bg-white border-b shadow-sm">
-        <div className="flex gap-5 px-4 py-3 overflow-x-auto whitespace-nowrap scrollbar-hide">
-          {tabs.map(
-            ([key, label]) => {
-              const active =
-                tab === key;
+        <div className="flex gap-3 px-4 py-3 overflow-x-auto whitespace-nowrap">
+          {tabs.map(([key, label]) => {
+            const active = tab === key;
 
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() =>
-                    handleTabChange(
-                      key
-                    )
-                  }
-                  className={`min-w-fit pb-2 border-b-2 transition text-sm ${
-                    active
-                      ? "border-black text-black font-semibold"
-                      : "border-transparent text-gray-400"
-                  }`}
-                >
-                  <div>
-                    {label}
-                  </div>
-
-                  <div className="text-[11px] mt-1 text-center">
-                    {
-                      counts[
-                        key
-                      ]
-                    }
-                  </div>
-                </button>
-              );
-            }
-          )}
+            return (
+              <button
+                key={key}
+                onClick={() => handleTabChange(key)}
+                className={`px-3 py-2 text-sm rounded-xl border transition ${
+                  active
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-gray-500 border-gray-200"
+                }`}
+              >
+                <div>{label}</div>
+                <div className="text-[11px] opacity-70">
+                  {counts[key]}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* LIST */}
       <div className="p-4 space-y-4">
-        {filtered.length ===
-        0 ? (
-          <div className="bg-white rounded-2xl border p-8 text-center text-sm text-gray-400">
-            {t.no_orders ??
-              "No orders"}
+        {filtered.length === 0 ? (
+          <div className="p-8 text-center text-sm text-gray-400 border rounded-2xl">
+            {t.no_orders ?? "No orders"}
           </div>
         ) : (
-          filtered.map(
-            (order) => (
-              <div
-                key={
-                  order.id
-                }
-                className="space-y-3"
-              >
-                <OrderCard
-                  order={
-                    order
-                  }
-                  onClick={() =>
-                    onClick(
-                      order.id
-                    )
-                  }
-                  actions={renderActions?.(
-                    order
-                  )}
-                />
+          filtered.map((order) => (
+            <div key={order.id} className="space-y-3">
+              <OrderCard
+                order={order}
+                onClick={() => onClick(order.id)}
+                actions={renderActions?.(order)}
+              />
 
-                {renderExtra?.(
-                  order
-                )}
-              </div>
-            )
-          )
+              {renderExtra?.(order)}
+            </div>
+          ))
         )}
       </div>
     </section>
