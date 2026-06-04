@@ -113,57 +113,62 @@ export default function CustomerOrderActions({
         </span>
       )}
 
-      {/* SHIPPED → RECEIVED */}
-      {isShipped && onReceived && (
-        <button
-          disabled={loading !== null}
-          onClick={handleAction(
-            "received",
-            onReceived
-          )}
-          className={`${base} bg-green-600 text-white`}
-        >
-          {loading === "received"
-            ? t.processing ?? "Processing..."
-            : t.received ?? "Received"}
-        </button>
-      )}
+      {/* SHIPPED */}
+{isShipped && onReceived && (
+  <button
+    disabled={loading !== null}
+    onClick={handleAction("received", onReceived)}
+    className={`${base} bg-green-600 text-white`}
+  >
+    {loading === "received"
+      ? t.processing ?? "Processing..."
+      : t.received ?? "Received"}
+  </button>
+)}
 
-      {/* DELIVERED → REVIEW */}
-      {isDelivered &&
-        !reviewed &&
-        onReview && (
-          <button
-            disabled={loading !== null}
-            onClick={handleAction(
-              "review",
-              onReview
-            )}
-            className={`${base} border border-orange-500 text-orange-500`}
-          >
-            {loading === "review"
-              ? t.processing ?? "Processing..."
-              : t.review_orders ?? "Review"}
-          </button>
-        )}
+{/* DELIVERED - CHƯA REVIEW */}
+{isDelivered && !reviewed && onReview && (
+  <button
+    disabled={loading !== null}
+    onClick={handleAction("review", onReview)}
+    className={`${base} border border-orange-500 text-orange-500`}
+  >
+    {loading === "review"
+      ? t.processing ?? "Processing..."
+      : t.review_orders ?? "Review"}
+  </button>
+)}
 
-      {/* REVIEWED */}
-      {isDelivered && reviewed && (
-        <span
-          className={`${base} bg-green-100 text-green-600`}
-        >
-          {t.order_reviewed ?? "Reviewed"}
-        </span>
-      )}
+{/* DELIVERED - ĐÃ REVIEW */}
+{isDelivered && reviewed && (
+  <span
+    className={`${base} bg-green-100 text-green-600`}
+  >
+    {t.order_reviewed ?? "Reviewed"}
+  </span>
+)}
 
-      {/* COMPLETED */}
-      {isCompleted && (
-        <span
-          className={`${base} bg-gray-100 text-gray-600`}
-        >
-          {t.order_completed ?? "Completed"}
-        </span>
-      )}
+{/* COMPLETED - CHƯA REVIEW */}
+{isCompleted && !reviewed && onReview && (
+  <button
+    disabled={loading !== null}
+    onClick={handleAction("review", onReview)}
+    className={`${base} border border-orange-500 text-orange-500`}
+  >
+    {loading === "review"
+      ? t.processing ?? "Processing..."
+      : t.review_orders ?? "Review"}
+  </button>
+)}
+
+{/* COMPLETED - ĐÃ REVIEW */}
+{isCompleted && reviewed && (
+  <span
+    className={`${base} bg-green-100 text-green-600`}
+  >
+    {t.order_reviewed ?? "Reviewed"}
+  </span>
+)}
     </div>
   );
           }
