@@ -9,13 +9,12 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 export type OrderStatus =
   | "pending"
-  | "pending_fulfillment"
   | "processing"
   | "shipped"
   | "delivered"
   | "completed"
   | "cancelled"
-  | "returned";
+  | "refunded";
 
 type Props = {
   status: OrderStatus;
