@@ -13,7 +13,16 @@ import {
   ORDER_STATUS,
   type OrderStatus,
 } from "@/constants/order-status";
-
+const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  pending: "Pending Payment",
+  pending_fulfillment: "Paid (Waiting Seller)",
+  processing: "Processing",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  completed: "Completed",
+  cancelled: "Cancelled",
+  refunded: "Refunded",
+};
 /* =====================================================
    TYPES
 ===================================================== */
