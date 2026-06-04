@@ -12,6 +12,7 @@ export type OrderStatus =
   | "pending_fulfillment"
   | "processing"
   | "shipped"
+  | "delivered"
   | "completed"
   | "cancelled"
   | "returned";
