@@ -684,7 +684,12 @@
   "order_paid": "chờ xác nhận",
   "order_shipped": "đang vận chuyển",
   "order_delivered": " hàng đã giao ",
-  "order_refunded": "đã hoàn tiền"
+  "order_refunded": "đã hoàn tiền",
+  "buy_again": "Mua lại",
+  "received": "Đã nhận hàng",
+  "shipped_orders": "Đơn hàng đang giao",
+  "delivered_orders": "Đơn hàng đã giao"
+
 
 
 
