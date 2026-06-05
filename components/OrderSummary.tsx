@@ -10,7 +10,7 @@ import useSWR from "swr";
 
 import {
   Clock3,
-  Package,
+  PackageCheck,
   Truck,
   CheckCircle2,
   XCircle,
