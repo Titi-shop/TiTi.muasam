@@ -156,7 +156,7 @@ if (
   order.status !== "delivered" &&
   order.status !== "completed"
 ) {
-  setError(t.return_only_completed);
+  setError(t.return_only_delivered);
   initialized.current = true;
   return;
 }
