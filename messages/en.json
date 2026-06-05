@@ -642,7 +642,12 @@
   "order_paid": "Awaiting Confirmation",
   "order_shipped": "Order Shipped",
   "order_delivered": "Order Delivered",
-  "order_refunded": "Order Refunded"
+  "order_refunded": "Order Refunded",
+  "buy_again": "Buy Again",
+  "received": "Received",
+  "shipped_orders": "Shipped Orders",
+  "delivered_orders": "Delivered Orders"
+
 
     
 
