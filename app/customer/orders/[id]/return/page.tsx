@@ -121,17 +121,18 @@ export default function OrderReturnPage() {
   );
 const allowedReturnStatus: OrderStatus[] = [
   "delivered",
-  "completed",
 ];
 
 useEffect(() => {
   if (!order) return;
 
-  if (!allowedReturnStatus.includes(order.status)) {
+  if (!allowedReturnStatus.includes(order.fulfillment_status)) {
     setError(
       t.return_only_delivered ??
         "Chỉ được hoàn đơn khi đơn đã giao"
     );
+
+    setItems([]);
   }
 }, [order]);
   /* ================= REASONS ================= */
@@ -146,34 +147,36 @@ useEffect(() => {
   /* ================= INIT (NO RESET ON I18N) ================= */
 
   useEffect(() => {
-    if (!order || initialized.current) return;
+  useEffect(() => {
+  if (!order || initialized.current) return;
 
-    // try load draft first
-    const saved = localStorage.getItem(draftKey);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved) as ReturnItemState[];
-        setItems(parsed);
-        initialized.current = true;
-        return;
-      } catch {
-      }
-    }
-    
+  const allowed = allowedReturnStatus.includes(order.fulfillment_status);
 
-    setItems(
-      order.order_items.map((i) => ({
-        orderItemId: i.id,
-        selected: false,
-        reasonValue: "",
-        reasonText: "",
-        files: [],
-        previews: [],
-      }))
-    );
+  if (!allowed) return;
 
-    initialized.current = true;
-  }, [order, draftKey]);
+  const saved = localStorage.getItem(draftKey);
+
+  if (saved) {
+    try {
+      setItems(JSON.parse(saved));
+      initialized.current = true;
+      return;
+    } catch {}
+  }
+
+  setItems(
+    order.order_items.map((i) => ({
+      orderItemId: i.id,
+      selected: false,
+      reasonValue: "",
+      reasonText: "",
+      files: [],
+      previews: [],
+    }))
+  );
+
+  initialized.current = true;
+}, [order]);
 
   /* ================= AUTOSAVE ================= */
 
