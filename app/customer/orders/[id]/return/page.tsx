@@ -70,7 +70,6 @@ async function compressImage(file: File): Promise<File> {
     img.src = blobUrl;
   });
 
-  // resize tối đa 1280px
   const maxW = 1280;
   const scale = Math.min(1, maxW / img.width);
   const w = Math.round(img.width * scale);
@@ -82,17 +81,13 @@ async function compressImage(file: File): Promise<File> {
 
   const ctx = canvas.getContext("2d");
   if (!ctx) return file;
-
   ctx.drawImage(img, 0, 0, w, h);
-
   const quality = 0.7; // 0.6–0.8 tuỳ bạn
   const blob: Blob = await new Promise((resolve) =>
     canvas.toBlob((b) => resolve(b as Blob), type, quality)
   );
 
   URL.revokeObjectURL(blobUrl);
-
-  // trả về file mới
   return new File([blob], file.name, { type });
 }
 
@@ -124,7 +119,21 @@ export default function OrderReturnPage() {
     user && orderId ? `/api/orders/${orderId}` : null,
     fetcher
   );
+const allowedReturnStatus: OrderStatus[] = [
+  "delivered",
+  "completed",
+];
 
+useEffect(() => {
+  if (!order) return;
+
+  if (!allowedReturnStatus.includes(order.status)) {
+    setError(
+      t.return_only_delivered ??
+        "Chỉ được hoàn đơn khi đơn đã giao"
+    );
+  }
+}, [order]);
   /* ================= REASONS ================= */
 
   const reasons = [
@@ -151,19 +160,7 @@ export default function OrderReturnPage() {
       }
     }
     
-const allowedReturnStatus: OrderStatus[] = [
-  "delivered",
-  "completed",
-];
 
-if (!allowedReturnStatus.includes(order.status)) {
-  setError(
-    t.return_only_delivered ??
-      "Chỉ được hoàn đơn khi đơn đã giao"
-  );
-  initialized.current = true;
-  return;
-}
     setItems(
       order.order_items.map((i) => ({
         orderItemId: i.id,
@@ -176,8 +173,6 @@ if (!allowedReturnStatus.includes(order.status)) {
     );
 
     initialized.current = true;
-    // ⚠️ không thêm `t` vào deps để tránh reset
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, draftKey]);
 
   /* ================= AUTOSAVE ================= */
