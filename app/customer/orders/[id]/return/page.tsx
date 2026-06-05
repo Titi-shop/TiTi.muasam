@@ -131,8 +131,7 @@ useEffect(() => {
       t.return_only_delivered ??
         "Chỉ được hoàn đơn khi đơn đã giao"
     );
-
-    setItems([]);
+return;
   }
 }, [order]);
   /* ================= REASONS ================= */
@@ -147,15 +146,10 @@ useEffect(() => {
   /* ================= INIT (NO RESET ON I18N) ================= */
 
   useEffect(() => {
-  useEffect(() => {
   if (!order || initialized.current) return;
-
   const allowed = allowedReturnStatus.includes(order.fulfillment_status);
-
   if (!allowed) return;
-
   const saved = localStorage.getItem(draftKey);
-
   if (saved) {
     try {
       setItems(JSON.parse(saved));
@@ -239,7 +233,6 @@ useEffect(() => {
 
     // revoke old previews
     updated[index].previews.forEach(URL.revokeObjectURL);
-
     updated[index].files = compressed;
     updated[index].previews = compressed.map((f) =>
       URL.createObjectURL(f)
