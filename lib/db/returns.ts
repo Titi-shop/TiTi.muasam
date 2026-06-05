@@ -7,7 +7,7 @@ import { query, withTransaction } from "@/lib/db";
 type DbOrder = {
   id: string;
   seller_id: string;
-  status: string;
+  fulfillment_status: string;
 };
 
 type DbOrderItem = {
@@ -17,7 +17,7 @@ type DbOrderItem = {
   product_name: string;
   product_slug: string;
   thumbnail: string;
-  unit_price: string; // numeric → string từ PG
+  unit_price: string;
   quantity: number;
 };
 
@@ -236,8 +236,10 @@ export async function createReturn(
 
     const { rows: orderRows } = await client.query<DbOrder>(
       `
-      SELECT id, seller_id, status
-      FROM orders
+      SELECT
+     id,
+  seller_id,  fulfillment_status
+     FROM orders
       WHERE id = $1 AND buyer_id = $2
       LIMIT 1
       `,
@@ -250,9 +252,10 @@ export async function createReturn(
 
     if (!order) error("ORDER_NOT_FOUND");
 
-    if (!["completed", "delivered"].includes(order.status)) {
-      error("ORDER_NOT_RETURNABLE");
-    }
+    if (
+  !["delivered", "completed"].includes(  order.fulfillment_status  )
+) {  error("ORDER_NOT_RETURNABLE");
+}
 
     /* ================= ITEM ================= */
 
@@ -695,7 +698,7 @@ export async function updateReturnStatusBySeller(
     amount,
   });
 
-  return; // 🔥 giữ return ở đây
+  return; 
 }
 
     /* ================= NORMAL UPDATE ================= */
