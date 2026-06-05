@@ -6,9 +6,6 @@
   "order_confirmed": "Đã xác nhận",
   "order_detail": "Chi tiết",
   "order_completed": "hoàn thành",
-  "order_pending": "chờ xác nhận",
-  "order_pickup": "lấy hàng",
-  "order_shipping": "Đang vận chuyển",
   "order_review": "Đánh giá",
   "order_received": "Đã nhận hàng",
   "admin": "Quản trị viên",
@@ -274,7 +271,7 @@
   "shop_orders": "Đơn hàng cửa hàng",
   "no_orders": "Không có đơn hàng",
   "no_address": "Không có địa chỉ",
-  "order_status_pending": "Chưa thanh toán",
+  "order_status_pending": "chờ xác nhận",
   "order_status_shipped": "Đang giao",
   "order_status_completed": "Hoàn thành",
   "order_status_returned": "Đã trả",
@@ -682,7 +679,12 @@
   "digital_products": "Sản phẩm kỹ thuật số",
   "gift_ideas": "Quà tặng",
   "limited_time_deals": "Ưu đãi có thời hạn",
-  "view": "Xem"
+  "view": "Xem",
+  "order_pending": "chưa thanh toán",
+  "order_paid": "chờ xác nhận",
+  "order_shipped": "đang vận chuyển",
+  "order_delivered": " hàng đã giao ",
+  "order_refunded": "đã hoàn tiền"
 
 
 
