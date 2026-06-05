@@ -148,19 +148,22 @@ export default function OrderReturnPage() {
         initialized.current = true;
         return;
       } catch {
-        // fallback to fresh
       }
     }
     
-if (
-  order.status !== "delivered" &&
-  order.status !== "completed"
-) {
-  setError(t.return_only_delivered);
+const allowedReturnStatus: OrderStatus[] = [
+  "delivered",
+  "completed",
+];
+
+if (!allowedReturnStatus.includes(order.status)) {
+  setError(
+    t.return_only_delivered ??
+      "Chỉ được hoàn đơn khi đơn đã giao"
+  );
   initialized.current = true;
   return;
 }
-
     setItems(
       order.order_items.map((i) => ({
         orderItemId: i.id,
