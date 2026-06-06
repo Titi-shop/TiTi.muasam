@@ -68,7 +68,6 @@ export default function CheckoutSheet({
   const router = useRouter();
   const { t } = useTranslation();
   const { user, piReady, pilogin } = useAuth();
-
   const processingRef = useRef(false);
 
   /* ================= STATE ================= */
@@ -82,9 +81,7 @@ export default function CheckoutSheet({
 
   const item = useMemo(() => {
     if (!product) return null;
-
     const v = product.selectedVariant;
-
     const price =
       v?.final_price ??
       v?.sale_price ??
@@ -131,17 +128,22 @@ export default function CheckoutSheet({
   /* ================= PREVIEW ================= */
 
   const previewKey = useMemo(() => {
-  if (!open || !shipping || !zone || !item) return null;
+  if (!open || !shipping || !item) return null;
 
   return [
     "/api/orders/preview",
     shipping.id,
-    zone,
     quantity,
     item.id,
     product?.selectedVariant?.id ?? "",
   ];
-}, [open, shipping, zone, quantity, item, product]);
+}, [
+  open,
+  shipping,
+  quantity,
+  item,
+  product,
+]);
   const { data: preview, isLoading, isValidating } = useSWR(
     previewKey,
     previewFetcher,
@@ -161,20 +163,14 @@ export default function CheckoutSheet({
   /* ================= RESOLVED REGION ================= */
 
   const resolvedRegion = useMemo(() => {
-    if (!shipping || !regions.length) return null;
+  if (!preview?.buyer_zone) return null;
 
-    const country = shipping.country?.toUpperCase();
-
-    const exact = regions.find(
-      (r) =>
-        r.domestic_country_code?.toUpperCase() === country ||
-        r.country_code?.toUpperCase() === country
-    );
-
-    if (exact) return exact;
-
-    return regions.find((r) => r.zone === zone) ?? null;
-  }, [shipping, regions, zone]);
+  return (
+    regions.find(
+      (r) => r.zone === preview.buyer_zone
+    ) ?? null
+  );
+}, [preview?.buyer_zone, regions]);
 
   /* ================= PAY ================= */
 
@@ -191,7 +187,7 @@ export default function CheckoutSheet({
     user,
     router,
     onClose,
-    zone,
+    zone: preview?.buyer_zone ?? null,
     product,
     showMessage: (text, type = "error") => {
       setMessage({ text, type });
@@ -202,7 +198,7 @@ export default function CheckoutSheet({
         user,
         piReady,
         shipping,
-        zone,
+        zone: preview?.buyer_zone ?? null,
         item,
         quantity,
         maxStock,
@@ -295,9 +291,16 @@ export default function CheckoutSheet({
                 </div>
 
                 <div className="text-xs opacity-70 mt-1">
-                  {getCountryDisplay(shipping?.country)} ·{" "}
-                  {formatPi(resolvedRegion.price)} π
-                </div>
+  {getCountryDisplay(shipping?.country)}
+</div>
+
+<div className="text-xs opacity-70">
+  Zone: {preview?.buyer_zone}
+</div>
+
+<div className="text-xs opacity-70">
+  Shipping: {formatPi(preview?.shipping_fee ?? 0)} π
+</div>
               </>
             )}
           </div>
