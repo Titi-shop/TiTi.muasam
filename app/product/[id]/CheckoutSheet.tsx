@@ -179,39 +179,6 @@ const showMessage = (
     stock: variant?.stock ?? product.stock ?? 0,
   };
 }, [product]);
-  
-  /* ================= PRODUCT ================= */
-
-    const price =
-      typeof product.final_price ===
-      "number"
-        ? product.final_price
-        : product.sale_price &&
-          product.sale_price > 0
-        ? product.sale_price
-        : product.price;
-
-    console.log(
-  "[CHECKOUT PRICE DEBUG]",
-  {
-    price: product.price,
-    sale_price: product.sale_price,
-    sale_enabled: product.sale_enabled,
-    final_price: product.final_price,
-  }
-);
-    return {
-      id: product.id,
-      name: product.name,
-      price,
-      final_price: price,
-      thumbnail:
-        product.thumbnail ||
-        "/placeholder.png",
-      stock:
-        product.stock ?? 0,
-    };
-  }, [product]);
 
   /* =========================================================
      STOCK
