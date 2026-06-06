@@ -15,14 +15,6 @@ import type {
 /* =========================
    PREVIEW DIRECT
 ========================= */
-
-async function previewOrderDirect({
-  shipping,
-  zone,
-  item,
-  quantity,
-  variant_id,
-}: PreviewPayload) {
   const token = await getPiAccessToken();
 
   const res = await fetch("/api/orders/preview", {
@@ -131,12 +123,6 @@ export function validateBeforePay({
     showMessage(t.invalid_shipping_country ?? "invalid_country");
     return false;
   }
-
-  /* ⚠️ IMPORTANT:
-     KHÔNG check province/district nữa
-     CHỈ cần country
-  */
-
   /* =========================
      ITEM CHECK
   ========================= */
@@ -187,7 +173,6 @@ export function useCheckoutPay({
   product,
   showMessage,
   validate,
-  preview,
 }: UseCheckoutPayParams) {
   return useCallback(async () => {
     if (processingRef.current || processing) return;
@@ -195,21 +180,9 @@ export function useCheckoutPay({
 
     processingRef.current = true;
     setProcessing(true);
-
     let completionLocked = false;
-
     try {
-      let finalPreview = preview;
-
-      if (!finalPreview && shipping && zone && item) {
-        finalPreview = await previewOrderDirect({
-          shipping,
-          zone,
-          item,
-          quantity,
-          variant_id: product.variant_id ?? null,
-        });
-      }
+      
 
       const token = await getPiAccessToken();
 
@@ -308,11 +281,8 @@ export function useCheckoutPay({
     callback();
   } catch (err) {
     console.error("🔥 [CHECKOUT] APPROVAL_FAIL", err);
-
     processingRef.current = false;
-
     setProcessing(false);
-
     showMessage(
       t.payment_approve_failed ?? "payment_approve_failed"
     );
@@ -339,9 +309,7 @@ onReadyForServerCompletion: async (
     });
 
     const token = await getPiAccessToken();
-
     console.log("🟡 [CHECKOUT] SUBMIT_STAGE");
-
     const submitRes = await fetch("/api/payments/pi/submit", {
       method: "POST",
       headers: {
