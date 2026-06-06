@@ -254,13 +254,16 @@ export function useCheckoutPay(params: UseCheckoutPayParams) {
   }
 },
 
-onReadyForServerCompletion: async (paymentId, txid, callback) => {
-  if (completionLockedRef.current) {
-  console.warn("🟠 [CHECKOUT] COMPLETION_LOCKED");
-  return;
-}
 
-completionLockedRef.current = true;
+      onReadyForServerCompletion: async (paymentId, txid, callback) => {
+  if (completionLockedRef.current) {
+    console.warn("🟠 [CHECKOUT] COMPLETION_LOCKED");
+    return;
+  }
+
+  completionLockedRef.current = true;
+
+  try {
     console.log("🟡 [CHECKOUT] COMPLETION_STAGE", {
       paymentId,
       txid,
@@ -268,7 +271,7 @@ completionLockedRef.current = true;
     });
 
     const token = await getPiAccessToken();
-    console.log("🟡 [CHECKOUT] SUBMIT_STAGE");
+
     const submitRes = await fetch("/api/payments/pi/submit", {
       method: "POST",
       headers: {
@@ -282,65 +285,33 @@ completionLockedRef.current = true;
       }),
     });
 
-    const submitData = await submitRes
-      .json()
-      .catch(() => null);
-
-    console.log("🟡 [CHECKOUT] SUBMIT_RESPONSE", {
-      status: submitRes.status,
-      data: submitData,
-    });
+    const submitData = await submitRes.json().catch(() => null);
 
     if (!submitRes.ok || !submitData?.success) {
-      throw new Error(
-        submitData?.error || "SUBMIT_FAILED"
-      );
+      throw new Error(submitData?.error || "SUBMIT_FAILED");
     }
 
-    console.log("🟢 [CHECKOUT] SUBMIT_OK", {
-      orderId: submitData?.order_id,
-      amount: submitData?.amount,
-      piCompleted: submitData?.pi_completed,
-    });
+    callback?.();
 
-    /* =====================================================
-       PI SDK CALLBACK
-    ===================================================== */
+    showMessage(
+      t.order_created_success ??
+        "Order created successfully. Please check Pending orders.",
+      "success"
+    );
 
-    try {
-      callback();
+    setTimeout(() => {
+      onClose();
+    }, 1500);
 
-      console.log("🟢 [CHECKOUT] PI_CALLBACK_OK");
-    } catch (sdkErr) {
-      console.warn(
-        "🟠 [CHECKOUT] PI_CALLBACK_WARN",
-        sdkErr
-      );
-    }
-    
-    /* =====================================================
-   SUCCESS UI
-===================================================== */
+  } catch (err) {
+    console.error("🔥 [CHECKOUT] COMPLETION_FAIL", err);
 
-showMessage(
-  t.order_created_success ??
-  "Order created successfully. Please check Pending orders.",
-  "success"
-);
-
-setTimeout(() => {
-  onClose();
-}, 1500);
-} catch (err) {
-  console.error("🔥 [CHECKOUT] COMPLETION_FAIL", err);
-
-  const key = getErrorKey((err as Error).message);
-
-  showMessage(t[key] ?? key);
-} finally {
-  processingRef.current = false;
-  setProcessing(false);
-}
+    const key = getErrorKey((err as Error).message);
+    showMessage(t[key] ?? key);
+  } finally {
+    completionLockedRef.current = false;
+    setProcessing(false);
+  }
 },
 
           onCancel: () => {
