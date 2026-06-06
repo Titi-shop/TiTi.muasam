@@ -33,8 +33,6 @@ ZONE LABEL ENGINE
 
 function getZoneLabel(zone: Region | null, country?: string) {
   if (!zone) return "Unknown";
-
-  const c = country?.toUpperCase();
 const c = country?.toUpperCase();
 
   switch (zone) {
