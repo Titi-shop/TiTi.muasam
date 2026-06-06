@@ -28,41 +28,35 @@ import {
 } from "./checkout.logic";
 
 /* =========================================================
-ZONE LABEL (i18n SAFE)
+ZONE LABEL ENGINE
 ========================================================= */
 
-function getZoneLabel(
-  zone: Region | null,
-  country?: string,
-  t?: any
-) {
-  if (!zone) return t?.zone_unknown ?? "Unknown";
+function getZoneLabel(zone: Region | null, country?: string) {
+  if (!zone) return "Unknown";
 
   const c = country?.toUpperCase();
 
   switch (zone) {
     case "domestic":
-      return c
-        ? `${t?.zone_domestic ?? "Domestic"} (${c})`
-        : t?.zone_domestic ?? "Domestic";
+      return c ? `Domestic (${c})` : "Domestic";
 
     case "asia":
-      return t?.zone_asia ?? "Asia";
+      return "Asia";
 
     case "europe":
-      return t?.zone_europe ?? "Europe";
+      return "Europe";
 
     case "north_america":
-      return t?.zone_north_america ?? "North America";
+      return "North America";
 
     case "sea":
-      return t?.zone_sea ?? "Southeast Asia";
+      return "Southeast Asia";
 
     case "rest_of_world":
-      return t?.zone_global ?? "Global";
+      return "Global";
 
     default:
-      return String(zone);
+      return zone;
   }
 }
 
@@ -71,7 +65,7 @@ DETECT ZONE
 ========================================================= */
 
 function detectZone(country: string, rates: ShippingRate[]): Region | null {
-  if (!country || !Array.isArray(rates)) return null;
+  if (!country || !rates?.length) return null;
 
   const c = country.toUpperCase();
 
@@ -81,7 +75,7 @@ function detectZone(country: string, rates: ShippingRate[]): Region | null {
       r.domestic_country_code?.toUpperCase() === c
   );
 
-  return match ? (match.zone as Region) : null;
+  return (match?.zone as Region) ?? null;
 }
 
 /* =========================================================
@@ -159,11 +153,11 @@ export default function CheckoutSheet({
 
       const z = detectZone(def.country, regions);
 
-      setZone((z ?? regions[0]?.zone ?? null) as Region | null);
+      setZone(z ?? regions[0]?.zone ?? null);
     })();
   }, [open, user, regions]);
 
-  /* ================= PREVIEW ================= */
+  /* ================= SWR PREVIEW ================= */
 
   const previewKey = useMemo(() => {
     if (!open || !shipping || !zone || !item) return null;
@@ -285,30 +279,30 @@ export default function CheckoutSheet({
                 </p>
               </>
             ) : (
-              <p className="text-gray-400">{t.add_shipping}</p>
+              <p className="text-gray-400">➕ {t.add_shipping}</p>
             )}
           </div>
 
           {/* SHIPPING ZONE */}
           <div className="border rounded-xl p-3">
-            <p className="font-medium mb-2">{t.shipping_zone}</p>
+            <p className="font-medium mb-2">🌍 Shipping zone</p>
 
             {!zone ? (
               <p className="text-red-500 text-sm">
-                {t.no_shipping_zone}
+                No shipping zone available
               </p>
             ) : (
               <>
                 <div className="text-sm font-semibold">
-                  {getZoneLabel(zone, shipping?.country, t)}
+                  {getZoneLabel(zone, shipping?.country)}
                 </div>
 
                 <div className="text-xs mt-1 opacity-70">
                   {activeRegion
-                    ? `${getZoneLabel(zone, shipping?.country, t)} · ${formatPi(
+                    ? `${getZoneLabel(zone, shipping?.country)} · ${formatPi(
                         activeRegion.price
                       )} π`
-                    : t.no_rate}
+                    : "No rate"}
                 </div>
               </>
             )}
@@ -318,52 +312,32 @@ export default function CheckoutSheet({
           <div className="flex items-center gap-3">
 
             <img
-              src={item.thumbnail || "/placeholder.png"}
-              className="w-16 h-16 rounded-lg object-cover border"
-              style={{ borderColor: "var(--nav-border)" }}
-              alt={item.name}
+              src={item.thumbnail}
+              className="w-16 h-16 rounded-lg object-cover"
             />
 
             <div className="flex-1">
-              <p className="font-medium line-clamp-2">
-                {item.name}
-              </p>
+              <p className="font-medium">{item.name}</p>
 
               <div className="flex items-center gap-2 mt-2">
 
-                <button
-                  type="button"
-                  onClick={() => setQty(String(Math.max(1, quantity - 1)))}
-                  disabled={quantity <= 1}
-                  className="w-8 h-8 border rounded-lg disabled:opacity-30"
-                >
+                <button onClick={() =>
+                  setQty(String(Math.max(1, quantity - 1)))
+                }>
                   -
                 </button>
 
                 <input
                   value={qty}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "");
-                    if (!val) return setQty("");
-                    if (Number(val) > maxStock) return;
-                    setQty(val);
-                  }}
-                  onBlur={() => {
-                    const v = Number(qty || "0");
-                    if (v < 1) setQty("1");
-                    else if (v > maxStock) setQty(String(maxStock));
-                  }}
-                  className="w-12 text-center border rounded-lg text-sm"
+                  onChange={(e) =>
+                    setQty(e.target.value.replace(/\D/g, ""))
+                  }
+                  className="w-12 text-center border"
                 />
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setQty(String(Math.min(maxStock, quantity + 1)))
-                  }
-                  disabled={quantity >= maxStock}
-                  className="w-8 h-8 border rounded-lg disabled:opacity-30"
-                >
+                <button onClick={() =>
+                  setQty(String(Math.min(maxStock, quantity + 1)))
+                }>
                   +
                 </button>
 
@@ -373,9 +347,7 @@ export default function CheckoutSheet({
             <div className="text-right font-bold text-red-500">
               {formatPi(total)} π
               {(isLoading || isValidating) && (
-                <p className="text-xs text-gray-400">
-                  {t.updating}
-                </p>
+                <p className="text-xs text-gray-400">Updating...</p>
               )}
             </div>
 
@@ -397,4 +369,4 @@ export default function CheckoutSheet({
       </div>
     </div>
   );
-        }
+                       }
