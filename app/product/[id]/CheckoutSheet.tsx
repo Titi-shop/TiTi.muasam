@@ -28,35 +28,6 @@ import {
 } from "./checkout.logic";
 
 /* =========================================================
-ZONE DETECT (PRO)
-========================================================= */
-  const c = country.toUpperCase();
-
-  const match = rates.find(
-    (r) =>
-      r.zone === "domestic" &&
-      r.domestic_country_code?.toUpperCase() === c
-  );
-
-  if (match) return match.zone as Region;
-
-  const priority = [
-    "asia",
-    "sea",
-    "europe",
-    "north_america",
-    "rest_of_world",
-  ];
-
-  for (const z of priority) {
-    const found = rates.find((r) => r.zone === z);
-
-    if (found) return found.zone as Region;
-  }
-
-  return null;
-}
-/* =========================================================
 COMPONENT
 ========================================================= */
 
