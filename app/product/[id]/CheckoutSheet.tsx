@@ -117,13 +117,15 @@ export default function CheckoutSheet({
   /* ================= LOAD ADDRESS ================= */
 
   useEffect(() => {
-    if (!open || !user) return;
+  if (!open || !user) return;
 
-    (async () => {
-      const def = await fetchDefaultAddress();
-      if (!def) return;
+  (async () => {
+    const def = await fetchDefaultAddress();
+    if (!def) return;
 
-      setShipping(def);
+    setShipping(def);
+  })();
+}, [open, user]);
       
   /* ================= PREVIEW ================= */
 
