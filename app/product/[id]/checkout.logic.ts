@@ -158,7 +158,7 @@ export function useCheckoutPay(params: UseCheckoutPayParams) {
         },
         body: JSON.stringify({
           product_id: item.id,
-          variant_id: product?.variant_id ?? null,
+          variant_id: product?.selectedVariant?.id ?? null,
           quantity,
           address_id: shipping?.id,
           zone,
@@ -254,18 +254,13 @@ export function useCheckoutPay(params: UseCheckoutPayParams) {
   }
 },
 
-onReadyForServerCompletion: async (
-  paymentId,
-  txid,
-  callback
-) => {
-  if (completionLocked) {
+onReadyForServerCompletion: async (paymentId, txid, callback) => {
+  if (completionLockedRef.current) {
     console.warn("🟠 [CHECKOUT] COMPLETION_LOCKED");
     return;
   }
 
-  completionLocked = true;
-
+  completionLockedRef.current = true;
   try {
     console.log("🟡 [CHECKOUT] COMPLETION_STAGE", {
       paymentId,
