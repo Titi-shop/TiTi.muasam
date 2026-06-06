@@ -53,7 +53,14 @@ function safeQty(v: unknown): number {
   }
 
   const body = raw as Record<string, unknown>;
-
+     
+if ("zone" in body) {
+  console.warn(
+    "[ORDER_PREVIEW] zone from client ignored",
+    body.zone
+  );
+}
+     
   const address_id =
     typeof body.address_id === "string"
       ? body.address_id.trim()
@@ -129,16 +136,16 @@ export async function previewOrderFromRequest(input: RawInput) {
   console.log("[ORDER][PREVIEW][START]", {
   userId: normalized.userId,
   address_id: normalized.address_id,
-  items: normalized.items.length,
+  items: normalized.items,
 });
 
   const result = await previewOrder(normalized);
 
   console.log("[ORDER][PREVIEW][SUCCESS]", {
-    subtotal: result.subtotal,
-    shipping: result.shipping_fee,
-    total: result.total,
-  });
-
+  buyer_zone: result.buyer_zone,
+  subtotal: result.subtotal,
+  shipping: result.shipping_fee,
+  total: result.total,
+});
   return result;
 }
