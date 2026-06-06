@@ -322,10 +322,13 @@ export default function CheckoutSheet({
 </div>
 
                 <div className="text-xs mt-1 opacity-70">
-                  {activeRegion
-                    ? `${getZoneLabel(zone, shipping?.country)} · ${formatPi(resolvedRegion?.price ?? 0)} π`
-                    : "No rate"}
-                </div>
+  {resolvedRegion
+    ? `${getZoneLabel(
+        resolvedRegion.zone,
+        shipping?.country
+      )} · ${formatPi(resolvedRegion.price)} π`
+    : "No rate"}
+</div>
               </>
             )}
           </div>
