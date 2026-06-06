@@ -238,18 +238,22 @@ export default function CheckoutSheet({
 
   if (!open || !item) return null;
 
-  const activeRegion = useMemo(() => {
+  const resolvedRegion = useMemo(() => {
   if (!shipping || !regions.length) return null;
 
   const country = shipping.country?.toUpperCase();
 
-  return (
-    regions.find(
-      (r) =>
-        r.domestic_country_code?.toUpperCase() === country ||
-        r.country_code?.toUpperCase() === country
-    ) || regions.find((r) => r.zone === zone)
+  // 1. match chính xác country
+  const exact = regions.find(
+    (r) =>
+      r.domestic_country_code?.toUpperCase() === country ||
+      r.country_code?.toUpperCase() === country
   );
+
+  if (exact) return exact;
+
+  // 2. fallback theo zone backend
+  return regions.find((r) => r.zone === zone) ?? null;
 }, [shipping, regions, zone]);
   /* ================= RENDER ================= */
 
@@ -309,10 +313,13 @@ export default function CheckoutSheet({
             ) : (
               <>
                 <div className="text-sm font-semibold">
-                  {activeRegion
-  ? `${getCountryDisplay(shipping?.country)} - ${getZoneLabel(activeRegion.zone, shipping?.country)}`
-  : getZoneLabel(zone, shipping?.country)}
-                </div>
+            {resolvedRegion
+        ? `${getCountryDisplay(shipping?.country)} - ${getZoneLabel(
+        resolvedRegion.zone,
+        shipping?.country
+      )}`
+    : "Unknown region"}
+</div>
 
                 <div className="text-xs mt-1 opacity-70">
                   {activeRegion
