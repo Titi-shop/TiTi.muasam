@@ -307,168 +307,91 @@ export default function CheckoutSheet({
               </>
             )}
           </div>
-          {/* PRODUCT */}    
+          {/* PRODUCT */}
+<div className="flex items-center gap-3">
 
-  <div className="flex items-center gap-3">    
-    <img    
-      src={    
-        item.thumbnail ||    
-        "/placeholder.png"    
-      }    
-      className="    
-        w-16 h-16    
-        rounded-lg    
-        object-cover    
-        border    
-      "    
-      style={{    
-        borderColor:    
-          "var(--nav-border)",    
-      }}    
-    />    
+  {/* IMAGE */}
+  <img
+    src={item?.thumbnail || "/placeholder.png"}
+    className="w-16 h-16 rounded-lg object-cover border"
+    style={{ borderColor: "var(--nav-border)" }}
+    alt={item?.name || "product"}
+  />
 
-    <div className="flex-1">    
-      <p className="font-medium">    
-        {item.name}    
-      </p>    
+  {/* INFO */}
+  <div className="flex-1">
 
-      {/* QUANTITY */}    
+    <p className="font-medium line-clamp-2">
+      {item?.name}
+    </p>
 
-      <div className="flex items-center gap-2 mt-2">    
-        <button    
-          onClick={() => {    
-            const val =    
-              Math.max(    
-                1,    
-                quantity - 1    
-              );    
+    {/* QUANTITY CONTROL */}
+    <div className="flex items-center gap-2 mt-2">
 
-            setQtyDraft(    
-              String(val)    
-            );    
-          }}    
-          disabled={    
-            quantity <= 1    
-          }    
-          className="    
-            w-8 h-8    
-            border rounded-lg    
-            text-lg    
-            disabled:opacity-30    
-          "    
-          style={{    
-            borderColor:    
-              "var(--nav-border)",    
-          }}    
-        >    
-          -    
-        </button>    
+      {/* MINUS */}
+      <button
+        type="button"
+        onClick={() => {
+          const next = Math.max(1, quantity - 1);
+          setQtyDraft(String(next));
+        }}
+        disabled={quantity <= 1}
+        className="w-8 h-8 border rounded-lg text-lg disabled:opacity-30"
+        style={{ borderColor: "var(--nav-border)" }}
+      >
+        -
+      </button>
 
-        <input    
-          type="text"    
-          inputMode="numeric"    
-          value={qtyDraft}    
-          onChange={(e) => {    
-            const val =    
-              e.target.value.replace(    
-                /\D/g,    
-                ""    
-              );    
+      {/* INPUT */}
+      <input
+        type="text"
+        inputMode="numeric"
+        value={qtyDraft}
+        onChange={(e) => {
+          const val = e.target.value.replace(/\D/g, "");
 
-            if (    
-              val === ""    
-            ) {    
-              setQtyDraft(    
-                ""    
-              );    
+          if (!val) {
+            setQtyDraft("");
+            return;
+          }
 
-              return;    
-            }    
+          const num = Number(val);
 
-            const num =    
-              Number(val);    
+          if (num > maxStock) return;
 
-            if (    
-              num >    
-              maxStock    
-            ) {    
-              return;    
-            }    
+          setQtyDraft(val);
+        }}
+        onBlur={() => {
+          const val = Number(qtyDraft || "0");
 
-            setQtyDraft(    
-              val    
-            );    
-          }}    
-          onBlur={() => {    
-            const val =    
-              Number(    
-                qtyDraft ||    
-                  "0"    
-              );    
+          if (val < 1) {
+            setQtyDraft("1");
+          } else if (val > maxStock) {
+            setQtyDraft(String(maxStock));
+          }
+        }}
+        className="w-12 text-center border rounded-lg py-1 text-sm bg-transparent"
+        style={{ borderColor: "var(--nav-border)" }}
+      />
 
-            if (    
-              val < 1    
-            ) {    
-              setQtyDraft(    
-                "1"    
-              );    
-            } else if (    
-              val >    
-              maxStock    
-            ) {    
-              setQtyDraft(    
-                String(    
-                  maxStock    
-                )    
-              );    
-            }    
-          }}    
-          className="    
-            w-12    
-            text-center    
-            border    
-            rounded-lg    
-            py-1    
-            text-sm    
-            bg-transparent    
-          "    
-          style={{    
-            borderColor:    
-              "var(--nav-border)",    
-          }}    
-        />    
+      {/* PLUS */}
+      <button
+        type="button"
+        onClick={() => {
+          const next = Math.min(maxStock, quantity + 1);
+          setQtyDraft(String(next));
+        }}
+        disabled={quantity >= maxStock}
+        className="w-8 h-8 border rounded-lg text-lg disabled:opacity-30"
+        style={{ borderColor: "var(--nav-border)" }}
+      >
+        +
+      </button>
 
-        <button    
-          onClick={() => {    
-            const val =    
-              Math.min(    
-                maxStock,    
-                quantity + 1    
-              );    
+    </div>
+  </div>
 
-            setQtyDraft(    
-              String(val)    
-            );    
-          }}    
-          disabled={    
-            quantity >=    
-            maxStock    
-          }    
-          className="    
-            w-8 h-8    
-            border rounded-lg    
-            text-lg    
-            disabled:opacity-30    
-          "    
-          style={{    
-            borderColor:    
-              "var(--nav-border)",    
-          }}    
-        >    
-          +    
-        </button>    
-      </div>    
-    </div>    
+</div>
 
             <div className="text-right font-bold text-red-500">
               {formatPi(total)} π
