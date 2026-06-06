@@ -241,13 +241,17 @@ quantity,
 ],
 },
 };
-}, [
-open,
-shipping,
-zone,
-item,
-quantity,
-product?.selectedVariant?.id
+},
+  [
+
+  open,
+  shipping?.id,
+  shipping?.country,
+  zone,
+  item?.id,
+  quantity,
+  product?.selectedVariant?.id
+  
 ]);
 /* =========================================================
 PREVIEW
@@ -260,6 +264,7 @@ isLoading,
 isValidating,
 } = useSWR(previewKey, previewFetcher, {
 revalidateOnFocus: false,
+dedupingInterval: 0,
 dedupingInterval: 2000,
 onSuccess: (data) => {
 console.log("[PREVIEW SUCCESS]", data);
@@ -341,9 +346,11 @@ PRICE
 const unitPrice =
 item?.final_price ?? 0;
 
-const total =
-preview?.total ??
-unitPrice * quantity;
+const total = useMemo(() => {
+  if (typeof preview?.total === "number") return preview.total;
+
+  return unitPrice * quantity;
+}, [preview?.total, unitPrice, quantity]);
 
 /* =========================================================
 VALIDATE
