@@ -262,19 +262,11 @@ const showMessage = (
   ========================================================= */
 
 const previewKey = useMemo(() => {
-  if (!open || !shipping || !zone || !item) {
-    console.log("[PREVIEW] SKIP KEY - missing data", {
-      open,
-      shipping,
-      zone,
-      item,
-    });
-    return null;
-  }
+  if (!open || !shipping || !zone || !item) return null;
 
-  const key = {
-    url: "/api/orders/preview",
-    payload: {
+  return [
+    "/api/orders/preview",
+    {
       address_id: shipping.id,
       country: shipping.country?.toUpperCase(),
       zone,
@@ -291,11 +283,7 @@ const previewKey = useMemo(() => {
         },
       ],
     },
-  };
-
-  console.log("[PREVIEW KEY CREATED]", key);
-
-  return key;
+  ] as const;
 }, [
   open,
   shipping?.id,
@@ -308,6 +296,7 @@ const previewKey = useMemo(() => {
   quantity,
   product?.selectedVariant?.id,
 ]);
+
   /* =========================================================
      PREVIEW
   ========================================================= */
@@ -442,7 +431,6 @@ const previewKey = useMemo(() => {
       product,
       showMessage,
       validate,
-      preview,
     });
 
   /* =========================================================
