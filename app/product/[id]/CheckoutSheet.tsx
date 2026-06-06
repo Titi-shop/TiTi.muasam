@@ -8,7 +8,7 @@ useRef,
 } from "react";
 
 import { useRouter } from "next/navigation";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { formatPi } from "@/lib/pi";
@@ -219,39 +219,39 @@ PREVIEW KEY
 ========================================================= */
 
 const previewKey = useMemo(() => {
-if (!open || !shipping || !zone || !item) return null;
+  if (!open || !shipping || !zone || !item) return null;
 
-return {
-url: "/api/orders/preview",
-payload: {
-address_id: shipping.id,
-country: shipping.country?.toUpperCase(),
-zone,
-shipping: {
-region: shipping.region,
-district: shipping.district ?? "",
-ward: shipping.ward ?? "",
-},
-items: [
-{
-product_id: item.id,
-variant_id: product?.selectedVariant?.id ?? null,
-quantity,
-},
-],
-},
-};
-},
-  [
-
+  return JSON.stringify({
+    url: "/api/orders/preview",
+    payload: {
+      address_id: shipping.id,
+      country: shipping.country?.toUpperCase(),
+      zone,
+      shipping: {
+        region: shipping.region,
+        district: shipping.district ?? "",
+        ward: shipping.ward ?? "",
+      },
+      items: [
+        {
+          product_id: item.id,
+          variant_id: product?.selectedVariant?.id ?? null,
+          quantity,
+        },
+      ],
+    },
+  });
+}, [
   open,
   shipping?.id,
   shipping?.country,
+  shipping?.region,
+  shipping?.district,
+  shipping?.ward,
   zone,
   item?.id,
   quantity,
-  product?.selectedVariant?.id
-  
+  product?.selectedVariant?.id,
 ]);
 /* =========================================================
 PREVIEW
@@ -338,7 +338,12 @@ showMessage(
 );
 
 }, [previewError, t]);
+useEffect(() => {
+  if (!previewKey) return;
 
+  // force SWR refetch
+  mutate(previewKey);
+}, [zone, quantity, shipping?.id]);
 /* =========================================================
 PRICE
 ========================================================= */
@@ -347,11 +352,10 @@ const unitPrice =
 item?.final_price ?? 0;
 
 const total = useMemo(() => {
-  if (typeof preview?.total === "number") return preview.total;
+  if (preview?.total != null) return preview.total;
 
   return unitPrice * quantity;
 }, [preview?.total, unitPrice, quantity]);
-
 /* =========================================================
 VALIDATE
 ========================================================= */
