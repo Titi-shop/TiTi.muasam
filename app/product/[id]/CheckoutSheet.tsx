@@ -312,32 +312,52 @@ export default function CheckoutSheet({
           <div className="flex items-center gap-3">
 
             <img
-              src={item.thumbnail}
-              className="w-16 h-16 rounded-lg object-cover"
+              src={item.thumbnail || "/placeholder.png"}
+              className="w-16 h-16 rounded-lg object-cover border"
+              style={{ borderColor: "var(--nav-border)" }}
+              alt={item.name}
             />
 
             <div className="flex-1">
-              <p className="font-medium">{item.name}</p>
+              <p className="font-medium line-clamp-2">
+                {item.name}
+              </p>
 
               <div className="flex items-center gap-2 mt-2">
 
-                <button onClick={() =>
-                  setQty(String(Math.max(1, quantity - 1)))
-                }>
+                <button
+                  type="button"
+                  onClick={() => setQty(String(Math.max(1, quantity - 1)))}
+                  disabled={quantity <= 1}
+                  className="w-8 h-8 border rounded-lg disabled:opacity-30"
+                >
                   -
                 </button>
 
                 <input
                   value={qty}
-                  onChange={(e) =>
-                    setQty(e.target.value.replace(/\D/g, ""))
-                  }
-                  className="w-12 text-center border"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    if (!val) return setQty("");
+                    if (Number(val) > maxStock) return;
+                    setQty(val);
+                  }}
+                  onBlur={() => {
+                    const v = Number(qty || "0");
+                    if (v < 1) setQty("1");
+                    else if (v > maxStock) setQty(String(maxStock));
+                  }}
+                  className="w-12 text-center border rounded-lg text-sm"
                 />
 
-                <button onClick={() =>
-                  setQty(String(Math.min(maxStock, quantity + 1)))
-                }>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setQty(String(Math.min(maxStock, quantity + 1)))
+                  }
+                  disabled={quantity >= maxStock}
+                  className="w-8 h-8 border rounded-lg disabled:opacity-30"
+                >
                   +
                 </button>
 
