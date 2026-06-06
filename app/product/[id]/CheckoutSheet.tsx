@@ -310,22 +310,19 @@ export default function CheckoutSheet({
           {/* PRODUCT */}
 <div className="flex items-center gap-3">
 
-  {/* IMAGE */}
   <img
     src={item?.thumbnail || "/placeholder.png"}
     className="w-16 h-16 rounded-lg object-cover border"
     style={{ borderColor: "var(--nav-border)" }}
-    alt={item?.name || "product"}
   />
 
-  {/* INFO */}
   <div className="flex-1">
 
     <p className="font-medium line-clamp-2">
       {item?.name}
     </p>
 
-    {/* QUANTITY CONTROL */}
+    {/* QUANTITY */}
     <div className="flex items-center gap-2 mt-2">
 
       {/* MINUS */}
@@ -333,10 +330,10 @@ export default function CheckoutSheet({
         type="button"
         onClick={() => {
           const next = Math.max(1, quantity - 1);
-          setQtyDraft(String(next));
+          setQty(String(next));
         }}
         disabled={quantity <= 1}
-        className="w-8 h-8 border rounded-lg text-lg disabled:opacity-30"
+        className="w-8 h-8 border rounded-lg disabled:opacity-30"
         style={{ borderColor: "var(--nav-border)" }}
       >
         -
@@ -346,12 +343,12 @@ export default function CheckoutSheet({
       <input
         type="text"
         inputMode="numeric"
-        value={qtyDraft}
+        value={qty}
         onChange={(e) => {
           const val = e.target.value.replace(/\D/g, "");
 
           if (!val) {
-            setQtyDraft("");
+            setQty("");
             return;
           }
 
@@ -359,16 +356,13 @@ export default function CheckoutSheet({
 
           if (num > maxStock) return;
 
-          setQtyDraft(val);
+          setQty(val);
         }}
         onBlur={() => {
-          const val = Number(qtyDraft || "0");
+          const val = Number(qty || "0");
 
-          if (val < 1) {
-            setQtyDraft("1");
-          } else if (val > maxStock) {
-            setQtyDraft(String(maxStock));
-          }
+          if (val < 1) setQty("1");
+          else if (val > maxStock) setQty(String(maxStock));
         }}
         className="w-12 text-center border rounded-lg py-1 text-sm bg-transparent"
         style={{ borderColor: "var(--nav-border)" }}
@@ -379,10 +373,10 @@ export default function CheckoutSheet({
         type="button"
         onClick={() => {
           const next = Math.min(maxStock, quantity + 1);
-          setQtyDraft(String(next));
+          setQty(String(next));
         }}
         disabled={quantity >= maxStock}
-        className="w-8 h-8 border rounded-lg text-lg disabled:opacity-30"
+        className="w-8 h-8 border rounded-lg disabled:opacity-30"
         style={{ borderColor: "var(--nav-border)" }}
       >
         +
@@ -391,15 +385,18 @@ export default function CheckoutSheet({
     </div>
   </div>
 
+  {/* TOTAL */}
+  <div className="text-right font-bold text-red-500">
+    {formatPi(total)} π
 
-            <div className="text-right font-bold text-red-500">
-              {formatPi(total)} π
-              {(isLoading || isValidating) && (
-                <p className="text-xs text-gray-400">Updating...</p>
-              )}
-            </div>
-          </div>
-        </div>
+    {(isLoading || isValidating) && (
+      <p className="text-xs text-gray-400">
+        Updating...
+      </p>
+    )}
+  </div>
+
+</div>
 
         {/* FOOTER */}
         <div className="border-t p-4">
