@@ -6,43 +6,43 @@ import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
    PREVIEW FETCHER (NO TYPE)
 ========================= */
 
-export const previewFetcher = async ([url, payload]) => {
-  console.log("[API PREVIEW CALL]", { url, payload });
+export const previewFetcher = async ([
+  url,
+  address_id,
+  zone,
+  quantity,
+  product_id,
+  variant_id,
+]) => {
+  console.log("[API PREVIEW CALL]", {
+    url,
+    address_id,
+    zone,
+    quantity,
+    product_id,
+    variant_id,
+  });
 
   const res = await apiAuthFetch(url, {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      address_id,
+      zone,
+      items: [
+        {
+          product_id,
+          variant_id: variant_id === "null" ? null : variant_id,
+          quantity,
+        },
+      ],
+    }),
   });
 
-  console.log("[API PREVIEW STATUS]", res.status);
-
-  let data;
-
-  try {
-    data = await res.json();
-  } catch (e) {
-    console.error("[API PREVIEW INVALID JSON]", e);
-    throw new Error("INVALID_RESPONSE");
-  }
+  const data = await res.json();
 
   if (!res.ok) {
-    console.error("[API PREVIEW FAILED]", data);
-
-    const errorMessage =
-      data &&
-      typeof data === "object" &&
-      typeof data.error === "string"
-        ? data.error
-        : "PREVIEW_FAILED";
-
-    throw new Error(errorMessage);
+    throw new Error(data?.error || "PREVIEW_FAILED");
   }
-
-  if (!data || typeof data !== "object") {
-    throw new Error("INVALID_PREVIEW_RESPONSE");
-  }
-
-  console.log("[API PREVIEW SUCCESS]", data);
 
   return data;
 };
