@@ -1,23 +1,13 @@
+"use client";
+
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
-import type {
-  PreviewPayload,
-  PreviewResponse,
-  AddressApiResponse,
-  ShippingInfo,
-} from "./checkout.types";
-
 /* =========================
-   PREVIEW FETCHER (SAFE)
+   PREVIEW FETCHER (NO TYPE)
 ========================= */
 
-export const previewFetcher = async (
-  [url, payload]: [string, PreviewPayload]
-): Promise<PreviewResponse> => {
-  console.log("[API PREVIEW CALL]", {
-    url,
-    payload,
-  });
+export const previewFetcher = async ([url, payload]) => {
+  console.log("[API PREVIEW CALL]", { url, payload });
 
   const res = await apiAuthFetch(url, {
     method: "POST",
@@ -26,7 +16,7 @@ export const previewFetcher = async (
 
   console.log("[API PREVIEW STATUS]", res.status);
 
-  let data: unknown = null;
+  let data;
 
   try {
     data = await res.json();
@@ -39,45 +29,57 @@ export const previewFetcher = async (
     console.error("[API PREVIEW FAILED]", data);
 
     const errorMessage =
+      data &&
       typeof data === "object" &&
-      data !== null &&
-      "error" in data &&
       typeof data.error === "string"
         ? data.error
         : "PREVIEW_FAILED";
+
     throw new Error(errorMessage);
   }
 
+  if (!data || typeof data !== "object") {
+    throw new Error("INVALID_PREVIEW_RESPONSE");
+  }
+
   console.log("[API PREVIEW SUCCESS]", data);
-  return data as PreviewResponse;
+
+  return data;
 };
+
 /* =========================
-   LOAD ADDRESS (SAFE)
+   FETCH DEFAULT ADDRESS (NO TYPE)
 ========================= */
 
-export async function fetchDefaultAddress(): Promise<ShippingInfo | null> {
+export async function fetchDefaultAddress() {
   try {
     const res = await apiAuthFetch("/api/address");
 
     if (!res.ok) return null;
 
-    const data: AddressApiResponse = await res.json();
+    const data = await res.json();
 
-    const def = data.items?.find((a) => a.is_default);
+    const items = Array.isArray(data?.items)
+      ? data.items
+      : [];
+
+    const def = items.find((a) => a.is_default);
+
     if (!def) return null;
 
     return {
-      id: def.id, 
+      id: def.id,
       name: def.full_name,
       phone: def.phone,
       address_line: def.address_line,
       region: def.region,
-      district: def.district ?? "",
-      ward: def.ward ?? "",
+      district: def.district || "",
+      ward: def.ward || "",
       country: def.country || "",
       postal_code: def.postal_code ?? null,
     };
-  } catch {
+  } catch (err) {
+    console.error("[ADDRESS LOAD ERROR]", err);
     return null;
   }
 }
@@ -86,8 +88,7 @@ export async function fetchDefaultAddress(): Promise<ShippingInfo | null> {
    HELPER
 ========================= */
 
-export function getCountryDisplay(country?: string) {
+export function getCountryDisplay(country) {
   if (!country) return "";
-
-  return country.toUpperCase();
+  return String(country).toUpperCase();
 }
