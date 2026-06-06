@@ -256,12 +256,11 @@ export function useCheckoutPay(params: UseCheckoutPayParams) {
 
 onReadyForServerCompletion: async (paymentId, txid, callback) => {
   if (completionLockedRef.current) {
-    console.warn("🟠 [CHECKOUT] COMPLETION_LOCKED");
-    return;
-  }
+  console.warn("🟠 [CHECKOUT] COMPLETION_LOCKED");
+  return;
+}
 
-  completionLockedRef.current = true;
-  try {
+completionLockedRef.current = true;
     console.log("🟡 [CHECKOUT] COMPLETION_STAGE", {
       paymentId,
       txid,
