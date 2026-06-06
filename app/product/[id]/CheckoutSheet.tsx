@@ -23,14 +23,46 @@ import {
 } from "./checkout.api";
 
 import {
-  getErrorKey,
   validateBeforePay,
   useCheckoutPay,
 } from "./checkout.logic";
 
-/* =========================
-HELPER
-========================= */
+/* =========================================================
+ZONE LABEL ENGINE
+========================================================= */
+
+function getZoneLabel(zone: Region | null, country?: string) {
+  if (!zone) return "Unknown";
+
+  const c = country?.toUpperCase();
+
+  switch (zone) {
+    case "domestic":
+      return c ? `Domestic (${c})` : "Domestic";
+
+    case "asia":
+      return "Asia";
+
+    case "europe":
+      return "Europe";
+
+    case "north_america":
+      return "North America";
+
+    case "sea":
+      return "Southeast Asia";
+
+    case "rest_of_world":
+      return "Global";
+
+    default:
+      return zone;
+  }
+}
+
+/* =========================================================
+DETECT ZONE
+========================================================= */
 
 function detectZone(country: string, rates: ShippingRate[]): Region | null {
   if (!country || !rates?.length) return null;
@@ -46,9 +78,9 @@ function detectZone(country: string, rates: ShippingRate[]): Region | null {
   return (match?.zone as Region) ?? null;
 }
 
-/* =========================
+/* =========================================================
 COMPONENT
-========================= */
+========================================================= */
 
 export default function CheckoutSheet({
   open,
@@ -61,29 +93,25 @@ export default function CheckoutSheet({
 
   const processingRef = useRef(false);
 
-  /* =========================
-  STATE
-  ========================= */
+  /* ================= STATE ================= */
 
   const [shipping, setShipping] = useState<ShippingInfo | null>(null);
   const [zone, setZone] = useState<Region | null>(null);
-  const [qty, setQty] = useState<string>("1");
+  const [qty, setQty] = useState("1");
   const [message, setMessage] = useState<Message | null>(null);
   const [processing, setProcessing] = useState(false);
 
-  /* =========================
-  ITEM
-  ========================= */
+  /* ================= ITEM ================= */
 
   const item = useMemo(() => {
     if (!product) return null;
 
-    const variant = product.selectedVariant;
+    const v = product.selectedVariant;
 
     const price =
-      variant?.final_price ??
-      variant?.sale_price ??
-      variant?.price ??
+      v?.final_price ??
+      v?.sale_price ??
+      v?.price ??
       product.final_price ??
       product.price;
 
@@ -93,7 +121,7 @@ export default function CheckoutSheet({
       price,
       final_price: price,
       thumbnail: product.thumbnail || "/placeholder.png",
-      stock: variant?.stock ?? product.stock ?? 0,
+      stock: v?.stock ?? product.stock ?? 0,
     };
   }, [product]);
 
@@ -101,13 +129,10 @@ export default function CheckoutSheet({
 
   const quantity = useMemo(() => {
     const n = Number(qty);
-    if (!Number.isInteger(n) || n < 1 || n > maxStock) return 1;
-    return n;
+    return Number.isInteger(n) && n >= 1 && n <= maxStock ? n : 1;
   }, [qty, maxStock]);
 
-  /* =========================
-  SHIPPING
-  ========================= */
+  /* ================= SHIPPING ================= */
 
   const regions = useMemo(() => {
     return Array.isArray(product?.shipping_rates)
@@ -115,9 +140,7 @@ export default function CheckoutSheet({
       : [];
   }, [product?.shipping_rates]);
 
-  /* =========================
-  LOAD ADDRESS
-  ========================= */
+  /* ================= LOAD ADDRESS ================= */
 
   useEffect(() => {
     if (!open || !user) return;
@@ -129,13 +152,12 @@ export default function CheckoutSheet({
       setShipping(def);
 
       const z = detectZone(def.country, regions);
+
       setZone(z ?? regions[0]?.zone ?? null);
     })();
   }, [open, user, regions]);
 
-  /* =========================
-  SWR PREVIEW
-  ========================= */
+  /* ================= SWR PREVIEW ================= */
 
   const previewKey = useMemo(() => {
     if (!open || !shipping || !zone || !item) return null;
@@ -159,9 +181,7 @@ export default function CheckoutSheet({
     }
   );
 
-  /* =========================
-  PRICE
-  ========================= */
+  /* ================= PRICE ================= */
 
   const unitPrice = item?.final_price ?? 0;
 
@@ -170,19 +190,14 @@ export default function CheckoutSheet({
     return unitPrice * quantity;
   }, [preview?.total, unitPrice, quantity]);
 
-  /* =========================
-  MESSAGE
-  ========================= */
+  /* ================= MESSAGE ================= */
 
   const showMessage = (text: string, type: "error" | "success" = "error") => {
     setMessage({ text, type });
-
     setTimeout(() => setMessage(null), 3000);
   };
 
-  /* =========================
-  PAY
-  ========================= */
+  /* ================= PAY ================= */
 
   const handlePay = useCheckoutPay({
     item,
@@ -215,18 +230,17 @@ export default function CheckoutSheet({
       }),
   });
 
-  /* =========================
-  GUARD
-  ========================= */
+  /* ================= GUARD ================= */
 
   if (!open || !item) return null;
 
-  /* =========================
-  RENDER
-  ========================= */
+  const activeRegion = regions.find((r) => r.zone === zone);
+
+  /* ================= RENDER ================= */
 
   return (
     <div className="fixed inset-0 z-[100]">
+
       {/* MESSAGE */}
       {message && (
         <div
@@ -242,6 +256,7 @@ export default function CheckoutSheet({
 
       {/* SHEET */}
       <div className="absolute bottom-0 left-0 right-0 h-[65vh] rounded-t-2xl flex flex-col bg-white">
+
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
           {/* ADDRESS */}
@@ -268,23 +283,34 @@ export default function CheckoutSheet({
             )}
           </div>
 
-          {/* SHIPPING */}
+          {/* SHIPPING ZONE */}
           <div className="border rounded-xl p-3">
-            <p className="font-medium mb-2">🌍 Zone</p>
+            <p className="font-medium mb-2">🌍 Shipping zone</p>
 
             {!zone ? (
               <p className="text-red-500 text-sm">
                 No shipping zone available
               </p>
             ) : (
-              <div className="text-sm">
-                {zone} · {formatPi(total)} π
-              </div>
+              <>
+                <div className="text-sm font-semibold">
+                  {getZoneLabel(zone, shipping?.country)}
+                </div>
+
+                <div className="text-xs mt-1 opacity-70">
+                  {activeRegion
+                    ? `${getZoneLabel(zone, shipping?.country)} · ${formatPi(
+                        activeRegion.price
+                      )} π`
+                    : "No rate"}
+                </div>
+              </>
             )}
           </div>
 
           {/* PRODUCT */}
-          <div className="flex gap-3 items-center">
+          <div className="flex items-center gap-3">
+
             <img
               src={item.thumbnail}
               className="w-16 h-16 rounded-lg object-cover"
@@ -294,23 +320,27 @@ export default function CheckoutSheet({
               <p className="font-medium">{item.name}</p>
 
               <div className="flex items-center gap-2 mt-2">
-                <button onClick={() => setQty(String(Math.max(1, quantity - 1)))}>
+
+                <button onClick={() =>
+                  setQty(String(Math.max(1, quantity - 1)))
+                }>
                   -
                 </button>
 
                 <input
                   value={qty}
-                  onChange={(e) => setQty(e.target.value.replace(/\D/g, ""))}
+                  onChange={(e) =>
+                    setQty(e.target.value.replace(/\D/g, ""))
+                  }
                   className="w-12 text-center border"
                 />
 
-                <button
-                  onClick={() =>
-                    setQty(String(Math.min(maxStock, quantity + 1)))
-                  }
-                >
+                <button onClick={() =>
+                  setQty(String(Math.min(maxStock, quantity + 1)))
+                }>
                   +
                 </button>
+
               </div>
             </div>
 
@@ -320,7 +350,9 @@ export default function CheckoutSheet({
                 <p className="text-xs text-gray-400">Updating...</p>
               )}
             </div>
+
           </div>
+
         </div>
 
         {/* FOOTER */}
@@ -328,12 +360,13 @@ export default function CheckoutSheet({
           <button
             onClick={() => handlePay?.()}
             disabled={processing}
-            className="w-full py-3 rounded-xl text-white font-bold bg-orange-500 disabled:opacity-50"
+            className="w-full py-3 rounded-xl bg-orange-500 text-white font-bold disabled:opacity-50"
           >
             {processing ? t.processing : t.pay_now}
           </button>
         </div>
+
       </div>
     </div>
   );
-                }
+      }
