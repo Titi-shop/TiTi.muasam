@@ -120,34 +120,36 @@ export function validateBeforePay({
    PAY
 ========================= */
 
-export function useCheckoutPay({
-  item,
-  quantity,
-  total,
-  shipping,
-  unitPrice,
-  processing,
-  setProcessing,
-  processingRef,
-  t,
-  user,
-  router,
-  onClose,
-  zone,
-  product,
-  showMessage,
-  validate,
-}: UseCheckoutPayParams) {
+export function useCheckoutPay(params: UseCheckoutPayParams) {
+  const {
+    item,
+    quantity,
+    total,
+    shipping,
+    unitPrice,
+    processing,
+    setProcessing,
+    processingRef,
+    t,
+    user,
+    router,
+    onClose,
+    zone,
+    product,
+    showMessage,
+    validate,
+  } = params;
+
+  const completionLockedRef = useRef(false);
+
   return useCallback(async () => {
     if (processingRef.current || processing) return;
     if (!validate()) return;
 
     processingRef.current = true;
     setProcessing(true);
-    const completionLockedRef = useRef(false);
-    try {
-      
 
+    try {
       const token = await getPiAccessToken();
 
       const intentRes = await fetch("/api/payments/pi/create-intent", {
@@ -157,12 +159,12 @@ export function useCheckoutPay({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-  product_id: item.id,
-  variant_id: variantId ?? null,
-  quantity,
-  address_id: shipping?.id,
-  zone,
-}),
+          product_id: item.id,
+          variant_id: product?.variant_id ?? null,
+          quantity,
+          address_id: shipping?.id,
+          zone,
+        }),
       });
 
       const intentData = await intentRes.json().catch(() => null);
