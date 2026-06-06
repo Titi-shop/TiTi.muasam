@@ -30,29 +30,32 @@ import {
 /* =========================================================
 ZONE DETECT (PRO)
 ========================================================= */
-
 function detectZone(country: string, rates: ShippingRate[]): Region | null {
   if (!country || !rates?.length) return null;
 
   const c = country.toUpperCase();
 
-  const exact = rates.find(
+  const match = rates.find(
     (r) =>
-      r.domestic_country_code?.toUpperCase() === c ||
-      r.country_code?.toUpperCase() === c
+      r.zone === "domestic" &&
+      r.domestic_country_code?.toUpperCase() === c
   );
+  if (match) return match.zone as Region;
+  // fallback theo priority SERVER LOGIC
+  const priority = [
+    "asia",
+    "sea",
+    "europe",
+    "north_america",
+    "rest_of_world",
+  ];
 
-  if (exact) return exact.zone as Region;
-
-  const fallback =
-    rates.find((r) => r.zone === "asia") ||
-    rates.find((r) => r.zone === "domestic") ||
-    rates.find((r) => r.zone === "sea") ||
-    rates.find((r) => r.zone === "rest_of_world");
-
-  return (fallback?.zone as Region) ?? null;
+  for (const z of priority) {
+    const found = rates.find((r) => r.zone === z);
+    if (found) return found.zone as Region;
+  }
+  return null;
 }
-
 /* =========================================================
 COMPONENT
 ========================================================= */
@@ -134,18 +137,17 @@ export default function CheckoutSheet({
   /* ================= PREVIEW ================= */
 
   const previewKey = useMemo(() => {
-    if (!open || !shipping || !zone || !item) return null;
+  if (!open || !shipping || !zone || !item) return null;
 
-    return [
-      "/api/orders/preview",
-      shipping.id,
-      zone,
-      quantity,
-      item.id,
-      product?.selectedVariant?.id ?? null,
-    ];
-  }, [open, shipping, zone, quantity, item, product]);
-
+  return [
+    "/api/orders/preview",
+    shipping.id,
+    zone,
+    quantity,
+    item.id,
+    product?.selectedVariant?.id ?? "",
+  ];
+}, [open, shipping, zone, quantity, item, product]);
   const { data: preview, isLoading, isValidating } = useSWR(
     previewKey,
     previewFetcher,
