@@ -233,7 +233,7 @@ const previewKey = useMemo(() => {
       items: [
         {
           product_id: item.id,
-          variant_id: product?.variant_id ?? null,
+          variant_id: product?.selectedVariant?.id ?? null,
           quantity,
         },
       ],
@@ -247,7 +247,6 @@ const previewKey = useMemo(() => {
   quantity,
   product?.selectedVariant?.id
 ]);
-
   /* =========================================================
      PREVIEW
   ========================================================= */
