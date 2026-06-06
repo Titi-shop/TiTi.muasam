@@ -310,14 +310,16 @@ export default function CheckoutSheet({
           {/* PRODUCT */}
 <div className="flex items-center gap-3">
 
+  {/* IMAGE */}
   <img
     src={item?.thumbnail || "/placeholder.png"}
     className="w-16 h-16 rounded-lg object-cover border"
     style={{ borderColor: "var(--nav-border)" }}
+    alt={item?.name || "product"}
   />
 
+  {/* INFO */}
   <div className="flex-1">
-
     <p className="font-medium line-clamp-2">
       {item?.name}
     </p>
@@ -333,7 +335,7 @@ export default function CheckoutSheet({
           setQty(String(next));
         }}
         disabled={quantity <= 1}
-        className="w-8 h-8 border rounded-lg disabled:opacity-30"
+        className="w-8 h-8 border rounded-lg text-lg disabled:opacity-30"
         style={{ borderColor: "var(--nav-border)" }}
       >
         -
@@ -361,8 +363,11 @@ export default function CheckoutSheet({
         onBlur={() => {
           const val = Number(qty || "0");
 
-          if (val < 1) setQty("1");
-          else if (val > maxStock) setQty(String(maxStock));
+          if (val < 1) {
+            setQty("1");
+          } else if (val > maxStock) {
+            setQty(String(maxStock));
+          }
         }}
         className="w-12 text-center border rounded-lg py-1 text-sm bg-transparent"
         style={{ borderColor: "var(--nav-border)" }}
@@ -376,7 +381,7 @@ export default function CheckoutSheet({
           setQty(String(next));
         }}
         disabled={quantity >= maxStock}
-        className="w-8 h-8 border rounded-lg disabled:opacity-30"
+        className="w-8 h-8 border rounded-lg text-lg disabled:opacity-30"
         style={{ borderColor: "var(--nav-border)" }}
       >
         +
@@ -395,7 +400,6 @@ export default function CheckoutSheet({
       </p>
     )}
   </div>
-
 </div>
 
         {/* FOOTER */}
