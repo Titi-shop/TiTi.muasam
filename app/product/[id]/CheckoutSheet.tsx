@@ -278,15 +278,17 @@ def.country,
 availableRegions
 );
 
-if (autoZone) {
-setZone(autoZone);
-} else if (
-availableRegions.length > 0
-) {
-setZone(
-availableRegions[0]
-.zone as Region
-);
+const matchedZone =
+  availableRegions.find(
+    (r) =>
+      r.zone === "domestic" &&
+      r.domestic_country_code?.toUpperCase() === def.country?.toUpperCase()
+  )?.zone;
+
+if (matchedZone) {
+  setZone(matchedZone);
+} else {
+  setZone(null);
 }
 }
 
@@ -399,9 +401,6 @@ string
 domestic:
 t.region_domestic ??
 "Domestic",
-
-
-
 sea:
 t.region_sea ?? "Sea",
 
@@ -612,27 +611,30 @@ borderWidth: "1.5px",
 
 backgroundColor: active
 ? "rgba(249, 115, 22, 0.12)"
-: "var(--card-bg)",
+<div className="border rounded-xl p-3 mb-4">
+  <p className="text-sm font-medium mb-2">
+    🌍 Shipping zone
+  </p>
 
-color: active
-? "#f97316"
-: "var(--foreground)",
+  {!zone ? (
+    <p className="text-red-500 text-sm">
+      Không có vùng ship hợp lệ cho địa chỉ này
+    </p>
+  ) : (
+    <>
+      <div className="text-sm font-semibold">
+        {zone}
+      </div>
 
-borderColor: active
-? "#f97316"
-: "#e5e7eb",
-
-borderWidth: "1.5px",
-}}
-
-> 
-
-<div className="font-medium">  
-{r.zone === "domestic"  
-  ? `Domestic (${r.domestic_country_code ?? "—"})`  
-  : labelMap[r.zone] ?? r.zone}  
-</div>  
-<div    
+      <div className="text-xs mt-1 opacity-70">
+        {formatPi(
+          availableRegions.find(r => r.zone === zone)?.price ?? 0
+        )} π
+      </div>
+    </>
+  )}
+</div>
+                  
                       className="text-[11px] mt-1"    
                       style={{    
                         opacity: 0.8,    
@@ -649,7 +651,8 @@ borderWidth: "1.5px",
             )}    
           </div>    
         )}    
-      </div>    {/* PRODUCT */}    
+      </div>  
+  {/* PRODUCT */}    
 
   <div className="flex items-center gap-3">    
     <img    
@@ -841,7 +844,8 @@ color: "#ef4444", // RED
           )}    
         </div>    
       </div>    
-    </div>    {/* FOOTER */}    
+    </div>   
+{/* FOOTER */}    
 
 <div    
   className="border-t p-4"    
