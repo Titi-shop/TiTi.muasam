@@ -6,45 +6,10 @@ import type { ShippingInfo, Region } from "./checkout.types";
 import type {
   ShippingInfo,
   Region,
-  PreviewPayload,
   CheckoutItem,
   ValidateParams,
   UseCheckoutPayParams,
 } from "./checkout.types";
-
-/* =========================
-   PREVIEW DIRECT
-========================= */
-  const token = await getPiAccessToken();
-
-  const res = await fetch("/api/orders/preview", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    
-  body: JSON.stringify({
-  address_id: shipping.id,
-  items: [
-    {
-      product_id: item.id,
-      variant_id: variant_id ?? null,
-      quantity,
-    },
-  ],
-  }),
-  });
-
-  const data = await res.json().catch(() => null);
-
-  if (!res.ok) {
-    throw new Error(data?.error || "PREVIEW_FAILED");
-  }
-
-  return data as { total: number };
-}
-
 /* =========================
    ERROR MAP
 ========================= */
