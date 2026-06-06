@@ -6,10 +6,9 @@ import type { ShippingInfo, Region } from "./checkout.types";
 import type {
   ShippingInfo,
   Region,
-  CheckoutItem,
   ValidateParams,
   UseCheckoutPayParams,
-} from "./checkout.types";
+} from "@/types/checkout";
 /* =========================
    ERROR MAP
 ========================= */
@@ -158,10 +157,11 @@ export function useCheckoutPay({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-  product_id: item?.id,
-  variant_id: product?.variant_id ?? null,
+  product_id: item.id,
+  variant_id: variantId ?? null,
   quantity,
   address_id: shipping?.id,
+  zone,
 }),
       });
 
