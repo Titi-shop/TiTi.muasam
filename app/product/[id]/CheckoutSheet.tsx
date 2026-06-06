@@ -391,7 +391,6 @@ export default function CheckoutSheet({
     </div>
   </div>
 
-</div>
 
             <div className="text-right font-bold text-red-500">
               {formatPi(total)} π
@@ -399,9 +398,7 @@ export default function CheckoutSheet({
                 <p className="text-xs text-gray-400">Updating...</p>
               )}
             </div>
-
           </div>
-
         </div>
 
         {/* FOOTER */}
