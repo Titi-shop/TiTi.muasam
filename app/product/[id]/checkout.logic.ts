@@ -140,7 +140,6 @@ export function useCheckoutPay(params: UseCheckoutPayParams) {
   } = params;
 
   const completionLockedRef = useRef(false);
-
   return useCallback(async () => {
     if (processingRef.current || processing) return;
     if (!validate()) return;
