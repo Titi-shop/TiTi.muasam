@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback ,useRef} from "react";
 import { getPiAccessToken } from "@/lib/piAuth";
 import type { ShippingInfo, Region } from "./checkout.types";
 import type {
@@ -145,7 +145,7 @@ export function useCheckoutPay({
 
     processingRef.current = true;
     setProcessing(true);
-    let completionLocked = false;
+    const completionLockedRef = useRef(false);
     try {
       
 
@@ -159,7 +159,7 @@ export function useCheckoutPay({
         },
         body: JSON.stringify({
   product_id: item?.id,
-  variant_id: product.variant_id ?? null,
+  variant_id: product?.variant_id ?? null,
   quantity,
   address_id: shipping?.id,
 }),
@@ -388,7 +388,6 @@ setTimeout(() => {
     onClose,
     zone,
     product.variant_id,
-    preview,
     validate,
     showMessage,
   ]);
