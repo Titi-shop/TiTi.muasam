@@ -161,14 +161,17 @@ export default function CheckoutSheet({
   /* ================= RESOLVED REGION ================= */
 
   const resolvedRegion = useMemo(() => {
-  if (!preview?.buyer_zone) return null;
-
+  const zone =  preview?.shipping_zone ??  preview?.buyer_zone;
+  if (!zone) return null;
   return (
-    regions.find(
-      (r) => r.zone === preview.buyer_zone
-    ) ?? null
+    regions.find((r) => r.zone === zone) ??
+    null
   );
-}, [preview?.buyer_zone, regions]);
+}, [
+  preview?.shipping_zone,
+  preview?.buyer_zone,
+  regions,
+]);
 
   /* ================= PAY ================= */
 
