@@ -170,36 +170,54 @@ async function loadVariant(variantId: string, productId: string) {
    SHIPPING (DOMESTIC PRIORITY FIXED)
 ========================================================= */
 
-async function getShipping(productId: string, country: string) {
-  const rates = await getShippingRatesByProduct(productId);
+async function getShipping(
+  productId: string,
+  buyerCountry: string,
+  buyerZone: string
+): Promise<number> {
+  log("SHIPPING_LOAD", { productId, buyerCountry, buyerZone });
 
-  if (!rates.length) throw new Error("SHIPPING_NOT_AVAILABLE");
+  const rates = (await getShippingRatesByProduct(productId)) as ShippingRate[];
 
-  const buyerCountry = country.toUpperCase();
+  log("SHIPPING_RATES", rates);
 
-  // 🥇 DOMESTIC FIRST (DB DESIGN)
-  const domestic = rates.find(
-    r =>
-      r.zone === "domestic" &&
-      r.domestic_country_code?.toUpperCase() === buyerCountry
-  );
-
-  if (domestic) return Number(domestic.price);
-
-  // 🥈 ZONE fallback
-  const zone = await getZoneByCountry(buyerCountry);
-
-  if (zone) {
-    const zoneRate = rates.find(r => r.zone === zone);
-    if (zoneRate) return Number(zoneRate.price);
+  if (!rates.length) {
+    throw new Error("SHIPPING_NOT_AVAILABLE");
   }
 
-  // 🥉 fallback global
-  const global = rates.find(r => r.zone === "rest_of_world");
-  if (global) return Number(global.price);
+  const country = buyerCountry.toUpperCase();
+
+  /* 1. DOMESTIC PRIORITY */
+  const domestic = rates.find(
+    (r) =>
+      r.zone === "domestic" &&
+      r.domestic_country_code?.toUpperCase() === country
+  );
+
+  if (domestic) {
+    log("SHIPPING_DOMESTIC_HIT", domestic);
+    return safeNumber(domestic.price);
+  }
+
+  /* 2. ZONE */
+  const zoneRate = rates.find((r) => r.zone === buyerZone);
+
+  if (zoneRate) {
+    log("SHIPPING_ZONE_HIT", zoneRate);
+    return safeNumber(zoneRate.price);
+  }
+
+  /* 3. GLOBAL */
+  const globalRate = rates.find((r) => r.zone === "rest_of_world");
+
+  if (globalRate) {
+    log("SHIPPING_GLOBAL_HIT", globalRate);
+    return safeNumber(globalRate.price);
+  }
 
   throw new Error("SHIPPING_NOT_AVAILABLE");
 }
+
 /* =========================================================
    MAIN ENGINE
 ========================================================= */
