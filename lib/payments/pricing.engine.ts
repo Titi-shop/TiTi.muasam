@@ -191,7 +191,7 @@ export async function calculatePricing(input: PricingInput): Promise<PricingResu
   const buyerCountry = address.country;
 
   const buyerZone = (await getZoneByCountry(buyerCountry)) ?? "rest_of_world";
-
+  let effectiveZone = buyerZone;
   let subtotal = 0;
   let shipping = 0;
 
@@ -204,7 +204,13 @@ export async function calculatePricing(input: PricingInput): Promise<PricingResu
 
     /* ===== PRODUCT ===== */
     const product = await loadProduct(item.product_id);
-
+  if (
+  product.seller_country &&
+  product.seller_country.toUpperCase() ===
+    buyerCountry
+) {
+  effectiveZone = "domestic";
+}
     /* ===== COUNTRY RULE (FIXED POSITION) ===== */
     if (product.seller_country) {
       const sellerCountry = product.seller_country.toUpperCase();
@@ -260,13 +266,13 @@ export async function calculatePricing(input: PricingInput): Promise<PricingResu
   }
 
   return {
-    items,
-    subtotal,
-    shipping_fee: shipping,
-    total: subtotal + shipping,
-    buyer_country: buyerCountry,
-    buyer_zone: buyerZone,
-  };
+  items,
+  subtotal,
+  shipping_fee: shipping,
+  total: subtotal + shipping,
+  buyer_country: buyerCountry,
+  buyer_zone: effectiveZone,
+};
 }
 
 /* =========================================================
