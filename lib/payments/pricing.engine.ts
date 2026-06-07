@@ -167,9 +167,6 @@ async function loadVariant(variantId: string, productId: string) {
 }
 
 /* =========================================================
-   SHIPPING (DOMESTIC PRIORITY FIXED)
-========================================================= */
-/* =========================================================
    SHIPPING
 ========================================================= */
 
@@ -261,13 +258,6 @@ export async function calculatePricing(
   const items: PricingResult["items"] = [];
 
   for (const item of input.items) {
-    log("ITEM_START", item);
-
-    if (!isUUID(item.product_id)) {
-      log("INVALID_PRODUCT_ID", item.product_id);
-      throw new Error("INVALID_PRODUCT_ID");
-    }
-for (const item of input.items) {
   log("ITEM_START", item);
 
   if (!isUUID(item.product_id)) {
@@ -281,6 +271,17 @@ for (const item of input.items) {
   ) {
     log("INVALID_VARIANT_ID", item.variant_id);
     throw new Error("INVALID_VARIANT_ID");
+  }
+
+  const qty = safeQty(item.quantity);
+  const product = await loadProduct(item.product_id);
+
+  if (product.seller_country) {
+    const sellerCountry = product.seller_country.toUpperCase();
+
+    if (sellerCountry !== buyerCountry) {
+      throw new Error("COUNTRY_NOT_SUPPORTED_FOR_DOMESTIC");
+    }
   }
 
   const qty = safeQty(item.quantity);
