@@ -169,10 +169,13 @@ async function loadVariant(variantId: string, productId: string) {
 /* =========================================================
    SHIPPING (DOMESTIC PRIORITY FIXED)
 ========================================================= */
-async function getShipping(
-  productId: string,
-  buyerCountry: string,
-  buyerZone: string
+const ship = await getShipping(
+  product.id,
+  buyerCountry,
+  buyerZone
+);
+shipping += ship.price;
+shippingZone = ship.zone;
 ): Promise<{ price: number; zone: string }> {
   const rates = await getShippingRatesByProduct(productId);
 
@@ -264,7 +267,6 @@ export async function calculatePricing(
     }
 
     let price = product.price;
-
     const saleActive = isSaleActive(
       product.sale_start,
       product.sale_end
@@ -333,18 +335,17 @@ export async function calculatePricing(
 
     log("ITEM_DONE", resultItem);
   }
-
-  const result: PricingResult = {
-    items,
-    subtotal,
-    shipping_fee: shipping,
-    total: subtotal + shipping,
-    buyer_country: buyerCountry,
-    buyer_zone: buyerZone,
-  };
+const result: PricingResult & { shipping_zone: string } = {
+  items,
+  subtotal,
+  shipping_fee: shipping,
+  total: subtotal + shipping,
+  buyer_country: buyerCountry,
+  buyer_zone: buyerZone,
+  shipping_zone: shippingZone,
+};
 
   log("DONE", result);
-
   return result;
 }
 
