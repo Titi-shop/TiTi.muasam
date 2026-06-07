@@ -289,7 +289,7 @@ export default function CheckoutSheet({
 
                 <div className="text-xs opacity-70 mt-1">
                   {getCountryDisplay(shipping?.country)} ·{" "}
-                  {formatPi(preview?.shipping ?? 0)} π
+                  {formatPi(preview?.shipping_fee ?? 0)} π
                 </div>
               </>
             )}
