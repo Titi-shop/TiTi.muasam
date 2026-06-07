@@ -50,8 +50,8 @@ export type PricingResult = {
   total: number;
   buyer_country: string;
   buyer_zone: string;
+  shipping_zone: string;
 };
-
 /* =========================================================
    LOGGER
 ========================================================= */
@@ -169,14 +169,18 @@ async function loadVariant(variantId: string, productId: string) {
 /* =========================================================
    SHIPPING (DOMESTIC PRIORITY FIXED)
 ========================================================= */
-const ship = await getShipping(
-  product.id,
-  buyerCountry,
-  buyerZone
-);
-shipping += ship.price;
-shippingZone = ship.zone;
-): Promise<{ price: number; zone: string }> {
+/* =========================================================
+   SHIPPING
+========================================================= */
+
+async function getShipping(
+  productId: string,
+  buyerCountry: string,
+  buyerZone: string
+): Promise<{
+  price: number;
+  zone: ShippingZone;
+}> {
   const rates = await getShippingRatesByProduct(productId);
 
   if (!rates.length) {
@@ -184,10 +188,10 @@ shippingZone = ship.zone;
   }
 
   const country = buyerCountry.toUpperCase();
-
   /* =========================
-     1. FORCE DOMESTIC FIRST
+     DOMESTIC FIRST
   ========================= */
+
   const domestic = rates.find(
     (r) =>
       r.zone === "domestic" &&
@@ -195,33 +199,40 @@ shippingZone = ship.zone;
   );
 
   if (domestic) {
-  return {
-    price: Number(domestic.price),
-    zone: "domestic"
-  };
-}
+    return {
+      price: Number(domestic.price),
+      zone: "domestic",
+    };
+  }
 
   /* =========================
-     2. ONLY USE ZONE IF NOT DOMESTIC
+     REGION MATCH
   ========================= */
-  const zoneRate = rates.find((r) => r.zone === buyerZone);
-if (zoneRate) {
-  return {
-    price: Number(zoneRate.price),
-    zone: zoneRate.zone
-  };
-}
+  const zoneRate = rates.find(
+    (r) => r.zone === buyerZone
+  );
+
+  if (zoneRate) {
+    return {
+      price: Number(zoneRate.price),
+      zone: zoneRate.zone,
+    };
+  }
 
   /* =========================
-     3. GLOBAL FALLBACK
+     FALLBACK
   ========================= */
-  const global = rates.find((r) => r.zone === "rest_of_world");
-if (global) {
-  return {
-    price: Number(global.price),
-    zone: "rest_of_world"
-  };
-}
+  const global = rates.find(
+    (r) => r.zone === "rest_of_world"
+  );
+
+  if (global) {
+    return {
+      price: Number(global.price),
+      zone: "rest_of_world",
+    };
+  }
+
   throw new Error("SHIPPING_NOT_AVAILABLE");
 }
 
@@ -246,6 +257,7 @@ export async function calculatePricing(
 
   let subtotal = 0;
   let shipping = 0;
+  let shippingZone: ShippingZone = "rest_of_world";
   let shippingZone = "domestic";
   const items: PricingResult["items"] = [];
 
@@ -315,12 +327,15 @@ export async function calculatePricing(
     subtotal += line;
 
     if (!product.is_digital) {
-      shipping += await getShipping(
-        product.id,
-        buyerCountry,
-        buyerZone
-      );
-    }
+  const ship = await getShipping(
+    product.id,
+    buyerCountry,
+    buyerZone
+  );
+
+  shipping += ship.price;
+  shippingZone = ship.zone;
+}
 
     const resultItem = {
       product_id: product.id,
@@ -335,7 +350,7 @@ export async function calculatePricing(
 
     log("ITEM_DONE", resultItem);
   }
-const result: PricingResult & { shipping_zone: string } = {
+const result: PricingResult = {
   items,
   subtotal,
   shipping_fee: shipping,
