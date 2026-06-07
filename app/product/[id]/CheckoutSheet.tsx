@@ -216,15 +216,15 @@ export default function CheckoutSheet({
   ========================================================= */
 
   const zoneLabel = (r: ShippingRate) => {
-    if (r.zone === "domestic") {
-      return `${t.region_domestic ?? "Domestic"} (${r.domestic_country_code ?? "—"})`;
-    }
+  if (r.zone === "domestic") {
+    return `${t.domestic_country ?? "Domestic"} (${r.domestic_country_code ?? "—"})`;
+  }
 
-    return (
-      t[`region_${r.zone}` as keyof typeof t] ??
-      r.zone
-    );
-  };
+  return (
+    t[`shipping_${r.zone}` as keyof typeof t] ??
+    r.zone
+  );
+};
 
   /* =========================================================
   RENDER
