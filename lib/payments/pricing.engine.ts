@@ -1,3 +1,4 @@
+bạn hướng dẫn mình chậm lại .
 import { getProductById } from "@/lib/db/products";
 import { getVariantById } from "@/lib/db/variants";
 import {
@@ -167,6 +168,9 @@ async function loadVariant(variantId: string, productId: string) {
 }
 
 /* =========================================================
+   SHIPPING (DOMESTIC PRIORITY FIXED)
+========================================================= */
+/* =========================================================
    SHIPPING
 ========================================================= */
 
@@ -258,34 +262,13 @@ export async function calculatePricing(
   const items: PricingResult["items"] = [];
 
   for (const item of input.items) {
-  log("ITEM_START", item);
+    log("ITEM_START", item);
 
-  if (!isUUID(item.product_id)) {
-    log("INVALID_PRODUCT_ID", item.product_id);
-    throw new Error("INVALID_PRODUCT_ID");
-  }
-
-  if (
-    item.variant_id &&
-    !isUUID(item.variant_id)
-  ) {
-    log("INVALID_VARIANT_ID", item.variant_id);
-    throw new Error("INVALID_VARIANT_ID");
-  }
-
-  const qty = safeQty(item.quantity);
-  const product = await loadProduct(item.product_id);
-
-  if (product.seller_country) {
-    const sellerCountry = product.seller_country.toUpperCase();
-
-    if (sellerCountry !== buyerCountry) {
-      throw new Error("COUNTRY_NOT_SUPPORTED_FOR_DOMESTIC");
+    if (!isUUID(item.product_id)) {
+      log("INVALID_PRODUCT_ID", item.product_id);
+      throw new Error("INVALID_PRODUCT_ID");
     }
-  }
 
-  const qty = safeQty(item.quantity);
-  const product = await loadProduct(item.product_id);
     const qty = safeQty(item.quantity);
     const product = await loadProduct(item.product_id);
     if (product.seller_country) {
