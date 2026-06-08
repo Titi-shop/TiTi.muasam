@@ -136,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     initAuth();
-  }, [piReady]);
+  }, []);
 
   /* ================= LOGIN ================= */
 
