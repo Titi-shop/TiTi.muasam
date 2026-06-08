@@ -7,7 +7,9 @@ import {
   useState,
   ReactNode,
 } from "react";
+
 import { getPiAccessToken, clearPiToken } from "@/lib/piAuth";
+import { usePi } from "@/app/pi/PiContext";
 
 /* ========================= TYPES ========================= */
 
@@ -29,6 +31,8 @@ type AuthContextType = {
 
 const USER_KEY = "pi_user";
 
+/* ========================= CONTEXT ========================= */
+
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
@@ -40,74 +44,55 @@ const AuthContext = createContext<AuthContextType>({
 /* ========================= PROVIDER ========================= */
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { ready: piReady } = usePi();
+
   const [user, setUser] = useState<PiUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [piReady, setPiReady] = useState(false);
 
-  /* ================= PI READY ================= */
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const timer = setInterval(() => {
-      if (window.Pi) {
-        setPiReady(true);
-        clearInterval(timer);
-      }
-    }, 300);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  /* ================= INIT (NO AUTO LOGIN) ================= */
+  /* ================= INIT AUTH ================= */
 
   useEffect(() => {
-  if (!piReady) return;
+    if (!piReady) return;
 
-  const initAuth = async () => {
-    try {
-      const token = await getPiAccessToken();
+    const initAuth = async () => {
+      try {
+        const token = await getPiAccessToken();
 
-      if (!token) {
+        if (!token) {
+          setUser(null);
+          return;
+        }
+
+        const res = await fetch("/api/pi/verify", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          setUser(null);
+          return;
+        }
+
+        const data: { user?: PiUser } = await res.json();
+
+        if (data?.user) {
+          setUser(data.user);
+          localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.error("INIT AUTH ERROR:", err);
         setUser(null);
-        return;
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const res = await fetch("/api/pi/verify", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        setUser(null);
-        return;
-      }
-
-      const data: unknown = await res.json();
-
-      if (
-        typeof data === "object" &&
-        data !== null &&
-        "user" in data
-      ) {
-        const verifiedUser = (data as { user: PiUser }).user;
-
-        setUser(verifiedUser);
-        localStorage.setItem(USER_KEY, JSON.stringify(verifiedUser));
-      } else {
-        setUser(null);
-      }
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  initAuth();
-}, [piReady]);
+    initAuth();
+  }, [piReady]);
 
   /* ================= LOGIN ================= */
 
@@ -126,17 +111,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      const data = await res.json();
+      const data: { user?: PiUser } = await res.json();
 
       if (!res.ok || !data?.user) {
         throw new Error("VERIFY_FAILED");
       }
 
-      const verifiedUser: PiUser = data.user;
-
-      setUser(verifiedUser);
-      localStorage.setItem(USER_KEY, JSON.stringify(verifiedUser));
+      setUser(data.user);
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
       sessionStorage.removeItem("cart_merged");
+
       console.log("🟢 LOGIN SUCCESS");
     } catch (err) {
       console.error("❌ LOGIN ERROR:", err);
@@ -148,27 +132,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /* ================= LOGOUT ================= */
 
   const logout = () => {
-  console.log("🔴 LOGOUT");
+    console.log("🔴 LOGOUT");
 
-  // 🧹 clear user
-  localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem("cart");
+    sessionStorage.removeItem("cart_merged");
 
-  // 🧹 clear cart (QUAN TRỌNG)
-  localStorage.removeItem("cart");
+    clearPiToken();
 
-  // 🧹 reset merge flag
-  sessionStorage.removeItem("cart_merged");
+    setUser(null);
+  };
 
-  // 🧹 clear Pi token
-  clearPiToken();
-
-  setUser(null);
-};
   /* ================= PROVIDER ================= */
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, piReady, pilogin, logout }}
+      value={{
+        user,
+        loading,
+        piReady,
+        pilogin,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>
