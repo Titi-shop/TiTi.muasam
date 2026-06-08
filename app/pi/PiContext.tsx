@@ -14,19 +14,29 @@ export function PiProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-  console.log("🟡 PiContext: waiting SDK...");
+    let timer: NodeJS.Timeout;
 
-  const timer = setInterval(() => {
-    if (typeof window !== "undefined" && window.Pi) {
-      console.log("🟢 Pi SDK detected");
+    const initCheck = async () => {
+      console.log("🟡 [PiContext] waiting SDK...");
 
-      setReady(true);
-      clearInterval(timer);
-    }
-  }, 300);
+      timer = setInterval(async () => {
+        if (typeof window === "undefined") return;
 
-  return () => clearInterval(timer);
-}, []);
+        if (window.Pi && (window as any).__pi_initialized) {
+          console.log("🟢 [PiContext] SDK fully ready");
+
+          setReady(true);
+          clearInterval(timer);
+        } else {
+          console.log("🟠 [PiContext] SDK not ready yet");
+        }
+      }, 300);
+    };
+
+    initCheck();
+
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <PiContext.Provider value={{ ready }}>
