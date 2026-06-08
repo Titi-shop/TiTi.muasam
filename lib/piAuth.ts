@@ -45,6 +45,7 @@ type PiBrowser = {
 declare global {
   interface Window {
     Pi?: PiBrowser;
+    __pi_initialized?: boolean;
   }
 }
 
