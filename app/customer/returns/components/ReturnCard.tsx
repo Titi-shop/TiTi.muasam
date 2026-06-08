@@ -416,30 +416,29 @@ export default function ReturnCard({
   )}
 
   {/* REJECTED */}
-  {item.status ===
-    "rejected" && (
-    <div
-  role="button"
-  tabIndex={0}
-  onClick={() =>
-    router.push(
-      `/customer/returns/${item.id}`
-  
-        );
-      
-      className="
-        rounded-xl
-        border border-red-500/20
-        bg-red-500/10
-        px-4 py-2
-        text-xs font-semibold
-        text-red-500
-      "
-    >
-      {t.view_reason ??
-        "View Reason"}
-    </button>
-  )}
+{item.status === "rejected" && (
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation();
+
+      router.push(
+        `/customer/returns/${item.id}`
+      );
+    }}
+    className="
+      rounded-xl
+      border border-red-500/20
+      bg-red-500/10
+      px-4 py-2
+      text-xs font-semibold
+      text-red-500
+    "
+  >
+    {t.view_reason ??
+      "View Reason"}
+  </button>
+)}
 </div>
           {/* DATES */}
           <div
