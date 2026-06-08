@@ -651,7 +651,19 @@
   "change_address": "Tap to change address",
   "add_shipping": "Add shipping address",
   "shipping_zone": "Shipping Zone",
-  "no_shipping_zone": "No shipping zone available"
+  "no_shipping_zone": "No shipping zone available",
+  
+  "logging_in_pi": "Connecting to Pi account...",
+  "creating_order": "Creating order...",
+  "opening_pi_wallet": "Opening Pi Wallet...",
+  "authorizing_payment": "Authorizing payment...",
+  "payment_authorized": "Payment authorized",
+  "confirming_payment": "Confirming payment...",
+  "payment_cancelled": "Payment cancelled by user",
+  "payment_failed": "Payment failed. Please try again.",
+  "transaction_failed": "Transaction failed. Please try again.",
+  "order_created_success": "Payment successful. Order created successfully."
+
 
 
 
