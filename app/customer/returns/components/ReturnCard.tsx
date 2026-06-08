@@ -426,7 +426,7 @@ export default function ReturnCard({
       `/customer/returns/${item.id}`
   
         );
-      }}
+      
       className="
         rounded-xl
         border border-red-500/20
