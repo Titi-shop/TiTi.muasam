@@ -6,102 +6,84 @@ export default function AlertProvider() {
   useEffect(() => {
     const oldAlert = window.alert;
 
-    window.alert = function (message?: unknown) {
-      console.log("Alert:", message);
+    const showTopNotification = (message: string) => {
+      const toast = document.createElement("div");
 
-      /* =========================
-         ROOT
-      ========================= */
-      const overlay = document.createElement("div");
-      overlay.style.position = "fixed";
-      overlay.style.inset = "0";
-      overlay.style.background = "rgba(0,0,0,0.4)";
-      overlay.style.display = "flex";
-      overlay.style.alignItems = "center";
-      overlay.style.justifyContent = "center";
-      overlay.style.zIndex = "9999";
+      toast.textContent = message;
 
-      /* =========================
-         MODAL
-      ========================= */
-      const modal = document.createElement("div");
-      modal.style.background = "#fff";
-      modal.style.padding = "20px";
-      modal.style.borderRadius = "14px";
-      modal.style.textAlign = "center";
-      modal.style.maxWidth = "320px";
-      modal.style.width = "85%";
-      modal.style.boxShadow = "0 10px 25px rgba(0,0,0,0.2)";
+      Object.assign(toast.style, {
+        position: "fixed",
+        top: "20px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        background: "#16a34a",
+        color: "#fff",
+        padding: "12px 18px",
+        borderRadius: "12px",
+        fontSize: "14px",
+        fontWeight: "600",
+        zIndex: "99999",
+        boxShadow: "0 10px 25px rgba(0,0,0,.15)",
+        transition: "all .3s ease",
+        maxWidth: "90vw",
+        textAlign: "center",
+      } satisfies Partial<CSSStyleDeclaration>);
 
-      /* =========================
-         TEXT
-      ========================= */
-      const text = document.createElement("p");
-      text.textContent =
-        typeof message === "string" ? message : "Something went wrong";
-      text.style.marginBottom = "16px";
-      text.style.color = "#333";
-      text.style.fontSize = "15px";
+      document.body.appendChild(toast);
 
-      /* =========================
-         BUTTON
-      ========================= */
-      const button = document.createElement("button");
-      button.textContent = "OK";
-      button.style.background = "#f97316";
-      button.style.color = "#fff";
-      button.style.padding = "10px 18px";
-      button.style.borderRadius = "10px";
-      button.style.border = "none";
-      button.style.fontWeight = "600";
-      button.style.cursor = "pointer";
-
-      /* =========================
-         CLOSE FUNCTION (SAFE)
-      ========================= */
-      const close = () => {
-        // tránh remove nhiều lần gây lỗi
-        if (overlay.parentNode) {
-          overlay.parentNode.removeChild(overlay);
-        }
-      };
-
-      /* =========================
-         EVENTS
-      ========================= */
-      button.onclick = close;
-      overlay.onclick = (e: MouseEvent) => {
-        if (e.target === overlay) {
-          close();
-        }
-      };
-
-      /* =========================
-         BUILD DOM
-      ========================= */
-      modal.appendChild(text);
-      modal.appendChild(button);
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
+      setTimeout(() => {
+        toast.remove();
+      }, 4000);
     };
-const checkGlobalAlert = () => {
-  const msg = localStorage.getItem("global_success_alert");
 
-  if (!msg) return;
+    window.alert = (message?: unknown): void => {
+      const text =
+        typeof message === "string"
+          ? message
+          : "Something went wrong";
 
-  localStorage.removeItem("global_success_alert");
+      showTopNotification(text);
+    };
 
-  window.alert(msg);
-};
+    const checkGlobalAlert = (): void => {
+      const message = localStorage.getItem(
+        "global_success_alert"
+      );
 
-checkGlobalAlert();
+      if (!message) return;
 
-window.addEventListener("focus", checkGlobalAlert);
+      localStorage.removeItem(
+        "global_success_alert"
+      );
 
-return () => {
-  window.removeEventListener("focus", checkGlobalAlert);
-  window.alert = oldAlert;
-};
+      showTopNotification(message);
+    };
+
+    checkGlobalAlert();
+
+    window.addEventListener(
+      "focus",
+      checkGlobalAlert
+    );
+
+    window.addEventListener(
+      "storage",
+      checkGlobalAlert
+    );
+
+    return () => {
+      window.removeEventListener(
+        "focus",
+        checkGlobalAlert
+      );
+
+      window.removeEventListener(
+        "storage",
+        checkGlobalAlert
+      );
+
+      window.alert = oldAlert;
+    };
   }, []);
 
   return null;
