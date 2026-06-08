@@ -418,13 +418,13 @@ export default function ReturnCard({
   {/* REJECTED */}
   {item.status ===
     "rejected" && (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-
-        router.push(
-          `/customer/returns/${item.id}`
+    <div
+  role="button"
+  tabIndex={0}
+  onClick={() =>
+    router.push(
+      `/customer/returns/${item.id}`
+  
         );
       }}
       className="
@@ -470,6 +470,6 @@ export default function ReturnCard({
           </div>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
