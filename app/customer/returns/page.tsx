@@ -7,13 +7,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
-import { ReturnRecord } from "./types/returns";
+import type { ReturnRecord } from "./types/returns";
 
 import ReturnList from "./components/ReturnList";
-import ReturnSkeleton from "./components/ReturnSkeleton";
+import ReturnsSkeleton from "./components/ReturnsSkeleton";
 
 export default function ReturnsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } =
+    useAuth();
 
   const [returns, setReturns] =
     useState<ReturnRecord[]>([]);
@@ -37,34 +38,43 @@ export default function ReturnsPage() {
         return;
       }
 
-      const json = await res.json();
+      const data = await res.json();
 
-      setReturns(
-        Array.isArray(json?.items)
-          ? json.items
-          : []
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.items)
+        ? data.items
+        : [];
+
+      setReturns(list);
+    } catch (error) {
+      console.error(
+        "❌ LOAD RETURNS ERROR",
+        error
       );
+
+      setReturns([]);
     } finally {
       setLoading(false);
     }
   }
 
-  const sortedReturns = useMemo(
-    () =>
-      [...returns].sort(
-        (a, b) =>
-          new Date(
-            b.created_at ?? 0
-          ).getTime() -
-          new Date(
-            a.created_at ?? 0
-          ).getTime()
-      ),
-    [returns]
-  );
+  const sortedReturns = useMemo(() => {
+    return [...returns].sort((a, b) => {
+      const da = a.created_at
+        ? new Date(a.created_at).getTime()
+        : 0;
+
+      const db = b.created_at
+        ? new Date(b.created_at).getTime()
+        : 0;
+
+      return db - da;
+    });
+  }, [returns]);
 
   if (loading || authLoading) {
-    return <ReturnSkeleton />;
+    return <ReturnsSkeleton />;
   }
 
   return (
