@@ -269,7 +269,178 @@ export default function ReturnCard({
               </span>
             </div>
           )}
+{/* ACTIONS */}
+<div className="mt-4 flex flex-wrap gap-2">
 
+  {/* VIEW RETURN */}
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation();
+
+      router.push(
+        `/customer/returns/${item.id}`
+      );
+    }}
+    className="
+      rounded-xl
+      border border-[var(--border)]
+      bg-[var(--card-secondary)]
+      px-4 py-2
+      text-xs font-medium
+      text-[var(--foreground)]
+    "
+  >
+    {t.view_return ?? "View Return"}
+  </button>
+
+  {/* APPROVED */}
+  {item.status === "approved" && (
+    <>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+
+          router.push(
+            `/customer/returns/${item.id}/shipping`
+          );
+        }}
+        className="
+          rounded-xl
+          bg-orange-500
+          px-4 py-2
+          text-xs font-semibold
+          text-white
+        "
+      >
+        {t.ship_return ??
+          "Ship Return"}
+      </button>
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+
+          router.push(
+            `/customer/orders/${item.order_id}`
+          );
+        }}
+        className="
+          rounded-xl
+          border border-blue-500/20
+          bg-blue-500/10
+          px-4 py-2
+          text-xs font-semibold
+          text-blue-500
+        "
+      >
+        {t.view_order ??
+          "View Order"}
+      </button>
+    </>
+  )}
+
+  {/* SHIPPING BACK */}
+  {item.status ===
+    "shipping_back" && (
+    <>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+        className="
+          rounded-xl
+          bg-indigo-500
+          px-4 py-2
+          text-xs font-semibold
+          text-white
+        "
+      >
+        {t.track_return ??
+          "Track Return"}
+      </button>
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+
+          router.push(
+            `/customer/orders/${item.order_id}`
+          );
+        }}
+        className="
+          rounded-xl
+          border border-blue-500/20
+          bg-blue-500/10
+          px-4 py-2
+          text-xs font-semibold
+          text-blue-500
+        "
+      >
+        {t.view_order ??
+          "View Order"}
+      </button>
+    </>
+  )}
+
+  {/* REFUND */}
+  {[
+    "refund_pending",
+    "refunded",
+  ].includes(item.status) && (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+
+        router.push(
+          `/customer/returns/${item.id}`
+        );
+      }}
+      className="
+        rounded-xl
+        border border-green-500/20
+        bg-green-500/10
+        px-4 py-2
+        text-xs font-semibold
+        text-green-500
+      "
+    >
+      {t.view_refund ??
+        "View Refund"}
+    </button>
+  )}
+
+  {/* REJECTED */}
+  {item.status ===
+    "rejected" && (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+
+        router.push(
+          `/customer/returns/${item.id}`
+        );
+      }}
+      className="
+        rounded-xl
+        border border-red-500/20
+        bg-red-500/10
+        px-4 py-2
+        text-xs font-semibold
+        text-red-500
+      "
+    >
+      {t.view_reason ??
+        "View Reason"}
+    </button>
+  )}
+</div>
           {/* DATES */}
           <div
             className="
