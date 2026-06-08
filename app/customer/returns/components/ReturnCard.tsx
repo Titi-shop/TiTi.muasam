@@ -435,8 +435,7 @@ export default function ReturnCard({
       text-red-500
     "
   >
-    {t.view_reason ??
-      "View Reason"}
+    {t.view_reason ?? "View Reason"}
   </button>
 )}
 </div>
@@ -469,6 +468,6 @@ export default function ReturnCard({
           </div>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
