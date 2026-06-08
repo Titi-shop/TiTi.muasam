@@ -86,19 +86,19 @@ export default function AlertProvider() {
     };
 const checkGlobalAlert = () => {
   const msg = localStorage.getItem("global_success_alert");
+
   if (!msg) return;
+
   localStorage.removeItem("global_success_alert");
+
   window.alert(msg);
 };
 
 checkGlobalAlert();
+
 window.addEventListener("focus", checkGlobalAlert);
 
 return () => {
-  window.removeEventListener("focus", checkGlobalAlert);
-  window.alert = oldAlert;
-};
-    return () => {
   window.removeEventListener("focus", checkGlobalAlert);
   window.alert = oldAlert;
 };
