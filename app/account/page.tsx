@@ -56,7 +56,7 @@ export default function AccountPage() {
             <div className="h-[52px]">
               <button
                 onClick={pilogin}
-                disabled={!piReady || !agreed}
+                disabled={!agreed || loading}
                 className={`
                   w-full
                   h-[52px]
