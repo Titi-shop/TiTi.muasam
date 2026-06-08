@@ -332,14 +332,22 @@ showMessage(
             console.warn("🟡 [CHECKOUT] USER_CANCELLED");
             processingRef.current = false;
             setProcessing(false);
-            showMessage(t.payment_cancelled ?? "cancelled");
+            showMessage(
+            t.payment_cancelled ??
+            "Payment cancelled by user",
+            "error"
+);
           },
 
           onError: (err) => {
             console.error("🔥 [CHECKOUT] PI_SDK_ERROR", err);
             processingRef.current = false;
             setProcessing(false);
-            showMessage(t.payment_failed ?? "payment_failed");
+            showMessage(
+            t.payment_failed ??
+           "Payment failed. Please try again.",
+          "error"
+       );
           },
         }
       );
@@ -347,7 +355,11 @@ showMessage(
       console.error("🔥 [CHECKOUT] PAY_ERROR", err);
       processingRef.current = false;
       setProcessing(false);
-      showMessage(t.transaction_failed ?? "transaction_failed");
+      showMessage(
+    t.transaction_failed ??
+    "Transaction failed. Please try again.",
+  "error"
+   );
     }
   }, [
     item,
