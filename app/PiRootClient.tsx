@@ -4,7 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { CartProvider } from "@/app/context/CartContext";
 import Navbar from "@/components/Navbar";
 import BottomNav from "@/components/BottomNav";
-import PiProvider from "@/app/pi/PiProvider";
+import { PiProvider } from "@/app/pi/PiContext";
 import "@/app/lib/i18n";
 
 export default function PiRootClient({ children }: { children: React.ReactNode }) {
