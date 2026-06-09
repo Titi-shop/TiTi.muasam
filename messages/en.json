@@ -662,8 +662,42 @@
   "payment_cancelled": "Payment cancelled by user",
   "payment_failed": "Payment failed. Please try again.",
   "transaction_failed": "Transaction failed. Please try again.",
-  "order_created_success": "Payment successful. Order created successfully."
+  "order_created_success": "Payment successful. Order created successfully.",
+  
 
+
+  "return_orders": "Return Orders",
+  "return_detail": "Return Details",
+  "reason": "Reason",
+  "pending": "Pending",
+  "approved": "Approved",
+  "shipping_back": "Returning",
+  "received": "Received",
+  "refund_pending": "Refund Pending",
+  "refunded": "Refunded",
+  "rejected": "Rejected",
+  "approve": "Approve",
+  "reject": "Reject",
+  "mark_received": "Mark as Received",
+  "action_failed": "Action Failed",
+  "loading": "Loading...",
+  "qty": "Quantity",
+  "return_number": "Return Number",
+  "return_status": "Return Status",
+  "return_request": "Return Request",
+  "evidence_images": "Evidence Images",
+  "tracking_code": "Return Tracking Code",
+  "customer_returned_item": "Customer Returned Item",
+  "seller_received_item": "Seller Received Returned Item",
+  "waiting_customer_return": "Waiting for Customer Return",
+  "waiting_refund": "Waiting for Refund",
+  "refund_completed": "Refund Completed",
+  "return_rejected": "Return Request Rejected",
+  "no_return_orders": "No Return Orders Found",
+  "view_details": "View Details",
+  "confirm_received": "Confirm Receipt",
+  "approve_return_request": "Approve Return Request",
+  "reject_return_request": "Reject Return Request"
 
 
 
