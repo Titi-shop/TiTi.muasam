@@ -1,214 +1,269 @@
-            "use client";
+"use client";
 
+import useSWR from "swr";
 import { useState } from "react";
-import { SellerAddressType } from "../types";
+import { useRouter } from "next/navigation";
+
+import { countries } from "@/data/countries";
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { getPiAccessToken } from "@/lib/piAuth";
+import { useAuth } from "@/context/AuthContext";
 
-/* =========================================================
-   TYPES
-========================================================= */
+import AddressForm, {
+  AddressFormData,
+} from "@/components/address/AddressForm";
 
-export type SellerAddress = {
+/* ================= TYPES ================= */
+
+interface Address {
   id: string;
-  seller_id: string;
-
-  type: SellerAddressType;
-
-  recipient_name: string;
+  full_name: string;
   phone: string;
 
   country: string;
-  province: string;
-  district: string;
+  region: string;
+  district?: string;
   ward?: string;
 
   address_line: string;
   postal_code?: string;
 
-  is_default?: boolean;
+  label: "home" | "office" | "other";
 
-  created_at?: string;
-  updated_at?: string;
+  is_default: boolean;
+}
+
+/* ================= FETCHER ================= */
+
+const fetcher = async () => {
+  const token = await getPiAccessToken();
+
+  const res = await fetch("/api/address", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) throw new Error("FETCH_FAILED");
+
+  return res.json();
 };
 
-type CreateAddressInput = Omit<
-  SellerAddress,
-  "id" | "created_at" | "updated_at"
->;
+/* ================= PAGE ================= */
 
-type Props = {
-  onClose: () => void;
-  onCreated: (addr: SellerAddress) => void;
-};
+export default function CustomerAddressPage() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { user } = useAuth();
 
-/* =========================================================
-   COMPONENT
-========================================================= */
+  const { data, mutate, isLoading } = useSWR(
+    user ? "/api/address" : null,
+    fetcher
+  );
 
-export default function AddressForm({
-  onClose,
-  onCreated,
-}: Props) {
-  const [form, setForm] = useState<CreateAddressInput>({
-    type: "return",
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-    recipient_name: "",
+  const [form, setForm] = useState<AddressFormData>({
+    full_name: "",
     phone: "",
 
     country: "VN",
-    province: "",
+    region: "",
     district: "",
     ward: "",
 
     address_line: "",
     postal_code: "",
-
-    seller_id: "",
-    is_default: false,
   });
 
-  const [loading, setLoading] = useState(false);
+  const addresses = data?.items ?? [];
 
-  const handleSubmit = async () => {
-    setLoading(true);
+  /* ================= HELPERS ================= */
+
+  const getCountryDisplay = (code: string) => {
+    const c = countries.find((x) => x.code === code);
+    return c ? `${c.flag} ${c.name}` : code;
+  };
+
+  /* ================= EDIT ================= */
+
+  const handleEdit = (a: Address) => {
+    setForm({
+      full_name: a.full_name,
+      phone: a.phone,
+
+      country: a.country,
+      region: a.region || "",
+      district: a.district || "",
+      ward: a.ward || "",
+
+      address_line: a.address_line,
+      postal_code: a.postal_code || "",
+    });
+
+    setEditingId(a.id);
+    setShowForm(true);
+  };
+
+  /* ================= SAVE ================= */
+
+  const handleSave = async () => {
+    setSaving(true);
 
     try {
       const token = await getPiAccessToken();
 
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch("/api/seller/addresses", {
-        method: "POST",
+      await fetch("/api/address", {
+        method: editingId ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          id: editingId,
+        }),
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to create address");
-      }
+      await mutate();
 
-      const data: SellerAddress = await res.json();
+      setShowForm(false);
+      setEditingId(null);
 
-      onCreated(data);
-      onClose();
-    } catch (err) {
-      console.error("CREATE ADDRESS ERROR", err);
+      setForm({
+        full_name: "",
+        phone: "",
+        country: "VN",
+        region: "",
+        district: "",
+        ward: "",
+        address_line: "",
+        postal_code: "",
+      });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
+  /* ================= DEFAULT ================= */
+
+  const setDefault = async (id: string) => {
+    const token = await getPiAccessToken();
+
+    await fetch("/api/address", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ id }),
+    });
+
+    mutate();
+  };
+
+  /* ================= DELETE ================= */
+
+  const deleteAddress = async (id: string) => {
+    if (!confirm(t.confirm_delete || "Delete?")) return;
+
+    const token = await getPiAccessToken();
+
+    await fetch(`/api/address?id=${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    mutate();
+  };
+
+  /* ================= UI ================= */
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl bg-[var(--card-bg)] p-4 space-y-3">
+    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] pb-28">
 
-        <h2 className="text-lg font-bold">Add Address</h2>
+      {/* LIST */}
+      <div className="mx-auto max-w-md space-y-4 px-4 pt-20">
 
-        {/* TYPE */}
-        <select
-          value={form.type}
-          onChange={(e) =>
+        {isLoading ? (
+          <div className="p-6 text-center text-sm text-[var(--text-muted)]">
+            {t.loading}
+          </div>
+        ) : addresses.length === 0 ? (
+          <div className="p-6 text-center text-sm text-[var(--text-muted)]">
+            {t.no_address}
+          </div>
+        ) : (
+          addresses.map((a) => (
+            <div key={a.id} className="rounded-2xl border bg-[var(--card-bg)] p-4">
+
+              <p className="font-semibold">{a.full_name}</p>
+
+              <p className="text-sm text-[var(--text-muted)]">{a.phone}</p>
+
+              <p className="mt-2 text-sm">{a.address_line}</p>
+
+              <p className="text-sm text-[var(--text-muted)]">
+                {[a.ward, a.district, a.region].filter(Boolean).join(", ")}
+              </p>
+
+              <p className="text-sm text-[var(--text-muted)]">
+                {getCountryDisplay(a.country)}
+              </p>
+
+              <div className="mt-3 flex gap-2">
+                <button onClick={() => handleEdit(a)}>Edit</button>
+
+                {!a.is_default && (
+                  <button onClick={() => setDefault(a.id)}>Set Default</button>
+                )}
+
+                <button onClick={() => deleteAddress(a.id)}>Delete</button>
+              </div>
+            </div>
+          ))
+        )}
+
+        {/* ADD */}
+        <button
+          onClick={() => {
+            setEditingId(null);
             setForm({
-              ...form,
-              type: e.target.value as SellerAddressType,
-            })
-          }
-          className="w-full border rounded-xl p-2"
+              full_name: "",
+              phone: "",
+              country: "VN",
+              region: "",
+              district: "",
+              ward: "",
+              address_line: "",
+              postal_code: "",
+            });
+            setShowForm(true);
+          }}
         >
-          <option value="return">Return</option>
-          <option value="warehouse">Warehouse</option>
-          <option value="pickup">Pickup</option>
-          <option value="support">Support</option>
-        </select>
-
-        {/* NAME */}
-        <input
-          placeholder="Recipient name"
-          value={form.recipient_name}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              recipient_name: e.target.value,
-            })
-          }
-          className="w-full border rounded-xl p-2"
-        />
-
-        {/* PHONE */}
-        <input
-          placeholder="Phone"
-          value={form.phone}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              phone: e.target.value,
-            })
-          }
-          className="w-full border rounded-xl p-2"
-        />
-
-        {/* ADDRESS */}
-        <input
-          placeholder="Address line"
-          value={form.address_line}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              address_line: e.target.value,
-            })
-          }
-          className="w-full border rounded-xl p-2"
-        />
-
-        <div className="grid grid-cols-2 gap-2">
-          <input
-            placeholder="Province"
-            value={form.province}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                province: e.target.value,
-              })
-            }
-            className="border rounded-xl p-2"
-          />
-
-          <input
-            placeholder="District"
-            value={form.district}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                district: e.target.value,
-              })
-            }
-            className="border rounded-xl p-2"
-          />
-        </div>
-
-        <div className="flex gap-2 pt-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 rounded-xl border"
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="flex-1 py-2 rounded-xl bg-orange-500 text-white"
-          >
-            {loading ? "Saving..." : "Save"}
-          </button>
-        </div>
+          + {t.add_address}
+        </button>
       </div>
-    </div>
+
+      {/* FORM */}
+      {showForm && (
+        <>
+          <div className="fixed inset-0 bg-black/50" onClick={() => setShowForm(false)} />
+
+          <div className="fixed bottom-0 left-0 right-0 h-[85vh] bg-[var(--card-bg)]">
+            <AddressForm
+              form={form}
+              setForm={setForm}
+              onSubmit={handleSave}
+              saving={saving}
+            />
+          </div>
+        </>
+      )}
+    </main>
   );
-        }
+}
