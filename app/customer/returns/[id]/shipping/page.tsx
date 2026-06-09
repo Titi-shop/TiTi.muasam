@@ -64,12 +64,14 @@ try {
 const token =
 await getPiAccessToken();
 
-    const res = await fetch(  `/api/returns/${returnId}`,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const res = await fetch(
+  `/api/returns/${returnId}`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
 
     if (!res.ok) {
       throw new Error(
@@ -117,18 +119,16 @@ try {
   `/api/returns/${returnId}/ship`,
   {
     method: "PATCH",
-      headers: {
-        "Content-Type":
-          "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        carrier,
-        tracking_code:
-          trackingCode,
-      }),
-    }
-  );
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      tracking_code: trackingCode,
+      shipping_provider: carrier,
+    }),
+  }
+);
 
   if (!res.ok) {
     throw new Error(
