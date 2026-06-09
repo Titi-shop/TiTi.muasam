@@ -223,25 +223,28 @@ export async function updateReturnStatusBySeller(
       }
 
       const { rows: addrRows } = await client.query<{
-        id: string;
-      }>(
-        `
-        SELECT id
-        FROM seller_addresses
-        WHERE seller_id = $1
-          AND type = 'return'
-          AND is_default = true
-          AND is_active = true
-        LIMIT 1
-        `,
-        [sellerId]
-      );
+  id: string;
+}>(
+  `
+  SELECT id
+  FROM seller_addresses
+  WHERE seller_id = $1
+    AND is_active = true
+  ORDER BY
+    CASE
+      WHEN type = 'return' THEN 1
+      WHEN type = 'pickup' THEN 2
+      ELSE 3
+    END
+  LIMIT 1
+  `,
+  [sellerId]
+);
 
-      const returnAddressId = addrRows[0]?.id;
-
-      if (!returnAddressId) {
-        throw new Error("RETURN_ADDRESS_REQUIRED");
-      }
+const returnAddressId = addrRows[0]?.id;
+if (!returnAddressId) {
+  throw new Error("RETURN_ADDRESS_REQUIRED");
+}
 
       await client.query(
         `
