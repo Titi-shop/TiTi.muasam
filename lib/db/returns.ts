@@ -601,12 +601,46 @@ export async function updateReturnStatusBySeller(
     /* ================= APPROVE ================= */
 
     if (action === "approve") {
-      if (ret.status !== "pending") {
-        throw new Error("INVALID_STATE");
-      }
+  if (ret.status !== "pending") {
+    throw new Error("INVALID_STATE");
+  }
 
-      nextStatus = "approved";
-    }
+  const { rows: addrRows } = await client.query<{
+    id: string;
+  }>(
+    `
+    SELECT id
+    FROM seller_addresses
+    WHERE seller_id = $1
+      AND type = 'return'
+      AND is_default = true
+      AND is_active = true
+    LIMIT 1
+    `,
+    [sellerId]
+  );
+
+  const returnAddressId = addrRows[0]?.id;
+
+  if (!returnAddressId) {
+    throw new Error("RETURN_ADDRESS_REQUIRED");
+  }
+
+  await client.query(
+    `
+    UPDATE returns
+    SET
+      status = 'approved',
+      return_address_id = $1,
+      approved_at = now(),
+      updated_at = now()
+    WHERE id = $2
+    `,
+    [returnAddressId, returnId]
+  );
+
+  return;
+}
 
     /* ================= REJECT ================= */
 
