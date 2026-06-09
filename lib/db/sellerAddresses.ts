@@ -1,33 +1,90 @@
-      import { query } from "@/lib/db";
+import { query } from "@/lib/db";
 
 /* =========================================================
-   LOG HELPER
+   TYPES
 ========================================================= */
 
-const log = (action: string, data?: any) => {
+export interface SellerAddress {
+  id: string;
+  seller_id: string;
+
+  full_name: string;
+  phone: string;
+
+  country: string;
+  province: string | null;
+  district: string | null;
+  ward: string | null;
+
+  address_line: string;
+  postal_code: string | null;
+
+  is_default: boolean;
+
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type CreateSellerAddressInput = {
+  seller_id: string;
+  full_name: string;
+  phone: string;
+
+  country: string;
+  province?: string | null;
+  district?: string | null;
+  ward?: string | null;
+
+  address_line: string;
+  postal_code?: string | null;
+
+  is_default?: boolean;
+};
+
+export type UpdateSellerAddressInput = {
+  full_name: string;
+  phone: string;
+
+  country: string;
+  province?: string | null;
+  district?: string | null;
+  ward?: string | null;
+
+  address_line: string;
+  postal_code?: string | null;
+
+  is_default?: boolean;
+};
+
+/* =========================================================
+   LOG HELPERS
+========================================================= */
+
+const log = (action: string, data?: unknown) => {
   console.log(
     `[seller_addresses] ${action}`,
-    data ? JSON.stringify(data, null, 2) : ""
+    data ? JSON.stringify(data) : ""
   );
 };
 
-const logError = (action: string, error: any) => {
+const logError = (action: string, error: unknown) => {
   console.error(
     `[seller_addresses ERROR] ${action}`,
-    error?.message || error,
     error
   );
 };
 
 /* =========================================================
-   GET ADDRESSES
+   GET
 ========================================================= */
 
-export async function getSellerAddresses(sellerId: string) {
+export async function getSellerAddresses(
+  sellerId: string
+): Promise<SellerAddress[]> {
   try {
     log("GET_ADDRESSES_START", { sellerId });
 
-    const res = await query(
+    const res = await query<SellerAddress>(
       `SELECT *
        FROM seller_addresses
        WHERE seller_id = $1
@@ -47,16 +104,18 @@ export async function getSellerAddresses(sellerId: string) {
 }
 
 /* =========================================================
-   CREATE ADDRESS
+   CREATE
 ========================================================= */
 
-export async function createSellerAddress(payload: any) {
+export async function createSellerAddress(
+  payload: CreateSellerAddressInput
+): Promise<SellerAddress> {
   try {
     log("CREATE_ADDRESS_START", {
-      seller_id: payload?.seller_id,
+      seller_id: payload.seller_id,
     });
 
-    const res = await query(
+    const res = await query<SellerAddress>(
       `INSERT INTO seller_addresses (
         seller_id,
         full_name,
@@ -76,20 +135,22 @@ export async function createSellerAddress(payload: any) {
         payload.full_name,
         payload.phone,
         payload.country,
-        payload.province,
-        payload.district,
-        payload.ward,
+        payload.province ?? null,
+        payload.district ?? null,
+        payload.ward ?? null,
         payload.address_line,
-        payload.postal_code,
+        payload.postal_code ?? null,
         payload.is_default ?? false,
       ]
     );
 
+    const created = res.rows[0];
+
     log("CREATE_ADDRESS_SUCCESS", {
-      id: res.rows?.[0]?.id,
+      id: created.id,
     });
 
-    return res.rows[0];
+    return created;
   } catch (error) {
     logError("CREATE_ADDRESS_FAIL", error);
     throw error;
@@ -97,17 +158,17 @@ export async function createSellerAddress(payload: any) {
 }
 
 /* =========================================================
-   UPDATE ADDRESS
+   UPDATE
 ========================================================= */
 
 export async function updateSellerAddress(
   id: string,
-  payload: any
-) {
+  payload: UpdateSellerAddressInput
+): Promise<SellerAddress> {
   try {
     log("UPDATE_ADDRESS_START", { id });
 
-    const res = await query(
+    const res = await query<SellerAddress>(
       `UPDATE seller_addresses
        SET full_name = $1,
            phone = $2,
@@ -125,19 +186,21 @@ export async function updateSellerAddress(
         payload.full_name,
         payload.phone,
         payload.country,
-        payload.province,
-        payload.district,
-        payload.ward,
+        payload.province ?? null,
+        payload.district ?? null,
+        payload.ward ?? null,
         payload.address_line,
-        payload.postal_code,
+        payload.postal_code ?? null,
         payload.is_default ?? false,
         id,
       ]
     );
 
+    const updated = res.rows[0];
+
     log("UPDATE_ADDRESS_SUCCESS", { id });
 
-    return res.rows[0];
+    return updated;
   } catch (error) {
     logError("UPDATE_ADDRESS_FAIL", error);
     throw error;
@@ -145,10 +208,12 @@ export async function updateSellerAddress(
 }
 
 /* =========================================================
-   DELETE ADDRESS
+   DELETE
 ========================================================= */
 
-export async function deleteSellerAddress(id: string) {
+export async function deleteSellerAddress(
+  id: string
+): Promise<boolean> {
   try {
     log("DELETE_ADDRESS_START", { id });
 
@@ -164,4 +229,4 @@ export async function deleteSellerAddress(id: string) {
     logError("DELETE_ADDRESS_FAIL", error);
     throw error;
   }
-}
+          }
