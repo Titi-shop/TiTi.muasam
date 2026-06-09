@@ -1,28 +1,70 @@
-"use client";
+            "use client";
 
 import { useState } from "react";
 import { SellerAddressType } from "../types";
+import { getPiAccessToken } from "@/lib/piAuth";
+
+/* =========================================================
+   TYPES
+========================================================= */
+
+export type SellerAddress = {
+  id: string;
+  seller_id: string;
+
+  type: SellerAddressType;
+
+  recipient_name: string;
+  phone: string;
+
+  country: string;
+  province: string;
+  district: string;
+  ward?: string;
+
+  address_line: string;
+  postal_code?: string;
+
+  is_default?: boolean;
+
+  created_at?: string;
+  updated_at?: string;
+};
+
+type CreateAddressInput = Omit<
+  SellerAddress,
+  "id" | "created_at" | "updated_at"
+>;
 
 type Props = {
   onClose: () => void;
-  onCreated: (addr: any) => void;
+  onCreated: (addr: SellerAddress) => void;
 };
+
+/* =========================================================
+   COMPONENT
+========================================================= */
 
 export default function AddressForm({
   onClose,
   onCreated,
 }: Props) {
+  const [form, setForm] = useState<CreateAddressInput>({
+    type: "return",
 
-  const [form, setForm] = useState({
-    type: "return" as SellerAddressType,
     recipient_name: "",
     phone: "",
+
     country: "VN",
     province: "",
     district: "",
     ward: "",
+
     address_line: "",
     postal_code: "",
+
+    seller_id: "",
+    is_default: false,
   });
 
   const [loading, setLoading] = useState(false);
@@ -31,17 +73,27 @@ export default function AddressForm({
     setLoading(true);
 
     try {
-      const res = await fetch("/api/seller-addresses", {
+      const token = await getPiAccessToken();
+
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/seller/addresses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(form),
       });
 
-      if (!res.ok) return;
+      if (!res.ok) {
+        throw new Error("Failed to create address");
+      }
 
-      const data = await res.json();
+      const data: SellerAddress = await res.json();
 
       onCreated(data);
       onClose();
@@ -62,7 +114,10 @@ export default function AddressForm({
         <select
           value={form.type}
           onChange={(e) =>
-            setForm({ ...form, type: e.target.value as SellerAddressType })
+            setForm({
+              ...form,
+              type: e.target.value as SellerAddressType,
+            })
           }
           className="w-full border rounded-xl p-2"
         >
@@ -77,7 +132,10 @@ export default function AddressForm({
           placeholder="Recipient name"
           value={form.recipient_name}
           onChange={(e) =>
-            setForm({ ...form, recipient_name: e.target.value })
+            setForm({
+              ...form,
+              recipient_name: e.target.value,
+            })
           }
           className="w-full border rounded-xl p-2"
         />
@@ -87,7 +145,10 @@ export default function AddressForm({
           placeholder="Phone"
           value={form.phone}
           onChange={(e) =>
-            setForm({ ...form, phone: e.target.value })
+            setForm({
+              ...form,
+              phone: e.target.value,
+            })
           }
           className="w-full border rounded-xl p-2"
         />
@@ -97,7 +158,10 @@ export default function AddressForm({
           placeholder="Address line"
           value={form.address_line}
           onChange={(e) =>
-            setForm({ ...form, address_line: e.target.value })
+            setForm({
+              ...form,
+              address_line: e.target.value,
+            })
           }
           className="w-full border rounded-xl p-2"
         />
@@ -107,7 +171,10 @@ export default function AddressForm({
             placeholder="Province"
             value={form.province}
             onChange={(e) =>
-              setForm({ ...form, province: e.target.value })
+              setForm({
+                ...form,
+                province: e.target.value,
+              })
             }
             className="border rounded-xl p-2"
           />
@@ -116,7 +183,10 @@ export default function AddressForm({
             placeholder="District"
             value={form.district}
             onChange={(e) =>
-              setForm({ ...form, district: e.target.value })
+              setForm({
+                ...form,
+                district: e.target.value,
+              })
             }
             className="border rounded-xl p-2"
           />
@@ -141,4 +211,4 @@ export default function AddressForm({
       </div>
     </div>
   );
-}
+        }
