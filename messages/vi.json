@@ -704,7 +704,46 @@
   "payment_cancelled": "Bạn đã hủy thanh toán",
   "payment_failed": "Thanh toán thất bại. Vui lòng thử lại.",
   "transaction_failed": "Giao dịch thất bại. Vui lòng thử lại.",
-  "order_created_success": "Thanh toán thành công. Đơn hàng đã được tạo."
+  "order_created_success": "Thanh toán thành công. Đơn hàng đã được tạo.",
+
+  "return_orders": "Đơn trả hàng",
+  "return_detail": "Chi tiết trả hàng",
+  "reason": "Lý do",
+
+  "all": "Tất cả",
+  "pending": "Chờ xử lý",
+  "approved": "Đã chấp nhận",
+  "shipping_back": "Đang gửi trả",
+  "received": "Đã nhận hàng trả",
+  "refund_pending": "Chờ hoàn tiền",
+  "refunded": "Đã hoàn tiền",
+  "rejected": "Từ chối",
+
+  "approve": "Chấp nhận",
+  "reject": "Từ chối",
+  "mark_received": "Đánh dấu đã nhận",
+
+  "action_failed": "Thao tác thất bại",
+
+  "loading": "Đang tải...",
+  "qty": "Số lượng",
+
+  "return_number": "Mã trả hàng",
+  "return_status": "Trạng thái trả hàng",
+  "return_request": "Yêu cầu trả hàng",
+  "evidence_images": "Hình ảnh minh chứng",
+  "tracking_code": "Mã vận đơn trả hàng",
+  "customer_returned_item": "Khách hàng đã gửi trả hàng",
+  "seller_received_item": "Người bán đã nhận được hàng trả",
+  "waiting_customer_return": "Đang chờ khách gửi trả hàng",
+  "waiting_refund": "Đang chờ hoàn tiền",
+  "refund_completed": "Hoàn tiền thành công",
+  "return_rejected": "Yêu cầu trả hàng bị từ chối",
+  "no_return_orders": "Không có đơn trả hàng nào",
+  "view_details": "Xem chi tiết",
+  "confirm_received": "Xác nhận đã nhận hàng trả",
+  "approve_return_request": "Chấp nhận yêu cầu trả hàng",
+  "reject_return_request": "Từ chối yêu cầu trả hàng"
 
 
 
