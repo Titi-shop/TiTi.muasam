@@ -747,10 +747,10 @@
 
 
   "order": "Đơn hàng",
-  "view_return": "Xem hoàn trả",
-  "ship_return": "Gửi hàng hoàn trả",
-  "view_order": "Xem đơn hàng",
-  "track_return": "Theo dõi hoàn trả",
+  "view_return": "chi tiết hoàn trả",
+  "ship_return": "Gửi hàng ",
+  "view_order": "đơn hàng gốc",
+  "track_return": "Theo dõi đơn",
   "view_refund": "Xem hoàn tiền",
   "view_reason": "Xem lý do",
   "refund_amount": "Số tiền hoàn",
