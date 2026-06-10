@@ -288,18 +288,19 @@ if (action === "received") {
   const buyerId = orderRows[0]?.buyer_id;
   if (!buyerId) throw new Error("BUYER_NOT_FOUND");
 
-  /* WALLET UPSERT SAFE */
+  /* =====================================================
+     WALLET UPSERT (SAFE)
+  ===================================================== */
+
   await client.query(
     `
     INSERT INTO wallets (user_id, balance)
     VALUES ($1, 0)
-    ON CONFLICT (user_id)
-    DO UPDATE SET user_id = EXCLUDED.user_id
+    ON CONFLICT (user_id) DO NOTHING
     `,
     [buyerId]
   );
 
-  /* CREDIT BALANCE */
   await client.query(
     `
     UPDATE wallets
@@ -310,7 +311,10 @@ if (action === "received") {
     [amount, buyerId]
   );
 
-  /* LEDGER SAFE (NO DOUBLE REFUND) */
+  /* =====================================================
+     WALLET JOURNAL (V7 STANDARD - NO idempotency_key)
+  ===================================================== */
+
   await client.query(
     `
     INSERT INTO wallet_journal (
@@ -322,8 +326,7 @@ if (action === "received") {
       currency,
       note,
       ref_id,
-      ref_table,
-      idempotency_key
+      ref_table
     )
     VALUES (
       $1,
@@ -334,13 +337,15 @@ if (action === "received") {
       'PI',
       'Return refund',
       $3,
-      'returns',
-      $4
+      'returns'
     )
-    ON CONFLICT (idempotency_key) DO NOTHING
     `,
-    [buyerId, amount, returnId, `refund_${returnId}`]
+    [buyerId, amount, returnId]
   );
+
+  /* =====================================================
+     UPDATE RETURN
+  ===================================================== */
 
   await client.query(
     `
@@ -355,5 +360,4 @@ if (action === "received") {
   );
 
   return;
-
 }
