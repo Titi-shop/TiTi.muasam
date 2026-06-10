@@ -763,7 +763,11 @@
   "return_refund_pending": "Đang xử lý hoàn tiền",
   "return_refunded": "Đã hoàn tiền",
   "return_rejected": "Từ chối hoàn trả",
-  "return_cancelled": "Đã hủy hoàn trả"
+  "return_cancelled": "Đã hủy hoàn trả",
+
+  "processing": "Đang xử lý...",
+  "mark_as_received": "Xác nhận đã nhận hàng",
+
 
 
 
