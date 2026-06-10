@@ -743,8 +743,27 @@
   "view_details": "Xem chi tiết",
   "confirm_received": "Xác nhận đã nhận hàng trả",
   "approve_return_request": "Chấp nhận yêu cầu trả hàng",
-  "reject_return_request": "Từ chối yêu cầu trả hàng"
+  "reject_return_request": "Từ chối yêu cầu trả hàng",
 
+
+  "order": "Đơn hàng",
+  "view_return": "Xem hoàn trả",
+  "ship_return": "Gửi hàng hoàn trả",
+  "view_order": "Xem đơn hàng",
+  "track_return": "Theo dõi hoàn trả",
+  "view_refund": "Xem hoàn tiền",
+  "view_reason": "Xem lý do",
+  "refund_amount": "Số tiền hoàn",
+  "return_tracking": "Mã vận chuyển hoàn trả",
+
+  "return_pending": "Đang chờ duyệt",
+  "return_approved": "Đã duyệt",
+  "return_shipping_back": "Đang gửi trả",
+  "return_received": "Đã nhận hàng trả",
+  "return_refund_pending": "Đang xử lý hoàn tiền",
+  "return_refunded": "Đã hoàn tiền",
+  "return_rejected": "Từ chối hoàn trả",
+  "return_cancelled": "Đã hủy hoàn trả"
 
 
 
