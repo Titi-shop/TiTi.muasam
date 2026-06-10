@@ -266,98 +266,90 @@ export async function updateReturnStatusBySeller(
        RECEIVED + REFUND (FIXED V7 WALLET SCHEMA)
     ===================================================== */
 if (action === "received") {
-  if (ret.status !== "shipping_back") {
-    throw new Error("INVALID_STATE");
+    if (ret.status !== "shipping_back") {
+      throw new Error("INVALID_STATE");
+    }
+
+    const amount = Number(ret.refund_amount ?? 0);
+    if (!amount || amount <= 0) {
+      throw new Error("INVALID_AMOUNT");
+    }
+
+    const { rows: orderRows } = await client.query<{ buyer_id: string }>(
+      `
+      SELECT buyer_id
+      FROM orders
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [ret.order_id]
+    );
+
+    const buyerId = orderRows[0]?.buyer_id;
+    if (!buyerId) throw new Error("BUYER_NOT_FOUND");
+
+    await client.query(
+      `
+      INSERT INTO wallets (user_id, balance)
+      VALUES ($1, 0)
+      ON CONFLICT (user_id) DO NOTHING
+      `,
+      [buyerId]
+    );
+
+    await client.query(
+      `
+      UPDATE wallets
+      SET balance = balance + $1,
+          updated_at = now()
+      WHERE user_id = $2
+      `,
+      [amount, buyerId]
+    );
+
+    await client.query(
+      `
+      INSERT INTO wallet_journal (
+        owner_id,
+        owner_type,
+        entry_type,
+        direction,
+        amount,
+        currency,
+        note,
+        ref_id,
+        ref_table
+      )
+      VALUES (
+        $1,
+        'BUYER',
+        'BUYER_REFUND',
+        'CREDIT',
+        $2,
+        'PI',
+        'Return refund',
+        $3,
+        'returns'
+      )
+      `,
+      [buyerId, amount, returnId]
+    );
+
+    await client.query(
+      `
+      UPDATE returns
+      SET status = 'refunded',
+          refunded_at = now(),
+          received_at = now(),
+          updated_at = now()
+      WHERE id = $1
+      `,
+      [returnId]
+    );
+
+    return;
   }
 
-  const amount = Number(ret.refund_amount ?? 0);
-  if (!amount || amount <= 0) {
-    throw new Error("INVALID_AMOUNT");
-  }
-
-  const { rows: orderRows } = await client.query<{ buyer_id: string }>(
-    `
-    SELECT buyer_id
-    FROM orders
-    WHERE id = $1
-    LIMIT 1
-    `,
-    [ret.order_id]
-  );
-
-  const buyerId = orderRows[0]?.buyer_id;
-  if (!buyerId) throw new Error("BUYER_NOT_FOUND");
-
-  /* =====================================================
-     WALLET UPSERT (SAFE)
-  ===================================================== */
-
-  await client.query(
-    `
-    INSERT INTO wallets (user_id, balance)
-    VALUES ($1, 0)
-    ON CONFLICT (user_id) DO NOTHING
-    `,
-    [buyerId]
-  );
-
-  await client.query(
-    `
-    UPDATE wallets
-    SET balance = balance + $1,
-        updated_at = now()
-    WHERE user_id = $2
-    `,
-    [amount, buyerId]
-  );
-
-  /* =====================================================
-     WALLET JOURNAL (V7 STANDARD - NO idempotency_key)
-  ===================================================== */
-
-  await client.query(
-    `
-    INSERT INTO wallet_journal (
-      owner_id,
-      owner_type,
-      entry_type,
-      direction,
-      amount,
-      currency,
-      note,
-      ref_id,
-      ref_table
-    )
-    VALUES (
-      $1,
-      'BUYER',
-      'BUYER_REFUND',
-      'CREDIT',
-      $2,
-      'PI',
-      'Return refund',
-      $3,
-      'returns'
-    )
-    `,
-    [buyerId, amount, returnId]
-  );
-
-  /* =====================================================
-     UPDATE RETURN
-  ===================================================== */
-
-  await client.query(
-    `
-    UPDATE returns
-    SET status = 'refunded',
-        refunded_at = now(),
-        received_at = now(),
-        updated_at = now()
-    WHERE id = $1
-    `,
-    [returnId]
-  );
-
-  return;
+  throw new Error("INVALID_ACTION");
+});
 }
