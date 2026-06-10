@@ -692,7 +692,28 @@
   "view_details": "查看详情",
   "confirm_received": "确认收到退货",
   "approve_return_request": "批准退货申请",
-  "reject_return_request": "拒绝退货申请"
+  "reject_return_request": "拒绝退货申请",
+
+  
+  "order": "订单",
+  "view_return": "查看退货",
+  "ship_return": "寄回商品",
+  "view_order": "查看订单",
+  "track_return": "物流追踪",
+  "view_refund": "查看退款",
+  "view_reason": "查看原因",
+  "refund_amount": "退款金额",
+  "return_tracking": "退货物流单号",
+
+  "return_pending": "等待审核",
+  "return_approved": "已批准",
+  "return_shipping_back": "退货运输中",
+  "return_received": "已收到退货",
+  "return_refund_pending": "退款处理中",
+  "return_refunded": "已退款",
+  "return_rejected": "退货被拒绝",
+  "return_cancelled": "已取消退货"
+
 
 
 
