@@ -4,7 +4,6 @@ import { requireSeller } from "@/lib/auth/guard";
 import {
   getReturnByIdForSeller,
   updateReturnStatusBySeller,
-  refundBuyerForReturn,
 } from "@/lib/db/returns";
 
 export const runtime = "nodejs";
@@ -21,19 +20,28 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requireSeller();
-  if (!auth.ok) return auth.response;
+  try {
+    const auth = await requireSeller();
+    if (!auth.ok) return auth.response;
 
-  const returnId = params.id;
+    const data = await getReturnByIdForSeller(
+      params.id,
+      auth.userId
+    );
 
-  const data = await getReturnByIdForSeller(
-    returnId,
-    auth.userId
-  );
+    if (!data) {
+      return errorJson("NOT_FOUND", 404);
+    }
 
-  if (!data) return errorJson("NOT_FOUND", 404);
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("SELLER RETURN GET ERROR:", error);
 
-  return NextResponse.json(data);
+    return NextResponse.json(
+      { error: "INTERNAL_SERVER_ERROR" },
+      { status: 500 }
+    );
+  }
 }
 
 /* ================= PATCH ================= */
@@ -42,62 +50,50 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requireSeller();
-  if (!auth.ok) return auth.response;
+  try {
+    const auth = await requireSeller();
+    if (!auth.ok) return auth.response;
 
-  const returnId = params.id;
-  const { action } = await req.json();
+    const { action } = await req.json();
 
-  if (!["approve", "reject", "received"].includes(action)) {
-    return errorJson("INVALID_ACTION");
-  }
+    if (
+      !["approve", "reject", "received"].includes(action)
+    ) {
+      return errorJson("INVALID_ACTION");
+    }
 
-  const returnData = await getReturnByIdForSeller(
-    returnId,
-    auth.userId
-  );
-
-  if (!returnData) {
-    return errorJson("NOT_FOUND", 404);
-  }
-
-  /* ================= BUSINESS FLOW ================= */
-
-  if (action === "approve") {
-    await updateReturnStatusBySeller(
-      returnId,
-      auth.userId,
-      "approved"
-    );
-  }
-
-  if (action === "reject") {
-    await updateReturnStatusBySeller(
-      returnId,
-      auth.userId,
-      "rejected"
-    );
-  }
-
-  if (action === "received") {
-    await updateReturnStatusBySeller(
-      returnId,
-      auth.userId,
-      "received"
+    const returnData = await getReturnByIdForSeller(
+      params.id,
+      auth.userId
     );
 
-    // 👇 refund logic moved to DB layer
-    await refundBuyerForReturn({
-      returnId,
-      sellerId: auth.userId,
+    if (!returnData) {
+      return errorJson("NOT_FOUND", 404);
+    }
+
+    await updateReturnStatusBySeller(
+      params.id,
+      auth.userId,
+      action
+    );
+
+    return NextResponse.json({
+      success: true,
     });
+  } catch (error) {
+    console.error(
+      "SELLER RETURN PATCH ERROR:",
+      error
+    );
 
-    await updateReturnStatusBySeller(
-      returnId,
-      auth.userId,
-      "refunded"
+    const message =
+      error instanceof Error
+        ? error.message
+        : "UNKNOWN_ERROR";
+
+    return NextResponse.json(
+      { error: message },
+      { status: 400 }
     );
   }
-
-  return NextResponse.json({ success: true });
 }
