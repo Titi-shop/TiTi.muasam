@@ -39,26 +39,19 @@ export default function ReturnCard({
   ];
 
   return (
-    <button
-      type="button"
-      onClick={() =>
-        router.push(
-          `/customer/returns/${item.id}`
-        )
-      }
-      className="
-        group w-full overflow-hidden
-        rounded-3xl
-        border border-orange-500/10
-        bg-[var(--card-bg)]
-        text-left
-        shadow-sm
-        transition-all duration-300
-        hover:border-orange-500/30
-        hover:shadow-lg
-        active:scale-[0.99]
-      "
-    >
+  <div
+    className="
+      group w-full overflow-hidden
+      rounded-3xl
+      border border-orange-500/10
+      bg-[var(--card-bg)]
+      text-left
+      shadow-sm
+      transition-all duration-300
+      hover:border-orange-500/30
+      hover:shadow-lg
+    "
+  >
       <div className="p-4">
 
         {/* TOP */}
@@ -468,6 +461,6 @@ export default function ReturnCard({
           </div>
         </div>
       </div>
-    </button>
+  </div>
   );
 }
