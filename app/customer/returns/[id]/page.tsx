@@ -63,35 +63,28 @@ export default function ReturnDetailPage() {
   }, [authLoading, user, id]);
 
   async function load() {
-    try {
-      setLoading(true);
+  async function load() {
+  try {
+    setLoading(true);
 
-      const res = await apiAuthFetch(
-        `/api/seller/returns/${id}`
-      );
+    const res = await apiAuthFetch(
+      `/api/returns/${id}`
+    );
 
-      if (!res.ok) {
-        setData(null);
-        return;
-      }
-
-      const json = await res.json();
-
-      /* 🔥 normalize data chống crash */
-      const normalized: ReturnDetail = {
-        ...json,
-        items: safeArray(json?.items),
-        evidence_images: safeArray(json?.evidence_images),
-        timeline: safeArray(json?.timeline),
-      };
-
-      setData(normalized);
-    } catch (err) {
-      console.error("[RETURN_DETAIL][LOAD]", err);
+    if (!res.ok) {
       setData(null);
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    const json = await res.json();
+
+    setData(json);
+  } catch (err) {
+    console.error("[RETURN][LOAD]", err);
+    setData(null);
+  } finally {
+    setLoading(false);
+  }
   }
 
   /* ================= HELPERS ================= */
