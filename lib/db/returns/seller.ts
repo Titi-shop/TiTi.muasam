@@ -266,104 +266,120 @@ if (!returnAddressId) {
        RECEIVED + REFUND
     ===================================================== */
 
-    if (action === "received") {
-      if (ret.status !== "shipping_back") {
-        throw new Error("INVALID_STATE");
+      if (action === "received") {
+  if (ret.status !== "shipping_back") {
+    throw new Error("INVALID_STATE");
+  }
+
+  if (ret.refunded_at) {
+    throw new Error("ALREADY_REFUNDED");
+  }
+
+  const amount = Number(ret.refund_amount);
+
+  if (!amount || amount <= 0) {
+    throw new Error("INVALID_AMOUNT");
+  }
+
+  const { rows: orderRows } = await client.query<{
+    buyer_id: string;
+  }>(
+    `
+    SELECT buyer_id
+    FROM orders
+    WHERE id = $1
+    `,
+    [ret.order_id]
+  );
+
+  const buyerId = orderRows[0]?.buyer_id;
+
+  if (!buyerId) {
+    throw new Error("BUYER_NOT_FOUND");
+  }
+
+  /* =====================================================
+     1. ENSURE WALLET EXISTS
+  ===================================================== */
+
+  await client.query(
+    `
+    INSERT INTO wallets (user_id, balance)
+    VALUES ($1, 0)
+    ON CONFLICT (user_id) DO NOTHING
+    `,
+    [buyerId]
+  );
+
+  /* =====================================================
+     2. UPDATE WALLET BALANCE
+  ===================================================== */
+
+  await client.query(
+    `
+    UPDATE wallets
+    SET balance = balance + $1,
+        updated_at = now()
+    WHERE user_id = $2
+    `,
+    [amount, buyerId]
+  );
+
+  /* =====================================================
+     3. WALLET LEDGER (NEW SYSTEM)
+  ===================================================== */
+
+  await client.query(
+    `
+    INSERT INTO wallet_journal (
+      owner_id,
+      owner_type,
+      ref_id,
+      ref_table,
+      entry_type,
+      direction,
+      amount,
+      currency,
+      note
+    ) VALUES (
+      $1,
+      'BUYER',
+      $2,
+      'returns',
+      'BUYER_REFUND',
+      'CREDIT',
+      $3,
+      'PI',
+      'Refund after seller received return'
+    )
+    `,
+    [buyerId, returnId, amount]
+  );
+
+  /* =====================================================
+     4. UPDATE RETURN STATUS
+  ===================================================== */
+
+  await client.query(
+    `
+    UPDATE returns
+    SET
+      status = 'refunded',
+      refunded_at = now(),
+      updated_at = now()
+    WHERE id = $1
+    `,
+    [returnId]
+  );
+
+  console.log("🟢 [RETURN REFUND SUCCESS]", {
+    returnId,
+    buyerId,
+    amount,
+  });
+
+  return;
       }
-
-      if (ret.refunded_at) {
-        throw new Error("ALREADY_REFUNDED");
-      }
-
-      const amount = Number(ret.refund_amount);
-
-      if (!amount || amount <= 0) {
-        throw new Error("INVALID_AMOUNT");
-      }
-
-      const { rows: orderRows } = await client.query<{
-        buyer_id: string;
-      }>(
-        `
-        SELECT buyer_id
-        FROM orders
-        WHERE id = $1
-        `,
-        [ret.order_id]
-      );
-
-      const buyerId = orderRows[0]?.buyer_id;
-
-      if (!buyerId) {
-        throw new Error("BUYER_NOT_FOUND");
-      }
-
-      await client.query(
-        `
-        INSERT INTO wallets (
-          user_id,
-          balance
-        )
-        VALUES ($1, 0)
-        ON CONFLICT (user_id)
-        DO NOTHING
-        `,
-        [buyerId]
-      );
-
-      await client.query(
-        `
-        UPDATE wallets
-        SET
-          balance = balance + $1,
-          updated_at = now()
-        WHERE user_id = $2
-        `,
-        [amount, buyerId]
-      );
-
-      await client.query(
-        `
-        INSERT INTO wallet_transactions (
-          user_id,
-          type,
-          amount,
-          reference_type,
-          reference_id
-        )
-        VALUES (
-          $1,
-          'credit',
-          $2,
-          'refund',
-          $3
-        )
-        `,
-        [buyerId, amount, returnId]
-      );
-
-      await client.query(
-        `
-        UPDATE returns
-        SET
-          status = 'refunded',
-          refunded_at = now(),
-          received_at = now(),
-          updated_at = now()
-        WHERE id = $1
-        `,
-        [returnId]
-      );
-
-      console.log("🟢 [REFUND INTERNAL SUCCESS]", {
-        returnId,
-        buyerId,
-        amount,
-      });
-
-      return;
-    }
-
     throw new Error("INVALID_ACTION");
   });
 }
