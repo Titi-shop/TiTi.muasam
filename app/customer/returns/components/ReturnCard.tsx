@@ -20,6 +20,23 @@ export default function ReturnCard({ item }: Props) {
   const config = getStatusConfig(item.status, t as Record<string, string>);
   const Icon = config.icon;
 
+  const orderId =
+    item.order_id && item.order_id !== "null"
+      ? item.order_id
+      : null;
+
+  const goOrder = () => {
+    if (orderId) router.push(`/customer/orders/${orderId}`);
+  };
+
+  const goReturn = () => {
+    router.push(`/customer/returns/${item.id}`);
+  };
+
+  const goShip = () => {
+    router.push(`/customer/returns/${item.id}/shipping`);
+  };
+
   const steps = [
     "pending",
     "approved",
@@ -29,92 +46,67 @@ export default function ReturnCard({ item }: Props) {
     "refunded",
   ];
 
-  const orderId =
-    item.order_id && item.order_id !== "null"
-      ? item.order_id
-      : null;
-
-  const goToOrder = () => {
-    if (!orderId) return;
-    router.push(`/customer/orders/${orderId}`);
-  };
+  const status = item.status;
 
   return (
-    <div
-      className="
-        group w-full overflow-hidden
-        rounded-3xl border border-orange-500/10
-        bg-[var(--card-bg)]
-        text-left shadow-sm
-        transition-all duration-300
-        hover:border-orange-500/30
-        hover:shadow-lg
-      "
-    >
+    <div className="group w-full overflow-hidden rounded-3xl border border-orange-500/10 bg-[var(--card-bg)] shadow-sm transition hover:border-orange-500/30 hover:shadow-lg">
       <div className="p-4">
 
-        {/* TOP */}
+        {/* HEADER */}
         <div className="flex gap-4">
 
-          {/* IMAGE */}
-          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-orange-500/10 bg-[var(--card-secondary)]">
+          <div className="h-24 w-24 overflow-hidden rounded-2xl border bg-[var(--card-secondary)]">
             <img
               src={getImage(item.thumbnail)}
-              alt="product"
-              onError={(e) => {
-                e.currentTarget.src = "/placeholder.png";
-              }}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              onError={(e) => (e.currentTarget.src = "/placeholder.png")}
+              className="h-full w-full object-cover"
             />
           </div>
 
-          {/* INFO */}
-          <div className="min-w-0 flex-1">
+          <div className="flex-1 min-w-0">
 
-            {/* HEADER (CLICK GO ORDER) */}
+            {/* CLICK HEADER -> ORDER */}
             <div
-              className="flex cursor-pointer items-start justify-between gap-3"
-              onClick={goToOrder}
+              className="flex cursor-pointer items-start justify-between"
+              onClick={goOrder}
             >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-[var(--foreground)]">
+              <div>
+                <p className="text-sm font-bold">
                   #{item.return_number ?? item.id.slice(0, 8)}
                 </p>
 
-                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                <p className="text-xs text-muted">
                   {t.order ?? "Order"}: #{orderId?.slice(0, 8) ?? "---"}
                 </p>
               </div>
 
-              <ChevronRight size={18} className="mt-1 shrink-0 text-[var(--text-muted)]" />
+              <ChevronRight size={18} />
             </div>
 
             {/* STATUS */}
-            <div className={`mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${config.className}`}>
+            <div className={`mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${config.className}`}>
               <Icon size={14} />
-              <span>{config.text}</span>
+              {config.text}
             </div>
 
             {/* PRODUCT */}
             {item.product_name && (
-              <p className="mt-3 line-clamp-2 text-sm text-[var(--foreground)]">
-                {item.product_name}
-              </p>
+              <p className="mt-2 text-sm">{item.product_name}</p>
             )}
           </div>
         </div>
 
         {/* TIMELINE */}
-        {!["rejected", "cancelled"].includes(item.status) && (
-          <div className="mt-5 flex items-center gap-2">
-            {steps.map((step, index) => {
-              const active = steps.indexOf(item.status) >= index;
+        {!["rejected", "cancelled"].includes(status) && (
+          <div className="mt-5 flex gap-2">
+            {steps.map((s, i) => {
+              const active = steps.indexOf(status) >= i;
 
               return (
-                <div key={step} className="flex flex-1 items-center gap-2">
-                  <div className={`h-2.5 w-2.5 rounded-full ${active ? "bg-orange-500" : "bg-[var(--border)]"}`} />
-                  {index !== steps.length - 1 && (
-                    <div className={`h-[2px] flex-1 ${active ? "bg-orange-500" : "bg-[var(--border)]"}`} />
+                <div key={s} className="flex flex-1 items-center gap-2">
+                  <div className={`h-2.5 w-2.5 rounded-full ${active ? "bg-orange-500" : "bg-gray-300"}`} />
+                  {i < steps.length - 1 && (
+                    <div className={`h-[2px] flex-1 ${active ? "bg-orange-500" : "bg-gray-300"}`} />
                   )}
                 </div>
               );
@@ -122,112 +114,96 @@ export default function ReturnCard({ item }: Props) {
           </div>
         )}
 
-        {/* EXTRA */}
+        {/* INFO */}
         <div className="mt-4 space-y-2">
 
           {item.return_tracking_code && (
-            <div className="rounded-2xl border border-blue-500/10 bg-blue-500/5 px-3 py-2 text-xs text-blue-500">
-              🚚 {t.return_tracking ?? "Tracking"}: {item.return_tracking_code}
+            <div className="rounded-xl bg-blue-50 px-3 py-2 text-xs text-blue-600">
+              🚚 {item.return_tracking_code}
             </div>
           )}
 
           {item.refund_amount && (
-            <div className="flex items-center justify-between rounded-2xl border border-green-500/10 bg-green-500/5 px-3 py-2">
-              <span className="text-xs text-[var(--text-muted)]">
-                {t.refund_amount ?? "Refund Amount"}
+            <div className="flex justify-between rounded-xl bg-green-50 px-3 py-2">
+              <span className="text-xs text-muted">
+                {t.refund_amount ?? "Refund"}
               </span>
-              <span className="text-sm font-bold text-green-500">
+              <span className="text-sm font-bold text-green-600">
                 π{formatPi(Number(item.refund_amount))}
               </span>
             </div>
           )}
+        </div>
 
-          {/* ACTIONS */}
-          <div className="mt-4 flex flex-wrap gap-2">
+        {/* ACTIONS (IMPORTANT PART) */}
+        <div className="mt-4 flex flex-wrap gap-2">
 
-            {/* VIEW RETURN */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                router.push(`/customer/returns/${item.id}`);
-              }}
-              className="rounded-xl border border-[var(--border)] bg-[var(--card-secondary)] px-4 py-2 text-xs font-medium"
-            >
-              {t.view_return ?? "View Return"}
+          {/* ALWAYS: VIEW RETURN */}
+          <button onClick={goReturn} className="btn-secondary">
+            {t.view_return ?? "View Return"}
+          </button>
+
+          {/* ALWAYS: VIEW ORDER (SECONDARY) */}
+          {orderId && (
+            <button onClick={goOrder} className="btn-outline">
+              {t.view_order ?? "View Order"}
             </button>
+          )}
 
-            {/* APPROVED */}
-            {item.status === "approved" && orderId && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(`/customer/orders/${orderId}`);
-                }}
-                className="rounded-xl border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-xs font-semibold text-blue-500"
-              >
-                {t.view_order ?? "View Order"}
+          {/* PENDING */}
+          {status === "pending" && (
+            <>
+              <button className="btn-danger">
+                {t.cancel_return ?? "Cancel Return"}
               </button>
-            )}
+            </>
+          )}
 
-            {/* SHIPPING BACK */}
-            {item.status === "shipping_back" && orderId && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(`/customer/orders/${orderId}`);
-                }}
-                className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-500"
-              >
-                {t.view_order ?? "View Order"}
+          {/* APPROVED */}
+          {status === "approved" && (
+            <>
+              <button onClick={goShip} className="btn-primary">
+                {t.ship_return ?? "Ship Return"}
               </button>
-            )}
+            </>
+          )}
 
-            {/* REFUND */}
-            {["refund_pending", "refunded"].includes(item.status) && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(`/customer/returns/${item.id}`);
-                }}
-                className="rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-2 text-xs font-semibold text-green-500"
-              >
-                {t.view_refund ?? "View Refund"}
-              </button>
-            )}
+          {/* SHIPPING BACK */}
+          {status === "shipping_back" && (
+            <button className="btn-primary">
+              {t.track_return ?? "Track Return"}
+            </button>
+          )}
 
-            {/* REJECTED */}
-            {item.status === "rejected" && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(`/customer/returns/${item.id}`);
-                }}
-                className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-500"
-              >
-                {t.view_reason ?? "View Reason"}
-              </button>
-            )}
-          </div>
+          {/* RECEIVED */}
+          {status === "received" && (
+            <button className="btn-secondary">
+              {t.waiting_refund ?? "Waiting Refund"}
+            </button>
+          )}
 
-          {/* DATES */}
-          <div className="flex flex-wrap items-center gap-3 text-[11px] text-[var(--text-muted)]">
-            {item.created_at && (
-              <span>🕒 {new Date(item.created_at).toLocaleString()}</span>
-            )}
+          {/* REFUNDED */}
+          {status === "refunded" && (
+            <button className="btn-success">
+              {t.view_refund ?? "View Refund"}
+            </button>
+          )}
 
-            {item.refunded_at && (
-              <span className="text-green-500">
-                💸 {new Date(item.refunded_at).toLocaleString()}
-              </span>
-            )}
-          </div>
+          {/* REJECTED */}
+          {status === "rejected" && (
+            <button className="btn-danger">
+              {t.view_reason ?? "View Reason"}
+            </button>
+          )}
+        </div>
+
+        {/* DATES */}
+        <div className="mt-3 text-[11px] text-muted">
+          {item.created_at && (
+            <span>🕒 {new Date(item.created_at).toLocaleString()}</span>
+          )}
         </div>
       </div>
     </div>
   );
-      }
+              }
