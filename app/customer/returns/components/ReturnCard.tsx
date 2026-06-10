@@ -276,13 +276,16 @@ export default function ReturnCard({
       );
     }}
     className="
-      rounded-xl
-      border border-[var(--border)]
-      bg-[var(--card-secondary)]
-      px-4 py-2
-      text-xs font-medium
-      text-[var(--foreground)]
-    "
+  rounded-xl border border-[var(--border)]
+  bg-[var(--card-secondary)]
+  px-4 py-2
+  text-xs font-medium
+  text-[var(--foreground)]
+  transition-all duration-150
+  active:scale-95
+  active:opacity-80
+  hover:shadow-sm
+"
   >
     {t.view_return ?? "View Return"}
   </button>
@@ -300,12 +303,14 @@ export default function ReturnCard({
           );
         }}
         className="
-          rounded-xl
-          bg-orange-500
-          px-4 py-2
-          text-xs font-semibold
-          text-white
-        "
+  rounded-xl bg-orange-500
+  px-4 py-2
+  text-xs font-semibold text-white
+  transition-all duration-150
+  active:scale-95
+  active:opacity-80
+  hover:shadow-md
+"
       >
         {t.ship_return ??
           "Ship Return"}
@@ -321,13 +326,15 @@ export default function ReturnCard({
           );
         }}
         className="
-          rounded-xl
-          border border-blue-500/20
-          bg-blue-500/10
-          px-4 py-2
-          text-xs font-semibold
-          text-blue-500
-        "
+  rounded-xl border border-blue-500/20
+  bg-blue-500/10
+  px-4 py-2
+  text-xs font-semibold text-blue-500
+  transition-all duration-150
+  active:scale-95
+  active:opacity-80
+  hover:shadow-sm
+"
       >
         {t.view_order ??
           "View Order"}
@@ -366,13 +373,15 @@ export default function ReturnCard({
           );
         }}
         className="
-          rounded-xl
-          border border-blue-500/20
-          bg-blue-500/10
-          px-4 py-2
-          text-xs font-semibold
-          text-blue-500
-        "
+  rounded-xl border border-red-500/20
+  bg-red-500/10
+  px-4 py-2
+  text-xs font-semibold text-red-500
+  transition-all duration-150
+  active:scale-95
+  active:opacity-80
+  hover:shadow-sm
+"
       >
         {t.view_order ??
           "View Order"}
@@ -395,13 +404,15 @@ export default function ReturnCard({
         );
       }}
       className="
-        rounded-xl
-        border border-green-500/20
-        bg-green-500/10
-        px-4 py-2
-        text-xs font-semibold
-        text-green-500
-      "
+  rounded-xl border border-green-500/20
+  bg-green-500/10
+  px-4 py-2
+  text-xs font-semibold text-green-500
+  transition-all duration-150
+  active:scale-95
+  active:opacity-80
+  hover:shadow-sm
+"
     >
       {t.view_refund ??
         "View Refund"}
