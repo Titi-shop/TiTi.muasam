@@ -697,7 +697,28 @@
   "view_details": "View Details",
   "confirm_received": "Confirm Receipt",
   "approve_return_request": "Approve Return Request",
-  "reject_return_request": "Reject Return Request"
+  "reject_return_request": "Reject Return Request",
+
+  
+  "order": "Order",
+  "view_return": "View Return",
+  "ship_return": "Ship Return",
+  "view_order": "View Order",
+  "track_return": "Track Return",
+  "view_refund": "View Refund",
+  "view_reason": "View Reason",
+  "refund_amount": "Refund Amount",
+  "return_tracking": "Return Tracking",
+
+  "return_pending": "Pending",
+  "return_approved": "Approved",
+  "return_shipping_back": "Shipping Back",
+  "return_received": "Received",
+  "return_refund_pending": "Refund Pending",
+  "return_refunded": "Refunded",
+  "return_rejected": "Rejected",
+  "return_cancelled": "Cancelled"
+
 
 
 
