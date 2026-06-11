@@ -75,34 +75,7 @@ async function safeJson<T>(res: Response): Promise<T | null> {
     return null;
   }
 }
-function normalizeStatus(
-  order: Order
-): OrderStatus {
-  const f = order.fulfillment_status;
-  const p = order.payment_status;
 
-  if (f) {
-    return f;
-  }
-
-  if (p === "pending") {
-    return ORDER_STATUS.PENDING;
-  }
-
-  if (p === "paid") {
-    return ORDER_STATUS.PENDING_FULFILLMENT;
-  }
-
-  if (p === "failed") {
-    return ORDER_STATUS.CANCELLED;
-  }
-
-  if (p === "refunded") {
-    return ORDER_STATUS.REFUNDED;
-  }
-
-  return ORDER_STATUS.PENDING;
-}
 /* =====================================================
    FETCHER
 ===================================================== */
@@ -173,15 +146,6 @@ export default function CustomerOrdersPage() {
 
   const mergedOrders = useMemo(() => {
     if (!optimisticOrder) return orders;
-const normalizedOrders = useMemo(
-  () =>
-    mergedOrders.map((order) => ({
-      ...order,
-      fulfillment_status:
-        normalizeStatus(order),
-    })),
-  [mergedOrders]
-);
     const exists = orders.some(o => o.id === optimisticOrder.id);
     return exists ? orders : [optimisticOrder, ...orders];
   }, [orders, optimisticOrder]);
@@ -348,8 +312,9 @@ useEffect(() => {
     setProcessingId(null);
   }
   }
-  const status = normalizeStatus(order);
-
+  const status =
+  order.fulfillment_status ??
+  ORDER_STATUS.PENDING;
 if (
   status !== ORDER_STATUS.DELIVERED &&
   status !== ORDER_STATUS.COMPLETED
@@ -497,7 +462,7 @@ if (loading || isLoading) {
     }>
       <CustomerOrdersList
         initialTab="all"
-        orders={normalizedOrders}
+        orders={mergedOrders}
         reviewedMap={reviewedMap}
         onDetail={(id) => router.push(`/customer/orders/${id}`)}
         onCancel={setShowCancelFor}
@@ -680,7 +645,7 @@ if (loading || isLoading) {
   onClick={() => {
     if (processingId) return;
 
-    const order = normalizedOrders.find(
+    const order = mergedOrders.find(
   item => item.id === activeReviewId
 );
 
