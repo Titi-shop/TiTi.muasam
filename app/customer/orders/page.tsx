@@ -544,7 +544,6 @@ if (loading || isLoading) {
           </div>
 
           {selectedReason === "cancel_reason_other" && (
-            <textarea
               <textarea
   rows={3}
   value={customReason}
