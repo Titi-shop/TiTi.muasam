@@ -26,6 +26,13 @@ export type OrderFulfillmentStatus =
   | "completed"
   | "cancelled"
   | "refunded";
+export type ReturnStatus =
+  | "pending"
+  | "approved"
+  | "shipping_back"
+  | "received"
+  | "refunded"
+  | "rejected";
 
 export type BuyerOrderItemRow = {
   id: string;
@@ -50,7 +57,7 @@ export type BuyerOrderItemRow = {
   currency: string;
 
   fulfillment_status: string;
-
+ return_status: ReturnStatus | null;
   seller_message: string | null;
   seller_cancel_reason: string | null;
 
@@ -131,10 +138,9 @@ export async function getOrdersByBuyer(
 
       o.payment_status,
       o.fulfillment_status,
-
+      rt.status AS return_status,
       o.total,
       o.currency,
-
       o.items_total,
       o.subtotal,
       o.discount,
@@ -202,14 +208,20 @@ export async function getOrdersByBuyer(
 ) AS order_items
 
     FROM orders o
-    LEFT JOIN order_items oi
-      ON oi.order_id = o.id
+LEFT JOIN order_items oi
+  ON oi.order_id = o.id
+LEFT JOIN LATERAL (
+  SELECT status
+  FROM returns r
+  WHERE r.order_id = o.id
+    AND r.deleted_at IS NULL
+  ORDER BY r.created_at DESC
+  LIMIT 1
+) rt ON TRUE
 
     WHERE o.buyer_id = $1
       AND o.deleted_at IS NULL
-
     GROUP BY o.id
-
     ORDER BY o.created_at DESC
     `,
     [userId]
@@ -316,9 +328,9 @@ export async function getOrderByBuyerId(
         o.order_number,
 
         o.payment_status,
-        o.fulfillment_status,
-
-        o.total,
+      o.fulfillment_status,
+       rt.status AS return_status,
+       o.total,
         o.currency,
 
         o.items_total,
@@ -388,8 +400,17 @@ export async function getOrderByBuyerId(
 ) AS order_items
 
       FROM orders o
-      LEFT JOIN order_items oi
-        ON oi.order_id = o.id
+LEFT JOIN order_items oi
+  ON oi.order_id = o.id
+
+LEFT JOIN LATERAL (
+  SELECT status
+  FROM returns r
+  WHERE r.order_id = o.id
+    AND r.deleted_at IS NULL
+  ORDER BY r.created_at DESC
+  LIMIT 1
+) rt ON TRUE
 
       WHERE o.id = $1
         AND o.buyer_id = $2
