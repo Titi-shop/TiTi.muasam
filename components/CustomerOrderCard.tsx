@@ -12,16 +12,7 @@ import {
 /* =======================================================
    TYPES
 ======================================================= */
-type ReturnStatus =
-  | "pending"
-  | "approved"
-  | "shipping_back"
-  | "received"
-  | "refunded"
-  | "rejected";
 
-return_status?: ReturnStatus | null;
-};
 type OrderItem = {
   id?: string;
   product_id?: string;
