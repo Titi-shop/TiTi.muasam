@@ -90,7 +90,6 @@ const fetcher = async (): Promise<Order[]> => {
   });
 
   if (!res.ok) return [];
-
   const data = await safeJson<unknown>(res);
 
   if (!data || typeof data !== "object") return [];
