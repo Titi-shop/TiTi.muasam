@@ -102,6 +102,73 @@ export async function getOrdersByBuyer(
     LEFT JOIN order_items oi
       ON oi.order_id = o.id
 
+    export async function getOrdersByBuyer(
+  userId: string
+): Promise<BuyerOrderRow[]> {
+  const { rows } = await query<BuyerOrderRow>(
+    `
+    SELECT
+      o.id,
+      o.order_number,
+      o.payment_status,
+      o.fulfillment_status,
+
+      rt.status AS return_status,
+
+      o.total,
+      o.currency,
+      o.items_total,
+      o.subtotal,
+      o.discount,
+      o.shipping_fee,
+      o.tax,
+
+      o.created_at,
+      o.paid_at,
+
+      o.fulfillment_started_at,
+      o.processing_at,
+      o.shipped_at,
+      o.delivered_at,
+      o.completed_at,
+
+      o.cancelled_at,
+      o.cancel_reason,
+
+      o.shipping_name,
+      o.shipping_phone,
+      o.shipping_address_line,
+
+      o.shipping_ward,
+      o.shipping_district,
+      o.shipping_region,
+
+      o.shipping_country,
+      o.shipping_postal_code,
+
+      o.shipping_provider,
+      o.shipping_zone,
+
+      o.buyer_note,
+      o.admin_note,
+
+      o.total_items,
+      o.total_quantity,
+
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'id', oi.id,
+            'product_name', oi.product_name
+          )
+        ) FILTER (WHERE oi.id IS NOT NULL),
+        '[]'::json
+      ) AS order_items
+
+    FROM orders o
+    LEFT JOIN order_items oi
+      ON oi.order_id = o.id
+
     LEFT JOIN LATERAL (
       SELECT r.status
       FROM returns r
@@ -292,27 +359,88 @@ export async function getOrderByBuyerId(
   '[]'::json
 ) AS order_items
 
-      FROM orders o
-LEFT JOIN order_items oi
-  ON oi.order_id = o.id
+      const { rows } = await query<BuyerOrderRow>(
+  `
+  SELECT
+    o.id,
+    o.order_number,
+    o.payment_status,
+    o.fulfillment_status,
 
-(
-  SELECT r.status
-  FROM returns r
-  WHERE r.order_id = o.id
-    AND r.deleted_at IS NULL
-  ORDER BY r.created_at DESC
-  LIMIT 1
-) AS return_status
+    rt.status AS return_status,
 
-      WHERE o.id = $1
-        AND o.buyer_id = $2
-        AND o.deleted_at IS NULL
+    o.total,
+    o.currency,
 
-      GROUP BY o.id
-      `,
-      [orderId, userId]
-    );
+    o.items_total,
+    o.subtotal,
+    o.discount,
+    o.shipping_fee,
+    o.tax,
+
+    o.created_at,
+    o.paid_at,
+
+    o.fulfillment_started_at,
+    o.processing_at,
+    o.shipped_at,
+    o.delivered_at,
+    o.completed_at,
+
+    o.cancelled_at,
+    o.cancel_reason,
+
+    o.shipping_name,
+    o.shipping_phone,
+    o.shipping_address_line,
+
+    o.shipping_ward,
+    o.shipping_district,
+    o.shipping_region,
+
+    o.shipping_country,
+    o.shipping_postal_code,
+
+    o.shipping_provider,
+    o.shipping_zone,
+
+    o.buyer_note,
+    o.admin_note,
+
+    o.total_items,
+    o.total_quantity,
+
+    COALESCE(
+      json_agg(
+        json_build_object(
+          'id', oi.id,
+          'product_name', oi.product_name
+        )
+      ) FILTER (WHERE oi.id IS NOT NULL),
+      '[]'::json
+    ) AS order_items
+
+  FROM orders o
+  LEFT JOIN order_items oi
+    ON oi.order_id = o.id
+
+  LEFT JOIN LATERAL (
+    SELECT r.status
+    FROM returns r
+    WHERE r.order_id = o.id
+      AND r.deleted_at IS NULL
+    ORDER BY r.created_at DESC
+    LIMIT 1
+  ) rt ON TRUE
+
+  WHERE o.id = $1
+    AND o.buyer_id = $2
+    AND o.deleted_at IS NULL
+
+  GROUP BY o.id, rt.status
+  `,
+  [orderId, userId]
+);
 
     /* =====================================================
        QUERY RESULT
