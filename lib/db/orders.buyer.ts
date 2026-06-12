@@ -291,14 +291,14 @@ export async function getOrderByBuyerId(
 LEFT JOIN order_items oi
   ON oi.order_id = o.id
 
-LEFT JOIN LATERAL (
-  SELECT status
+(
+  SELECT r.status
   FROM returns r
   WHERE r.order_id = o.id
     AND r.deleted_at IS NULL
   ORDER BY r.created_at DESC
   LIMIT 1
-) rt ON TRUE
+) AS return_status
 
       WHERE o.id = $1
         AND o.buyer_id = $2
