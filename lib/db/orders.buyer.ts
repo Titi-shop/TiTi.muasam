@@ -6,6 +6,11 @@ import {
 import {
   syncOrderFulfillmentStatus,
 } from "@/lib/db/orders";
+import type {
+  Order as BuyerOrderRow,
+  OrderItem as BuyerOrderItemRow,
+  ReturnStatus,
+} from "@/lib/types/orders";
 
 /* =========================================================
    BUYER — ORDERS LIST
