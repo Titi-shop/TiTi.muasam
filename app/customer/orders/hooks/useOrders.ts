@@ -8,7 +8,7 @@ import { getPiAccessToken } from "@/lib/piAuth";
 import type {
   Order,
   OrdersResponse,
-} from "../types";
+} from "@/types/orders";
 
 function normalizeOrder(
   order: Order
