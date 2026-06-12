@@ -23,6 +23,13 @@ type OrderStatus =
   | "completed"
   | "cancelled"
   | "refunded";
+type ReturnStatus =
+  | "pending"
+  | "approved"
+  | "shipping_back"
+  | "received"
+  | "refunded"
+  | "rejected";
 
 interface OrderItem {
   id: string;
@@ -43,8 +50,7 @@ interface Order {
   created_at: string;
   order_items: OrderItem[];
 
-  /* 🔥 RETURN SYSTEM */
-  has_return_request?: boolean;
+  return_status?: ReturnStatus | null;
 }
 
 /* =====================================================
@@ -119,10 +125,13 @@ export default function OrderDetailPage() {
      RETURN LOGIC (QUAN TRỌNG)
   ===================================================== */
 
-  const canReturn =
-    order.fulfillment_status === "delivered" &&
-    !order.has_return_request;
+  const hasActiveReturn =
+  order.return_status &&
+  order.return_status !== "rejected";
 
+const canReturn =
+  order.fulfillment_status === "delivered" &&
+  !hasActiveReturn;
   /* =====================================================
      UI
   ===================================================== */
@@ -149,9 +158,10 @@ export default function OrderDetailPage() {
               {new Date(order.created_at).toLocaleString()}
             </p>
           </div>
-
-          <span className="text-xs px-3 py-1 rounded-full bg-orange-100 text-orange-600">
-            {order.fulfillment_status}
+<span className="text-xs px-3 py-1 rounded-full bg-orange-100 text-orange-600">
+  {order.return_status
+    ? `return_${order.return_status}`
+    : order.fulfillment_status}
           </span>
         </div>
       </div>
