@@ -15,8 +15,6 @@ import type {
 /* =========================================================
    BUYER — ORDERS LIST
 ========================================================= */
-
-product_name', oi.product_name,
 export async function getOrdersByBuyer(
   userId: string
 ): Promise<BuyerOrderRow[]> {
@@ -78,99 +76,20 @@ export async function getOrdersByBuyer(
             'product_name', oi.product_name,
             'product_slug', oi.product_slug,
             'thumbnail', oi.thumbnail,
-            'images', oi.images,
-            'variant_name', oi.variant_name,
-            'variant_value', oi.variant_value,
             'quantity', oi.quantity,
-            'unit_price', oi.unit_price,
-            'total_price', oi.total_price,
-            'currency', oi.currency,
-            'fulfillment_status', oi.fulfillment_status,
-            'seller_message', oi.seller_message,
-            'seller_cancel_reason', oi.seller_cancel_reason,
-            'tracking_code', oi.tracking_code,
-            'shipping_provider', oi.shipping_provider,
-            'shipped_at', oi.shipped_at,
-            'delivered_at', oi.delivered_at,
-            'snapshot', oi.snapshot
+            'unit_price', oi.unit_price
           )
         ) FILTER (WHERE oi.id IS NOT NULL),
         '[]'::json
       ) AS order_items
 
     FROM orders o
-    LEFT JOIN order_items oi
-      ON oi.order_id = o.id
 
-    export async function getOrdersByBuyer(
-  userId: string
-): Promise<BuyerOrderRow[]> {
-  const { rows } = await query<BuyerOrderRow>(
-    `
-    SELECT
-      o.id,
-      o.order_number,
-      o.payment_status,
-      o.fulfillment_status,
-
-      rt.status AS return_status,
-
-      o.total,
-      o.currency,
-      o.items_total,
-      o.subtotal,
-      o.discount,
-      o.shipping_fee,
-      o.tax,
-
-      o.created_at,
-      o.paid_at,
-
-      o.fulfillment_started_at,
-      o.processing_at,
-      o.shipped_at,
-      o.delivered_at,
-      o.completed_at,
-
-      o.cancelled_at,
-      o.cancel_reason,
-
-      o.shipping_name,
-      o.shipping_phone,
-      o.shipping_address_line,
-
-      o.shipping_ward,
-      o.shipping_district,
-      o.shipping_region,
-
-      o.shipping_country,
-      o.shipping_postal_code,
-
-      o.shipping_provider,
-      o.shipping_zone,
-
-      o.buyer_note,
-      o.admin_note,
-
-      o.total_items,
-      o.total_quantity,
-
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'id', oi.id,
-            'product_name', oi.product_name
-          )
-        ) FILTER (WHERE oi.id IS NOT NULL),
-        '[]'::json
-      ) AS order_items
-
-    FROM orders o
     LEFT JOIN order_items oi
       ON oi.order_id = o.id
 
     LEFT JOIN LATERAL (
-      SELECT r.status
+      SELECT status
       FROM returns r
       WHERE r.order_id = o.id
         AND r.deleted_at IS NULL
