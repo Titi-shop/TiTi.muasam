@@ -1,10 +1,20 @@
-import type { OrderStatus } from "@/constants/order-status";
+import type {
+  OrderStatus,
+} from "@/constants/order-status";
+
+/* =====================================================
+   PAYMENT
+===================================================== */
 
 export type PaymentStatus =
   | "pending"
   | "paid"
   | "failed"
   | "refunded";
+
+/* =====================================================
+   RETURN
+===================================================== */
 
 export type ReturnStatus =
   | "pending"
@@ -13,6 +23,10 @@ export type ReturnStatus =
   | "received"
   | "refunded"
   | "rejected";
+
+/* =====================================================
+   ORDER ITEM
+===================================================== */
 
 export type OrderItem = {
   id: string;
@@ -24,7 +38,7 @@ export type OrderItem = {
 
   thumbnail: string | null;
 
-  images: unknown;
+  images: string[] | null;
 
   variant_name: string | null;
   variant_value: string | null;
@@ -49,8 +63,14 @@ export type OrderItem = {
   shipped_at: string | null;
   delivered_at: string | null;
 
-  snapshot: unknown;
+  snapshot:
+    | Record<string, unknown>
+    | null;
 };
+
+/* =====================================================
+   ORDER
+===================================================== */
 
 export type Order = {
   id: string;
@@ -108,36 +128,17 @@ export type Order = {
   order_items: OrderItem[];
 };
 
-export type OrdersResponse = {
-  orders: Order[];
-};
-export type PaymentStatus =
-  | "pending"
-  | "paid"
-  | "failed"
-  | "refunded";
-
-export type OrderItem = {
-  product_id: string;
-  product_name?: string | null;
-  thumbnail?: string | null;
-  quantity?: number;
-};
-
-export type Order = {
-  id: string;
-  order_number: string;
-  payment_status?: PaymentStatus;
-  fulfillment_status?: string;
-  total: number | string;
-  currency: string;
-  created_at: string;
-  order_items?: OrderItem[];
-};
+/* =====================================================
+   API RESPONSE
+===================================================== */
 
 export type OrdersResponse = {
   orders?: Order[];
 };
+
+/* =====================================================
+   CANCEL
+===================================================== */
 
 export const CANCEL_REASON_KEYS = [
   "cancel_reason_change_mind",
@@ -151,6 +152,10 @@ export const CANCEL_REASON_KEYS = [
 
 export type CancelReasonKey =
   (typeof CANCEL_REASON_KEYS)[number];
+
+/* =====================================================
+   REVIEW
+===================================================== */
 
 export type ReviewedMap =
   Record<string, boolean>;
