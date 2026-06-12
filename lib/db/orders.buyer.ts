@@ -16,6 +16,7 @@ import type {
    BUYER — ORDERS LIST
 ========================================================= */
 
+product_name', oi.product_name,
 export async function getOrdersByBuyer(
   userId: string
 ): Promise<BuyerOrderRow[]> {
@@ -26,7 +27,9 @@ export async function getOrdersByBuyer(
       o.order_number,
       o.payment_status,
       o.fulfillment_status,
+
       rt.status AS return_status,
+
       o.total,
       o.currency,
       o.items_total,
@@ -68,48 +71,50 @@ export async function getOrdersByBuyer(
       o.total_quantity,
 
       COALESCE(
-  json_agg(
-    json_build_object(
-      'id', oi.id,
-      'product_id', oi.product_id,
-      'product_name', oi.product_name,
-      'product_slug', oi.product_slug,
-      'thumbnail', oi.thumbnail,
-      'images', oi.images,
-      'variant_name', oi.variant_name,
-      'variant_value', oi.variant_value,
-      'quantity', oi.quantity,
-      'unit_price', oi.unit_price,
-      'total_price', oi.total_price,
-      'currency', oi.currency,
-      'fulfillment_status', oi.fulfillment_status,
-      'seller_message', oi.seller_message,
-      'seller_cancel_reason', oi.seller_cancel_reason,
-      'tracking_code', oi.tracking_code,
-      'shipping_provider', oi.shipping_provider,
-      'shipped_at', oi.shipped_at,
-      'delivered_at', oi.delivered_at,
-      'snapshot', oi.snapshot
-    )
-  ) FILTER (WHERE oi.id IS NOT NULL),
-  '[]'::json
-) AS order_items
+        json_agg(
+          json_build_object(
+            'id', oi.id,
+            'product_id', oi.product_id,
+            'product_name', oi.product_name,
+            'product_slug', oi.product_slug,
+            'thumbnail', oi.thumbnail,
+            'images', oi.images,
+            'variant_name', oi.variant_name,
+            'variant_value', oi.variant_value,
+            'quantity', oi.quantity,
+            'unit_price', oi.unit_price,
+            'total_price', oi.total_price,
+            'currency', oi.currency,
+            'fulfillment_status', oi.fulfillment_status,
+            'seller_message', oi.seller_message,
+            'seller_cancel_reason', oi.seller_cancel_reason,
+            'tracking_code', oi.tracking_code,
+            'shipping_provider', oi.shipping_provider,
+            'shipped_at', oi.shipped_at,
+            'delivered_at', oi.delivered_at,
+            'snapshot', oi.snapshot
+          )
+        ) FILTER (WHERE oi.id IS NOT NULL),
+        '[]'::json
+      ) AS order_items
 
     FROM orders o
-LEFT JOIN order_items oi
-  ON oi.order_id = o.id
-LEFT JOIN LATERAL (
-  SELECT status
-  FROM returns r
-  WHERE r.order_id = o.id
-    AND r.deleted_at IS NULL
-  ORDER BY r.created_at DESC
-  LIMIT 1
-) rt ON TRUE
+    LEFT JOIN order_items oi
+      ON oi.order_id = o.id
+
+    LEFT JOIN LATERAL (
+      SELECT r.status
+      FROM returns r
+      WHERE r.order_id = o.id
+        AND r.deleted_at IS NULL
+      ORDER BY r.created_at DESC
+      LIMIT 1
+    ) rt ON TRUE
 
     WHERE o.buyer_id = $1
       AND o.deleted_at IS NULL
-    GROUP BY o.id
+
+    GROUP BY o.id, rt.status
     ORDER BY o.created_at DESC
     `,
     [userId]
