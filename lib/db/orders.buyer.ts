@@ -24,7 +24,6 @@ export async function getOrdersByBuyer(
     SELECT
       o.id,
       o.order_number,
-
       o.payment_status,
       o.fulfillment_status,
       rt.status AS return_status,
