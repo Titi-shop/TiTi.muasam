@@ -12,7 +12,7 @@ import {
 import type {
   CancelReasonKey,
   Order,
-} from "../types";
+} from "@/types/orders";
 
 type TranslateObject = Record<
   string,
