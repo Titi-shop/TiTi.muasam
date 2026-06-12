@@ -57,7 +57,9 @@ type ReturnItemState = {
 };
 
 /* ================= FETCHER ================= */
-
+const ALLOWED_RETURN_STATUS: OrderStatus[] = [
+  "delivered",
+];
 const fetcher = async (url: string): Promise<OrderDetail | null> => {
   const res = await apiAuthFetch(url);
   if (!res.ok) return null;
@@ -166,7 +168,10 @@ useEffect(() => {
 
   useEffect(() => {
   if (!order || initialized.current) return;
-  const allowed = allowedReturnStatus.includes(order.fulfillment_status);
+  const allowed =
+  ALLOWED_RETURN_STATUS.includes(
+    order.fulfillment_status
+  );
   if (!allowed) return;
   const saved = localStorage.getItem(draftKey);
   if (saved) {
