@@ -173,8 +173,7 @@ export default function CustomerOrderCard({
   const { t } = useTranslation();
 
   const status =
-    normalizeOrderStatus(order);
-
+  getDisplayStatus(order);
   const items =
     order.order_items ?? [];
 
