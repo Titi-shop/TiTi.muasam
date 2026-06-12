@@ -58,14 +58,8 @@ async function fetchOrders(): Promise<Order[]> {
   }
 
   if (Array.isArray(data)) {
-    return data.map(
-      item =>
-        normalizeOrder(
-          item as Order
-        )
-    );
+  return data as Order[];
   }
-
   const typed =
     data as OrdersResponse;
 
