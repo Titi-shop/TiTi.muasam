@@ -55,10 +55,13 @@ export async function GET() {
               FROM escrow_entries
 
               WHERE
-                release_status = 'HOLD'
-                AND status = 'PAID'
-                AND release_after IS NOT NULL
-                AND release_after <= NOW()
+  release_status = 'HOLD'
+  AND status IN (
+    'PAID',
+    'SETTLED'
+  )
+  AND release_after IS NOT NULL
+  AND release_after <= NOW()
               FOR UPDATE SKIP LOCKED
               `
             );
