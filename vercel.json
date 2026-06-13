@@ -4,6 +4,7 @@
     {
       "path": "/api/internal/jobs/process",
       "schedule": "*/5 * * * *"
+      
     }
   ]
 }
