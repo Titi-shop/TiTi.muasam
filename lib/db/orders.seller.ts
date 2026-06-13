@@ -343,25 +343,42 @@ export async function startShippingBySeller(
            → cron auto complete
         ===================================================== */
 
-        await client.query(
-          `
-          UPDATE escrow_entries
+        const escrowUpdate =
+  await client.query(
+    `
+    UPDATE escrow_entries
 
-          SET
-            release_after =
-              NOW() + interval '1 hours',
+    SET
+      release_after =
+        NOW() + interval '1 hours',
 
-            updated_at = NOW()
+      updated_at = NOW()
 
-          WHERE order_id = $1
-            AND seller_id = $2
-            AND release_status = 'HOLD'
-          `,
-          [
-            orderId,
-            sellerId,
-          ]
-        );
+    WHERE order_id = $1
+      AND seller_id = $2
+
+    RETURNING
+      id,
+      status,
+      release_status,
+      release_after
+    `,
+    [
+      orderId,
+      sellerId,
+    ]
+  );
+
+console.log(
+  "[ORDER][SELLER][SHIP][ESCROW_TIMER]",
+  {
+    rowCount:
+      escrowUpdate.rowCount,
+
+    rows:
+      escrowUpdate.rows,
+  }
+);
 
         /* =====================================================
            4. GLOBAL STATUS SYNC
