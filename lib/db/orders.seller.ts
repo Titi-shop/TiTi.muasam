@@ -265,9 +265,6 @@ export async function startShippingBySeller(
 
            FLOW:
            processing → shipped
-
-           Buyer will now see:
-           "Shipping"
         ===================================================== */
 
         const res =
@@ -308,45 +305,11 @@ export async function startShippingBySeller(
         }
 
         /* =====================================================
-           2. ESCROW AUTO RELEASE TIMER
+           2. UPDATE MAIN ORDER
 
            IMPORTANT:
-           - NO wallet update here
-           - NO payout release here
-           - only schedule settlement
-
-           TEST MODE:
-           auto complete after 10 hours
-        ===================================================== */
-
-        await client.query(
-          `
-          UPDATE escrow_entries
-
-          SET
-            release_after =
-              NOW() + interval '10 hours',
-
-            updated_at = NOW()
-
-          WHERE order_id = $1
-            AND seller_id = $2
-            AND release_status = 'HOLD'
-          `,
-          [
-            orderId,
-            sellerId,
-          ]
-        );
-
-        /* =====================================================
-           3. UPDATE MAIN ORDER STATUS
-
-           Buyer page currently reads:
+           buyer app reads:
            orders.fulfillment_status
-
-           FLOW:
-           processing → shipped
         ===================================================== */
 
         await client.query(
@@ -370,10 +333,41 @@ export async function startShippingBySeller(
         );
 
         /* =====================================================
-           4. GLOBAL STATUS SYNC
+           3. SET AUTO RELEASE TIMER
 
            IMPORTANT:
-           keep order + items synchronized
+           - NO payout here
+           - NO wallet update here
+           - only schedule release timing
+
+           FLOW:
+           shipped
+           → wait 10 hours
+           → cron auto complete
+        ===================================================== */
+
+        await client.query(
+          `
+          UPDATE escrow_entries
+
+          SET
+            release_after =
+              NOW() + interval '10 hours',
+
+            updated_at = NOW()
+
+          WHERE order_id = $1
+            AND seller_id = $2
+            AND release_status = 'HOLD'
+          `,
+          [
+            orderId,
+            sellerId,
+          ]
+        );
+
+        /* =====================================================
+           4. GLOBAL STATUS SYNC
         ===================================================== */
 
         await syncOrderFulfillmentStatus(
