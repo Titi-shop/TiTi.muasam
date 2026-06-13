@@ -371,21 +371,38 @@ export async function completeOrderByBuyer(
          → cron auto complete
       ===================================================== */
 
-      await client.query(
-        `
-        UPDATE escrow_entries
+      const escrowUpdate =
+  await client.query(
+    `
+    UPDATE escrow_entries
 
-        SET
-          release_after =
-            NOW() + interval '5 minutes',
+    SET
+      release_after =
+        NOW() + interval '5 minutes',
 
-          updated_at = NOW()
+      updated_at = NOW()
 
-        WHERE order_id = $1
-          AND release_status = 'HOLD'
-        `,
-        [orderId]
-      );
+    WHERE order_id = $1
+
+    RETURNING
+      id,
+      status,
+      release_status,
+      release_after
+    `,
+    [orderId]
+  );
+
+console.log(
+  "[ESCROW][AUTO_TIMER_SET]",
+  {
+    rowCount:
+      escrowUpdate.rowCount,
+
+    rows:
+      escrowUpdate.rows,
+  }
+);
 
       console.log(
         "[ORDER][BUYER][DELIVERED]",
