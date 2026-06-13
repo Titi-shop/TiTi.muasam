@@ -261,53 +261,141 @@ export async function getOrderByBuyerId(
 export async function completeOrderByBuyer(
   orderId: string,
   userId: string
-): Promise<"SUCCESS" | "NOT_FOUND" | "FORBIDDEN" | "INVALID_STATUS"> {
-  return withTransaction(async (client) => {
-    const { rows } = await client.query<{
-      buyer_id: string;
-      fulfillment_status: string;
-    }>(
-      `
-      SELECT buyer_id, fulfillment_status
-      FROM orders
-      WHERE id = $1
-      LIMIT 1
-      `,
-      [orderId]
-    );
+): Promise<
+  | "SUCCESS"
+  | "NOT_FOUND"
+  | "FORBIDDEN"
+  | "INVALID_STATUS"
+> {
 
-    const order = rows[0];
-    if (!order) return "NOT_FOUND";
-    if (order.buyer_id !== userId) return "FORBIDDEN";
+  return withTransaction(
+    async (client) => {
 
-    if (order.fulfillment_status !== "shipped") {
-      return "INVALID_STATUS";
+      /* =====================================================
+         1. GET ORDER
+      ===================================================== */
+
+      const { rows } =
+        await client.query<{
+          buyer_id: string;
+          fulfillment_status: string;
+        }>(
+          `
+          SELECT
+            buyer_id,
+            fulfillment_status
+          FROM orders
+          WHERE id = $1
+          LIMIT 1
+          `,
+          [orderId]
+        );
+
+      const order =
+        rows[0];
+
+      if (!order) {
+        return "NOT_FOUND";
+      }
+
+      if (
+        order.buyer_id !==
+        userId
+      ) {
+        return "FORBIDDEN";
+      }
+
+      /* =====================================================
+         2. ONLY SHIPPED → DELIVERED
+      ===================================================== */
+
+      if (
+        order.fulfillment_status !==
+        "shipped"
+      ) {
+        return "INVALID_STATUS";
+      }
+
+      /* =====================================================
+         3. UPDATE ORDER ITEMS
+
+         FLOW:
+         shipped → delivered
+      ===================================================== */
+
+      await client.query(
+        `
+        UPDATE order_items
+
+        SET
+          fulfillment_status = 'delivered',
+
+          delivered_at = NOW(),
+
+          updated_at = NOW()
+
+        WHERE order_id = $1
+          AND fulfillment_status = 'shipped'
+        `,
+        [orderId]
+      );
+
+      /* =====================================================
+         4. UPDATE MAIN ORDER
+
+         Buyer now sees:
+         delivered
+      ===================================================== */
+
+      await client.query(
+        `
+        UPDATE orders
+
+        SET
+          fulfillment_status = 'delivered',
+
+          delivered_at = NOW(),
+
+          updated_at = NOW()
+
+        WHERE id = $1
+        `,
+        [orderId]
+      );
+
+      /* =====================================================
+         5. AUTO COMPLETE TIMER
+
+         IMPORTANT:
+         If no:
+         - return request
+         - refund
+         - dispute
+
+         then:
+         delivered → completed
+         after 1 hour
+      ===================================================== */
+
+      await client.query(
+        `
+        UPDATE escrow_entries
+
+        SET
+          release_after =
+            NOW() + interval '1 hour',
+
+          updated_at = NOW()
+
+        WHERE order_id = $1
+          AND release_status = 'HOLD'
+        `,
+        [orderId]
+      );
+
+      return "SUCCESS";
     }
-
-    await client.query(
-      `
-      UPDATE order_items
-      SET fulfillment_status = 'delivered',
-          delivered_at = NOW(),
-          updated_at = NOW()
-      WHERE order_id = $1
-      `,
-      [orderId]
-    );
-
-    await client.query(
-      `
-      UPDATE orders
-      SET fulfillment_status = 'delivered',
-          delivered_at = NOW(),
-          updated_at = NOW()
-      WHERE id = $1
-      `,
-      [orderId]
-    );
-
-    return "SUCCESS";
-  });
+  );
 }
 
 /* =========================================================
