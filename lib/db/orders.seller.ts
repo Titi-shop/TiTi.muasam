@@ -249,77 +249,115 @@ export async function getSellerOrderById(
 /* =========================================================
    SELLER — START SHIPPING
 ========================================================= */
+/* =========================================================
+   SELLER — START SHIPPING
+========================================================= */
 
 export async function startShippingBySeller(
   orderId: string,
   sellerId: string
 ): Promise<boolean> {
+
   try {
-    return await withTransaction(async (client) => {
+    return await withTransaction(
+      async (client) => {
 
-      /* =========================
-         1. UPDATE ITEMS → SHIPPED
-      ========================= */
-      const res = await client.query(
-        `
-        UPDATE order_items
-        SET
-          fulfillment_status = 'shipped',
-          shipped_at = NOW(),
-          updated_at = NOW()
-        WHERE order_id = $1
-          AND seller_id = $2
-          AND fulfillment_status = 'processing'
-        `,
-        [orderId, sellerId]
-      );
+        /* =====================================================
+           1. UPDATE ITEMS → SHIPPED
 
-      if (res.rowCount === 0) {
-        console.warn("[ORDER][SELLER][SHIP][NO_ITEMS]", {
-          orderId,
-          sellerId,
-        });
-        return false;
+           SECURITY:
+           - payout NOT released here
+           - only queue payout timing
+           - server-side controlled
+        ===================================================== */
+
+        const res =
+          await client.query(
+            `
+            UPDATE order_items
+
+            SET
+              fulfillment_status = 'shipped',
+
+              shipped_at = NOW(),
+
+              seller_payout_status = 'pending',
+
+              seller_release_at =
+                NOW() + interval '2 days',
+
+              updated_at = NOW()
+
+            WHERE order_id = $1
+              AND seller_id = $2
+              AND fulfillment_status = 'processing'
+            `,
+            [
+              orderId,
+              sellerId,
+            ]
+          );
+
+        if (
+          res.rowCount === 0
+        ) {
+
+          console.warn(
+            "[ORDER][SELLER][SHIP][NO_ITEMS]",
+            {
+              orderId,
+            }
+          );
+
+          return false;
+        }
+
+        /* =====================================================
+           2. IMPORTANT
+
+           DO NOT FORCE UPDATE orders.status
+
+           Multi-seller marketplace:
+           - seller A may ship
+           - seller B may still processing
+
+           Source of truth:
+           syncOrderFulfillmentStatus()
+        ===================================================== */
+
+        await syncOrderFulfillmentStatus(
+          client,
+          orderId
+        );
+
+        console.log(
+          "[ORDER][SELLER][SHIP][SUCCESS]",
+          {
+            orderId,
+          }
+        );
+
+        return true;
       }
-
-      /* =========================
-         2. FORCE UPDATE ORDER → SHIPPED
-         (QUAN TRỌNG NHẤT)
-      ========================= */
-      await client.query(
-        `
-        UPDATE orders
-        SET
-          fulfillment_status = 'shipped',
-          shipped_at = NOW(),
-          updated_at = NOW()
-        WHERE id = $1
-          AND fulfillment_status = 'processing'
-        `,
-        [orderId]
-      );
-
-      /* =========================
-         3. SYNC (optional safety)
-      ========================= */
-      await syncOrderFulfillmentStatus(client, orderId);
-
-      console.log("[ORDER][SELLER][SHIP][SUCCESS]", {
-        orderId,
-      });
-
-      return true;
-    });
+    );
 
   } catch (err) {
-    console.error("[ORDER][SELLER][SHIP][DB_ERROR]", {
-      message: err instanceof Error ? err.message : "UNKNOWN",
-    });
 
-    throw new Error("DB_ERROR");
+    console.error(
+      "[ORDER][SELLER][SHIP][DB_ERROR]",
+      {
+        message:
+          err instanceof Error
+            ? err.message
+            : "UNKNOWN",
+      }
+    );
+
+    throw new Error(
+      "DB_ERROR"
+    );
   }
 }
-
 /* =========================================================
    SELLER — CANCEL ORDER
 ========================================================= */
