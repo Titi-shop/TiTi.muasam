@@ -318,11 +318,8 @@ export async function startShippingBySeller(
 
           SET
             fulfillment_status = 'shipped',
-
             shipped_at = NOW(),
-
             updated_at = NOW()
-
           WHERE id = $1
             AND fulfillment_status IN (
               'pending',
@@ -352,7 +349,7 @@ export async function startShippingBySeller(
 
           SET
             release_after =
-              NOW() + interval '10 hours',
+              NOW() + interval '1 hours',
 
             updated_at = NOW()
 
