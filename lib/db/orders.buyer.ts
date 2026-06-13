@@ -377,7 +377,7 @@ export async function completeOrderByBuyer(
 
         SET
           release_after =
-            NOW() + interval '1 hour',
+            NOW() + interval '5 minutes',
 
           updated_at = NOW()
 
