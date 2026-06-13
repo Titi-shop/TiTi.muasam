@@ -318,9 +318,6 @@ export async function completeOrderByBuyer(
 
       /* =====================================================
          3. UPDATE ORDER ITEMS
-
-         FLOW:
-         shipped → delivered
       ===================================================== */
 
       await client.query(
@@ -342,9 +339,6 @@ export async function completeOrderByBuyer(
 
       /* =====================================================
          4. UPDATE MAIN ORDER
-
-         Buyer now sees:
-         delivered
       ===================================================== */
 
       await client.query(
@@ -364,17 +358,17 @@ export async function completeOrderByBuyer(
       );
 
       /* =====================================================
-         5. AUTO COMPLETE TIMER
+         5. SET AUTO COMPLETE TIMER
 
          IMPORTANT:
-         If no:
-         - return request
-         - refund
-         - dispute
+         - NO payout here
+         - NO wallet update here
+         - only schedule auto settlement
 
-         then:
-         delivered → completed
-         after 1 hour
+         FLOW:
+         delivered
+         → 1 hour wait
+         → cron auto complete
       ===================================================== */
 
       await client.query(
@@ -393,11 +387,18 @@ export async function completeOrderByBuyer(
         [orderId]
       );
 
+      console.log(
+        "[ORDER][BUYER][DELIVERED]",
+        {
+          orderId,
+          userId,
+        }
+      );
+
       return "SUCCESS";
     }
   );
 }
-
 /* =========================================================
    CANCEL ORDER
 ========================================================= */
