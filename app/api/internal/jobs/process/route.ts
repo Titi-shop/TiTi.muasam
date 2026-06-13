@@ -56,13 +56,9 @@ export async function GET() {
 
               WHERE
                 release_status = 'HOLD'
-
-                AND status = 'PAID'
-
+                AND status = 'SETTLED'
                 AND release_after IS NOT NULL
-
                 AND release_after <= NOW()
-
               FOR UPDATE SKIP LOCKED
               `
             );
@@ -187,17 +183,14 @@ export async function GET() {
               SET
                 release_status =
                   'RELEASED',
-
                 released_amount =
                   amount,
-
                 released_at =
                   NOW(),
-
                 updated_at =
                   NOW()
-
               WHERE id = $1
+              AND release_status = 'HOLD'
               `,
               [escrow.id]
             );
