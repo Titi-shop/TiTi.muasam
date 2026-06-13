@@ -249,9 +249,6 @@ export async function getSellerOrderById(
 /* =========================================================
    SELLER — START SHIPPING
 ========================================================= */
-/* =========================================================
-   SELLER — START SHIPPING
-========================================================= */
 
 export async function startShippingBySeller(
   orderId: string,
@@ -263,12 +260,7 @@ export async function startShippingBySeller(
       async (client) => {
 
         /* =====================================================
-           1. UPDATE ITEMS → SHIPPED
-
-           SECURITY:
-           - payout NOT released here
-           - only queue payout timing
-           - server-side controlled
+           1. UPDATE ORDER ITEMS → SHIPPED
         ===================================================== */
 
         const res =
@@ -280,11 +272,6 @@ export async function startShippingBySeller(
               fulfillment_status = 'shipped',
 
               shipped_at = NOW(),
-
-              seller_payout_status = 'pending',
-
-              seller_release_at =
-                NOW() + interval '2 days',
 
               updated_at = NOW()
 
@@ -313,16 +300,40 @@ export async function startShippingBySeller(
         }
 
         /* =====================================================
-           2. IMPORTANT
+           2. ESCROW RELEASE TIMER
 
-           DO NOT FORCE UPDATE orders.status
+           IMPORTANT:
+           - NO wallet release here
+           - NO balance update here
+           - only schedule settlement timing
 
-           Multi-seller marketplace:
-           - seller A may ship
-           - seller B may still processing
+           escrow_entries = financial source of truth
+        ===================================================== */
 
-           Source of truth:
-           syncOrderFulfillmentStatus()
+        await client.query(
+          `
+          UPDATE escrow_entries
+
+          SET
+            release_after =
+              NOW() + interval '10 hours',
+
+            updated_at = NOW()
+
+          WHERE order_id = $1
+            AND seller_id = $2
+            AND release_status = 'HOLD'
+          `,
+          [
+            orderId,
+            sellerId,
+          ]
+        );
+
+        /* =====================================================
+           3. SYNC ORDER STATUS
+
+           Multi-seller safe
         ===================================================== */
 
         await syncOrderFulfillmentStatus(
