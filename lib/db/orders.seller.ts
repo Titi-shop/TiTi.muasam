@@ -331,7 +331,41 @@ export async function startShippingBySeller(
         );
 
         /* =====================================================
-           3. SYNC ORDER STATUS
+           3. TEMP ORDER STATUS SYNC
+
+           IMPORTANT:
+           Buyer page currently reads:
+           orders.fulfillment_status
+
+           So temporarily force sync order → shipped
+
+           Later:
+           move fully into
+           syncOrderFulfillmentStatus()
+        ===================================================== */
+
+        await client.query(
+          `
+          UPDATE orders
+
+          SET
+            fulfillment_status = 'shipped',
+
+            shipped_at = NOW(),
+
+            updated_at = NOW()
+
+          WHERE id = $1
+            AND fulfillment_status IN (
+              'pending',
+              'processing'
+            )
+          `,
+          [orderId]
+        );
+
+        /* =====================================================
+           4. GLOBAL STATUS SYNC
 
            Multi-seller safe
         ===================================================== */
