@@ -10,8 +10,9 @@ import {
 import type {
   CreditSellerInput,
 } from "@/lib/payments/types";
+
 import {
-  makeSettlementHash,
+  makeEventHash,
 } from "./settlement.utils";
 import {
   createSettlementEventOnce,
