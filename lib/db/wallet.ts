@@ -13,345 +13,534 @@ type OrderRow = {
   status: string;
 };
 
+type JournalDirection =
+  | "CREDIT"
+  | "DEBIT";
+
+type JournalEntryType =
+  | "ESCROW_HOLD"
+  | "BUYER_REFUND"
+  | "SELLER_CREDIT"
+  | "SELLER_ESCROW_RELEASE"
+  | "SELLER_WITHDRAW"
+  | "SYSTEM_COMPENSATION";
+
 /* =====================================================
    HELPERS
 ===================================================== */
 
-function isValidUuid(value: string): boolean {
-  return /^[0-9a-f-]{36}$/i.test(value);
+function isValidUuid(
+  value: string
+): boolean {
+  return /^[0-9a-f-]{36}$/i.test(
+    value
+  );
 }
 
-function toNumberSafe(value: unknown, field: string): number {
+function toNumberSafe(
+  value: unknown,
+  field: string
+): number {
+
   const n = Number(value);
 
   if (Number.isNaN(n)) {
-    console.error("❌ [WALLET][PARSE_ERROR]", { field, value });
-    throw new Error("INVALID_NUMBER");
+
+    console.error(
+      "❌ [WALLET][PARSE_ERROR]",
+      {
+        field,
+        value,
+      }
+    );
+
+    throw new Error(
+      "INVALID_NUMBER"
+    );
   }
 
   return n;
 }
 
-function error(message: string): never {
+function error(
+  message: string
+): never {
   throw new Error(message);
+}
+
+/* =====================================================
+   ENSURE WALLET
+===================================================== */
+
+export async function ensureWallet(
+  userId: string
+): Promise<void> {
+
+  await query(
+    `
+    INSERT INTO wallets (
+      user_id,
+      balance
+    )
+    VALUES ($1, 0)
+
+    ON CONFLICT (user_id)
+    DO NOTHING
+    `,
+    [userId]
+  );
 }
 
 /* =====================================================
    GET WALLET
 ===================================================== */
 
-export async function getWalletByUserId(userId: string) {
+export async function getWalletByUserId(
+  userId: string
+) {
+
   if (!isValidUuid(userId)) {
     error("INVALID_USER_ID");
   }
 
-  console.log("🟡 [WALLET][GET] START", { userId });
+  await ensureWallet(userId);
 
-  // ensure wallet tồn tại
+  const { rows } =
+    await query<WalletRow>(
+      `
+      SELECT balance
+      FROM wallets
+      WHERE user_id = $1
+      LIMIT 1
+      `,
+      [userId]
+    );
+
+  const balance =
+    toNumberSafe(
+      rows[0]?.balance ?? 0,
+      "balance"
+    );
+
+  return {
+    balance,
+  };
+}
+
+/* =====================================================
+   CREATE JOURNAL ENTRY
+===================================================== */
+
+export async function createWalletJournal(
+  params: {
+
+    ownerId: string;
+
+    ownerType:
+      | "BUYER"
+      | "SELLER"
+      | "SYSTEM"
+      | "ADMIN";
+
+    refId?: string | null;
+
+    refTable?: string | null;
+
+    entryType:
+      JournalEntryType;
+
+    direction:
+      JournalDirection;
+
+    amount: number;
+
+    note?: string;
+
+    metadata?: Record<
+      string,
+      unknown
+    >;
+
+    eventHash?: string | null;
+
+    createdBy?: string | null;
+  }
+) {
+
+  if (
+    !isValidUuid(params.ownerId)
+  ) {
+    error("INVALID_OWNER_ID");
+  }
+
+  if (
+    params.amount <= 0
+  ) {
+    error("INVALID_AMOUNT");
+  }
+
   await query(
     `
-    INSERT INTO wallets (user_id, balance)
-    VALUES ($1, 0)
-    ON CONFLICT (user_id) DO NOTHING
+    INSERT INTO wallet_journal (
+
+      owner_id,
+      owner_type,
+
+      ref_id,
+      ref_table,
+
+      entry_type,
+      direction,
+
+      amount,
+      currency,
+
+      note,
+      metadata,
+
+      event_hash,
+      created_by
+
+    )
+    VALUES (
+
+      $1,
+      $2,
+
+      $3,
+      $4,
+
+      $5,
+      $6,
+
+      $7,
+      'PI',
+
+      $8,
+      $9,
+
+      $10,
+      $11
+    )
     `,
-    [userId]
+    [
+      params.ownerId,
+      params.ownerType,
+
+      params.refId ?? null,
+      params.refTable ?? null,
+
+      params.entryType,
+      params.direction,
+
+      params.amount,
+
+      params.note ?? null,
+
+      JSON.stringify(
+        params.metadata ?? {}
+      ),
+
+      params.eventHash ?? null,
+      params.createdBy ?? null,
+    ]
   );
-
-  const { rows } = await query<WalletRow>(
-    `
-    SELECT balance
-    FROM wallets
-    WHERE user_id = $1
-    LIMIT 1
-    `,
-    [userId]
-  );
-
-  const balance = toNumberSafe(rows[0]?.balance ?? 0, "balance");
-
-  console.log("🟢 [WALLET][GET] SUCCESS", {
-    userId,
-    balance,
-  });
-
-  return { balance };
 }
 
 /* =====================================================
-   CREDIT WALLET (REFUND)
+   CREDIT INTERNAL WALLET
 ===================================================== */
 
-export async function creditWallet(params: {
-  userId: string;
-  amount: number;
-  referenceId: string;
-  idempotencyKey: string;
-}) {
-  const { userId, amount, referenceId, idempotencyKey } = params;
+export async function creditWallet(
+  params: {
+    userId: string;
+    amount: number;
+  }
+) {
 
-  if (!isValidUuid(userId) || !isValidUuid(referenceId)) {
-    error("INVALID_INPUT");
+  const {
+    userId,
+    amount,
+  } = params;
+
+  if (
+    !isValidUuid(userId)
+  ) {
+    error("INVALID_USER_ID");
   }
 
-  if (!amount || amount <= 0) {
+  if (
+    amount <= 0
+  ) {
     error("INVALID_AMOUNT");
   }
 
-  console.log("🟡 [WALLET][CREDIT] START", {
-    userId,
-    amount,
-    referenceId,
-  });
+  return withTransaction(
+    async (client) => {
 
-  return withTransaction(async (client) => {
-    /* ================= LOCK WALLET ================= */
+      await client.query(
+        `
+        INSERT INTO wallets (
+          user_id,
+          balance
+        )
+        VALUES ($1, 0)
 
-    const { rows } = await client.query<WalletRow>(
-      `
-      SELECT balance
-      FROM wallets
-      WHERE user_id = $1
-      FOR UPDATE
-      `,
-      [userId]
-    );
+        ON CONFLICT (user_id)
+        DO NOTHING
+        `,
+        [userId]
+      );
 
-    if (!rows[0]) {
-      error("WALLET_NOT_FOUND");
+      await client.query(
+        `
+        UPDATE wallets
+
+        SET
+          balance =
+            balance + $1,
+
+          updated_at =
+            now()
+
+        WHERE user_id = $2
+        `,
+        [
+          amount,
+          userId,
+        ]
+      );
     }
-
-    const before = toNumberSafe(rows[0].balance, "balance_before");
-    const after = before + amount;
-
-    console.log("💰 [WALLET][CREDIT][CALC]", {
-      before,
-      amount,
-      after,
-    });
-
-    /* ================= IDEMPOTENT INSERT ================= */
-
-    const insert = await client.query(
-      `
-      INSERT INTO wallet_transactions (
-        user_id,
-        type,
-        amount,
-        reference_type,
-        reference_id,
-        idempotency_key,
-        balance_before,
-        balance_after
-      )
-      VALUES ($1,'credit',$2,'refund',$3,$4,$5,$6)
-      ON CONFLICT (idempotency_key) DO NOTHING
-      RETURNING id
-      `,
-      [userId, amount, referenceId, idempotencyKey, before, after]
-    );
-
-    if (insert.rowCount === 0) {
-      console.warn("⚠️ [WALLET][CREDIT] DUPLICATE IGNORED", {
-        idempotencyKey,
-      });
-      return;
-    }
-
-    /* ================= UPDATE BALANCE ================= */
-
-    await client.query(
-      `
-      UPDATE wallets
-      SET balance = $1,
-          updated_at = now()
-      WHERE user_id = $2
-      `,
-      [after, userId]
-    );
-
-    console.log("🟢 [WALLET][CREDIT] SUCCESS", {
-      userId,
-      amount,
-      after,
-    });
-  });
+  );
 }
 
 /* =====================================================
-   DEBIT WALLET (PAY)
+   DEBIT INTERNAL WALLET
 ===================================================== */
 
-export async function debitWallet(params: {
-  userId: string;
-  amount: number;
-  referenceId: string;
-  idempotencyKey: string;
-}) {
-  const { userId, amount, referenceId, idempotencyKey } = params;
+export async function debitWallet(
+  params: {
+    userId: string;
+    amount: number;
+  }
+) {
 
-  if (!isValidUuid(userId) || !isValidUuid(referenceId)) {
-    error("INVALID_INPUT");
+  const {
+    userId,
+    amount,
+  } = params;
+
+  if (
+    !isValidUuid(userId)
+  ) {
+    error("INVALID_USER_ID");
   }
 
-  if (!amount || amount <= 0) {
+  if (
+    amount <= 0
+  ) {
     error("INVALID_AMOUNT");
   }
 
-  console.log("🟡 [WALLET][DEBIT] START", {
-    userId,
-    amount,
-    referenceId,
-  });
+  return withTransaction(
+    async (client) => {
 
-  return withTransaction(async (client) => {
-    /* ================= LOCK WALLET ================= */
+      const { rows } =
+        await client.query<WalletRow>(
+          `
+          SELECT balance
+          FROM wallets
+          WHERE user_id = $1
+          FOR UPDATE
+          `,
+          [userId]
+        );
 
-    const { rows } = await client.query<WalletRow>(
-      `
-      SELECT balance
-      FROM wallets
-      WHERE user_id = $1
-      FOR UPDATE
-      `,
-      [userId]
-    );
+      if (!rows.length) {
+        error("WALLET_NOT_FOUND");
+      }
 
-    if (!rows[0]) {
-      error("WALLET_NOT_FOUND");
+      const balance =
+        toNumberSafe(
+          rows[0].balance,
+          "balance"
+        );
+
+      if (
+        balance < amount
+      ) {
+        error(
+          "INSUFFICIENT_BALANCE"
+        );
+      }
+
+      await client.query(
+        `
+        UPDATE wallets
+
+        SET
+          balance =
+            balance - $1,
+
+          updated_at =
+            now()
+
+        WHERE user_id = $2
+        `,
+        [
+          amount,
+          userId,
+        ]
+      );
     }
-
-    const before = toNumberSafe(rows[0].balance, "balance_before");
-
-    if (before < amount) {
-      error("INSUFFICIENT_BALANCE");
-    }
-
-    const after = before - amount;
-
-    console.log("💰 [WALLET][DEBIT][CALC]", {
-      before,
-      amount,
-      after,
-    });
-
-    /* ================= IDEMPOTENT ================= */
-
-    const insert = await client.query(
-      `
-      INSERT INTO wallet_transactions (
-        user_id,
-        type,
-        amount,
-        reference_type,
-        reference_id,
-        idempotency_key,
-        balance_before,
-        balance_after
-      )
-      VALUES ($1,'debit',$2,'order',$3,$4,$5,$6)
-      ON CONFLICT (idempotency_key) DO NOTHING
-      RETURNING id
-      `,
-      [userId, amount, referenceId, idempotencyKey, before, after]
-    );
-
-    if (insert.rowCount === 0) {
-      console.warn("⚠️ [WALLET][DEBIT] DUPLICATE IGNORED", {
-        idempotencyKey,
-      });
-      return;
-    }
-
-    /* ================= UPDATE ================= */
-
-    await client.query(
-      `
-      UPDATE wallets
-      SET balance = $1,
-          updated_at = now()
-      WHERE user_id = $2
-      `,
-      [after, userId]
-    );
-
-    console.log("🟢 [WALLET][DEBIT] SUCCESS", {
-      userId,
-      amount,
-      after,
-    });
-  });
+  );
 }
 
 /* =====================================================
-   PAY WITH WALLET (ORDER FLOW)
+   PAY WITH WALLET
 ===================================================== */
 
-export async function payWithWallet(params: {
-  userId: string;
-  orderId: string;
-}) {
-  const { userId, orderId } = params;
-
-  if (!isValidUuid(userId) || !isValidUuid(orderId)) {
-    error("INVALID_INPUT");
+export async function payWithWallet(
+  params: {
+    userId: string;
+    orderId: string;
   }
+) {
 
-  console.log("🟡 [WALLET][PAY ORDER] START", {
+  const {
     userId,
     orderId,
-  });
+  } = params;
 
-  return withTransaction(async (client) => {
-    /* ================= LOCK ORDER ================= */
+  if (
+    !isValidUuid(userId) ||
+    !isValidUuid(orderId)
+  ) {
+    error("INVALID_INPUT");
+  }
 
-    const { rows } = await client.query<OrderRow>(
-      `
-      SELECT total_amount, status
-      FROM orders
-      WHERE id = $1 AND buyer_id = $2
-      FOR UPDATE
-      `,
-      [orderId, userId]
-    );
+  return withTransaction(
+    async (client) => {
 
-    const order = rows[0];
+      const { rows } =
+        await client.query<OrderRow>(
+          `
+          SELECT
+            total_amount,
+            status
 
-    if (!order) error("ORDER_NOT_FOUND");
+          FROM orders
 
-    if (order.status !== "pending") {
-      error("INVALID_STATE");
-    }
+          WHERE
+            id = $1
+            AND buyer_id = $2
 
-    const amount = toNumberSafe(order.total_amount, "total_amount");
+          LIMIT 1
 
-    console.log("💰 [ORDER][PAY]", {
-      orderId,
-      amount,
-    });
+          FOR UPDATE
+          `,
+          [
+            orderId,
+            userId,
+          ]
+        );
 
-    /* ================= DEBIT ================= */
+      const order =
+        rows[0];
 
-    await debitWallet({
-      userId,
-      amount,
-      referenceId: orderId,
-      idempotencyKey: `order_${orderId}`,
-    });
+      if (!order) {
+        error(
+          "ORDER_NOT_FOUND"
+        );
+      }
 
-    /* ================= UPDATE ORDER ================= */
+      if (
+        order.status !==
+        "pending"
+      ) {
+        error(
+          "INVALID_ORDER_STATE"
+        );
+      }
 
-    await client.query(
-      `
-      UPDATE orders
-      SET status = 'paid',
+      const amount =
+        toNumberSafe(
+          order.total_amount,
+          "total_amount"
+        );
+
+      /* ===============================
+         DEBIT WALLET
+      =============================== */
+
+      await debitWallet({
+        userId,
+        amount,
+      });
+
+      /* ===============================
+         JOURNAL
+      =============================== */
+
+      await client.query(
+        `
+        INSERT INTO wallet_journal (
+
+          owner_id,
+          owner_type,
+
+          ref_id,
+          ref_table,
+
+          entry_type,
+          direction,
+
+          amount,
+          currency,
+
+          note
+
+        )
+        VALUES (
+
+          $1,
+          'BUYER',
+
+          $2,
+          'orders',
+
+          'ESCROW_HOLD',
+          'DEBIT',
+
+          $3,
+          'PI',
+
+          'Wallet payment for order'
+        )
+        `,
+        [
+          userId,
+          orderId,
+          amount,
+        ]
+      );
+
+      /* ===============================
+         UPDATE ORDER
+      =============================== */
+
+      await client.query(
+        `
+        UPDATE orders
+
+        SET
+          status = 'paid',
           updated_at = now()
-      WHERE id = $1
-      `,
-      [orderId]
-    );
 
-    console.log("🟢 [WALLET][PAY ORDER] SUCCESS", {
-      orderId,
-    });
-  });
+        WHERE id = $1
+        `,
+        [orderId]
+      );
+    }
+  );
 }
