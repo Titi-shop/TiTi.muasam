@@ -22,7 +22,14 @@ import {
   FinalizePaidOrderResult,
 } from "@/lib/db/orders.payment";
 
-import { SettlementLedgerV3 as SettlementLedger } from "@/lib/db/settlement.ledger";
+import {
+  createEscrow,
+  markPiVerified,
+  markRpcVerified,
+  linkOrder,
+  creditSeller,
+} from "@/lib/db/settlement";
+
 import { piCompletePayment } from "@/lib/pi/client";
 
 import type {
@@ -272,25 +279,34 @@ async function safeLedger(
       return false;
     }
 
-    const escrowId = await SettlementLedger.createEscrow({
-  paymentIntentId,
-  orderId: paid.orderId,
-  buyerId: paid.buyerId,
-  sellerId: paid.sellerId,
-  amount: paid.amount,
-  txid,
-  piPaymentId,
-});
+    const escrowId =
+  await createEscrow({
+    paymentIntentId,
+    orderId: paid.orderId,
+    buyerId: paid.buyerId,
+    sellerId: paid.sellerId,
+    amount: paid.amount,
+    txid,
+    piPaymentId,
+  });
 
-await SettlementLedger.markPiVerified(escrowId);
+await markPiVerified(
+  escrowId
+);
 
 if (rpcVerified.confirmed) {
-  await SettlementLedger.markRpcVerified(escrowId);
+
+  await markRpcVerified(
+    escrowId
+  );
 }
 
-await SettlementLedger.linkOrder(escrowId, paid.orderId);
+await linkOrder(
+  escrowId,
+  paid.orderId
+);
 
-await SettlementLedger.creditSeller({
+await creditSeller({
   escrowId,
   sellerId: paid.sellerId,
   amount: paid.amount,
