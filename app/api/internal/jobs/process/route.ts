@@ -177,6 +177,88 @@ export async function GET() {
             }
           );
 
+/* =====================================================
+   2.3 ENSURE SELLER WALLET
+===================================================== */
+
+await client.query(
+  `
+  INSERT INTO wallets (
+    id,
+    user_id,
+
+    balance,
+    pending_balance,
+    available_balance,
+
+    created_at,
+    updated_at
+  )
+  VALUES (
+    gen_random_uuid(),
+
+    $1,
+
+    0,
+    0,
+    0,
+
+    NOW(),
+    NOW()
+  )
+
+  ON CONFLICT (user_id)
+  DO NOTHING
+  `,
+  [
+    escrow.seller_id,
+  ]
+);
+
+console.log(
+  "[JOBS][WALLET_ENSURED]",
+  {
+    sellerId:
+      escrow.seller_id,
+  }
+);
+
+/* =====================================================
+   2.4 CREDIT SELLER WALLET
+===================================================== */
+
+await client.query(
+  `
+  UPDATE wallets
+
+  SET
+    balance =
+      balance + $1,
+
+    available_balance =
+      available_balance + $1,
+
+    updated_at =
+      NOW()
+
+  WHERE user_id = $2
+  `,
+  [
+    amount,
+    escrow.seller_id,
+  ]
+);
+
+console.log(
+  "[JOBS][WALLET_CREDITED]",
+  {
+    sellerId:
+      escrow.seller_id,
+
+    amount,
+  }
+);
+
           /* =====================================================
              2.3 WALLET JOURNAL
           ===================================================== */
