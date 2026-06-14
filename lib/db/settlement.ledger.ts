@@ -101,8 +101,8 @@ export class SettlementLedgerV3 {
           $1,$2,$3,$4,$5,$6,
           0,0,
           'PI',
-          'PAID',
-          'HOLD',
+          'HELD',
+          'HOLDING',
           $7,$8,
           now(),
           now(),
@@ -227,12 +227,12 @@ export class SettlementLedgerV3 {
         )
         VALUES (
           $1,$2,$3,$4,
-          0,0,0,$5,
+          0,0,$5,0,
           'PI',
-          'AVAILABLE',
+          'HELD',
           $6,
           'ORDER_PAYMENT',
-          now(),
+          null,
           now(),
           now()
         )
