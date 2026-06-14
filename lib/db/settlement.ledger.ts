@@ -19,6 +19,8 @@ type CreditSellerInput = {
   escrowId: string;
   sellerId: string;
   amount: number;
+  paymentIntentId?: string;
+  orderId?: string;
   piPaymentId?: string;
 };
 
@@ -212,7 +214,10 @@ export class SettlementLedgerV3 {
           id,
           seller_id,
           escrow_id,
+          payment_intent_id,
+          order_id,
           amount,
+   
           withdrawn_amount,
           reversed_amount,
           frozen_amount,
@@ -225,8 +230,8 @@ export class SettlementLedgerV3 {
           created_at,
           updated_at
         )
-        VALUES (
-          $1,$2,$3,$4,
+          VALUES (
+  $1,$2,$3,$4,$5,$6,
           0,0,$5,0,
           'PI',
           'FROZEN',
@@ -239,11 +244,13 @@ export class SettlementLedgerV3 {
         `,
         [
           creditId,
-          input.sellerId,
-          input.escrowId,
-          input.amount,
-          input.amount,
-          input.piPaymentId ?? null,
+input.sellerId,
+input.escrowId,
+input.paymentIntentId ?? null,
+input.orderId ?? null,
+input.amount,
+input.amount,
+input.piPaymentId ?? null,
         ]
       );
     }
