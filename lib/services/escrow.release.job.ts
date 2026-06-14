@@ -1,8 +1,15 @@
-import { withTransaction } from "@/lib/db";
+// =====================================================
+// lib/services/escrow.release.job.ts
+// =====================================================
 
 import {
-  SettlementLedgerV3,
-} from "@/lib/db/settlement.ledger";
+  withTransaction,
+} from "@/lib/db";
+
+import {
+  findReleasableEscrows,
+  releaseEscrowFlow,
+} from "@/lib/db/settlement";
 
 export async function processEscrowReleaseJob() {
 
@@ -10,16 +17,16 @@ export async function processEscrowReleaseJob() {
     async (client) => {
 
       const escrows =
-        await SettlementLedgerV3
-          .findReleasableEscrows(client);
+        await findReleasableEscrows(
+          client
+        );
 
       for (const escrow of escrows) {
 
-        await SettlementLedgerV3
-          .releaseEscrowFlow({
-            client,
-            escrow,
-          });
+        await releaseEscrowFlow({
+          client,
+          escrow,
+        });
       }
 
       return {
