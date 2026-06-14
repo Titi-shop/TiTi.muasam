@@ -190,93 +190,163 @@ export class SettlementLedgerV3 {
      CREDIT SELLER (IDEMPOTENT)
   ===================================================== */
 
-  static async creditSeller(input: CreditSellerInput): Promise<string> {
-    const existed = await query<{ id: string }>(
-      `
-      SELECT id
-      FROM seller_credits
-      WHERE escrow_id = $1
-      LIMIT 1
-      `,
-      [input.escrowId]
-    );
+  static async creditSeller( input: CreditSellerInput): Promise<string> {
+  const existed = await query<{ id: string }>(
+    `
+    SELECT id
+    FROM seller_credits
+    WHERE escrow_id = $1
+    LIMIT 1
+    `,
+    [input.escrowId]
+  );
 
-    let creditId: string;
+  let creditId: string;
 
-    if (existed.rows.length) {
-      creditId = existed.rows[0].id;
-    } else {
-      creditId = randomUUID();
+  if (existed.rows.length) {
 
-      await query(
-        `
-        INSERT INTO seller_credits (
-          id,
-          seller_id,
-          escrow_id,
-          payment_intent_id,
-          order_id,
-          amount,
-   
-          withdrawn_amount,
-          reversed_amount,
-          frozen_amount,
-          available_amount,
-          currency,
-          status,
-          pi_payment_id,
-          credit_source,
-          released_at,
-          created_at,
-          updated_at
-        )
-          VALUES (
-  $1,$2,$3,$4,$5,$6,
-          0,0,$5,0,
-          'PI',
-          'FROZEN',
-          $6,
-          'ORDER_PAYMENT',
-          null,
-          now(),
-          now()
-        )
-        `,
-        [
-          creditId,
-input.sellerId,
-input.escrowId,
-input.paymentIntentId ?? null,
-input.orderId ?? null,
-input.amount,
-input.amount,
-input.piPaymentId ?? null,
-        ]
-      );
-    }
+    creditId = existed.rows[0].id;
 
-    await this.eventOnce(
-      input.escrowId,
-      "SELLER_CREDITED",
-      "ledger",
-      "SELLER_BALANCE_GRANTED",
-      input
-    );
+  } else {
 
-    await this.journalOnce({
-      ownerId: input.sellerId,
-      ownerType: "SELLER",
-      refId: creditId,
-      refTable: "seller_credits",
-      entryType: "SELLER_CREDIT",
-      direction: "CREDIT",
+    creditId = randomUUID();
+
+    const auditHash = makeEventHash({
+      escrowId: input.escrowId,
+      sellerId: input.sellerId,
       amount: input.amount,
-      note: "Seller internal wallet credited",
+      paymentIntentId: input.paymentIntentId,
+      orderId: input.orderId,
+      piPaymentId: input.piPaymentId,
     });
 
-    return creditId;
+    await query(
+      `
+      INSERT INTO seller_credits (
+
+        id,
+
+        seller_id,
+        escrow_id,
+
+        payment_intent_id,
+        order_id,
+
+        amount,
+
+        withdrawn_amount,
+        reversed_amount,
+
+        frozen_amount,
+        available_amount,
+        currency,
+        status,
+        pi_payment_id,
+        chain_txid,
+        credit_source,
+        ledger_version,
+        audit_hash,
+        lock_id,
+        locked_at,
+        lock_source,
+
+        hold_reason,
+        release_note,
+        manual_review_reason,
+
+        withdraw_count,
+        last_withdraw_at,
+
+        frozen_at,
+        released_at,
+        reversed_at,
+
+        created_at,
+        updated_at
+
+      )
+      VALUES (
+
+        $1,
+
+        $2,
+        $3,
+
+        $4,
+        $5,
+
+        $6,
+
+        0,
+        0,
+
+        $6,
+        0,
+
+        'PI',
+        'FROZEN',
+
+        $7,
+        NULL,
+
+        'ORDER_PAYMENT',
+
+        1,
+        $8,
+
+        NULL,
+        NULL,
+        NULL,
+
+        'ESCROW_PENDING',
+        NULL,
+        NULL,
+
+        0,
+        NULL,
+
+        NOW(),
+        NULL,
+        NULL,
+
+        NOW(),
+        NOW()
+      )
+      `,
+      [
+        creditId,
+        input.sellerId,
+        input.escrowId,
+        input.paymentIntentId ?? null,
+        input.orderId ?? null,
+        input.amount,
+        input.piPaymentId ?? null,
+        auditHash,
+      ]
+    );
   }
 
+  await this.eventOnce(
+    input.escrowId,
+    "SELLER_CREDITED",
+    "ledger",
+    "SELLER_BALANCE_GRANTED",
+    input
+  );
+
+  await this.journalOnce({
+    ownerId: input.sellerId,
+    ownerType: "SELLER",
+    refId: creditId,
+    refTable: "seller_credits",
+    entryType: "SELLER_CREDIT",
+    direction: "CREDIT",
+    amount: input.amount,
+    note: "Seller escrow balance frozen",
+  });
+
+  return creditId;
+}
   /* =====================================================
      RELEASE ESCROW
   ===================================================== */
