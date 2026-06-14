@@ -20,36 +20,46 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 /* =======================================================
    TYPES
 ======================================================= */
-
 type TransactionType =
-  | "credit"
-  | "debit";
+  | "CREDIT"
+  | "DEBIT";
 
-type ReferenceType =
-  | "order"
-  | "refund"
-  | "withdraw"
-  | "deposit"
+type EntryType =
+  | "ESCROW_HOLD"
+  | "BUYER_REFUND"
+  | "BUYER_PARTIAL_REFUND"
+  | "SELLER_CREDIT"
+  | "SELLER_ESCROW_RELEASE"
+  | "SELLER_WITHDRAW"
+  | "SELLER_WITHDRAW_REVERT"
+  | "ESCROW_RELEASE"
+  | "ESCROW_REVERT"
+  | "DISPUTE_LOCK"
+  | "DISPUTE_RELEASE"
+  | "DISPUTE_REFUND"
+  | "ADMIN_ADJUST"
+  | "ADMIN_REVERSE"
+  | "SYSTEM_COMPENSATION"
   | string;
 
-type WalletResponse = {
-  balance?: number | string;
-};
 
 type Tx = {
   id: string;
-  type: TransactionType;
+  direction: TransactionType;
   amount: number;
-  reference_type: ReferenceType;
+  entry_type: EntryType;
   created_at: string;
 };
 
 type TransactionApiItem = {
   id?: unknown;
-  type?: unknown;
+  direction?: unknown;
   amount?: unknown;
-  reference_type?: unknown;
+  entry_type?: unknown;
   created_at?: unknown;
+};
+type WalletResponse = {
+  balance?: number | string;
 };
 
 /* =======================================================
@@ -82,43 +92,54 @@ function isTransactionApiItem(
   );
 }
 
-function parseTransaction(
-  value: unknown
-): Tx | null {
-  if (!isTransactionApiItem(value)) {
-    return null;
+function getRefLabel(
+  type: EntryType
+): string {
+
+  switch (type) {
+
+    case "ESCROW_HOLD":
+      return "Escrow Hold";
+
+    case "BUYER_REFUND":
+      return "Buyer Refund";
+
+    case "BUYER_PARTIAL_REFUND":
+      return "Partial Refund";
+
+    case "SELLER_CREDIT":
+      return "Seller Credit";
+
+    case "SELLER_ESCROW_RELEASE":
+      return "Escrow Released";
+
+    case "SELLER_WITHDRAW":
+      return "Withdraw";
+
+    case "SELLER_WITHDRAW_REVERT":
+      return "Withdraw Reverted";
+
+    case "DISPUTE_LOCK":
+      return "Dispute Locked";
+
+    case "DISPUTE_RELEASE":
+      return "Dispute Released";
+
+    case "DISPUTE_REFUND":
+      return "Dispute Refund";
+
+    case "ADMIN_ADJUST":
+      return "Admin Adjust";
+
+    case "ADMIN_REVERSE":
+      return "Admin Reverse";
+
+    case "SYSTEM_COMPENSATION":
+      return "System Compensation";
+
+    default:
+      return type;
   }
-
-  const {
-    id,
-    type,
-    amount,
-    reference_type,
-    created_at,
-  } = value;
-
-  if (
-    typeof id !== "string" ||
-    (type !== "credit" &&
-      type !== "debit") ||
-    typeof reference_type !==
-      "string" ||
-    typeof created_at !== "string"
-  ) {
-    return null;
-  }
-
-  const parsedAmount = Number(amount);
-
-  return {
-    id,
-    type,
-    amount: Number.isNaN(parsedAmount)
-      ? 0
-      : parsedAmount,
-    reference_type,
-    created_at,
-  };
 }
 
 /* =======================================================
@@ -283,7 +304,7 @@ export default function WalletPage() {
     return txs
       .filter(
         (item) =>
-          item.type === "credit"
+          item.direction === "CREDIT"
       )
       .reduce(
         (acc, item) =>
@@ -296,7 +317,7 @@ export default function WalletPage() {
     return txs
       .filter(
         (item) =>
-          item.type === "debit"
+          item.direction === "DEBIT"
       )
       .reduce(
         (acc, item) =>
@@ -632,7 +653,7 @@ export default function WalletPage() {
 
           {txs.map((item) => {
             const isCredit =
-              item.type === "credit";
+  item.direction === "CREDIT";
 
             return (
               <div
@@ -678,7 +699,7 @@ export default function WalletPage() {
                       "
                     >
                       {getRefLabel(
-                        item.reference_type
+                        item.entry_type
                       )}
                     </p>
 
