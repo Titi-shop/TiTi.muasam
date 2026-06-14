@@ -290,14 +290,32 @@ async function safeLedger(
 
     await SettlementLedger.linkOrder(escrowId, paid.orderId);
 
-    await SettlementLedger.creditSeller({
-      escrowId,
-      sellerId: paid.sellerId,
-      amount: paid.amount,
-      piPaymentId,
-    });
+    const escrowId = await SettlementLedger.createEscrow({
+  paymentIntentId,
+  orderId: paid.orderId,
+  buyerId: paid.buyerId,
+  sellerId: paid.sellerId,
+  amount: paid.amount,
+  txid,
+  piPaymentId,
+});
 
-    await SettlementLedger.releaseEscrow(escrowId);
+await SettlementLedger.markPiVerified(escrowId);
+
+if (rpcVerified.confirmed) {
+  await SettlementLedger.markRpcVerified(escrowId);
+}
+
+await SettlementLedger.linkOrder(escrowId, paid.orderId);
+
+/**
+ * KHÔNG release tại đây
+ * KHÔNG credit seller tại đây
+ *
+ * Escrow sẽ giữ tiền đến:
+ * - shipped timeout
+ * - delivered timeout
+ */
     await auditFinalizeDone(paymentIntentId, {
       source: "ledger",
       orderId: paid.orderId,
