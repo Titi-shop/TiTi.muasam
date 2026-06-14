@@ -176,7 +176,6 @@ export async function GET() {
                 escrow.id,
             }
           );
-
 /* =====================================================
    2.3 ENSURE SELLER WALLET
 ===================================================== */
@@ -184,17 +183,23 @@ export async function GET() {
 await client.query(
   `
   INSERT INTO wallets (
+
     id,
     user_id,
 
     balance,
-    pending_balance,
     available_balance,
+    pending_balance,
+    frozen_balance,
+
+    wallet_version,
 
     created_at,
     updated_at
+
   )
   VALUES (
+
     gen_random_uuid(),
 
     $1,
@@ -202,6 +207,9 @@ await client.query(
     0,
     0,
     0,
+    0,
+
+    1,
 
     NOW(),
     NOW()
@@ -232,11 +240,44 @@ await client.query(
   UPDATE wallets
 
   SET
+
+    /* ===============================================
+       TOTAL BALANCE
+    =============================================== */
+
     balance =
       balance + $1,
 
+    /* ===============================================
+       AVAILABLE BALANCE
+    =============================================== */
+
     available_balance =
       available_balance + $1,
+
+    /* ===============================================
+       REMOVE PENDING
+    =============================================== */
+
+    pending_balance =
+      GREATEST(
+        pending_balance - $1,
+        0
+      ),
+
+    /* ===============================================
+       VERSIONING
+    =============================================== */
+
+    wallet_version =
+      wallet_version + 1,
+
+    /* ===============================================
+       AUDIT
+    =============================================== */
+
+    last_credit_at =
+      NOW(),
 
     updated_at =
       NOW()
@@ -258,9 +299,8 @@ console.log(
     amount,
   }
 );
-
           /* =====================================================
-             2.3 WALLET JOURNAL
+             2.5 WALLET JOURNAL
           ===================================================== */
 
           await client.query(
@@ -318,7 +358,7 @@ console.log(
           );
 
           /* =====================================================
-             2.4 COMPLETE ORDER
+             2.6 COMPLETE ORDER
           ===================================================== */
 
           await client.query(
@@ -349,7 +389,7 @@ console.log(
           );
 
           /* =====================================================
-             2.5 COMPLETE ORDER ITEMS
+             2.7 COMPLETE ORDER ITEMS
           ===================================================== */
 
           await client.query(
@@ -384,7 +424,7 @@ console.log(
           );
 
           /* =====================================================
-             2.6 SETTLEMENT EVENT
+             2.8 SETTLEMENT EVENT
           ===================================================== */
 
           await client.query(
