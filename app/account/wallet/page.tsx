@@ -60,6 +60,7 @@ type TransactionApiItem = {
 };
 type WalletResponse = {
   balance?: number | string;
+  transactions?: unknown[];
 };
 
 /* =======================================================
@@ -185,61 +186,56 @@ export default function WalletPage() {
 
   async function load(): Promise<void> {
     try {
-      const [walletRes, txRes] =
-        await Promise.all([
-          apiAuthFetch("/api/wallet", {
-            cache: "no-store",
-          }),
-
-          apiAuthFetch(
-            "/api/wallet/transactions",
-            {
-              cache: "no-store",
-            }
-          ),
-        ]);
+      const walletRes =
+  await apiAuthFetch(
+    "/api/wallet",
+    {
+      cache: "no-store",
+    }
+  );
 
       /* ================= WALLET ================= */
 
-      if (walletRes.ok) {
-        const walletJson: unknown =
-          await walletRes.json();
+    if (walletRes.ok) {
 
-        if (
-          isWalletResponse(walletJson)
-        ) {
-          const parsedBalance =
-            Number(
-              walletJson.balance ?? 0
-            );
+  const walletJson: unknown =
+    await walletRes.json();
 
-          setBalance(
-            Number.isNaN(parsedBalance)
-              ? 0
-              : parsedBalance
+  if (
+    isWalletResponse(walletJson)
+  ) {
+
+    const parsedBalance =
+      Number(
+        walletJson.balance ?? 0
+      );
+
+    setBalance(
+      Number.isNaN(parsedBalance)
+        ? 0
+        : parsedBalance
+    );
+
+    if (
+      Array.isArray(
+        walletJson.transactions
+      )
+    ) {
+
+      const safeTxs =
+        walletJson.transactions
+          .map(parseTransaction)
+          .filter(
+            (
+              item
+            ): item is Tx =>
+              item !== null
           );
-        }
-      }
 
-      /* ================= TRANSACTIONS ================= */
-
-      if (txRes.ok) {
-        const txJson: unknown =
-          await txRes.json();
-
-        if (Array.isArray(txJson)) {
-          const safeTxs = txJson
-            .map(parseTransaction)
-            .filter(
-              (
-                item
-              ): item is Tx =>
-                item !== null
-            );
-
-          setTxs(safeTxs);
-        }
-      }
+      setTxs(safeTxs);
+    }
+  }
+}
     } catch (error) {
       console.error(
         "❌ WALLET LOAD ERROR",
