@@ -290,14 +290,12 @@ if (rpcVerified.confirmed) {
 
 await SettlementLedger.linkOrder(escrowId, paid.orderId);
 
-/**
- * KHÔNG release tại đây
- * KHÔNG credit seller tại đây
- *
- * Escrow sẽ giữ tiền đến:
- * - shipped timeout
- * - delivered timeout
- */
+await SettlementLedger.creditSeller({
+  escrowId,
+  sellerId: paid.sellerId,
+  amount: paid.amount,
+  piPaymentId,
+});
     await auditFinalizeDone(paymentIntentId, {
       source: "ledger",
       orderId: paid.orderId,
