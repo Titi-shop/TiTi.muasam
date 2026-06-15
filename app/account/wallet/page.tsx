@@ -220,76 +220,82 @@ export default function WalletPage() {
      ERROR
   =================================================== */
 
-  if (error) {
+if (error) {
 
-    return (
-      <main
+  return (
+    <main
+      className="
+        min-h-screen
+        bg-[var(--background)]
+        px-4
+        pt-24
+        pb-40
+      "
+    >
+
+      <div
         className="
-          flex min-h-screen
-          items-center
-          justify-center
-          bg-[var(--background)]
+          mx-auto
+          w-full
+          max-w-sm
+          rounded-3xl
+          border border-red-500/10
+          bg-[var(--card-bg)]
           p-6
+          text-center
+          shadow-sm
         "
       >
 
-        <div
+        <h2
           className="
-            w-full max-w-sm
-            rounded-3xl
-            border border-red-500/10
-            bg-[var(--card-bg)]
-            p-6 text-center
-            shadow-sm
+            text-lg
+            font-bold
+            text-red-500
           "
         >
+          Wallet Load Failed
+        </h2>
 
-          <h2
-            className="
-              text-lg font-bold
-              text-red-500
-            "
-          >
-            Wallet Load Failed
-          </h2>
+        <p
+          className="
+            mt-2
+            text-sm
+            text-[var(--text-muted)]
+          "
+        >
+          Unable to load wallet data.
+        </p>
 
-          <p
-            className="
-              mt-2 text-sm
-              text-[var(--text-muted)]
-            "
-          >
-            Unable to load
-            wallet data.
-          </p>
+        <button
+          type="button"
+          onClick={() => {
+            void mutate();
+          }}
+          className="
+            mt-5
+            inline-flex
+            items-center
+            justify-center
+            rounded-2xl
+            bg-orange-500
+            px-5
+            py-3
+            text-sm
+            font-semibold
+            text-white
+            transition-all
+            active:scale-95
+          "
+        >
+          Retry
+        </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              void mutate();
-            }}
-            className="
-              mt-5 inline-flex
-              items-center
-              justify-center
-              rounded-2xl
-              bg-orange-500
-              px-5 py-3
-              text-sm font-semibold
-              text-white
-              transition-all
-              active:scale-95
-            "
-          >
-            Retry
-          </button>
+      </div>
 
-        </div>
-
-      </main>
-    );
-  }
-
+    </main>
+  );
+}
   /* ===================================================
      UI
   =================================================== */
@@ -299,7 +305,7 @@ export default function WalletPage() {
       className="
         min-h-screen
         bg-[var(--background)]
-        pb-28
+        pb-40
         transition-colors
         duration-300
       "
