@@ -249,7 +249,7 @@ export default function WalletWithdrawModal({
       className="
         fixed inset-0 z-50
         flex items-end
-        bg-black/50
+        bg-black/60
         backdrop-blur-sm
       "
     >
@@ -267,49 +267,51 @@ export default function WalletWithdrawModal({
       {/* SHEET */}
 
       <div
-  className="
-    relative z-10
-    w-full
-    rounded-t-[2rem]
-    bg-[var(--card-bg)]
-    p-5
-    pb-[calc(env(safe-area-inset-bottom)+24px)]
-    shadow-2xl
-  "
->
+        className="
+          relative z-10
+          w-full
+          rounded-t-[2rem]
+          bg-[var(--card-bg)]
+          border-t
+          border-[var(--nav-border)]
+          p-5
+          pb-[calc(env(safe-area-inset-bottom)+90px)]
+          shadow-2xl
+        "
+      >
 
         {/* HANDLE */}
 
         <div
           className="
-            mx-auto mb-5
+            mx-auto mb-6
             h-1.5 w-14
             rounded-full
-            bg-[var(--border-color)]
+            bg-[var(--nav-border)]
           "
         />
 
         {/* HEADER */}
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
 
           <div
             className="
-              flex h-12 w-12
+              flex h-14 w-14
               items-center justify-center
               rounded-2xl
-              bg-orange-500/10
-              text-orange-500
+              bg-primary/10
+              text-primary
             "
           >
-            <Wallet size={22} />
+            <Wallet size={24} />
           </div>
 
-          <div>
+          <div className="flex-1">
 
             <h2
               className="
-                text-lg font-bold
+                text-xl font-bold
                 text-[var(--foreground)]
               "
             >
@@ -319,7 +321,7 @@ export default function WalletWithdrawModal({
 
             <p
               className="
-                text-sm
+                mt-1 text-sm
                 text-[var(--text-muted)]
               "
             >
@@ -338,11 +340,14 @@ export default function WalletWithdrawModal({
 
           <div
             className="
-              mt-5 rounded-2xl
-              border border-red-500/10
-              bg-red-500/5
+              mt-5
+              rounded-2xl
+              border
+              border-red-500/20
+              bg-red-500/10
               px-4 py-3
               text-sm
+              font-medium
               text-red-500
             "
           >
@@ -352,12 +357,14 @@ export default function WalletWithdrawModal({
 
         {/* WALLET */}
 
-        <div className="mt-5">
+        <div className="mt-6">
 
           <p
             className="
-              mb-2 text-sm
-              text-[var(--text-muted)]
+              mb-2
+              text-sm
+              font-medium
+              text-[var(--foreground)]
             "
           >
             {t
@@ -381,12 +388,20 @@ export default function WalletWithdrawModal({
               "Pi Wallet Address"
             }
             className="
-              w-full rounded-2xl
-              border border-orange-500/10
+              w-full
+              rounded-2xl
+              border
+              border-[var(--nav-border)]
               bg-[var(--background)]
-              px-4 py-3
+              px-4 py-3.5
               text-sm
+              text-[var(--foreground)]
               outline-none
+              transition-all
+              placeholder:text-[var(--text-muted)]
+              focus:border-[var(--color-primary)]
+              focus:ring-2
+              focus:ring-[var(--color-primary)]/10
             "
           />
 
@@ -394,12 +409,14 @@ export default function WalletWithdrawModal({
 
         {/* AMOUNT */}
 
-        <div className="mt-4">
+        <div className="mt-5">
 
           <p
             className="
-              mb-2 text-sm
-              text-[var(--text-muted)]
+              mb-2
+              text-sm
+              font-medium
+              text-[var(--foreground)]
             "
           >
             {t
@@ -417,12 +434,20 @@ export default function WalletWithdrawModal({
             }}
             placeholder="0.00"
             className="
-              w-full rounded-2xl
-              border border-orange-500/10
+              w-full
+              rounded-2xl
+              border
+              border-[var(--nav-border)]
               bg-[var(--background)]
-              px-4 py-3
+              px-4 py-3.5
               text-sm
+              text-[var(--foreground)]
               outline-none
+              transition-all
+              placeholder:text-[var(--text-muted)]
+              focus:border-[var(--color-primary)]
+              focus:ring-2
+              focus:ring-[var(--color-primary)]/10
             "
           />
 
@@ -439,13 +464,18 @@ export default function WalletWithdrawModal({
             onClick={onClose}
             disabled={loading}
             className="
-              flex-1 rounded-2xl
-              border border-orange-500/10
-              py-3 text-sm
+              flex-1
+              rounded-2xl
+              border
+              border-[var(--nav-border)]
+              bg-[var(--card-secondary)]
+              py-3.5
+              text-sm
               font-semibold
               text-[var(--foreground)]
               transition-all
               active:scale-95
+              disabled:opacity-60
             "
           >
             {t
@@ -467,8 +497,9 @@ export default function WalletWithdrawModal({
               justify-center
               gap-2
               rounded-2xl
-              bg-orange-500
-              py-3 text-sm
+              bg-primary
+              py-3.5
+              text-sm
               font-semibold
               text-white
               transition-all
