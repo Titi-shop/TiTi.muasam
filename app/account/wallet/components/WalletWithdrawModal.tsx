@@ -271,7 +271,7 @@ export default function WalletWithdrawModal({
                 e.target.value
               );
             }}
-            placeholder="Pi Wallet Address"
+            placeholder="t.wallet_address_placeholder"
             className="
               w-full rounded-2xl
               border border-orange-500/10
