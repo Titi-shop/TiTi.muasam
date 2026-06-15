@@ -18,8 +18,8 @@ import {
 } from "@/app/lib/i18n/client";
 
 import {
-  requestWalletWithdraw,
-} from "../actions/wallet.withdraw";
+  createWithdraw,
+} from "../wallet.withdraw";
 
 /* =====================================================
    TYPES
@@ -114,7 +114,7 @@ export default function WalletWithdrawModal({
         return;
       }
 
-      await requestWalletWithdraw({
+      await createWithdraw({
         amount:
           parsedAmount,
 
