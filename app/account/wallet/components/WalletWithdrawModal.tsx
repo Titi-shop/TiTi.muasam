@@ -267,15 +267,16 @@ export default function WalletWithdrawModal({
       {/* SHEET */}
 
       <div
-        className="
-          relative z-10
-          w-full
-          rounded-t-[2rem]
-          bg-[var(--card-bg)]
-          p-5
-          shadow-2xl
-        "
-      >
+  className="
+    relative z-10
+    w-full
+    rounded-t-[2rem]
+    bg-[var(--card-bg)]
+    p-5
+    pb-[calc(env(safe-area-inset-bottom)+24px)]
+    shadow-2xl
+  "
+>
 
         {/* HANDLE */}
 
@@ -429,7 +430,7 @@ export default function WalletWithdrawModal({
 
         {/* ACTIONS */}
 
-        <div className="mt-15 flex gap-3">
+        <div className="mt-6 flex gap-3">
 
           {/* CANCEL */}
 
