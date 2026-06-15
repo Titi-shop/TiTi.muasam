@@ -44,10 +44,12 @@ export async function fetchWallet():
       }
     );
   if (!response.ok) {
-    throw new Error(
-      "WALLET_FETCH_FAILED"
-    );
-  }
+
+  return {
+    balance: 0,
+    transactions: [],
+  };
+}
   const json:
     unknown =
       await response.json();
