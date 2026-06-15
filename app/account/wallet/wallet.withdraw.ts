@@ -165,4 +165,3 @@ export async function createWithdraw(
   }
 }
 
-Viết các ngôn ngữ bên trong thành key ngôn ngữ .
