@@ -717,8 +717,16 @@
   "return_refund_pending": "Refund Pending",
   "return_refunded": "Refunded",
   "return_rejected": "Rejected",
-  "return_cancelled": "Cancelled"
+  "return_cancelled": "Cancelled",
+    "invalid_amount": "Invalid amount",
+    "invalid_wallet": "Invalid wallet address",
+    "invalid_response": "Invalid server response",
+    "withdraw_failed": "Withdraw failed",
+    "network_error": "Network error",
 
+    "INSUFFICIENT_BALANCE": "Insufficient balance",
+    "WITHDRAW_DISABLED": "Withdraw is disabled",
+    "INVALID_ADDRESS": "Invalid wallet address"
 
 
 
