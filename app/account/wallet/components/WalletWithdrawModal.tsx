@@ -75,6 +75,82 @@ export default function WalletWithdrawModal({
   }
 
   /* ===================================================
+     GET ERROR MESSAGE
+  =================================================== */
+
+  function getErrorMessage(
+    errorCode?: string
+  ) {
+
+    switch (
+      errorCode
+    ) {
+
+      case
+        "INVALID_AMOUNT":
+
+        return (
+          t
+            .wallet_invalid_amount ??
+          "Invalid amount"
+        );
+
+      case
+        "INVALID_WALLET":
+
+        return (
+          t
+            .wallet_invalid_wallet ??
+          "Invalid wallet address"
+        );
+
+      case
+        "INSUFFICIENT_BALANCE":
+
+        return (
+          t
+            .wallet_insufficient_balance ??
+          "Insufficient balance"
+        );
+
+      case
+        "WITHDRAW_DISABLED":
+
+        return (
+          t
+            .wallet_withdraw_disabled ??
+          "Withdraw is disabled"
+        );
+
+      case
+        "INVALID_ADDRESS":
+
+        return (
+          t
+            .wallet_invalid_address ??
+          "Invalid wallet address"
+        );
+
+      case
+        "NETWORK_ERROR":
+
+        return (
+          t
+            .wallet_network_error ??
+          "Network error"
+        );
+
+      default:
+
+        return (
+          t
+            .wallet_withdraw_failed ??
+          "Withdraw failed"
+        );
+    }
+  }
+
+  /* ===================================================
      SUBMIT
   =================================================== */
 
@@ -106,7 +182,8 @@ export default function WalletWithdrawModal({
       }
 
       if (
-        !withdrawWallet.trim()
+        !withdrawWallet
+          .trim()
       ) {
 
         setError(
@@ -124,7 +201,8 @@ export default function WalletWithdrawModal({
             parsedAmount,
 
           withdrawWallet:
-            withdrawWallet.trim(),
+            withdrawWallet
+              .trim(),
         });
 
       if (
@@ -132,10 +210,9 @@ export default function WalletWithdrawModal({
       ) {
 
         setError(
-          result.error ??
-          t
-            .wallet_withdraw_failed ??
-          "Withdraw failed"
+          getErrorMessage(
+            result.error
+          )
         );
 
         return;
@@ -245,7 +322,8 @@ export default function WalletWithdrawModal({
                 text-[var(--text-muted)]
               "
             >
-              {t.wallet_withdraw_description ??
+              {t
+                .wallet_withdraw_description ??
                 "Withdraw PI to another wallet"}
             </p>
 
@@ -281,20 +359,24 @@ export default function WalletWithdrawModal({
               text-[var(--text-muted)]
             "
           >
-            {t.wallet_address ??
+            {t
+              .wallet_address ??
               "Wallet Address"}
           </p>
 
           <input
             type="text"
-            value={withdrawWallet}
+            value={
+              withdrawWallet
+            }
             onChange={(e) => {
               setWithdrawWallet(
                 e.target.value
               );
             }}
             placeholder={
-              t.wallet_address_placeholder ??
+              t
+                .wallet_address_placeholder ??
               "Pi Wallet Address"
             }
             className="
@@ -319,7 +401,8 @@ export default function WalletWithdrawModal({
               text-[var(--text-muted)]
             "
           >
-            {t.wallet_amount ??
+            {t
+              .wallet_amount ??
               "Amount"}
           </p>
 
@@ -344,79 +427,86 @@ export default function WalletWithdrawModal({
 
         </div>
 
-        {/* ACTIONS */}
+        // ACTIONS
 
-        <div className="mt-6 flex gap-3">
+<div
+  className="
+    sticky bottom-0
+    mt-6 flex gap-3
+    border-t border-orange-500/10
+    bg-[var(--card-bg)]
+    pt-4
+  "
+>
 
-          {/* CANCEL */}
+  {/* CANCEL */}
 
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="
-              flex-1 rounded-2xl
-              border border-orange-500/10
-              py-3 text-sm
-              font-semibold
-              text-[var(--foreground)]
-              transition-all
-              active:scale-95
-            "
-          >
-            {t.common_cancel ??
-              "Cancel"}
-          </button>
+  <button
+    type="button"
+    onClick={onClose}
+    disabled={loading}
+    className="
+      flex-1 rounded-2xl
+      border border-orange-500/10
+      py-3 text-sm
+      font-semibold
+      text-[var(--foreground)]
+      transition-all
+      active:scale-95
+    "
+  >
+    {t
+      .common_cancel ??
+      "Cancel"}
+  </button>
 
-          {/* SUBMIT */}
+  {/* SUBMIT */}
 
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => {
-              void handleSubmit();
-            }}
-            className="
-              flex flex-1
-              items-center
-              justify-center
-              gap-2
-              rounded-2xl
-              bg-orange-500
-              py-3 text-sm
-              font-semibold
-              text-white
-              transition-all
-              active:scale-95
-              disabled:opacity-60
-            "
-          >
+  <button
+    type="button"
+    disabled={loading}
+    onClick={() => {
+      void handleSubmit();
+    }}
+    className="
+      flex flex-1
+      items-center
+      justify-center
+      gap-2
+      rounded-2xl
+      bg-orange-500
+      py-3 text-sm
+      font-semibold
+      text-white
+      transition-all
+      active:scale-95
+      disabled:opacity-60
+      mb-safe
+    "
+  >
 
-            {loading && (
-              <Loader2
-                size={16}
-                className="animate-spin"
-              />
-            )}
+    {loading && (
+      <Loader2
+        size={16}
+        className="animate-spin"
+      />
+    )}
 
-            {loading
-              ? (
-                t
-                  .common_processing ??
-                "Processing..."
-              )
-              : (
-                t
-                  .wallet_withdraw ??
-                "Withdraw"
-              )}
+    {loading
+      ? (
+        t
+          .common_processing ??
+        "Processing..."
+      )
+      : (
+        t
+          .wallet_withdraw ??
+        "Withdraw"
+      )}
 
-          </button>
-
-        </div>
-
+  </button>
+</div>
       </div>
-
     </div>
   );
 }
