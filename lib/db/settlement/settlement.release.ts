@@ -215,12 +215,12 @@ console.log(
 
       SET
         status = 'AVAILABLE',
+        
+available_amount =
+  available_amount + frozen_amount,
 
-        available_amount =
-          amount,
-
-        frozen_amount = 0,
-
+frozen_amount = 0,
+  
         released_at =
           NOW(),
 
