@@ -145,38 +145,46 @@ export async function releaseEscrowFlow(
   );
 
   const escrowUpdate =
-    await client.query(
-      `
-      UPDATE escrow_entries
+  await client.query(
+    `
+    UPDATE escrow_entries
 
-      SET
-        status = 'SETTLED',
+    SET
+      status = 'SETTLED',
 
-        release_status =
-          'RELEASED',
+      release_status =
+        'RELEASED',
 
-        released_amount =
-          amount,
+      released_amount =
+        amount,
 
-        released_at =
-          NOW(),
+      released_at =
+        NOW(),
 
-        updated_at =
-          NOW(),
+      updated_at =
+        NOW(),
 
-        escrow_version =
-          escrow_version + 1
+      escrow_version =
+        escrow_version + 1
 
-      WHERE id = $1
-        AND release_status = 'HOLD'
-      `,
-      [
-        escrow.id,
-      ]
-    );
+    WHERE id = $1
+      AND release_status = 'HOLD'
+    `,
+    [
+      escrow.id,
+    ]
+  );
 
-  console.log(
-    "[SETTLEMENT][RELEASE] ESCROW_UPDATE_DONE",
+/* ===================================================
+   IDEMPOTENT GUARD
+=================================================== */
+
+if (
+  escrowUpdate.rowCount !== 1
+) {
+
+  console.warn(
+    "[SETTLEMENT][RELEASE] ALREADY_RELEASED",
     {
       escrowId:
         escrow.id,
@@ -186,17 +194,19 @@ export async function releaseEscrowFlow(
     }
   );
 
-  /* ===================================================
-     2. RELEASE SELLER CREDIT
-  =================================================== */
+  return;
+}
 
-  console.log(
-    "[SETTLEMENT][RELEASE] CREDIT_RELEASE_START",
-    {
-      escrowId:
-        escrow.id,
-    }
-  );
+console.log(
+  "[SETTLEMENT][RELEASE] ESCROW_UPDATE_DONE",
+  {
+    escrowId:
+      escrow.id,
+
+    affected:
+      escrowUpdate.rowCount,
+  }
+);
 
   const sellerCreditUpdate =
     await client.query(
