@@ -237,9 +237,27 @@ frozen_amount = 0,
         escrow.id,
       ]
     );
+console.log(
+  "[SETTLEMENT][RELEASE] CREDIT_RELEASE_DONE",
+  {
+    escrowId:
+      escrow.id,
 
-  console.log(
-    "[SETTLEMENT][RELEASE] CREDIT_RELEASE_DONE",
+    affected:
+      sellerCreditUpdate.rowCount,
+  }
+);
+
+/* ===================================================
+   IDEMPOTENT CREDIT GUARD
+=================================================== */
+
+if (
+  sellerCreditUpdate.rowCount !== 1
+) {
+
+  console.warn(
+    "[SETTLEMENT][RELEASE] CREDIT_ALREADY_RELEASED",
     {
       escrowId:
         escrow.id,
@@ -248,6 +266,9 @@ frozen_amount = 0,
         sellerCreditUpdate.rowCount,
     }
   );
+
+  return;
+}
 
   /* ===================================================
      3. ENSURE WALLET
