@@ -427,86 +427,80 @@ export default function WalletWithdrawModal({
 
         </div>
 
-        // ACTIONS
+        {/* ACTIONS */}
 
-<div
-  className="
-    sticky bottom-0
-    mt-6 flex gap-3
-    border-t border-orange-500/10
-    bg-[var(--card-bg)]
-    pt-4
-  "
->
+        <div className="mt-15 flex gap-3">
 
-  {/* CANCEL */}
+          {/* CANCEL */}
 
-  <button
-    type="button"
-    onClick={onClose}
-    disabled={loading}
-    className="
-      flex-1 rounded-2xl
-      border border-orange-500/10
-      py-3 text-sm
-      font-semibold
-      text-[var(--foreground)]
-      transition-all
-      active:scale-95
-    "
-  >
-    {t
-      .common_cancel ??
-      "Cancel"}
-  </button>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            className="
+              flex-1 rounded-2xl
+              border border-orange-500/10
+              py-3 text-sm
+              font-semibold
+              text-[var(--foreground)]
+              transition-all
+              active:scale-95
+            "
+          >
+            {t
+              .common_cancel ??
+              "Cancel"}
+          </button>
 
-  {/* SUBMIT */}
+          {/* SUBMIT */}
 
-  <button
-    type="button"
-    disabled={loading}
-    onClick={() => {
-      void handleSubmit();
-    }}
-    className="
-      flex flex-1
-      items-center
-      justify-center
-      gap-2
-      rounded-2xl
-      bg-orange-500
-      py-3 text-sm
-      font-semibold
-      text-white
-      transition-all
-      active:scale-95
-      disabled:opacity-60
-      mb-safe
-    "
-  >
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => {
+              void handleSubmit();
+            }}
+            className="
+              flex flex-1
+              items-center
+              justify-center
+              gap-2
+              rounded-2xl
+              bg-orange-500
+              py-3 text-sm
+              font-semibold
+              text-white
+              transition-all
+              active:scale-95
+              disabled:opacity-60
+            "
+          >
 
-    {loading && (
-      <Loader2
-        size={16}
-        className="animate-spin"
-      />
-    )}
+            {loading && (
+              <Loader2
+                size={16}
+                className="animate-spin"
+              />
+            )}
 
-    {loading
-      ? (
-        t
-          .common_processing ??
-        "Processing..."
-      )
-      : (
-        t
-          .wallet_withdraw ??
-        "Withdraw"
-      )}
+            {loading
+              ? (
+                t
+                  .common_processing ??
+                "Processing..."
+              )
+              : (
+                t
+                  .wallet_withdraw ??
+                "Withdraw"
+              )}
 
-  </button>
-</div>
+          </button>
+
+        </div>
+
       </div>
+
     </div>
   );
 }
