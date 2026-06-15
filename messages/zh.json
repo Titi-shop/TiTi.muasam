@@ -714,7 +714,6 @@
   "return_rejected": "退货被拒绝",
   "return_cancelled": "已取消退货",
 
-{
   "wallet_invalid_amount": "金额无效",
   "wallet_invalid_wallet": "钱包地址无效",
   "wallet_invalid_response": "服务器响应无效",
@@ -724,7 +723,7 @@
   "wallet_insufficient_balance": "余额不足",
   "wallet_withdraw_disabled": "提现功能已关闭",
   "wallet_invalid_address": "钱包地址无效"
-}
+
 
 
 }
