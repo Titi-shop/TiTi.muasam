@@ -29,16 +29,25 @@ type DbClient = {
 ===================================================== */
 
 export async function createSettlementJournalOnce(
-  params: {
-    ownerId: string;
-    ownerType: string;
-    refId: string;
-    refTable: string;
-    entryType: string;
-    direction: string;
-    amount: number;
-    note?: string;
-  },
+params: {
+  ownerId: string;
+  ownerType: string;
+  refId: string;
+  refTable: string;
+  entryType: string;
+  direction: string;
+  amount: number;
+  note?: string;
+
+  metadata?: Record<
+    string,
+    unknown
+  >;
+
+  eventHash?: string;
+
+  createdBy?: string;
+},
 
   client?: DbClient
 ): Promise<void> {
@@ -125,70 +134,66 @@ export async function createSettlementJournalOnce(
   /* ===================================================
      INSERT JOURNAL
   =================================================== */
+await db.query(
+  `
+  INSERT INTO wallet_journal (
 
-  await db.query(
-    `
-    INSERT INTO wallet_journal (
+    id,
+    owner_id,
+    owner_type,
+    ref_id,
+    ref_table,
+    entry_type,
+    direction,
+    amount,
+    currency,
+    note,
+    metadata,
+    event_hash,
+    created_by,
+    created_at
 
-      id,
+  )
+  VALUES (
 
-      owner_id,
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    'PI',
+    $9,
+    $10,
+    $11,
+    $12,
+    NOW()
+  )
+  `,
+  [
+    randomUUID(),
+    params.ownerId,
+    params.ownerType,
+    params.refId,
+    params.refTable,
+    params.entryType,
+    params.direction,
+    params.amount,
+    params.note ?? null,
+    JSON.stringify(
+      params.metadata ??
+      {}
+    ),
 
-      owner_type,
+    params.eventHash ??
+      null,
 
-      ref_id,
-
-      ref_table,
-
-      entry_type,
-
-      direction,
-
-      amount,
-
-      currency,
-
-      note,
-
-      created_at
-
-    )
-    VALUES (
-
-      $1,
-      $2,
-      $3,
-      $4,
-      $5,
-      $6,
-      $7,
-      $8,
-      'PI',
-      $9,
-      NOW()
-    )
-    `,
-    [
-      randomUUID(),
-
-      params.ownerId,
-
-      params.ownerType,
-
-      params.refId,
-
-      params.refTable,
-
-      params.entryType,
-
-      params.direction,
-
-      params.amount,
-
-      params.note ?? null,
-    ]
-  );
-
+    params.createdBy ??
+      null,
+  ]
+);
   console.log(
     "[SETTLEMENT][JOURNAL] DONE",
     {
