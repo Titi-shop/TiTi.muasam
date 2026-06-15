@@ -94,3 +94,22 @@ export type PayWithWalletInput = {
   userId: string;
   orderId: string;
 };
+export type WalletTransaction = {
+  id: string;
+
+  direction:
+    JournalDirection;
+
+  amount: number;
+
+  entry_type:
+    JournalEntryType;
+
+  created_at: string;
+};
+
+export type WalletApiResponse = {
+  balance: number;
+  transactions:
+    WalletTransaction[];
+};
