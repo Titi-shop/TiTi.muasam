@@ -33,7 +33,12 @@ function vlog(
 function normalizeString(
   value: unknown
 ): string {
-  function isSameAmount(
+  return typeof value === "string"
+    ? value.trim()
+    : "";
+}
+
+function isSameAmount(
   a: number,
   b: number
 ): boolean {
@@ -41,10 +46,6 @@ function normalizeString(
     Math.abs(a - b) <
     0.0000001
   );
-}
-  return typeof value === "string"
-    ? value.trim()
-    : "";
 }
 
 function isValidIntentState(
@@ -249,17 +250,13 @@ vlog(
       "PI_PAYMENT_CANCELLED"
     );
   }
-if (
+  if (
   payment.status
     ?.developer_completed
 ) {
   vlog(
     "PI_ALREADY_COMPLETED"
   );
-
-  return {
-    success: true,
-  };
 }
   /* =====================================================
      10. VERIFY AMOUNT
@@ -308,7 +305,13 @@ if (
   /* =====================================================
      11. VERIFY RECEIVER WALLET
   ===================================================== */
-
+if (
+  !intent.merchant_wallet
+) {
+  throw new Error(
+    "MERCHANT_WALLET_MISSING"
+  );
+}
   const expectedWallet =
   String(
     intent.merchant_wallet
