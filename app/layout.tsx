@@ -1,10 +1,4 @@
-import "./globals.css";
 
-import "./styles/theme.css";
-import "./styles/base.css";
-import "./styles/components.css";
-import "./styles/utilities.css";
-import "./styles/animations.css";
 import "./globals.css";
 import Script from "next/script";
 import PiRootClient from "./PiRootClient";
