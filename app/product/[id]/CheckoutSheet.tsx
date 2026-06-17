@@ -410,16 +410,20 @@ style={{
 
   {message && (
     <div
-      className={`
-        mb-3 px-3 py-2 rounded-lg text-sm
-        ${
-          message.type === "success"
-            ? "bg-green-100 text-green-700"
-            : message.type === "info"
-            ? "bg-blue-100 text-blue-700"
-            : "bg-red-100 text-red-700"
-        }
-      `}
+      style={{
+  background:
+    message.type === "success"
+      ? "rgba(34,197,94,.15)"
+      : message.type === "info"
+      ? "rgba(59,130,246,.15)"
+      : "rgba(239,68,68,.15)",
+  color:
+    message.type === "success"
+      ? "var(--success)"
+      : message.type === "info"
+      ? "var(--info)"
+      : "var(--danger)",
+}}
     >
       {message.text}
     </div>
