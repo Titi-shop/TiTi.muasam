@@ -8,7 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { useCart } from "@/app/context/CartContext";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
-
+import AppLoading from "@/components/AppLoading";
 import { useProduct } from "./product.logic";
 import { ProductView } from "./product.components";
 import CheckoutSheet from "./CheckoutSheet";
@@ -133,76 +133,8 @@ const [initialScale, setInitialScale] =
 }, [product?.category_id]);
 
   /* ================= GUARD ================= */
-if (isLoading) {
-  return (
-    <main
-      className="min-h-screen"
-      style={{
-        background: "var(--background)",
-      }}
-    >
-      {/* IMAGE */}
-      <div
-        className="aspect-square animate-pulse"
-        style={{
-          background: "var(--card-bg)",
-        }}
-      />
-
-      {/* INFO */}
-      <div className="p-4 space-y-3">
-        <div
-          className="h-6 w-3/4 rounded-lg animate-pulse"
-          style={{
-            background: "var(--card-bg)",
-          }}
-        />
-
-        <div
-          className="h-8 w-32 rounded-lg animate-pulse"
-          style={{
-            background: "var(--card-bg)",
-          }}
-        />
-
-        <div
-          className="h-4 w-1/2 rounded-lg animate-pulse"
-          style={{
-            background: "var(--card-bg)",
-          }}
-        />
-      </div>
-
-      {/* VARIANTS */}
-      <div className="px-4 pb-4">
-        <div className="grid grid-cols-3 gap-2">
-          {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="h-14 rounded-lg animate-pulse"
-              style={{
-                background: "var(--card-bg)",
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* DESCRIPTION */}
-      <div className="px-4 space-y-2">
-        {[...Array(5)].map((_, i) => (
-          <div
-            key={i}
-            className="h-4 rounded-lg animate-pulse"
-            style={{
-              background: "var(--card-bg)",
-              width: `${100 - i * 10}%`,
-            }}
-          />
-        ))}
-      </div>
-    </main>
-  );
+if (loading) {
+  return <AppLoading />;
 }
   /* ================= LOGIC ================= */
 
