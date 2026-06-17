@@ -82,6 +82,7 @@ export async function createOrder(input: CreateOrderInput) {
              thumbnail, is_active, deleted_at, stock
       FROM products
       WHERE id = ANY($1::uuid[])
+      FOR UPDATE
       `,
       [productIds]
     );
@@ -101,6 +102,7 @@ export async function createOrder(input: CreateOrderInput) {
             SELECT id, product_id, price, sale_price, stock
             FROM product_variants
             WHERE id = ANY($1::uuid[])
+            FOR UPDATE
             `,
             [variantIds]
           )
@@ -205,10 +207,12 @@ export async function createOrder(input: CreateOrderInput) {
        STOCK DEDUCTION (STRICT)
     ========================================================= */
 
-    for (const item of orderItems) {
-      const res = await client.query(
-        `
-        UPDATE products
+    if (item.variant_id) {
+  UPDATE product_variants
+}
+else {
+  UPDATE products
+}
         SET stock = stock - $1,
             sold = sold + $1
         WHERE id = $2 AND stock >= $1
