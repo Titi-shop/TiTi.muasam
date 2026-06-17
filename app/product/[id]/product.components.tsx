@@ -586,31 +586,27 @@ style={{
     buy();
   }}
   disabled={hasVariants && !selectedVariant}
-  className={`
-    flex-1 h-8 rounded-lg text-xs font-semibold transition
-    ${
-      className="
-  flex-1 h-8
-  rounded-lg
-  text-xs font-semibold
-  transition
-"
-style={{
-  background:
-    hasVariants && !selectedVariant
-      ? "var(--surface-3)"
-      : "var(--color-primary-dark)",
+  className="
+    flex-1 h-8
+    rounded-lg
+    text-xs
+    font-semibold
+    transition
+  "
+  style={{
+    background:
+      hasVariants && !selectedVariant
+        ? "var(--surface-3)"
+        : "var(--color-primary-dark)",
 
-  color:
-    hasVariants && !selectedVariant
-      ? "var(--text-muted)"
-      : "#fff",
-}}
-    }
-  `}
+    color:
+      hasVariants && !selectedVariant
+        ? "var(--text-muted)"
+        : "#fff",
+  }}
 >
-      {t.buy_now}
-    </button>
+  {t.buy_now}
+</button>
   </div>
 </div>
     </div> 
