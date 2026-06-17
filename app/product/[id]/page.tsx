@@ -132,9 +132,24 @@ const [initialScale, setInitialScale] =
   void loadRelatedProducts();
 }, [product?.category_id]);
 
-  /* ================= GUARD ================= */
-if (loading) {
+/* ================= GUARD ================= */
+
+if (isLoading) {
   return <AppLoading />;
+}
+
+if (!product) {
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{
+        background: "var(--background)",
+        color: "var(--text-muted)",
+      }}
+    >
+      {t.product_not_found ?? "Product not found"}
+    </div>
+  );
 }
   /* ================= LOGIC ================= */
 
