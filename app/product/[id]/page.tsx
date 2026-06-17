@@ -133,34 +133,32 @@ const [initialScale, setInitialScale] =
 }, [product?.category_id]);
 
   /* ================= GUARD ================= */
-
-  if (isLoading) {
+if (isLoading) {
   return (
     <div
-      className="
-        min-h-screen
-        flex
-        items-center
-        justify-center
-      "
+      className="p-4 text-center"
       style={{
-        background: "var(--background)",
+        color: "var(--text-muted)",
       }}
     >
-      <div
-        className="
-          animate-pulse
-          h-12
-          w-40
-          rounded-xl
-        "
-        style={{
-          background: "var(--card-bg)",
-        }}
-      />
+      {t.loading ?? "Loading..."}
     </div>
   );
 }
+
+ if (!product) {
+  return (
+    <div
+      className="p-4 text-center"
+      style={{
+        color: "var(--text-muted)",
+      }}
+    >
+      {t.product_not_found ?? "Product not found"}
+    </div>
+  );
+}
+
   /* ================= LOGIC ================= */
 
   const hasVariants = product.has_variants;
