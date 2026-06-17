@@ -9,7 +9,7 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import CheckoutSheet from "@/app/product/[id]/CheckoutSheet";
 import { getPiAccessToken } from "@/lib/piAuth";
 import { formatPi } from "@/lib/pi";
-
+import AppLoading from "@/components/AppLoading";
 /* =====================================================
    TYPES
 ===================================================== */
@@ -36,7 +36,8 @@ export default function CartPage() {
   const [openCheckout, setOpenCheckout] = useState(false);
   const [checkoutItem, setCheckoutItem] = useState<any>(null);
   const [message, setMessage] = useState<string | null>(null);
-
+  const [loading, setLoading] =
+  useState(true);
   /* =====================================================
      MESSAGE
   ===================================================== */
@@ -74,42 +75,47 @@ export default function CartPage() {
   ===================================================== */
 
   useEffect(() => {
-    async function load() {
+  async function load() {
+    try {
       if (!user) return;
 
-      try {
-        const token = await getPiAccessToken();
+      const token = await getPiAccessToken();
 
-        const res = await fetch("/api/address", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+      const res = await fetch("/api/address", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        if (!res.ok) return;
+      if (!res.ok) return;
 
-        const data = await res.json();
+      const data = await res.json();
 
-        const def = data.items?.find(
-          (a: any) => a.is_default
-        );
+      const def = data.items?.find(
+        (a: any) => a.is_default
+      );
 
-        if (!def) return;
+      if (!def) return;
 
-        setShipping({
-          name: def.full_name,
-          phone: def.phone,
-          address_line: def.address_line,
-          country: def.country,
-          postal_code: def.postal_code ?? null,
-        });
-      } catch (err) {
-        console.error("[CART][ADDRESS_ERROR]", err);
-      }
+      setShipping({
+        name: def.full_name,
+        phone: def.phone,
+        address_line: def.address_line,
+        country: def.country,
+        postal_code: def.postal_code ?? null,
+      });
+    } catch (err) {
+      console.error(
+        "[CART][ADDRESS_ERROR]",
+        err
+      );
+    } finally {
+      setLoading(false);
     }
+  }
 
-    load();
-  }, [user]);
+  void load();
+}, [user]);
 
   /* =====================================================
      TOGGLE ITEM
@@ -179,7 +185,9 @@ export default function CartPage() {
   /* =====================================================
      EMPTY CART
 ===================================================== */
-
+if (loading) {
+  return <AppLoading />;
+}
   if (cart.length === 0) {
     return (
       <main className="flex min-h-[60vh] items-center justify-center">
