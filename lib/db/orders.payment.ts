@@ -608,14 +608,16 @@ await client.query(
     ===================================================== */
 
     await client.query(
-      `
-      UPDATE payment_intents
+`
+UPDATE payment_intents
 SET
   status = 'paid',
 
   payment_state = 'PAID',
   provider_status = 'COMPLETED',
-  settlement_state = 'ESCROWED',
+
+  settlement_state = 'LEDGER_POSTED',
+
   pi_payment_id = $2,
   txid = $3,
 
@@ -624,9 +626,9 @@ SET
 
   updated_at = now()
 WHERE id = $1
-      `,
-      [paymentIntentId, piPaymentId, txid]
-    );
+`,
+[paymentIntentId, piPaymentId, txid]
+);
 
     /* =====================================================
        9. RETURN
