@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Search, Trash2, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-
+import AppLoading from "@/components/AppLoading";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { formatPi } from "@/lib/pi";
 
@@ -353,22 +353,9 @@ export default function SearchPage() {
             LOADING
         ======================================================= */}
 
-        {loading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {Array.from({ length: 6 }).map(
-              (_, i) => (
-                <div
-                  key={i}
-                  className="
-                    h-56 animate-pulse rounded-2xl
-                    border border-orange-500/10
-                    bg-[var(--card-bg)]
-                  "
-                />
-              )
-            )}
-          </div>
-        ) : results.length > 0 ? (
+if (loading) {
+  return <AppLoading />;
+}
           /* =======================================================
               RESULTS
           ======================================================= */
