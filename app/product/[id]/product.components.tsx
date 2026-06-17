@@ -241,74 +241,89 @@ let newScale =
   </h2>
 
   <div className="text-right">
-    {hasVariants ? (
-      selectedVariant ? (
-        <>
-         className="text-xl font-black"
-style={{
-  color: "var(--color-primary)",
-}}
-            π{" "}
-            {formatPi(
-              selectedVariant.final_price ??
-                selectedVariant.sale_price ??
-                selectedVariant.price
-            )}
-          </p>
-
-          {(selectedVariant.sale_price ??
-            0) > 0 &&
-            selectedVariant.final_price <
-              selectedVariant.price && (
-              className="text-sm line-through"
-style={{
-  color: "var(--text-muted)",
-}}
-                π{" "}
-                {formatPi(
-                  selectedVariant.price
-                )}
-              </p>
-            )}
-        </>
-      ) : (
-        <p className="text-xl font-black text-red-500">
-          π{" "}
-          {formatPi(
-            product.final_price ??
-              product.sale_price ??
-              product.price ??
-              0
-          )}
-        </p>
-      )
-    ) : (
+  {hasVariants ? (
+    selectedVariant ? (
       <>
-        <p className="text-xl font-black text-red-500">
+        <p
+          className="text-xl font-black"
+          style={{
+            color: "var(--color-primary)",
+          }}
+        >
           π{" "}
           {formatPi(
-            product.final_price ??
-              product.sale_price ??
-              product.price ??
-              0
+            selectedVariant.final_price ??
+              selectedVariant.sale_price ??
+              selectedVariant.price
           )}
         </p>
 
-        {(product.sale_price ?? 0) >
-          0 &&
-          (product.final_price ??
-            product.price) <
-            product.price && (
-            <p className="text-sm text-gray-400 line-through">
+        {(selectedVariant.sale_price ?? 0) > 0 &&
+          selectedVariant.final_price <
+            selectedVariant.price && (
+            <p
+              className="text-sm line-through"
+              style={{
+                color: "var(--text-muted)",
+              }}
+            >
               π{" "}
               {formatPi(
-                product.price
+                selectedVariant.price
               )}
             </p>
           )}
       </>
-    )}
-  </div>
+    ) : (
+      <p
+        className="text-xl font-black"
+        style={{
+          color: "var(--color-primary)",
+        }}
+      >
+        π{" "}
+        {formatPi(
+          product.final_price ??
+            product.sale_price ??
+            product.price ??
+            0
+        )}
+      </p>
+    )
+  ) : (
+    <>
+      <p
+        className="text-xl font-black"
+        style={{
+          color: "var(--color-primary)",
+        }}
+      >
+        π{" "}
+        {formatPi(
+          product.final_price ??
+            product.sale_price ??
+            product.price ??
+            0
+        )}
+      </p>
+
+      {(product.sale_price ?? 0) > 0 &&
+        (product.final_price ??
+          product.price) <
+          product.price && (
+          <p
+            className="text-sm line-through"
+            style={{
+              color: "var(--text-muted)",
+            }}
+          >
+            π{" "}
+            {formatPi(product.price)}
+          </p>
+        )}
+    </>
+  )}
+</div>
 </div>
 
       {/* ===== META ===== */}
