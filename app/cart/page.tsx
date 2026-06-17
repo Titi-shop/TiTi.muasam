@@ -376,7 +376,14 @@ if (loading) {
 
       {/* FOOTER */}
 
-     <div className="fixed bottom-16 left-0 right-0 border-t border-black/5 bg-card px-5 pb-6 pt-4">  
+     <div className="
+fixed bottom-16 left-0 right-0
+border-t
+bg-[var(--card-bg)]
+"
+style={{
+  borderColor: "var(--nav-border)",
+}}>  
         <div className="mb-4 flex items-center justify-between">
           <span className="text-sm text-muted">
             {t.total ??
