@@ -87,16 +87,10 @@ export function ProductView(props: ProductViewProps) {
     hasVariants,
     relatedProducts,
   } = props;
-   const variantOnSale =
-  selectedVariant?.sale_price != null &&
-  selectedVariant.sale_price < selectedVariant.price;
+   
   /* ================= SAFE ================= */
-  if (!product) return null;
-
-  /* ================= DOUBLE TAP FIX ================= */
-  const [lastTap, setLastTap] =
-  useState(0);
-if (!product) return null;
+ if (!product) return null;
+const [lastTap, setLastTap] = useState(0);
 
   /* ================= IMAGES ================= */
   const displayImages = [
@@ -119,7 +113,13 @@ if (!product) return null;
 >
         {product.sale_price &&
  product.final_price < product.price && (
-          <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 text-xs rounded z-10">
+         <div
+  className="absolute top-3 right-3 px-2 py-1 text-xs rounded z-10"
+  style={{
+    background: "var(--danger)",
+    color: "#fff",
+  }}
+>
             -{calcSalePercent(
             product.price,
            product.final_price
@@ -244,7 +244,10 @@ let newScale =
     {hasVariants ? (
       selectedVariant ? (
         <>
-          <p className="text-xl font-black text-red-500">
+         className="text-xl font-black"
+style={{
+  color: "var(--color-primary)",
+}}
             π{" "}
             {formatPi(
               selectedVariant.final_price ??
@@ -257,7 +260,10 @@ let newScale =
             0) > 0 &&
             selectedVariant.final_price <
               selectedVariant.price && (
-              <p className="text-sm text-gray-400 line-through">
+              className="text-sm line-through"
+style={{
+  color: "var(--text-muted)",
+}}
                 π{" "}
                 {formatPi(
                   selectedVariant.price
@@ -331,7 +337,11 @@ let newScale =
       product.rating_avg ?? 0
     ).toFixed(1)}
 
-    <span className="text-gray-400">
+   <span
+  style={{
+    color: "var(--text-muted)",
+  }}
+>
       ({product.rating_count ?? 0})
     </span>
   </span>
@@ -345,7 +355,11 @@ let newScale =
   }}
 >
   {canBuy ? (
-    <span className="text-green-600">
+   <span
+  style={{
+    color: "var(--success)",
+  }}
+>
       ✅ {t.in_stock}{" "}
       {hasVariants
         ? selectedVariant
@@ -354,7 +368,11 @@ let newScale =
         : product.stock}
     </span>
   ) : (
-    <span className="text-red-500">
+    <span
+  style={{
+    color: "var(--danger)",
+  }}
+>
       ❌ {t.out_of_stock}
     </span>
   )}
@@ -398,16 +416,24 @@ let newScale =
                   }
                 }
               }}
-              className={`
-              rounded border px-2 py-2 text-sm transition
-              ${
-                isDisabled
-                  ? "bg-gray-100 text-gray-400"
-                  : isSelected
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-[var(--nav-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
-              }
-            `}
+              className="rounded border px-2 py-2 text-sm transition"
+style={{
+  background: isDisabled
+    ? "var(--surface-2)"
+    : isSelected
+    ? "rgba(249,115,22,.10)"
+    : "var(--card-bg)",
+
+  color: isDisabled
+    ? "var(--text-muted)"
+    : isSelected
+    ? "var(--color-primary)"
+    : "var(--foreground)",
+
+  borderColor: isSelected
+    ? "var(--color-primary)"
+    : "var(--nav-border)",
+}}
             >
               <div className="flex flex-col items-center gap-1">
                 {v.image && (
@@ -423,7 +449,12 @@ let newScale =
                     "Option"}
                 </span>
 
-                <span className="text-[10px] text-gray-400">
+                <span
+  className="text-[10px]"
+  style={{
+    color: "var(--text-muted)",
+  }}
+>
                   {v.stock}
                 </span>
               </div>
@@ -492,12 +523,22 @@ let newScale =
                   {p.name}
                 </p>
 
-                <p className="text-sm font-semibold text-primary">
+              <p
+  className="text-sm font-semibold"
+  style={{
+    color: "var(--color-primary)",
+  }}
+>
                   π {formatPi(p.final_price ?? p.price)}
                 </p>
 
                 {p.sale_price && p.final_price < p.price && (
-                  <p className="text-xs text-gray-400 line-through">
+                 <p
+  className="text-xs line-through"
+  style={{
+    color: "var(--text-muted)",
+  }}
+>
                     π {formatPi(p.price)}
                   </p>
                 )}
@@ -526,12 +567,15 @@ let newScale =
     <button
       onClick={add}
       className="
-        flex-1 h-8
-        bg-primary text-white
-        rounded-lg
-        text-xs font-medium
-        active:scale-95 transition
-      "
+  flex-1 h-8
+  rounded-lg
+  text-xs font-medium
+  active:scale-95 transition
+"
+style={{
+  background: "var(--color-primary)",
+  color: "#fff",
+}}
     >
       {t.add_to_cart}
     </button>
@@ -545,9 +589,23 @@ let newScale =
   className={`
     flex-1 h-8 rounded-lg text-xs font-semibold transition
     ${
-      hasVariants && !selectedVariant
-        ? "bg-gray-300 text-gray-500"
-        : "bg-primary-dark text-white active:scale-95"
+      className="
+  flex-1 h-8
+  rounded-lg
+  text-xs font-semibold
+  transition
+"
+style={{
+  background:
+    hasVariants && !selectedVariant
+      ? "var(--surface-3)"
+      : "var(--color-primary-dark)",
+
+  color:
+    hasVariants && !selectedVariant
+      ? "var(--text-muted)"
+      : "#fff",
+}}
     }
   `}
 >
