@@ -133,47 +133,73 @@ const [initialScale, setInitialScale] =
 }, [product?.category_id]);
 
   /* ================= GUARD ================= */
-if (loading) {
+if (isLoading) {
   return (
     <main
-      className="min-h-screen p-4"
+      className="min-h-screen"
       style={{
         background: "var(--background)",
       }}
     >
-      <div className="animate-pulse space-y-5">
+      {/* IMAGE */}
+      <div
+        className="aspect-square animate-pulse"
+        style={{
+          background: "var(--card-bg)",
+        }}
+      />
 
+      {/* INFO */}
+      <div className="p-4 space-y-3">
         <div
-          className="h-14 rounded-2xl"
+          className="h-6 w-3/4 rounded-lg animate-pulse"
           style={{
             background: "var(--card-bg)",
           }}
         />
 
-        <div className="flex gap-3 overflow-hidden">
+        <div
+          className="h-8 w-32 rounded-lg animate-pulse"
+          style={{
+            background: "var(--card-bg)",
+          }}
+        />
+
+        <div
+          className="h-4 w-1/2 rounded-lg animate-pulse"
+          style={{
+            background: "var(--card-bg)",
+          }}
+        />
+      </div>
+
+      {/* VARIANTS */}
+      <div className="px-4 pb-4">
+        <div className="grid grid-cols-3 gap-2">
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="h-20 min-w-[90px] rounded-2xl"
+              className="h-14 rounded-lg animate-pulse"
               style={{
                 background: "var(--card-bg)",
               }}
             />
           ))}
         </div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="h-72 rounded-[28px]"
-              style={{
-                background: "var(--card-bg)",
-              }}
-            />
-          ))}
-        </div>
-
+      {/* DESCRIPTION */}
+      <div className="px-4 space-y-2">
+        {[...Array(5)].map((_, i) => (
+          <div
+            key={i}
+            className="h-4 rounded-lg animate-pulse"
+            style={{
+              background: "var(--card-bg)",
+              width: `${100 - i * 10}%`,
+            }}
+          />
+        ))}
       </div>
     </main>
   );
