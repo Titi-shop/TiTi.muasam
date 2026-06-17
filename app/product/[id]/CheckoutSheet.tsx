@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
@@ -240,7 +240,14 @@ export default function CheckoutSheet({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* SHEET */}
-      <div className="absolute bottom-0 left-0 right-0 h-[65vh] bg-white rounded-t-2xl flex flex-col">
+      <div
+  className="absolute bottom-0 left-0 right-0 h-[65vh] rounded-t-2xl flex flex-col"
+  style={{
+    background: "var(--card-bg)",
+    color: "var(--foreground)",
+    borderTop: "1px solid var(--nav-border)",
+  }}
+>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
@@ -256,7 +263,9 @@ export default function CheckoutSheet({
     <>
       <p className="font-medium">{shipping.name}</p>
       <p className="text-sm text-gray-500">{shipping.phone}</p>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm" style={{ color: "var(--text-muted)",
+  }}
+>
         {shipping.address_line}
       </p>
       <p className="text-sm text-gray-500">
@@ -271,17 +280,32 @@ export default function CheckoutSheet({
       </p>
     </>
   ) : (
-    <p className="text-gray-400">
+    <p
+  style={{
+    color: "var(--text-muted)",
+  }}
+>
       ➕ {t.add_shipping}
     </p>
   )}
 </div>
           {/* SHIPPING ZONE */}
-          <div className="border rounded-xl p-3">
+          <div
+  className="rounded-xl p-3"
+  style={{
+    border: "1px solid var(--nav-border)",
+    background: "var(--card-bg)",
+  }}
+>
             <p className="font-medium mb-2">🌍 {t.shipping_zone}</p>
 
             {!resolvedRegion ? (
-              <p className="text-red-500 text-sm">
+              <p
+  className="text-sm"
+  style={{
+    color: "var(--danger)",
+  }}
+>
                 {t.no_shipping_zone}
               </p>
             ) : (
@@ -301,10 +325,16 @@ export default function CheckoutSheet({
           {/* PRODUCT */}
           <div className="flex items-center gap-3">
 
-            <img
-              src={item.thumbnail}
-              className="w-16 h-16 rounded-lg object-cover border"
-            />
+            <Image
+  src={item.thumbnail}
+  alt={item.name}
+  width={64}
+  height={64}
+  className="w-16 h-16 rounded-lg object-cover"
+  style={{
+    border: "1px solid var(--nav-border)",
+  }}
+/>
 
             <div className="flex-1">
               <p className="font-medium line-clamp-2">{item.name}</p>
@@ -314,7 +344,11 @@ export default function CheckoutSheet({
                 <button
                   onClick={() => setQty(String(Math.max(1, quantity - 1)))}
                   disabled={quantity <= 1}
-                  className="w-8 h-8 border rounded-lg"
+                 className="w-8 h-8 rounded-lg"
+style={{
+  border: "1px solid var(--nav-border)",
+  background: "var(--card-bg)",
+}}
                 >
                   -
                 </button>
@@ -327,7 +361,12 @@ export default function CheckoutSheet({
                     if (Number(v) > maxStock) return;
                     setQty(v);
                   }}
-                  className="w-12 text-center border rounded-lg"
+                  className="w-12 text-center rounded-lg"
+style={{
+  border: "1px solid var(--nav-border)",
+  background: "var(--card-bg)",
+  color: "var(--foreground)",
+}}
                 />
 
                 <button
@@ -335,7 +374,11 @@ export default function CheckoutSheet({
                     setQty(String(Math.min(maxStock, quantity + 1)))
                   }
                   disabled={quantity >= maxStock}
-                  className="w-8 h-8 border rounded-lg"
+                 className="w-8 h-8 rounded-lg"
+style={{
+  border: "1px solid var(--nav-border)",
+  background: "var(--card-bg)",
+}}
                 >
                   +
                 </button>
@@ -343,7 +386,12 @@ export default function CheckoutSheet({
               </div>
             </div>
 
-            <div className="text-right font-bold text-red-500">
+            <div
+  className="text-right font-bold"
+  style={{
+    color: "var(--color-primary)",
+  }}
+>
               {formatPi(total)} π
             </div>
 
@@ -352,7 +400,13 @@ export default function CheckoutSheet({
         </div>
 
         {/* FOOTER */}
-        <div className="border-t p-4">
+        <div
+  className="p-4"
+  style={{
+    borderTop: "1px solid var(--nav-border)",
+    background: "var(--card-bg)",
+  }}
+>
 
   {message && (
     <div
@@ -374,7 +428,10 @@ export default function CheckoutSheet({
   <button
     onClick={handlePay}
     disabled={processing}
-    className="w-full py-3 rounded-xl bg-orange-500 text-white font-bold"
+   className="w-full py-3 rounded-xl text-white font-bold transition-all"
+style={{
+  background: "var(--color-primary)",
+}}
   >
     {processing ? t.processing : t.pay_now}
   </button>
