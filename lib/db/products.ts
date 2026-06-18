@@ -863,8 +863,23 @@ if (!current) {
   return null;
 }
 
-const hasVariants =
-  input.has_variants === true;
+const hasVariants = Boolean(
+  input.has_variants ??
+  current.has_variants
+);
+    log(
+  "UPDATE_VARIANT_MODE",
+  {
+    current_has_variants:
+      current.has_variants,
+
+    input_has_variants:
+      input.has_variants,
+
+    final_has_variants:
+      hasVariants,
+  }
+);
 
 /* =========================
    PRICE
