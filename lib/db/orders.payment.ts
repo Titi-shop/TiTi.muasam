@@ -661,39 +661,42 @@ await client.query(
        8. FINALIZE PAYMENT INTENT
     ===================================================== */
 
-    await client.query(
-`
-UPDATE payment_intents
-SET
-  status = 'paid',
-
-  payment_state = 'PAID',
-  provider_status = 'COMPLETED',
-
-  settlement_state =
-    'LEDGER_POSTED',
-
-  pi_payment_id = $2,
-  txid = $3,
-
-  paid_at = now(),
-  finalized_at = now(),
-
-  updated_at = now()
-
-WHERE id = $1
-AND status <> 'paid'
-`,
-[paymentIntentId, piPaymentId, txid]
-);
-const finalizeUpdate =
+    const finalizeUpdate =
   await client.query(
-    ...
+    `
+    UPDATE payment_intents
+    SET
+      status = 'paid',
+
+      payment_state = 'PAID',
+      provider_status = 'COMPLETED',
+
+      settlement_state = 'LEDGER_POSTED',
+
+      pi_payment_id = $2,
+      txid = $3,
+
+      paid_at = now(),
+      finalized_at = now(),
+
+      updated_at = now()
+
+    WHERE id = $1
+      AND status <> 'paid'
+    `,
+    [
+      paymentIntentId,
+      piPaymentId,
+      txid,
+    ]
   );
 
 if (!finalizeUpdate.rowCount) {
   console.log(
-    "[PAYMENT][FINALIZE] ALREADY_PAID"
+    "[PAYMENT][FINALIZE] ALREADY_PAID",
+    {
+      paymentIntentId,
+    }
   );
 }
     /* =====================================================
