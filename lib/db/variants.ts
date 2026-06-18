@@ -279,7 +279,11 @@ export function mapVariantToDB(
   const price = safeNumber(
     variant.price
   );
-
+if (price <= 0) {
+  throw new Error(
+    "INVALID_VARIANT_PRICE"
+  );
+}
   const salePrice =
     safeNullableNumber(
       variant.sale_price
@@ -488,6 +492,17 @@ export async function getVariantById(
 
   const row =
     result.rows[0] ?? null;
+  if (!row) {
+  return null;
+}
+
+if (
+  Number(row.final_price) <= 0
+) {
+  throw new Error(
+    "VARIANT_FINAL_PRICE_INVALID"
+  );
+}
 
   vlog(
     "GET_VARIANT_RESULT",
