@@ -288,14 +288,6 @@ if (item.variant_id) {
   let vPrice = variant.price;
 
   if (
-    saleActive &&
-    variant.sale_price &&
-    variant.sale_price < vPrice
-  ) {
-    vPrice = variant.sale_price;
-  }
-
-  if (
     !variant.is_unlimited &&
     variant.stock !== null &&
     variant.stock < qty
@@ -316,13 +308,9 @@ if (item.variant_id) {
       "OUT_OF_STOCK"
     );
   }
+}
 
-
-
-      price = vPrice;
-    }
-
-    const line = price * qty;
+const line = price * qty;
     subtotal += line;
 
     if (!product.is_digital) {
