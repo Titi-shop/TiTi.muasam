@@ -126,7 +126,9 @@ async function loadProduct(productId: string) {
   const product = {
   id: String(p.id),
   name: p.name,
+
   price: safeNumber(p.price),
+
   sale_price:
     p.sale_price !== null
       ? safeNumber(p.sale_price)
@@ -135,6 +137,19 @@ async function loadProduct(productId: string) {
   final_price: safeNumber(
     p.final_price
   ),
+
+  sale_start: p.sale_start ?? null,
+  sale_end: p.sale_end ?? null,
+
+  stock: p.stock ?? null,
+
+  is_unlimited: !!p.is_unlimited,
+  is_digital: !!p.is_digital,
+
+  seller_country:
+    p.domestic_country_code ?? null,
+};
+
 if (
   !Number.isFinite(
     product.final_price
@@ -145,15 +160,6 @@ if (
     "PRODUCT_PRICE_CORRUPTED"
   );
 }
-  sale_start: p.sale_start ?? null,
-  sale_end: p.sale_end ?? null,
-  stock: p.stock ?? null,
-  is_unlimited: !!p.is_unlimited,
-  is_digital: !!p.is_digital,
-
-  seller_country:
-    p.domestic_country_code ?? null,
-};
 
   log("PRODUCT_OK", product);
 
@@ -174,7 +180,9 @@ async function loadVariant(variantId: string, productId: string) {
 
   const variant = {
   id: String(v.id),
+
   price: safeNumber(v.price),
+
   sale_price:
     v.sale_price !== null
       ? safeNumber(v.sale_price)
@@ -183,6 +191,13 @@ async function loadVariant(variantId: string, productId: string) {
   final_price: safeNumber(
     v.final_price
   ),
+
+  stock: v.stock ?? null,
+
+  is_unlimited:
+    !!v.is_unlimited,
+};
+
 if (
   !Number.isFinite(
     variant.final_price
@@ -193,10 +208,6 @@ if (
     "VARIANT_PRICE_CORRUPTED"
   );
 }
-  stock: v.stock ?? null,
-  is_unlimited:
-    !!v.is_unlimited,
-};
 
   log("VARIANT_OK", variant);
 
