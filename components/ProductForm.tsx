@@ -258,11 +258,19 @@ if (
   hasVariants &&
   form.sale_enabled
 ) {
-  alert(
-    t.variant_product_cannot_sale
+  console.log(
+    "🧪 BLOCKED_BY_SALE_ENABLED"
   );
-  setSubmitting(false);
-  return;
+
+  form.setSale_enabled(false);
+
+  form.setSale_price("");
+
+  form.setSale_stock(0);
+
+  form.setSale_start("");
+
+  form.setSale_end("");
 }
       const hasSaleTime =
         Boolean(form.sale_start) &&
@@ -546,14 +554,22 @@ const payload: ProductPayload = {
       : Number(form.sale_stock || 0),
 
   sale_start:
-    hasSaleTime
-      ? toUTCFromInput(form.sale_start)
-      : null,
+  hasVariants
+    ? null
+    : hasSaleTime
+    ? toUTCFromInput(
+        form.sale_start
+      )
+    : null,
 
-  sale_end:
-    hasSaleTime
-      ? toUTCFromInput(form.sale_end)
-      : null,
+sale_end:
+  hasVariants
+    ? null
+    : hasSaleTime
+    ? toUTCFromInput(
+        form.sale_end
+      )
+    : null,
 
   variants: normalizedVariants,
 
