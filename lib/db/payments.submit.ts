@@ -140,7 +140,42 @@ export async function markPaymentVerifying({
     if (!intent.pi_user_uid || typeof intent.pi_user_uid !== "string") {
       throw new Error("PI_UID_NOT_BOUND");
     }
+if (
+intent.pi_payment_id &&
+intent.pi_payment_id !== piPaymentId
+) {
+console.error(
+“[PAYMENT][SUBMIT] PI_PAYMENT_MISMATCH”,
+{
+expected:
+intent.pi_payment_id,
+received:
+piPaymentId,
+}
+);
 
+throw new Error(
+“PI_PAYMENT_MISMATCH”
+);
+}
+     if (
+intent.txid &&
+intent.txid !== txid
+) {
+console.error(
+“[PAYMENT][SUBMIT] TXID_MISMATCH”,
+{
+expected:
+intent.txid,
+received:
+txid,
+}
+);
+
+throw new Error(
+“TXID_MISMATCH”
+);
+}
     /* =====================================================
        6. GLOBAL REPLAY PROTECTION
     ===================================================== */
@@ -167,21 +202,21 @@ export async function markPaymentVerifying({
        orchestrator reconcile owns settlement locking.
     ===================================================== */
 
-    await client.query(
-      `
-      UPDATE payment_intents
-      SET
-        status = 'verifying',
-        settlement_state = 'UNSETTLED',
-        pi_payment_id = $2,
-        txid = $3,
-        reconcile_attempts = reconcile_attempts + 1,
-        last_reconcile_at = now(),
-        updated_at = now()
-      WHERE id = $1
-      `,
-      [paymentIntentId, piPaymentId, txid]
-    );
+    const update =
+await client.query(
+UPDATE payment_intents SET status = 'verifying', settlement_state = 'UNSETTLED', pi_payment_id = $2, txid = $3, reconcile_attempts = reconcile_attempts + 1, last_reconcile_at = now(), updated_at = now() WHERE id = $1 AND status IN ( 'created', 'wallet_opened', 'submitted' ),
+[
+paymentIntentId,
+piPaymentId,
+txid,
+]
+);
+
+if (!update.rowCount) {
+throw new Error(
+“STATUS_CHANGED”
+);
+}
 
     console.log("[PAYMENT][SUBMIT] VERIFYING_SET", {
       paymentIntentId,
