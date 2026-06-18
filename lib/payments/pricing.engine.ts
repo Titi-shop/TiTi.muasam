@@ -124,17 +124,27 @@ async function loadProduct(productId: string) {
   if (p.is_active === false) throw new Error("PRODUCT_INACTIVE");
 
   const product = {
-    id: String(p.id),
-    name: p.name,
-    price: safeNumber(p.price),
-    sale_price: p.sale_price ? safeNumber(p.sale_price) : null,
-    sale_start: p.sale_start ?? null,
-    sale_end: p.sale_end ?? null,
-    stock: p.stock ?? null,
-    is_unlimited: !!p.is_unlimited,
-    is_digital: !!p.is_digital,
-    seller_country: p.domestic_country_code ?? null,
-  };
+  id: String(p.id),
+  name: p.name,
+  price: safeNumber(p.price),
+  sale_price:
+    p.sale_price !== null
+      ? safeNumber(p.sale_price)
+      : null,
+
+  final_price: safeNumber(
+    p.final_price
+  ),
+
+  sale_start: p.sale_start ?? null,
+  sale_end: p.sale_end ?? null,
+  stock: p.stock ?? null,
+  is_unlimited: !!p.is_unlimited,
+  is_digital: !!p.is_digital,
+
+  seller_country:
+    p.domestic_country_code ?? null,
+};
 
   log("PRODUCT_OK", product);
 
@@ -154,21 +164,27 @@ async function loadVariant(variantId: string, productId: string) {
   if (v.product_id !== productId) throw new Error("VARIANT_PRODUCT_MISMATCH");
 
   const variant = {
-    id: String(v.id),
-    price: safeNumber(v.price),
-    sale_price: v.sale_price ? safeNumber(v.sale_price) : null,
-    stock: v.stock ?? null,
-    is_unlimited: !!v.is_unlimited,
-  };
+  id: String(v.id),
+  price: safeNumber(v.price),
+  sale_price:
+    v.sale_price !== null
+      ? safeNumber(v.sale_price)
+      : null,
+
+  final_price: safeNumber(
+    v.final_price
+  ),
+
+  stock: v.stock ?? null,
+  is_unlimited:
+    !!v.is_unlimited,
+};
 
   log("VARIANT_OK", variant);
 
   return variant;
 }
 
-/* =========================================================
-   SHIPPING (DOMESTIC PRIORITY FIXED)
-========================================================= */
 /* =========================================================
    SHIPPING
 ========================================================= */
@@ -277,16 +293,32 @@ export async function calculatePricing(
       }
     }
 
-    let price = product.price;
-
+    let price =
+  product.final_price;
+if (
+  !Number.isFinite(price) ||
+  price <= 0
+) {
+  throw new Error(
+    "INVALID_PRODUCT_PRICE"
+  );
+}
 if (item.variant_id) {
   const variant = await loadVariant(
     item.variant_id,
     product.id
   );
 
-  let vPrice = variant.price;
-
+  let vPrice =
+  variant.final_price;
+if (
+  !Number.isFinite(vPrice) ||
+  vPrice <= 0
+) {
+  throw new Error(
+    "INVALID_VARIANT_PRICE"
+  );
+}
   if (
     !variant.is_unlimited &&
     variant.stock !== null &&
