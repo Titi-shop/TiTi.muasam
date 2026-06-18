@@ -155,7 +155,48 @@ export async function getProductService(id: string) {
     log("SHIPPING.LOAD", "DONE", {
       count: shippingRates.length,
     });
+console.log(
+  "🧪 PRODUCT_RESPONSE_DATA",
+  {
+    id: product.id,
 
+    category_id:
+      product.category_id,
+
+    has_variants:
+      product.has_variants,
+
+    price:
+      product.price,
+
+    sale_price:
+      product.sale_price,
+
+    final_price:
+      product.final_price,
+
+    stock:
+      product.stock,
+
+    sale_stock:
+      product.sale_stock,
+
+    sale_enabled:
+      product.sale_enabled,
+
+    sale_start:
+      product.sale_start,
+
+    sale_end:
+      product.sale_end,
+
+    variantCount:
+      enrichedVariants.length,
+
+    shippingCount:
+      shippingRates.length,
+  }
+);
     return {
       ...product,
       has_variants: product.has_variants,
