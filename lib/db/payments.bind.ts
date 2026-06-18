@@ -244,8 +244,8 @@ try {
     pi_payment_payload = $5,
 
     status = 'submitted',
-    payment_state = 'PENDING'
-provider_status = 'CREATED'
+    payment_state = 'PENDING',
+provider_status = 'CREATED',
 
     updated_at = now()
 
