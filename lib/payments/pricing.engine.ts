@@ -329,7 +329,6 @@ if (item.variant_id) {
       "OUT_OF_STOCK"
     );
   }
-}
 
 
       price = vPrice;
