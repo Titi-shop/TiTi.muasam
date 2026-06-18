@@ -244,10 +244,9 @@ try {
     pi_payment_payload = $5,
 
     status = 'submitted',
-    payment_state = 'PENDING',
-provider_status = 'CREATED',
-
-    updated_at = now()
+payment_state = 'AUTHORIZED',
+provider_status = 'APPROVED',
+updated_at = now()
 
   WHERE id = $1
   `,
