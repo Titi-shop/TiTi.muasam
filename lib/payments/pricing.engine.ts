@@ -287,37 +287,32 @@ export async function calculatePricing(
       price = product.sale_price;
     }
 
-    if (
-      !product.is_unlimited &&
-      product.stock !== null &&
-      product.stock < qty
-    ) {
-      throw new Error("OUT_OF_STOCK");
-    }
+  if (item.variant_id) {
+  const variant = await loadVariant(
+    item.variant_id,
+    product.id
+  );
 
-    if (item.variant_id) {
-      const variant = await loadVariant(
-        item.variant_id,
-        product.id
-      );
-
-      let vPrice = variant.price;
-
-      if (
-        saleActive &&
-        variant.sale_price &&
-        variant.sale_price < vPrice
-      ) {
-        vPrice = variant.sale_price;
-      }
-
-      if (
-        !variant.is_unlimited &&
-        variant.stock !== null &&
-        variant.stock < qty
-      ) {
-        throw new Error("VARIANT_OUT_OF_STOCK");
-      }
+  if (
+    !variant.is_unlimited &&
+    variant.stock !== null &&
+    variant.stock < qty
+  ) {
+    throw new Error(
+      "VARIANT_OUT_OF_STOCK"
+    );
+  }
+} else {
+  if (
+    !product.is_unlimited &&
+    product.stock !== null &&
+    product.stock < qty
+  ) {
+    throw new Error(
+      "OUT_OF_STOCK"
+    );
+  }
+}
 
       price = vPrice;
     }
