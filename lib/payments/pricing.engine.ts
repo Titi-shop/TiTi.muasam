@@ -278,20 +278,35 @@ export async function calculatePricing(
     }
 
     let price = product.price;
-    const saleActive = isSaleActive(
-      product.sale_start,
-      product.sale_end
-    );
 
-    if (saleActive && product.sale_price && product.sale_price < price) {
-      price = product.sale_price;
-    }
+const saleActive = isSaleActive(
+  product.sale_start,
+  product.sale_end
+);
 
-  if (item.variant_id) {
+if (
+  saleActive &&
+  product.sale_price &&
+  product.sale_price < price
+) {
+  price = product.sale_price;
+}
+
+if (item.variant_id) {
   const variant = await loadVariant(
     item.variant_id,
     product.id
   );
+
+  let vPrice = variant.price;
+
+  if (
+    saleActive &&
+    variant.sale_price &&
+    variant.sale_price < vPrice
+  ) {
+    vPrice = variant.sale_price;
+  }
 
   if (
     !variant.is_unlimited &&
@@ -302,6 +317,8 @@ export async function calculatePricing(
       "VARIANT_OUT_OF_STOCK"
     );
   }
+
+  price = vPrice;
 } else {
   if (
     !product.is_unlimited &&
@@ -312,6 +329,7 @@ export async function calculatePricing(
       "OUT_OF_STOCK"
     );
   }
+}
 
 
       price = vPrice;
