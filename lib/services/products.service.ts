@@ -332,9 +332,9 @@ const stock =
     ? null
     : Number(body.stock ?? 0);
     console.log(
-      "🚀 CREATE_PRODUCT_DB",
-      {
-        finalPrice,
+  "🚀 CREATE_PRODUCT_DB",
+  {
+    productPrice,
         stock,
         sale_enabled:
           body.sale_enabled,
@@ -534,9 +534,7 @@ const hasVariants =
 const stock = hasVariants
   ? null
   : Number(body.stock ?? 0);
-
-  const updated =
-    console.log(
+console.log(
   "🚀 UPDATE_PRODUCT_DB",
   {
     id: body.id,
@@ -571,6 +569,7 @@ const stock = hasVariants
       variants.length,
   }
 );
+  const updated =
     await updateProductBySeller(
       userId,
       body.id ?? "",
@@ -592,7 +591,7 @@ const stock = hasVariants
         category_id:
           getCategoryId(body),
 
-        price: finalPrice,
+        price: productPrice,
 
         stock,
 
@@ -657,7 +656,7 @@ sale_end:
 
     data: {
       id: body.id,
-      price: finalPrice,
+      price: productPrice,
     },
   };
 }
