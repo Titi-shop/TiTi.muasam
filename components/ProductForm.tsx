@@ -254,24 +254,7 @@ setErrors((prev) => ({
 
     try {
       const hasVariants = form.variants.length > 0;
-if (
-  hasVariants &&
-  form.sale_enabled
-) {
-  console.log(
-    "🧪 BLOCKED_BY_SALE_ENABLED"
-  );
 
-  form.setSale_enabled(false);
-
-  form.setSale_price("");
-
-  form.setSale_stock(0);
-
-  form.setSale_start("");
-
-  form.setSale_end("");
-}
       const hasSaleTime =
         Boolean(form.sale_start) &&
         Boolean(form.sale_end);
@@ -534,7 +517,7 @@ const payload: ProductPayload = {
 
   sale_enabled:
   hasVariants
-    ? false
+    ? hasVariantSale
     : (
         form.sale_enabled &&
         hasSaleTime &&
@@ -554,25 +537,20 @@ const payload: ProductPayload = {
       : Number(form.sale_stock || 0),
 
   sale_start:
-  hasVariants
-    ? null
-    : hasSaleTime
+  hasSaleTime
     ? toUTCFromInput(
         form.sale_start
       )
     : null,
 
 sale_end:
-  hasVariants
-    ? null
-    : hasSaleTime
+  hasSaleTime
     ? toUTCFromInput(
         form.sale_end
       )
     : null,
 
   variants: normalizedVariants,
-
   idempotency_key: generateKey(),
 };
 
