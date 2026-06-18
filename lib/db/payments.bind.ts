@@ -164,7 +164,11 @@ export async function bindPiPaymentToIntent(
 
       const intent =
         res.rows[0];
-
+       vlog("CURRENT_STATE", {
+  status: intent.status,
+  pi_payment_id:
+    intent.pi_payment_id,
+      });
       vlog("LOCK_OK", intent);
 
       /* ===============================================
@@ -185,15 +189,16 @@ export async function bindPiPaymentToIntent(
       =============================================== */
 
       if (
-        intent.status ===
-        "paid"
-      ) {
-        vlog(
-          "ALREADY_PAID_SKIP"
-        );
-
-        return;
-      }
+  intent.status ===
+    "submitted" &&
+  intent.pi_payment_id ===
+    piPaymentId
+) {
+  vlog(
+    "ALREADY_BOUND"
+  );
+  return;
+}
 
       /* ===============================================
          SAME PAYMENT REPLAY
@@ -228,20 +233,26 @@ export async function bindPiPaymentToIntent(
          UPDATE
       =============================================== */
 
-      vlog("UPDATE_START");
+      vlog("UPDATE_START", {
+  paymentIntentId,
+  piPaymentId,
+  piUid,
+  amount,
+});
 
       await client.query(
         `
         UPDATE payment_intents
         SET
-          pi_payment_id = $2,
-          pi_user_uid = $3,
-          pi_verified_amount = $4,
-          pi_payment_payload = $5,
+  pi_payment_id = $2,
+  pi_user_uid = $3,
+  pi_verified_amount = $4,
+  pi_payment_payload = $5,
+  status = 'submitted',
+  payment_state = 'AUTHORIZED',
+  provider_status = 'APPROVED',
 
-          status = 'submitted',
-
-          updated_at = now()
+  updated_at = now()
 
         WHERE id = $1
         `,
@@ -250,9 +261,14 @@ export async function bindPiPaymentToIntent(
           piPaymentId,
           piUid,
           amount,
-          JSON.stringify(
-            piPayload ?? {}
-          ),
+          let payloadJson = "{}";
+try {
+          payloadJson = JSON.stringify(
+          piPayload ?? {}
+          );
+          } catch {
+          payloadJson = "{}";
+},
         ]
       );
 
