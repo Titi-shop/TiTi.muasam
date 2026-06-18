@@ -561,6 +561,28 @@ export async function runPaymentSettlement({
   console.log("[PAYMENT][SETTLEMENT] FINALIZE_ORDER_START", {
     paymentIntentId,
   });
+    const latestIntent =
+  await getPaymentIntent(
+    paymentIntentId
+  );
+
+if (
+  latestIntent?.status ===
+  "paid"
+) {
+  console.log(
+    "[PAYMENT][SETTLEMENT] ALREADY_FINALIZED"
+  );
+
+  return successResult(
+    null,
+    Number(
+      latestIntent.total_amount
+    ),
+    rpcVerified.ok,
+    source
+  );
+}
   await writePaymentAudit({
   paymentIntentId,
   eventCode: "FINALIZE_STARTED",
