@@ -326,10 +326,7 @@ const hasVariants =
 const finalPrice =
   hasVariants
     ? null
-    : calcFinalPrice(
-        [],
-        Number(body.price ?? 0)
-      );
+    : Number(body.price ?? 0);
 
 const stock =
   hasVariants
@@ -556,12 +553,14 @@ sale_stock:
     : Number(body.sale_stock ?? 0),
         
         sale_start:
-          body.sale_start ??
-          null,
+  hasVariants
+    ? null
+    : body.sale_start ?? null,
 
-        sale_end:
-          body.sale_end ??
-          null,
+sale_end:
+  hasVariants
+    ? null
+    : body.sale_end ?? null,
 
 
         is_active: body.is_active ?? true,
