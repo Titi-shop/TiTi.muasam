@@ -244,7 +244,7 @@ async function safeCompletePi(
     piPaymentId,
   payload: {
     error: String(e),
-    stage: "FINALIZE_ORDER",
+    stage: "PI_COMPLETE",
   },
    });
 
@@ -502,24 +502,28 @@ export async function runPaymentSettlement({
   txid,
   source
 );
+    if (!rpcVerified.ok) {
+  console.error(
+    "[PAYMENT][SETTLEMENT] RPC_VERIFY_FAILED",
+    {
+      paymentIntentId,
+      reason: rpcVerified.reason,
+    }
+  );
 
-if (!rpcVerified.ok) {
-  console.error("[PAYMENT][SETTLEMENT] RPC_VERIFY_FAILED", {
+  await auditManualReview(
     paymentIntentId,
-    reason: rpcVerified.reason,
-  });
+    "RPC_VERIFY_FAILED",
+    {
+      source,
+      txid,
+      piPaymentId,
+      reason: rpcVerified.reason,
+    }
+  );
 
-  await auditManualReview(paymentIntentId, "RPC_VERIFY_FAILED", {
-    source,
-    txid,
-    piPaymentId,
-    reason: rpcVerified.reason,
-  });
-
-  return failResult(
-    piVerified.verifiedAmount,
-    false,
-    source
+  console.warn(
+    "[PAYMENT][SETTLEMENT] RPC_SOFT_FAIL"
   );
 }
 
@@ -667,15 +671,29 @@ return successResult(
     error: e,
   });
 
-  await auditManualReview(paymentIntentId, "SETTLEMENT_FATAL", {
-    source: source ?? "submit-api",
-    txid: String(txid || ""),
-    piPaymentId: String(piPaymentId || ""),
-    reason: e instanceof Error ? e.message : String(e),
-    requiresReplay: true,
-    reconcileStage: "FINALIZE_ORDER",
-  });
-
+  try {
+  await auditManualReview(
+    paymentIntentId,
+    "SETTLEMENT_FATAL",
+    {
+      source: source ?? "submit-api",
+      txid: String(txid || ""),
+      piPaymentId: String(piPaymentId || ""),
+      reason:
+        e instanceof Error
+          ? e.message
+          : String(e),
+      requiresReplay: true,
+      reconcileStage:
+        "FINALIZE_ORDER",
+    }
+    );
+    } catch (auditError) {
+     console.error(
+     "[PAYMENT][AUDIT_FATAL]",
+     auditError
+     );
+     }
   return failResult(0, false, source);
 }
 }
