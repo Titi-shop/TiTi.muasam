@@ -160,7 +160,21 @@ export function mapVariantToApp(
     salePrice !== null &&
     salePrice > 0 &&
     salePrice < price;
+const finalPrice =
+  safeNumber(
+    row.final_price
+  );
 
+if (
+  !Number.isFinite(
+    finalPrice
+  ) ||
+  finalPrice <= 0
+) {
+  throw new Error(
+    "VARIANT_FINAL_PRICE_CORRUPTED"
+  );
+}
   const mapped: ProductVariant =
     {
       id: row.id,
@@ -204,15 +218,7 @@ export function mapVariantToApp(
           ? salePrice
           : null,
 
-      final_price:
-        safeNumber(
-          row.final_price,
-          calcFinalPrice(
-            price,
-            salePrice,
-            saleEnabled
-          )
-        ),
+      final_price: finalPrice,
 
       currency:
         row.currency ===
