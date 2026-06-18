@@ -912,7 +912,15 @@ const nextFinalPrice =
         sale_enabled:
           nextSaleEnabled,
       });
-
+log(
+  "UPDATE_PRICE_CALC",
+  {
+    nextPrice,
+    nextSalePrice,
+    nextSaleEnabled,
+    nextFinalPrice,
+  }
+);
 /* =========================
    STOCK
 ========================= */
