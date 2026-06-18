@@ -7,15 +7,10 @@ import { withTransaction } from "@/lib/db";
 
 type BindParams = {
   userId: string;
-
   paymentIntentId: string;
-
   piPaymentId: string;
-
   piUid: string;
-
   verifiedAmount: number;
-
   piPayload: unknown;
 };
 
@@ -58,11 +53,14 @@ function safeAmount(
 ): number {
   const n = Number(value);
 
-  if (!Number.isFinite(n)) {
-    throw new Error(
-      "INVALID_AMOUNT"
-    );
-  }
+  if (
+  !Number.isFinite(n) ||
+  n <= 0
+) {
+  throw new Error(
+    "INVALID_AMOUNT"
+  );
+}
 
   return n;
 }
@@ -144,13 +142,15 @@ export async function bindPiPaymentToIntent(
         await client.query<IntentRow>(
           `
           SELECT
-            id,
-            buyer_id,
-            status,
-            pi_payment_id
-          FROM payment_intents
-          WHERE id = $1
-          FOR UPDATE
+  id,
+  buyer_id,
+  status,
+  payment_state,
+  provider_status,
+  pi_payment_id
+FROM payment_intents
+WHERE id = $1
+FOR UPDATE
           `,
           [paymentIntentId]
         );
@@ -182,22 +182,6 @@ export async function bindPiPaymentToIntent(
           "FORBIDDEN"
         );
       }
-
-      /* ===============================================
-         PAID IDEMPOTENT
-      =============================================== */
-
-      if (
-  intent.status ===
-    "submitted" &&
-  intent.pi_payment_id ===
-    piPaymentId
-) {
-  vlog(
-    "ALREADY_BOUND"
-  );
-  return;
-}
 
       /* ===============================================
          SAME PAYMENT REPLAY
@@ -260,8 +244,8 @@ try {
     pi_payment_payload = $5,
 
     status = 'submitted',
-    payment_state = 'AUTHORIZED',
-    provider_status = 'APPROVED',
+    payment_state = 'PENDING'
+provider_status = 'CREATED'
 
     updated_at = now()
 
