@@ -312,7 +312,7 @@ export async function calculatePricing(
       "OUT_OF_STOCK"
     );
   }
-}
+
 
       price = vPrice;
     }
