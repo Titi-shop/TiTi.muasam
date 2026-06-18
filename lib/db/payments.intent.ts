@@ -7,7 +7,8 @@ import type {
 import type {
   CreatePiPaymentIntentParams,
   CreateIntentResult,
-} from "@/lib/payments/types";
+  PaymentIntentRow,
+} from "@/lib/payments/types/intent";
 /* =========================================================
    GLOBAL WALLET
 ========================================================= */
@@ -98,18 +99,16 @@ export async function createPiPaymentIntent({
     ===================================================== */
 
     const ownerRes = await client.query<{
-      seller_id: string;
-    }>(
-      `
-      SELECT
-  seller_id,
-  status
-     FROM products
-      WHERE id = $1
-      LIMIT 1
-      `,
-      [productId]
-    );
+  seller_id: string;
+}>(
+  `
+  SELECT seller_id
+  FROM products
+  WHERE id = $1
+  LIMIT 1
+  `,
+  [productId]
+);
 
     if (!ownerRes.rows.length) {
       throw new Error("PRODUCT_NOT_FOUND");
@@ -134,18 +133,29 @@ export async function createPiPaymentIntent({
 
     const memo = `ORDER-${paymentIntentId.slice(0, 8)}`;
      const expiresAt = makeExpiresAt();
+    vlog("INITIAL_STATE", {
+  status: makeInitialStatus(),
+  settlement_state:
+    makeInitialSettlement(),
+  payment_state: "PENDING",
+  provider_status: "CREATED",
+  expiresAt,
+});
     /* =====================================================
        4. SNAPSHOT (TRUST PRICING ENGINE)
     ===================================================== */
 
     const shippingSnapshot = {
   buyer_shipping: shipping,
-  buyer_country: pricing.buyer_country,
-  buyer_zone: pricing.buyer_zone,
+  buyer_country:
+    pricing.buyer_country,
+  buyer_zone:
+    pricing.buyer_zone,
   pricing_snapshot: pricing,
   product_snapshot:
-    pricing.items?.[0] ?? null,
+    pricing.items[0] ?? null,
   variant_snapshot: null,
+} as const;
 };
 
     /* =====================================================
@@ -257,7 +267,8 @@ export async function createPiPaymentIntent({
 ========================================================= */
 
 export async function getPaymentIntent(id: string) {
-  const res = await query(
+  const res =
+  await query<PaymentIntentRow>(
     `
     SELECT *
     FROM payment_intents
