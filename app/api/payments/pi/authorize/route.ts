@@ -25,15 +25,20 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(result);
-  } catch (e) {
-    return NextResponse.json(
-      {
-        error:
-          e instanceof Error
-            ? e.message
-            : "AUTHORIZE_FAILED",
-      },
-      { status: 400 }
+  catch (e) {
+  console.error(
+    "[AUTHORIZE_ROUTE_ERROR]",
+    e
+  );
+
+  return NextResponse.json(
+    {
+      error:
+        e instanceof Error
+          ? e.message
+          : "AUTHORIZE_FAILED",
+    },
+    { status: 400 }
     );
   }
 }
