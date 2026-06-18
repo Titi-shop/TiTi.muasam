@@ -279,19 +279,6 @@ export async function calculatePricing(
 
     let price = product.price;
 
-const saleActive = isSaleActive(
-  product.sale_start,
-  product.sale_end
-);
-
-if (
-  saleActive &&
-  product.sale_price &&
-  product.sale_price < price
-) {
-  price = product.sale_price;
-}
-
 if (item.variant_id) {
   const variant = await loadVariant(
     item.variant_id,
@@ -329,6 +316,7 @@ if (item.variant_id) {
       "OUT_OF_STOCK"
     );
   }
+
 
 
       price = vPrice;
