@@ -30,7 +30,9 @@ export async function createProduct(
   );
 
   try {
-    if (!isUUID(seller_id)) {
+    if (
+      !isUUID(seller_id)
+    ) {
       throw new Error(
         "INVALID_SELLER_ID"
       );
@@ -56,78 +58,67 @@ export async function createProduct(
     }
 
     const hasVariants =
-      input.has_variants === true;
+  input.has_variants === true;
 
-    const price = hasVariants
-      ? null
-      : safeNumber(
-          input.price
-        );
+const price = hasVariants
+  ? null
+  : safeNumber(input.price);
 
-    const salePrice =
-      hasVariants
-        ? null
-        : safeNullableNumber(
-            input.sale_price
-          );
+const salePrice = hasVariants
+  ? null
+  : safeNullableNumber(
+      input.sale_price
+    );
 
-    if (
-      !hasVariants &&
-      price !== null &&
-      price < 0
-    ) {
-      throw new Error(
-        "INVALID_PRODUCT_PRICE"
-      );
-    }
+if (
+  !hasVariants &&
+  price !== null &&
+  price < 0
+) {
+  throw new Error(
+    "INVALID_PRODUCT_PRICE"
+  );
+}
 
-    if (
-      !hasVariants &&
-      price !== null &&
-      salePrice !== null &&
-      salePrice >= price
-    ) {
-      throw new Error(
-        "INVALID_SALE_PRICE"
-      );
-    }
+if (
+  !hasVariants &&
+  price !== null &&
+  salePrice !== null &&
+  salePrice >= price
+) {
+  throw new Error(
+    "INVALID_SALE_PRICE"
+  );
+}
 
-    const finalPrice =
-      hasVariants
-        ? null
-        : calcFinalPrice({
-            price,
-            sale_price:
-              salePrice,
-            sale_enabled:
-              input.sale_enabled,
-          });
+const finalPrice = hasVariants
+  ? null
+  : calcFinalPrice({
+      price,
+      sale_price: salePrice,
+      sale_enabled:
+        input.sale_enabled,
+    });
 
-    const stock =
-      hasVariants
-        ? null
-        : safeNumber(
-            input.stock
-          );
+const stock = hasVariants
+  ? null
+  : safeNumber(
+      input.stock
+    );
 
-    const saleStock =
-      hasVariants
-        ? null
-        : safeNumber(
-            input.sale_stock
-          );
+const saleStock = hasVariants
+  ? null
+  : safeNumber(
+      input.sale_stock
+    );
 
-    const saleEnabled =
-  hasVariants
-    ? false
-    : Boolean(input.sale_enabled);
+const saleEnabled =
+  Boolean(input.sale_enabled);
 
 const saleStart =
-
   input.sale_start ?? null;
 
 const saleEnd =
-
   input.sale_end ?? null;
 
     const slug =
@@ -137,7 +128,7 @@ const saleEnd =
 
     const status =
       normalizeStatus(
-        input.status as ProductStatus,
+        input.status,
         input.is_active
       );
 
@@ -186,76 +177,76 @@ const saleEnd =
         RETURNING *
         `,
         [
-          seller_id,
-          input.name.trim(),
-          slug,
+          
+  seller_id,
+  input.name.trim(),
+  slug,
 
-          input.short_description ??
-            "",
+  input.short_description ??
+    "",
 
-          input.description ??
-            "",
+  input.description ??
+    "",
 
-          input.detail ??
-            "",
+  input.detail ??
+    "",
 
-          input.thumbnail ??
-            "",
+  input.thumbnail ??
+    "",
 
-          normalizeImages(
-            input.images
-          ),
+  normalizeImages(
+    input.images
+  ),
 
-          normalizeImages(
-            input.detail_images
-          ),
+  normalizeImages(
+    input.detail_images
+  ),
 
-          input.video_url ??
-            "",
+  input.video_url ??
+    "",
 
-          price,
-          salePrice,
-          finalPrice,
+  price,
+  salePrice,
+  finalPrice,
+  "PI",
 
-          "PI",
+  stock,
 
-          stock,
+  Boolean(
+    input.is_unlimited
+  ),
 
-          Boolean(
-            input.is_unlimited
-          ),
+  Boolean(
+    input.is_featured
+  ),
 
-          Boolean(
-            input.is_featured
-          ),
+  Boolean(
+    input.is_digital
+  ),
 
-          Boolean(
-            input.is_digital
-          ),
+  status,
 
-          status,
+  input.category_id ??
+    null,
 
-          input.category_id ??
-            null,
+  saleStart,
+  saleEnd,
 
-          saleStart,
-          saleEnd,
+  saleEnabled,
 
-          saleEnabled,
+  saleStock,
 
-          saleStock,
+  input.meta_title ??
+    "",
 
-          input.meta_title ??
-            "",
+  input.meta_description ??
+    "",
 
-          input.meta_description ??
-            "",
+  input.is_active !==
+    false,
 
-          input.is_active !==
-            false,
-
-          hasVariants,
-        ]
+  hasVariants,
+]
       );
 
     const row =
