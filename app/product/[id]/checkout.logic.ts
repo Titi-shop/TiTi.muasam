@@ -4,7 +4,6 @@ import { useCallback ,useRef} from "react";
 import { getPiAccessToken } from "@/lib/piAuth";
 import type {
   ShippingInfo,
-  Region,
   ValidateParams,
   UseCheckoutPayParams,
 } from "@/types/checkout";
@@ -39,7 +38,6 @@ export function validateBeforePay({
   user,
   piReady,
   shipping,
-  zone,
   item,
   quantity,
   maxStock,
@@ -51,7 +49,6 @@ export function validateBeforePay({
     user,
     piReady,
     shipping,
-    zone,
     item,
     quantity,
   });
@@ -115,10 +112,6 @@ if (!user) {
      ZONE CHECK (NON-BLOCKING)
   ========================= */
 
-  if (!zone) {
-    console.warn("[CHECKOUT] zone missing → fallback rest_of_world");
-  }
-
   console.log("🟢 [VALIDATE] PASSED");
   return true;
 }
@@ -140,7 +133,6 @@ export function useCheckoutPay(params: UseCheckoutPayParams) {
     user,
     router,
     onClose,
-    zone,
     product,
     showMessage,
     validate,
@@ -169,7 +161,7 @@ showMessage(
           variant_id: product?.selectedVariant?.id ?? null,
           quantity,
           address_id: shipping?.id,
-          zone,
+        
         }),
       });
 
@@ -379,7 +371,6 @@ window.dispatchEvent(
     user,
     router,
     onClose,
-    zone,
     product?.variant_id,
     validate,
     showMessage,
