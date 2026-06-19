@@ -18,7 +18,7 @@ import {
   log,
   logError,
 } from "./helpers";
-
+import { calcFinalPrice }from "./pricing";
 import { mapRow } from "./mapper";
 
 export async function createProduct(
