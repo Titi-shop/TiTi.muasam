@@ -486,13 +486,20 @@ if (
    VARIANT SALE WINDOW
 ========================= */
 
-if (
-  hasVariants &&
-  (
-    body.sale_start ||
-    body.sale_end
-  )
-) {
+const variants =
+  normalizeVariants(
+    body.variants ?? []
+  );
+
+const hasSaleVariant =
+  variants.some(
+    (variant) =>
+      variant.sale_enabled &&
+      variant.sale_price != null &&
+      variant.sale_price > 0
+  );
+
+if (hasSaleVariant) {
   if (!body.sale_start) {
     return "SALE_START_REQUIRED";
   }
