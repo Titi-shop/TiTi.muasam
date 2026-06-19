@@ -127,11 +127,7 @@ export default function CheckoutSheet({
     setShipping(def);
   })();
 }, [open, user]);
-useEffect(() => {
-  if (resolvedRegion?.zone) {
-    setZone(resolvedRegion.zone as Region);
-  }
-}, [resolvedRegion]);
+
   /* ================= PREVIEW ================= */
 
   const previewKey = useMemo(() => {
