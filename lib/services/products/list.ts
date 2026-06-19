@@ -163,11 +163,8 @@ if (!hasVariants) {
     ...product,
 
     variants: [],
-
     min_price: null,
-
     max_price: null,
-
     sale_price:
       saleActive
         ? product.sale_price
@@ -184,28 +181,7 @@ if (!hasVariants) {
       ) ?? [],
   };
 }
-        console.log(
-  "🧪 [PRODUCT_SALE_CHECK]",
-  {
-    productId: product.id,
-
-    price: product.price,
-
-    sale_price:
-      product.sale_price,
-
-    sale_enabled:
-      product.sale_enabled,
-
-    sale_start:
-      product.sale_start,
-
-    sale_end:
-      product.sale_end,
-
-    saleActive,
-  }
-);
+        
         
         /* =====================
    LOAD VARIANTS
