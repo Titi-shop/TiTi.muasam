@@ -118,17 +118,19 @@ export async function createProduct(
           );
 
     const saleEnabled =
-      Boolean(
-        input.sale_enabled
-      );
+  hasVariants
+    ? false
+    : Boolean(input.sale_enabled);
 
-    const saleStart =
-      input.sale_start ??
-      null;
+const saleStart =
+  hasVariants
+    ? null
+    : input.sale_start ?? null;
 
-    const saleEnd =
-      input.sale_end ??
-      null;
+const saleEnd =
+  hasVariants
+    ? null
+    : input.sale_end ?? null;
 
     const slug =
       await generateUniqueSlug(
