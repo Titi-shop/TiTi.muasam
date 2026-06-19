@@ -483,7 +483,59 @@ console.log(
     variants: normalizedVariants,
   }
 );
+/* =========================
+   VARIANT SALE VALIDATION
+========================= */
 
+if (
+  hasVariantSale &&
+  (
+    !form.sale_start ||
+    !form.sale_end
+  )
+) {
+  setErrors((prev) => ({
+    ...prev,
+    sale_start:
+      !form.sale_start,
+
+    sale_end:
+      !form.sale_end,
+  }));
+
+  alert(
+    t.sale_date_required ??
+    "Please select sale start and end date"
+  );
+
+  setSubmitting(false);
+
+  return;
+}
+
+/* =========================
+   INVALID SALE RANGE
+========================= */
+
+if (
+  hasVariantSale &&
+  form.sale_start &&
+  form.sale_end &&
+  new Date(
+    form.sale_start
+  ).getTime() >=
+    new Date(
+      form.sale_end
+    ).getTime()
+) {
+  alert(
+    t.invalid_sale_time
+  );
+
+  setSubmitting(false);
+
+  return;
+}
 console.log("🧪 FORM CATEGORY:", form.category_id);
 const payload: ProductPayload = {
   id:
