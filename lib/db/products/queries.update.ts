@@ -164,16 +164,12 @@ export async function updateProductBySeller(
         : current.sale_stock;
 
     const nextSaleStart =
-  hasVariants
-    ? null
-    : input.sale_start !== undefined
+  input.sale_start !== undefined
     ? input.sale_start
     : current.sale_start;
 
 const nextSaleEnd =
-  hasVariants
-    ? null
-    : input.sale_end !== undefined
+  input.sale_end !== undefined
     ? input.sale_end
     : current.sale_end;
 
