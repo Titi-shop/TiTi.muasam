@@ -92,7 +92,11 @@ export function mapVariantToApp(
         : null,
 
     final_price:
-      finalPrice,
+  calcFinalPrice(
+    price,
+    salePrice,
+    saleEnabled
+  ),
 
     currency: "PI",
 
@@ -162,6 +166,18 @@ export function mapVariantToDB(
     safeNullableNumber(
       variant.sale_price
     );
+  const stock =
+  safeNumber(
+    variant.stock
+  );
+
+const saleStock =
+  Math.min(
+    safeNumber(
+      variant.sale_stock
+    ),
+    stock
+  );
 
   const saleEnabled =
     Boolean(
@@ -237,12 +253,11 @@ export function mapVariantToDB(
     sale_enabled:
       saleEnabled,
 
-    sale_stock:
-      saleEnabled
-        ? safeNumber(
-            variant.sale_stock
-          )
-        : 0,
+    stock,
+sale_stock:
+  saleEnabled
+    ? saleStock
+    : 0,
 
     sale_sold:
       safeNumber(
