@@ -175,72 +175,125 @@ export async function listProductsService(
         }
 
         /* =====================
-           LOAD VARIANTS
-        ===================== */
+   LOAD VARIANTS
+===================== */
 
-        const variants =
-          await getVariantsByProductId(
-            product.id
-          );
-
-        console.log(
-          "🔵 [HAS_VARIANTS]",
-          {
-            id:
-              product.id,
-
-            name:
-              product.name,
-
-            variantCount:
-              variants.length,
-          }
-        );
-
-        const enrichedVariants =
-          variants.map(
-            (variant) => {
-              const saleActive = isSaleActive(
-        variant.sale_enabled,
-    variant.sale_price,
-       variant.price,
-         variant.sale_start,
-           variant.sale_end
-            );
-
-              return {
-                ...variant,
-
-                final_price:
-                  saleActive
-                    ? Number(
-                        variant.sale_price
-                      )
-                    : Number(
-                        variant.price
-                      ),
-              };
-            }
-          );
-
-        const prices =
-          enrichedVariants.map(
-            (v) =>
-              Number(
-                v.final_price
-              )
-          );
-
-        const saleVariants =
-      enrichedVariants.filter((v) =>
-    isSaleActive(
-      v.sale_enabled,
-      v.sale_price,
-      v.price,
-      product.sale_start,
-      product.sale_end
-    )
+const variants =
+  await getVariantsByProductId(
+    product.id
   );
+
+console.log(
+  "🔵 [HAS_VARIANTS]",
+  {
+    id: product.id,
+    name: product.name,
+    variantCount: variants.length,
+
+    productSaleEnabled:
+      product.sale_enabled,
+
+    productSaleStart:
+      product.sale_start,
+
+    productSaleEnd:
+      product.sale_end,
+  }
+);
+
+const enrichedVariants =
+  variants.map((variant) => {
+    const saleActive =
+      isSaleActive(
+        variant.sale_enabled,
+        variant.sale_price,
+        variant.price,
+        product.sale_start,
+        product.sale_end
+      );
+
+    console.log(
+      "🧪 [VARIANT_SALE_CHECK]",
+      {
+        productId:
+          product.id,
+
+        variantId:
+          variant.id,
+
+        price:
+          variant.price,
+
+        sale_price:
+          variant.sale_price,
+
+        variantSaleEnabled:
+          variant.sale_enabled,
+
+        productSaleStart:
+          product.sale_start,
+
+        productSaleEnd:
+          product.sale_end,
+
+        saleActive,
+      }
+    );
+
+    return {
+      ...variant,
+
+      sale_enabled:
+        saleActive,
+
+      sale_price:
+        saleActive
+          ? variant.sale_price
+          : null,
+
+      final_price:
+        saleActive
+          ? Number(
+              variant.sale_price
+            )
+          : Number(
+              variant.price
+            ),
+    };
+  });
+
+const prices =
+  enrichedVariants.map(
+    (v) =>
+      Number(
+        v.final_price
+      )
+  );
+
+const saleVariants =
+  enrichedVariants.filter(
+    (v) => v.sale_enabled
+  );
+
+console.log(
+  "🧪 [PRODUCT_VARIANT_SUMMARY]",
+  {
+    productId:
+      product.id,
+
+    variantCount:
+      enrichedVariants.length,
+
+    activeSaleVariants:
+      saleVariants.length,
+
+    minFinalPrice:
+      Math.min(...prices),
+
+    maxFinalPrice:
+      Math.max(...prices),
+  }
+);
         return {
           ...product,
 
