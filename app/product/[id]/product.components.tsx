@@ -59,6 +59,7 @@ availableVariants: ProductVariantView[];
 };
 export function ProductView(props: ProductViewProps) {
   const [activeImage, setActiveImage] = useState<string | null>(null);
+
   const {
     product,
     t,
@@ -87,28 +88,26 @@ export function ProductView(props: ProductViewProps) {
     hasVariants,
     relatedProducts,
   } = props;
-  console.log("🧪 PRODUCT_VIEW", {
-  productId: product.id,
-  hasVariants: product.has_variants,
 
-  product_price: product.price,
-  product_sale_price: product.sale_price,
-  product_final_price: product.final_price,
+  console.log("🧪 SALE_BADGE_CHECK", {
+    hasVariants,
 
-  selectedVariant: selectedVariant
-    ? {
-        id: selectedVariant.id,
-        option1: selectedVariant.option1,
-        price: selectedVariant.price,
-        sale_price: selectedVariant.sale_price,
-        final_price: selectedVariant.final_price,
-        stock: selectedVariant.stock,
-      }
-    : null,
-});
-   
+    productPrice: product?.price,
+    productSalePrice: product?.sale_price,
+    productFinalPrice: product?.final_price,
+
+    selectedVariant: selectedVariant
+      ? {
+          id: selectedVariant.id,
+          price: selectedVariant.price,
+          sale_price: selectedVariant.sale_price,
+          final_price: selectedVariant.final_price,
+        }
+      : null,
+  });
+
   /* ================= SAFE ================= */
- if (!product) return null;
+  if (!product) return null;
 const [lastTap, setLastTap] = useState(0);
 
   /* ================= IMAGES ================= */
