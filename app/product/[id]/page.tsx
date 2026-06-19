@@ -251,6 +251,8 @@ initialScale={initialScale}
 setInitialScale={setInitialScale}
       />
 <CheckoutSheet
+  open={openCheckout}
+  onClose={() => setOpenCheckout(false)}
   product={{
     id: product.id,
     selectedVariant,
@@ -263,6 +265,7 @@ setInitialScale={setInitialScale}
     price:
       selectedVariant?.price ??
       product.price,
+
     sale_price:
       selectedVariant?.sale_price ??
       product.sale_price,
@@ -271,8 +274,8 @@ setInitialScale={setInitialScale}
       selectedVariant?.final_price ??
       product.final_price,
     thumbnail: product.thumbnail,
-    stock,
 
+    stock,
     shipping_rates:
       product.shipping_rates,
     variant_id:
