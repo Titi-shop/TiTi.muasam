@@ -49,15 +49,39 @@ export async function updateProductService(
     }
 
     const error =
-      validateProductPayload({
-        ...body,
-        variants:
-          body.variants ?? [],
-      });
+  validateProductPayload({
+    ...body,
+    variants:
+      body.variants ?? [],
+  });
 
-    if (error) {
-      return { error };
+console.log(
+  "🧪 VALIDATION_RESULT",
+  error
+);
+
+if (error) {
+  console.error(
+    "❌ VALIDATION_FAILED",
+    error,
+    {
+      sale_enabled:
+        body.sale_enabled,
+
+      sale_start:
+        body.sale_start,
+
+      sale_end:
+        body.sale_end,
+
+      variantCount:
+        body.variants?.length ??
+        0,
     }
+  );
+
+  return { error };
+}
 
     const variants =
       normalizeVariants(
