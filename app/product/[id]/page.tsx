@@ -273,16 +273,18 @@ setInitialScale={setInitialScale}
     final_price:
       selectedVariant?.final_price ??
       product.final_price,
+
     thumbnail: product.thumbnail,
 
     stock,
+
     shipping_rates:
       product.shipping_rates,
+
     variant_id:
       selectedVariant?.id ?? null,
   }}
 />
-
     </>
   );
 }
