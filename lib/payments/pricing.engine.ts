@@ -127,16 +127,20 @@ async function loadProduct(productId: string) {
   id: String(p.id),
   name: p.name,
 
-  price: safeNumber(p.price),
+  price:
+  p.price !== null
+    ? safeNumber(p.price)
+    : null,
 
   sale_price:
     p.sale_price !== null
       ? safeNumber(p.sale_price)
       : null,
 
-  final_price: safeNumber(
-    p.final_price
-  ),
+  final_price:
+  p.final_price !== null
+    ? safeNumber(p.final_price)
+    : null,
 
   sale_start: p.sale_start ?? null,
   sale_end: p.sale_end ?? null,
