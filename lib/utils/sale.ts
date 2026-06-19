@@ -5,7 +5,22 @@ export function isSaleActive(
   saleStart?: string | Date | null,
   saleEnd?: string | Date | null
 ): boolean {
+  console.log(
+    "🧪 [SALE_CHECK]",
+    {
+      saleEnabled,
+      salePrice,
+      price,
+      saleStart,
+      saleEnd,
+    }
+  );
+
   if (!saleEnabled) {
+    console.log(
+      "🧪 [SALE_CHECK] DISABLED"
+    );
+
     return false;
   }
 
@@ -15,28 +30,66 @@ export function isSaleActive(
     salePrice <= 0 ||
     salePrice >= price
   ) {
+    console.log(
+      "🧪 [SALE_CHECK] INVALID_PRICE"
+    );
+
     return false;
   }
 
-  const now = Date.now();
+  /* =========================
+     MUST HAVE SALE WINDOW
+  ========================= */
 
-  if (saleStart) {
-    const start =
-      new Date(saleStart).getTime();
+  if (!saleStart || !saleEnd) {
+    console.log(
+      "🧪 [SALE_CHECK] MISSING_WINDOW"
+    );
 
-    if (now < start) {
-      return false;
-    }
+    return false;
   }
 
-  if (saleEnd) {
-    const end =
-      new Date(saleEnd).getTime();
+  const start =
+    new Date(saleStart).getTime();
 
-    if (now > end) {
-      return false;
+  const end =
+    new Date(saleEnd).getTime();
+
+  const now =
+    Date.now();
+
+  console.log(
+    "🧪 [SALE_WINDOW]",
+    {
+      start,
+      end,
+      now,
+      started:
+        now >= start,
+      expired:
+        now > end,
     }
+  );
+
+  if (now < start) {
+    console.log(
+      "🧪 [SALE_CHECK] NOT_STARTED"
+    );
+
+    return false;
   }
+
+  if (now > end) {
+    console.log(
+      "🧪 [SALE_CHECK] EXPIRED"
+    );
+
+    return false;
+  }
+
+  console.log(
+    "🧪 [SALE_CHECK] ACTIVE"
+  );
 
   return true;
 }
