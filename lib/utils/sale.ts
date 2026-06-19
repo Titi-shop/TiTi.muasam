@@ -50,13 +50,32 @@ export function isSaleActive(
   }
 
   const start =
-    new Date(saleStart).getTime();
+  new Date(saleStart).getTime();
 
-  const end =
-    new Date(saleEnd).getTime();
+const end =
+  new Date(saleEnd).getTime();
 
-  const now =
-    Date.now();
+if (
+  Number.isNaN(start) ||
+  Number.isNaN(end)
+) {
+  console.log(
+    "🧪 [SALE_CHECK] INVALID_WINDOW"
+  );
+
+  return false;
+}
+
+if (start >= end) {
+  console.log(
+    "🧪 [SALE_CHECK] INVALID_RANGE"
+  );
+
+  return false;
+}
+
+const now =
+  Date.now();
 
   console.log(
     "🧪 [SALE_WINDOW]",
