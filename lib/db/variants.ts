@@ -1,5 +1,5 @@
 import { query, withTransaction } from "@/lib/db";
-
+import { isSaleActive } from "@/lib/utils/sale";
 import type {
   ProductVariant,
   ProductVariantDB,
@@ -142,7 +142,7 @@ function calcFinalPrice(
 ========================================================= */
 
 export function mapVariantToApp(
-  row: ProductVariantDB
+  row: VariantWithSaleWindow
 ): ProductVariant {
   const price = safeNumber(
     row.price
@@ -154,27 +154,18 @@ export function mapVariantToApp(
     );
 
   const saleEnabled =
-    Boolean(
-      row.sale_enabled
-    ) &&
-    salePrice !== null &&
-    salePrice > 0 &&
-    salePrice < price;
+  isSaleActive(
+    row.sale_enabled,
+    salePrice,
+    price,
+    row.sale_start,
+    row.sale_end
+  );
 const finalPrice =
-  safeNumber(
-    row.final_price
-  );
-
-if (
-  !Number.isFinite(
-    finalPrice
-  ) ||
-  finalPrice <= 0
-) {
-  throw new Error(
-    "VARIANT_FINAL_PRICE_CORRUPTED"
-  );
-}
+  saleEnabled &&
+  salePrice !== null
+    ? salePrice
+    : price;
   const mapped: ProductVariant =
     {
       id: row.id,
@@ -439,18 +430,23 @@ export async function getVariantsByProductId(
   }
 
   const result =
-    await query<ProductVariantDB>(
-      `
-      SELECT *
-      FROM product_variants
-      WHERE product_id = $1
-        AND deleted_at IS NULL
-      ORDER BY
-        sort_order ASC,
-        created_at ASC
-      `,
-      [productId]
-    );
+  await query<VariantWithSaleWindow>(
+    `
+    SELECT
+      v.*,
+      p.sale_start,
+      p.sale_end
+    FROM product_variants v
+    JOIN products p
+      ON p.id = v.product_id
+    WHERE v.product_id = $1
+      AND v.deleted_at IS NULL
+    ORDER BY
+      v.sort_order ASC,
+      v.created_at ASC
+    `,
+    [productId]
+  );
 
   vlog(
     "GET_BY_PRODUCT_ROWS",
