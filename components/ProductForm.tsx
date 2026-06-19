@@ -1,43 +1,23 @@
+
 "use client";
 
 import { FormEvent, useState } from "react";
+import { toUTCFromInput } from "@/lib/utils/time";
+import { compressImage } from "@/lib/upload/imageUtils";
+import { getPiAccessToken } from "@/lib/piAuth";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase/client";
 
 import { useProductForm } from "./product/useProductForm";
 import ShippingRates from "./product/ShippingRates";
 import VariantEditor from "./product/VariantEditor";
-import {
-  inputClass,
-  inputStyle,
-  cardStyle,
-} from "./product/product-form.styles";
 
-import {
-  ProductFormErrors,
-} from "./product/product-form.types";
-
-import {
-  uploadProductImages,
-  uploadDetailImages,
-} from "./product/product-upload";
-
-import {
-  showMessage,
-} from "./product/product-notify";
-
-import {
-  validateProductSale,
-  validateVariantSale,
-} from "./product/product-form.validation";
-
-import {
-  buildProductPayload,
-  normalizeVariants,
-} from "./product/product-form.payload";
 import type {
   Category,
   ProductPayload,
+  ProductVariant,
+  ShippingRate,
 } from "@/types/product";
 /* =========================
    TYPES
@@ -50,6 +30,10 @@ interface ProductFormProps {
   onSubmit: (
     payload: ProductPayload
   ) => Promise<void>;
+}
+interface SignedUrlResponse {
+  uploadUrl: string;
+  publicUrl: string;
 }
 
 /* =========================
@@ -67,10 +51,17 @@ export default function ProductForm({
   const form = useProductForm(initialData);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] =
-  useState<ProductFormErrors>(
-    {}
-  );
+  const [errors, setErrors] = useState<{
+  name?: boolean;
+  category?: boolean;
+  images?: boolean;
+  price?: boolean;
+
+  sale_price?: boolean;
+  sale_stock?: boolean;
+  sale_start?: boolean;
+  sale_end?: boolean;
+}>({});
 
   const inputClass =
   "w-full border p-2 rounded transition-colors";
@@ -90,6 +81,9 @@ const cardStyle = {
      HELPERS
   ========================= */
 
+  const generateKey = (): string =>
+    `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
   const toNumber = (value: string): number => {
     if (value.trim() === "") return 0;
 
@@ -98,69 +92,136 @@ const cardStyle = {
   };
 
   /* =========================
+     UPLOAD
+  ========================= */
+
+  const uploadWithProgress = (
+    url: string,
+    file: File,
+    index: number
+  ): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", url);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+
+          console.log(`📊 [${index}] ${percent}%`);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          resolve();
+        } else {
+          reject(new Error(String(xhr.status)));
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new Error("NETWORK_ERROR"));
+      };
+
+      xhr.setRequestHeader("Content-Type", file.type);
+
+      xhr.send(file);
+    });
+
+  const getSignedUrl = async (): Promise<SignedUrlResponse> => {
+    const token = await getPiAccessToken();
+
+    const res = await fetch("/api/upload-url", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("❌ SIGNED URL FAIL:", text);
+      throw new Error("SIGNED_URL_FAILED");
+    }
+
+    const data: SignedUrlResponse = await res.json();
+    if (!data.uploadUrl || !data.publicUrl) {
+      throw new Error("NO_UPLOAD_URL");
+    }
+
+    return data;
+  };
+
+  /* =========================
      MAIN IMAGE UPLOAD
   ========================= */
 
-  const handleUpload = async (
-  files: File[]
-) => {
-  try {
-    setUploading(true);
+  const handleUpload = async (files: File[]) => {
+    if (!files.length) return;
 
-    const urls =
-      await uploadProductImages(
-        files
-      );
+    try {
+      setUploading(true);
 
-    form.setImages(
-      (prev) => [
-        ...prev,
-        ...urls,
-      ]
-    );
-  } catch (error) {
-    console.error(error);
+      const uploads = files.map(async (file, index) => {
+        const compressed = await compressImage(file);
+        const { uploadUrl, publicUrl } = await getSignedUrl();
+        await uploadWithProgress(uploadUrl, compressed, index);
+        return publicUrl;
+      });
 
-    showMessage(
-      t.upload_failed
-    );
-  } finally {
-    setUploading(false);
-  }
-};
+      const urls = await Promise.all(uploads);
+      form.setImages((prev: string[]) => [...prev, ...urls]);
+    } catch (error) {
+      console.error("💥 UPLOAD ERROR:", error);
+      alert(t.upload_failed);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   /* =========================
      DETAIL IMAGE UPLOAD
   ========================= */
 
-  const handleDetailUpload =
-  async (
-    files: File[]
-  ) => {
-    if (!user) return;
+  const uploadDetailImages = async (files: File[]) => {
+    if (!files.length || !user) return;
 
     try {
-      const urls =
-        await uploadDetailImages(
-          files,
-          user.id
-        );
+      const uploads = files.map(async (file) => {
+        const path = `products/${user.id}/detail-${Date.now()}.jpg`;
 
-      form.setDetail(
-        (prev) =>
-          `${prev}\n${urls
-            .map(
-              (url) =>
-                `<img src="${url}" />`
-            )
-            .join("\n")}`
-      );
+        const { error } = await supabase.storage
+          .from("products")
+          .upload(path, file);
+
+        if (error) {
+          throw error;
+        }
+
+        const { data } = supabase.storage
+          .from("products")
+          .getPublicUrl(path);
+
+        return data.publicUrl;
+      });
+
+      const urls = await Promise.all(uploads);
+     setErrors({});
+      form.setDetail((prev: string) => {
+        const html = urls
+          .map((url) => `<img src="${url}" />`)
+          .join("\n");
+
+        return `${prev}\n${html}`;
+      });
+setErrors((prev) => ({
+  ...prev,
+  images: false,
+}));
     } catch (error) {
-      console.error(error);
+      console.error("💥 DETAIL IMAGE ERROR:", error);
 
-      showMessage(
-        t.upload_failed
-      );
+      alert(t.upload_failed);
     }
   };
 
@@ -245,28 +306,207 @@ if (
   form.setSale_enabled(false);
       }
 
-    const productSaleError =
-  validateProductSale(
-    Boolean(
-      form.sale_enabled
-    ),
-    Number(form.price),
-    Number(
-      form.sale_price
-    ),
-    Number(
-      form.sale_stock
-    ),
-    form.sale_start,
-    form.sale_end
+      /* =========================
+         SALE VALIDATION
+      ========================= */
+
+if (
+  !hasVariants &&
+  form.sale_enabled
+) {
+
+  const sale = Number(
+    form.sale_price
   );
 
-if (productSaleError) {
-  showMessage(
-    t[
-      productSaleError.toLowerCase() as keyof typeof t
-    ] ??
-      productSaleError
+  const price = Number(
+    form.price
+  );
+
+  /* =====================
+     SALE PRICE
+  ===================== */
+
+if (
+  Number.isNaN(sale) ||
+  sale < 0.00001
+) {
+  setErrors((prev) => ({
+    ...prev,
+    sale_price: true,
+  }));
+  setSubmitting(false);
+  return;
+}
+
+  /* =====================
+     SALE STOCK
+  ===================== */
+
+  if (
+  !form.sale_stock ||
+  Number(form.sale_stock) <= 0
+) {
+  setErrors((prev) => ({
+    ...prev,
+    sale_stock: true,
+  }));
+
+  setSubmitting(false);
+  return;
+}
+
+  /* =====================
+     SALE TIME
+  ===================== */
+
+if (!hasSaleTime) {
+  setErrors((prev) => ({
+    ...prev,
+    sale_start: !form.sale_start,
+    sale_end: !form.sale_end,
+  }));
+  setSubmitting(false);
+  return;
+}
+
+  /* =====================
+     SALE PRICE < PRICE
+  ===================== */
+
+  if (sale >= price) {
+    alert(
+      t.sale_price_less_than_price
+    );
+
+    setSubmitting(false);
+
+    return;
+  }
+
+  /* =====================
+     INVALID TIME RANGE
+  ===================== */
+
+  if (
+    new Date(
+      form.sale_start
+    ).getTime() >=
+    new Date(
+      form.sale_end
+    ).getTime()
+  ) {
+    alert(
+      t.invalid_sale_time
+    );
+
+    setSubmitting(false);
+
+    return;
+  }
+}
+      /* =========================
+         SALE TIME BUT NO PRICE
+      ========================= */
+
+      if (
+        !hasVariants &&
+        hasSaleTime &&
+        !hasSalePrice
+      ) {
+        alert(t.sale_price_required);
+        setSubmitting(false);
+        return;
+      }
+
+      /* =========================
+         SHIPPING
+      ========================= */
+
+      const shippingRatesPayload: ShippingRate[] =
+  Object.entries(
+    form.shipping_rates
+  ).map(([zone, price]) => ({
+    zone:
+      zone as ShippingRate["zone"],
+    price: Number(price || 0),
+    domestic_country_code:
+      zone === "domestic"
+        ? form.domestic_country_code
+        : null,
+  }));
+
+      /* =========================
+         VARIANTS
+      ========================= */
+
+      const normalizedVariants: ProductVariant[] =
+        form.variants.map((v) => ({
+          ...v,
+
+          sale_enabled: Boolean(v.sale_enabled),
+
+          sale_price:
+            v.sale_enabled &&
+            v.sale_price !== null
+              ? Number(v.sale_price)
+              : null,
+
+          sale_stock:
+            v.sale_enabled
+              ? Number(v.sale_stock || 0)
+              : 0,
+
+          sale_sold: Number(v.sale_sold || 0),
+      final_price:
+     v.sale_enabled &&
+       v.sale_price !== null &&
+            Number(v.sale_price) > 0 &&
+            Number(v.sale_price) < Number(v.price)
+              ? Number(v.sale_price)
+              : Number(v.price),
+        }));
+
+      /* =========================
+         PAYLOAD
+      ========================= */
+      const hasVariantSale = normalizedVariants.some(
+  (v) =>
+    Boolean(v.sale_enabled) &&
+    Number(v.sale_price) > 0
+);
+
+console.log(
+  "🧪 VARIANT SALE CHECK",
+  {
+    hasVariants,
+    hasVariantSale,
+    variants: normalizedVariants,
+  }
+);
+/* =========================
+   VARIANT SALE VALIDATION
+========================= */
+
+if (
+  hasVariantSale &&
+  (
+    !form.sale_start ||
+    !form.sale_end
+  )
+) {
+  setErrors((prev) => ({
+    ...prev,
+    sale_start:
+      !form.sale_start,
+
+    sale_end:
+      !form.sale_end,
+  }));
+
+  alert(
+    t.sale_date_required ??
+    "Please select sale start and end date"
   );
 
   setSubmitting(false);
@@ -274,6 +514,115 @@ if (productSaleError) {
   return;
 }
 
+/* =========================
+   INVALID SALE RANGE
+========================= */
+
+if (
+  hasVariantSale &&
+  form.sale_start &&
+  form.sale_end &&
+  new Date(
+    form.sale_start
+  ).getTime() >=
+    new Date(
+      form.sale_end
+    ).getTime()
+) {
+  alert(
+    t.invalid_sale_time
+  );
+
+  setSubmitting(false);
+
+  return;
+}
+console.log("🧪 FORM CATEGORY:", form.category_id);
+const payload: ProductPayload = {
+  id:
+    typeof form.id === "string"
+      ? form.id
+      : undefined,
+  name: form.name,
+  category_id:
+    form.category_id !== "" &&
+    form.category_id !== null &&
+    form.category_id !== undefined
+      ? Number(form.category_id)
+      : undefined,
+
+  description: form.description,
+  detail: form.detail,
+  images: form.images,
+  thumbnail: form.images[0] || null,
+  is_active: form.is_active,
+  has_variants: hasVariants,
+  shipping_rates: shippingRatesPayload,
+  domestic_country_code:
+  form.domestic_country_code || null,
+  price: hasVariants
+    ? undefined
+    : Number(form.price),
+
+  stock: hasVariants
+    ? undefined
+    : Number(form.stock || 0),
+
+  sale_enabled:
+  hasVariants
+    ? hasVariantSale
+    : (
+        form.sale_enabled &&
+        hasSaleTime &&
+        hasSalePrice
+      ),
+
+  sale_price:
+    hasVariants
+      ? null
+      : !form.sale_enabled
+        ? null
+        : Number(form.sale_price),
+
+  sale_stock:
+    hasVariants || !form.sale_enabled
+      ? 0
+      : Number(form.sale_stock || 0),
+
+  sale_start:
+  hasSaleTime
+    ? toUTCFromInput(
+        form.sale_start
+      )
+    : null,
+
+sale_end:
+  hasSaleTime
+    ? toUTCFromInput(
+        form.sale_end
+      )
+    : null,
+
+  variants: normalizedVariants,
+  idempotency_key: generateKey(),
+};
+
+console.log("🧪 FORM CATEGORY:", form.category_id);
+console.log("📦 PRODUCT PAYLOAD:", payload);
+console.log(
+  "📦 PRODUCT PAYLOAD",
+  JSON.stringify(payload, null, 2)
+);
+
+await onSubmit(payload);
+    } catch (error) {
+      console.error(error);
+      alert(t.submit_failed);
+    } finally {
+      setSubmitting(false);
+    }
+
+  };
   /* =========================
      UI
   ========================= */
