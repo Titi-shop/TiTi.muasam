@@ -200,19 +200,13 @@ export async function listProductsService(
         const enrichedVariants =
           variants.map(
             (variant) => {
-              const saleActive =
-                variant.sale_enabled &&
-                variant.sale_price !==
-                  null &&
-                Number(
-                  variant.sale_price
-                ) > 0 &&
-                Number(
-                  variant.sale_price
-                ) <
-                  Number(
-                    variant.price
-                  );
+              const saleActive = isSaleActive(
+        variant.sale_enabled,
+    variant.sale_price,
+       variant.price,
+         variant.sale_start,
+           variant.sale_end
+            );
 
               return {
                 ...variant,
