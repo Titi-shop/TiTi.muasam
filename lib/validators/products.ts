@@ -509,5 +509,35 @@ if (hasSaleVariant) {
   }
 }
 
+  /* =========================
+   SALE DATE VALIDATION
+========================= */
+
+if (
+  body.sale_start &&
+  body.sale_end
+) {
+  const start =
+    new Date(
+      body.sale_start
+    ).getTime();
+
+  const end =
+    new Date(
+      body.sale_end
+    ).getTime();
+
+  if (
+    Number.isNaN(start) ||
+    Number.isNaN(end)
+  ) {
+    return "SALE_DATE_INVALID";
+  }
+
+  if (end <= start) {
+    return "SALE_DATE_INVALID";
+  }
+}
+
   return null;
 }
