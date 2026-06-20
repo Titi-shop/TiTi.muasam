@@ -51,7 +51,7 @@ export async function upsertPaymentReceipt(
       user_id,
       order_id,
       escrow_id,
-
+      seller_credit_id,
       pi_payment_id,
       pi_uid,
       txid,
@@ -106,7 +106,7 @@ export async function upsertPaymentReceipt(
       $25,
       $26,$27,
       $28,$29,
-      $30,
+      $30,$
       now(),now(),now(),now()
     )
     ON CONFLICT (pi_payment_id)
