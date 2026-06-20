@@ -41,6 +41,19 @@ type CreateOrderInput = {
     region?: string | null;
     postal_code?: string | null;
   };
+   pricing: {
+  subtotal: number;
+  shipping_fee: number;
+  total: number;
+
+  items: {
+    product_id: string;
+    variant_id: string | null;
+    quantity: number;
+    unit_price: number;
+    subtotal: number;
+  }[];
+};
 };
 
 function isUUID(v: string): boolean {
@@ -140,8 +153,6 @@ FOR UPDATE
     /* =========================================================
        CALCULATE
     ========================================================= */
-
-    let subtotal = 0;
     let totalQuantity = 0;
 
     const orderItems: OrderItemInternal[] = [];
@@ -170,55 +181,38 @@ if (
 if (!p.is_active || p.deleted_at) {
   throw new Error("PRODUCT_NOT_AVAILABLE");
 }
+const pricingItem =
+  input.pricing.items.find(
+    (x) =>
+      x.product_id === item.product_id &&
+      (x.variant_id ?? null) ===
+        (item.variant_id ?? null)
+  );
 
-let price = Number(p.price);
-
-if (item.variant_id) {
-  const v = variantMap.get(item.variant_id);
-
-  if (!v) {
-    throw new Error("INVALID_VARIANT");
-  }
-
-  if (v.product_id !== p.id) {
-    throw new Error(
-      "VARIANT_PRODUCT_MISMATCH"
-    );
-  }
-
-  if (!v.is_active) {
-    throw new Error("VARIANT_DISABLED");
-  }
-
-  if (
-    v.stock !== null &&
-    Number(v.stock) < qty
-  ) {
-    throw new Error("OUT_OF_STOCK");
-  }
-
-  price = v.sale_price
-    ? Number(v.sale_price)
-    : Number(v.price);
+if (!pricingItem) {
+  throw new Error(
+    "PRICING_ITEM_NOT_FOUND"
+  );
 }
 
-      const total = price * qty;
+const price =
+  Number(pricingItem.unit_price);
 
-      subtotal += total;
+const lineTotal =
+  Number(pricingItem.subtotal);
       totalQuantity += qty;
-
       orderItems.push({
-        product: {
-          id: p.id,
-          seller_id: p.seller_id,
-          name: p.name,
-          thumbnail: p.thumbnail ?? null,
-        },
-        variant_id: item.variant_id ?? null,
-        price,
-        qty,
-        total,
-      });
+  product: {
+    id: p.id,
+    seller_id: p.seller_id,
+    name: p.name,
+    thumbnail: p.thumbnail ?? null,
+  },
+  variant_id: item.variant_id ?? null,
+  price,
+  qty,
+  total: lineTotal,
+});
 
       console.log("🧾 [ORDER][ITEM]", {
         productId: p.id,
@@ -227,41 +221,6 @@ if (item.variant_id) {
         total,
       });
     }
-
-    /* =========================================================
-       SHIPPING
-    ========================================================= */
-
-    const { rows: shippingRows } = await client.query<any>(
-      `
-      SELECT sr.product_id, sr.price
-      FROM shipping_rates sr
-      JOIN shipping_zones sz ON sz.id = sr.zone_id
-      WHERE sr.product_id = ANY($1::uuid[])
-      AND sz.code = $2
-      `,
-      [productIds, zone]
-    );
-
-    const shippingMap = new Map(
-      shippingRows.map((r) => [r.product_id, Number(r.price)])
-    );
-
-    let shippingFee = 0;
-
-    for (const item of items) {
-      const fee = shippingMap.get(item.product_id);
-      if (fee === undefined) throw new Error("SHIPPING_NOT_AVAILABLE");
-      shippingFee += fee;
-    }
-
-    const total = subtotal + shippingFee;
-
-    console.log("💰 [ORDER][TOTAL]", {
-      subtotal,
-      shippingFee,
-      total,
-    });
 
     /* =========================================================
    STOCK DEDUCTION (STRICT)
