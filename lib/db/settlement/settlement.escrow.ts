@@ -185,16 +185,13 @@ const journalHash = makeEventHash({
   await createSettlementJournalOnce({
   ownerId: input.buyerId,
   ownerType: "BUYER",
-
   refId: escrowId,
   refTable: "escrow_entries",
-
   entryType: "ESCROW_HOLD",
   direction: "DEBIT",
   amount: input.amount,
   note: "Buyer funds moved into escrow",
   eventHash: journalHash,
-
   metadata: {
     escrowId,
     paymentIntentId: input.paymentIntentId,
@@ -206,11 +203,8 @@ const journalHash = makeEventHash({
     piPaymentId: input.piPaymentId,
   },
 
-  createdBy: "settlement.escrow",
+  createdBy: input.buyerId, // UUID hợp lệ
 });
-
-  return escrowId;
-}
 
 /* =====================================================
    RELEASE ESCROW
