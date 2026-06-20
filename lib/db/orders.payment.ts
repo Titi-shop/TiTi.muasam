@@ -134,7 +134,10 @@ if (
        3. STRICT AMOUNT + RECEIVER VALIDATION
     ===================================================== */
 
-    const expectedAmount = toNumber(intent.total_amount);
+    const expectedAmount = toNumber(
+  intent.total_amount
+);
+
 const pricingTotal = Number(
   pricing.total
 );
@@ -159,31 +162,116 @@ if (
     "PRICING_TOTAL_MISMATCH"
   );
 }
-    if (!isSameAmount(expectedAmount, verifiedAmount)) {
-      await auditManualReview(paymentIntentId, "AMOUNT_MISMATCH", {
-        expectedAmount,
-        verifiedAmount,
-      });
-      throw new Error("AMOUNT_MISMATCH");
-    }
 
-    if (
-  String(intent.merchant_wallet || "").trim().toLowerCase() !==
-  String(receiverWallet || "").trim().toLowerCase()
+if (
+  !isSameAmount(
+    expectedAmount,
+    verifiedAmount
+  )
+) {
+  await auditManualReview(
+    paymentIntentId,
+    "AMOUNT_MISMATCH",
+    {
+      expectedAmount,
+      verifiedAmount,
+    },
+    client
+  );
+
+  throw new Error(
+    "AMOUNT_MISMATCH"
+  );
+}
+
+if (
+  String(
+    intent.merchant_wallet || ""
+  )
+    .trim()
+    .toLowerCase() !==
+  String(
+    receiverWallet || ""
+  )
+    .trim()
+    .toLowerCase()
 ) {
   await auditManualReview(
     paymentIntentId,
     "RECEIVER_MISMATCH",
     {
-      expected: intent.merchant_wallet,
+      expected:
+        intent.merchant_wallet,
       got: receiverWallet,
     },
     client
   );
 
-  throw new Error("RECEIVER_MISMATCH");
+  throw new Error(
+    "RECEIVER_MISMATCH"
+  );
 }
-    if (!txid) {
+
+if (!rpcPayload?.confirmed) {
+  await auditManualReview(
+    paymentIntentId,
+    "RPC_NOT_CONFIRMED",
+    rpcPayload,
+    client
+  );
+
+  throw new Error(
+    "RPC_NOT_CONFIRMED"
+  );
+}
+
+if (
+  rpcPayload?.txStatus !==
+  "SUCCESS"
+) {
+  await auditManualReview(
+    paymentIntentId,
+    "RPC_TX_FAILED",
+    rpcPayload,
+    client
+  );
+
+  throw new Error(
+    "RPC_TX_FAILED"
+  );
+}
+
+if (
+  rpcPayload?.reason &&
+  rpcPayload.reason !==
+    "NONE"
+) {
+  await auditManualReview(
+    paymentIntentId,
+    "RPC_REASON_FAILED",
+    rpcPayload,
+    client
+  );
+
+  throw new Error(
+    "RPC_REASON_FAILED"
+  );
+}
+
+if (!rpcPayload?.ledger) {
+  await auditManualReview(
+    paymentIntentId,
+    "RPC_LEDGER_MISSING",
+    rpcPayload,
+    client
+  );
+
+  throw new Error(
+    "RPC_LEDGER_MISSING"
+  );
+}
+
+if (!txid) {
   await auditManualReview(
     paymentIntentId,
     "TXID_MISSING",
@@ -198,7 +286,8 @@ if (
 
 if (
   rpcPayload?.chainReference &&
-  rpcPayload.chainReference !== txid
+  rpcPayload.chainReference !==
+    txid
 ) {
   await auditManualReview(
     paymentIntentId,
