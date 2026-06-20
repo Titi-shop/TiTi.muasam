@@ -274,42 +274,76 @@ async function safeLedger(
         txid,
       });
 
-      await auditManualReview(paymentIntentId, "ORDER_MISSING_IN_LEDGER", {
-        piPaymentId,
-        txid,
-      });
+      catch (e) {
+  console.error(
+    "[PAYMENT][LEDGER][ERROR]",
+    e
+  );
 
-      return false;
-    }
-console.log(
-  "[PAYMENT][LEDGER] CREATE_ESCROW_START"
-);
-
-    const escrowId =
-  await createEscrow({
+  await auditManualReview(
     paymentIntentId,
-    orderId: paid.orderId,
-    buyerId: paid.buyerId,
-    sellerId: paid.sellerId,
-    amount: paid.amount,
-    txid,
-    piPaymentId,
-  });
-    console.log(
-  "[PAYMENT][LEDGER] CREATE_ESCROW_DONE",
-  { escrowId }
-
-);
-    await withTransaction(async (client) => {
-  await linkReceiptSettlement(
-    client,
+    "LEDGER_PIPELINE_FAILED",
     {
-      paymentIntentId,
-      escrowId,
-      sellerCreditId: creditId,
+      txid,
+      piPaymentId,
+      error:
+        e instanceof Error
+          ? e.message
+          : String(e),
     }
   );
+
+  return false;
+}
+console.log("[PAYMENT][LEDGER] MARK_PI_START");
+
+await markPiVerified(escrowId);
+
+console.log("[PAYMENT][LEDGER] MARK_PI_DONE");
+
+if (rpcVerified.confirmed) {
+  console.log("[PAYMENT][LEDGER] MARK_RPC_START");
+
+  await markRpcVerified(escrowId);
+
+  console.log("[PAYMENT][LEDGER] MARK_RPC_DONE");
+}
+
+console.log("[PAYMENT][LEDGER] LINK_ORDER_START");
+
+await linkOrder(
+  escrowId,
+  paid.orderId
+);
+
+console.log("[PAYMENT][LEDGER] LINK_ORDER_DONE");
+
+console.log("[PAYMENT][LEDGER] CREDIT_START");
+
+const creditId = await creditSeller({
+  escrowId,
+  sellerId: paid.sellerId,
+  amount: paid.amount,
+  paymentIntentId,
+  orderId: paid.orderId,
+  piPaymentId,
 });
+
+console.log("[PAYMENT][LEDGER] CREDIT_DONE", {
+  creditId,
+});
+
+console.log("[PAYMENT][LEDGER] RECEIPT_LINK_START");
+
+await withTransaction(async (client) => {
+  await linkReceiptSettlement(client, {
+    paymentIntentId,
+    escrowId,
+    sellerCreditId: creditId,
+  });
+});
+
+console.log("[PAYMENT][LEDGER] RECEIPT_LINK_DONE");
 
 await markPiVerified(
   escrowId
