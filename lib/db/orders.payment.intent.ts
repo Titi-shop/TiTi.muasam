@@ -63,6 +63,17 @@ export async function finalizePaymentIntent(
   client: PoolClient,
   input: FinalizeIntentInput
 ): Promise<void> {
+  console.log(
+    "[PAYMENT][FINALIZE_INTENT] START",
+    {
+      paymentIntentId:
+        input?.paymentIntentId,
+      piPaymentId:
+        input?.piPaymentId,
+      txid:
+        input?.txid,
+    }
+  );
   const {
     paymentIntentId,
     piPaymentId,
