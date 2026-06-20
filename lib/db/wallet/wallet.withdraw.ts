@@ -61,16 +61,11 @@ export async function createWalletWithdrawal(
     );
   }
 
-  if (
-    Number.isNaN(
-      params.amount
-    ) ||
-    params.amount <= 0
-  ) {
-    throw new Error(
-      "INVALID_AMOUNT"
-    );
-  }
+  if (params.amount > 1000000) {
+  throw new Error(
+    "INVALID_AMOUNT"
+  );
+}
 
   if (
     typeof params.withdrawWallet !==
@@ -113,46 +108,41 @@ export async function createWalletWithdrawal(
          INSERT WITHDRAWAL
       =============================================== */
 
-      await client.query(
-        `
-        INSERT INTO wallet_withdrawals (
+      const withdrawRs =
+  await client.query(
+    `
+    INSERT INTO wallet_withdrawals (
+      id,
+      user_id,
+      amount,
+      currency,
+      withdraw_wallet,
+      status,
+      requested_at
+    )
+    VALUES (
+      $1,$2,$3,
+      'PI',
+      $4,
+      'PENDING',
+      NOW()
+    )
+    RETURNING id
+    `,
+    [
+      withdrawalId,
+      params.userId,
+      params.amount,
+      params.withdrawWallet,
+    ]
+  );
 
-          id,
-
-          user_id,
-
-          amount,
-
-          currency,
-
-          withdraw_wallet,
-
-          status,
-
-          requested_at
-
-        )
-        VALUES (
-
-          $1,
-          $2,
-          $3,
-          'PI',
-          $4,
-          'PENDING',
-          NOW()
-        )
-        `,
-        [
-          withdrawalId,
-
-          params.userId,
-
-          params.amount,
-
-          params.withdrawWallet,
-        ]
-      );
+if (withdrawRs.rowCount !== 1) {
+  throw new Error(
+    "WITHDRAWAL_CREATE_FAILED"
+  );
+}
+          
 
       /* ===============================================
          JOURNAL
