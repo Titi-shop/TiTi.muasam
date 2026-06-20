@@ -327,7 +327,14 @@ async function safeLedger(
         orderId: paid.orderId,
         piPaymentId,
       });
-
+console.log(
+  "[PAYMENT][LEDGER] RECEIPT_LINK_START",
+  {
+    paymentIntentId,
+    escrowId,
+    creditId,
+  }
+);
     await withTransaction(async (client) => {
   await linkReceiptSettlement(
     client,
