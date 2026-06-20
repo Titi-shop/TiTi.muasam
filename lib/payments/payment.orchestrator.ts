@@ -268,122 +268,104 @@ async function safeLedger(
 ): Promise<boolean> {
   try {
     if (!paid.orderId) {
-      console.error("[PAYMENT][LEDGER] BLOCKED_NO_ORDER", {
+      console.error(
+        "[PAYMENT][LEDGER] BLOCKED_NO_ORDER",
+        {
+          paymentIntentId,
+          piPaymentId,
+          txid,
+        }
+      );
+
+      await auditManualReview(
         paymentIntentId,
-        piPaymentId,
+        "ORDER_MISSING_IN_LEDGER",
+        {
+          piPaymentId,
+          txid,
+        }
+      );
+
+      return false;
+    }
+
+    console.log(
+      "[PAYMENT][LEDGER] CREATE_ESCROW_START"
+    );
+
+    const escrowId =
+      await createEscrow({
+        paymentIntentId,
+        orderId: paid.orderId,
+        buyerId: paid.buyerId,
+        sellerId: paid.sellerId,
+        amount: paid.amount,
         txid,
+        piPaymentId,
       });
 
-      catch (e) {
-  console.error(
-    "[PAYMENT][LEDGER][ERROR]",
-    e
-  );
+    console.log(
+      "[PAYMENT][LEDGER] CREATE_ESCROW_DONE",
+      { escrowId }
+    );
 
-  await auditManualReview(
-    paymentIntentId,
-    "LEDGER_PIPELINE_FAILED",
-    {
-      txid,
-      piPaymentId,
-      error:
-        e instanceof Error
-          ? e.message
-          : String(e),
+    await markPiVerified(escrowId);
+
+    if (rpcVerified.confirmed) {
+      await markRpcVerified(escrowId);
     }
-  );
 
-  return false;
-}
-console.log("[PAYMENT][LEDGER] MARK_PI_START");
-
-await markPiVerified(escrowId);
-
-console.log("[PAYMENT][LEDGER] MARK_PI_DONE");
-
-if (rpcVerified.confirmed) {
-  console.log("[PAYMENT][LEDGER] MARK_RPC_START");
-
-  await markRpcVerified(escrowId);
-
-  console.log("[PAYMENT][LEDGER] MARK_RPC_DONE");
-}
-
-console.log("[PAYMENT][LEDGER] LINK_ORDER_START");
-
-await linkOrder(
-  escrowId,
-  paid.orderId
-);
-
-console.log("[PAYMENT][LEDGER] LINK_ORDER_DONE");
-
-console.log("[PAYMENT][LEDGER] CREDIT_START");
-
-const creditId = await creditSeller({
-  escrowId,
-  sellerId: paid.sellerId,
-  amount: paid.amount,
-  paymentIntentId,
-  orderId: paid.orderId,
-  piPaymentId,
-});
-
-console.log("[PAYMENT][LEDGER] CREDIT_DONE", {
-  creditId,
-});
-
-console.log("[PAYMENT][LEDGER] RECEIPT_LINK_START");
-
-await withTransaction(async (client) => {
-  await linkReceiptSettlement(client, {
-    paymentIntentId,
-    escrowId,
-    sellerCreditId: creditId,
-  });
-});
-
-console.log("[PAYMENT][LEDGER] RECEIPT_LINK_DONE");
-
-await markPiVerified(
-  escrowId
-);
-
-if (rpcVerified.confirmed) {
-  await markRpcVerified(
-    escrowId
-  );
-}
-
-await linkOrder(
-  escrowId,
-  paid.orderId
-);
-
-const creditId =
-  await creditSeller({
-    escrowId,
-    sellerId: paid.sellerId,
-    amount: paid.amount,
-    paymentIntentId,
-    orderId: paid.orderId,
-    piPaymentId,
-  });
-    await auditFinalizeDone(paymentIntentId, {
-      source: "ledger",
-      orderId: paid.orderId,
+    await linkOrder(
       escrowId,
-      piPaymentId,
-      txid,
+      paid.orderId
+    );
+
+    const creditId =
+      await creditSeller({
+        escrowId,
+        sellerId: paid.sellerId,
+        amount: paid.amount,
+        paymentIntentId,
+        orderId: paid.orderId,
+        piPaymentId,
+      });
+
+    await linkReceiptSettlement({
+      paymentIntentId,
+      escrowId,
+      sellerCreditId: creditId,
     });
+
+    await auditFinalizeDone(
+      paymentIntentId,
+      {
+        source: "ledger",
+        orderId: paid.orderId,
+        escrowId,
+        piPaymentId,
+        txid,
+      }
+    );
 
     return true;
   } catch (e) {
-    await auditManualReview(paymentIntentId, "LEDGER_PIPELINE_FAILED", {
-      txid,
-      piPaymentId,
-      error: String(e),
-    });
+    console.error(
+      "[PAYMENT][LEDGER][ERROR]",
+      e
+    );
+
+    await auditManualReview(
+      paymentIntentId,
+      "LEDGER_PIPELINE_FAILED",
+      {
+        txid,
+        piPaymentId,
+        error:
+          e instanceof Error
+            ? e.message
+            : String(e),
+      }
+    );
 
     return false;
   }
