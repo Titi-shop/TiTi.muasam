@@ -202,9 +202,11 @@ const journalHash = makeEventHash({
     txid: input.txid,
     piPaymentId: input.piPaymentId,
   },
-
-  createdBy: input.buyerId, // UUID hợp lệ
+  createdBy: input.buyerId,
 });
+
+return escrowId;
+}
 
 /* =====================================================
    RELEASE ESCROW
@@ -213,7 +215,7 @@ const journalHash = makeEventHash({
 export async function releaseEscrow(
   escrowId: string
 ): Promise<void> {
-
+  
   const rs =
     await query<{
       amount: string;
