@@ -7,7 +7,25 @@ import type {
   ShippingSnapshot,
   StrictPaymentValidationInput,
 } from "./orders.payment.types";
+function logValidation(
+  event: string,
+  payload: Record<string, unknown>
+): void {
+  console.log(
+    `[PAYMENT][VALIDATE] ${event}`,
+    payload
+  );
+}
 
+function logValidationFail(
+  event: string,
+  payload: Record<string, unknown>
+): void {
+  console.error(
+    `[PAYMENT][VALIDATE][FAIL] ${event}`,
+    payload
+  );
+}
 /* =========================================================
    HELPERS
 ========================================================= */
