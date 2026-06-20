@@ -20,7 +20,7 @@ import { verifyRpcPaymentForReconcile } from "@/lib/db/payments.rpc";
 import {
   finalizePaidOrderFromIntent,
   FinalizePaidOrderResult,
-  linkReceiptSettlement,
+  linkReceiptSettlementByIds,
 } from "@/lib/db/orders.payment";
 
 import {
