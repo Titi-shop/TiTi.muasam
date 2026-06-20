@@ -29,6 +29,9 @@ import {
   linkOrder,
   creditSeller,
 } from "@/lib/db/settlement";
+import {
+  linkReceiptSettlement,
+} from "@/lib/db/orders.payment.receipt";
 
 import { piCompletePayment } from "@/lib/pi/client";
 
@@ -289,6 +292,16 @@ async function safeLedger(
     txid,
     piPaymentId,
   });
+    await withTransaction(async (client) => {
+  await linkReceiptSettlement(
+    client,
+    {
+      paymentIntentId,
+      escrowId,
+      sellerCreditId: creditId,
+    }
+  );
+});
 
 await markPiVerified(
   escrowId
