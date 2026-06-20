@@ -3,7 +3,25 @@ import type { PoolClient } from "pg";
 import type {
   UpsertPaymentReceiptInput,
 } from "./orders.payment.types";
+function logReceipt(
+  event: string,
+  payload: Record<string, unknown>
+): void {
+  console.log(
+    `[PAYMENT][RECEIPT] ${event}`,
+    payload
+  );
+}
 
+function logReceiptFail(
+  event: string,
+  payload: Record<string, unknown>
+): void {
+  console.error(
+    `[PAYMENT][RECEIPT][FAIL] ${event}`,
+    payload
+  );
+}
 export async function upsertPaymentReceipt(
   client: PoolClient,
   input: UpsertPaymentReceiptInput
@@ -25,9 +43,10 @@ export async function upsertPaymentReceipt(
     rpcPayload,
   } = input;
 
+  try {
   await client.query(
     `
-    INSERT INTO payment_receipts (
+    INSERT INTO payment_receipts
       payment_intent_id,
       user_id,
       order_id,
@@ -294,4 +313,90 @@ export async function upsertPaymentReceipt(
       paymentIntentId,
     ]
   );
+  logReceipt(
+  "UPSERT_START",
+  {
+    paymentIntentId,
+    orderId,
+    buyerId,
+    piPaymentId,
+    txid,
+    expectedAmount,
+    verifiedAmount,
+    ledger:
+      rpcPayload.ledger,
+    txStatus:
+      rpcPayload.txStatus,
+  }
+);
+  if (!paymentIntentId) {
+  throw new Error(
+    "PAYMENT_INTENT_ID_REQUIRED"
+  );
+}
+
+if (!orderId) {
+  throw new Error(
+    "ORDER_ID_REQUIRED"
+  );
+}
+
+if (!piPaymentId) {
+  throw new Error(
+    "PI_PAYMENT_ID_REQUIRED"
+  );
+}
+
+if (!txid) {
+  throw new Error(
+    "TXID_REQUIRED"
+  );
+}
+  if (
+  rpcPayload.chainReference &&
+  rpcPayload.chainReference !==
+    txid
+) {
+  throw new Error(
+    "CHAIN_REFERENCE_MISMATCH"
+  );
+}
+
+if (
+  rpcPayload.amount != null &&
+  Number(rpcPayload.amount) !==
+    Number(verifiedAmount)
+) {
+  throw new Error(
+    "RECEIPT_AMOUNT_MISMATCH"
+  );
+  ]
+);
+
+logReceipt(
+  "UPSERT_SUCCESS",
+  {
+    paymentIntentId,
+    orderId,
+    piPaymentId,
+    txid,
+  }
+);
+}
+catch (error) {
+  logReceiptFail(
+    "UPSERT_FAILED",
+    {
+      paymentIntentId,
+      piPaymentId,
+      txid,
+      error:
+        error instanceof Error
+          ? error.message
+          : String(error),
+    }
+  );
+
+  throw error;
+}
 }
