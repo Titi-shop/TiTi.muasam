@@ -144,6 +144,7 @@ if (
     receiverWallet,
   }
 );
+  try {
   const result =
   await client.query(
     `
@@ -386,25 +387,20 @@ if (
     ]
   );
   logPiPayment(
-  "UPSERT_SUCCESS",
-  {
-    paymentIntentId,
-    orderId,
-    piPaymentId,
-    txid,
-    rowCount:
-      result.rowCount,
-  }
-);
-  logPiPayment(
+
     "UPSERT_SUCCESS",
+
     {
+
       paymentIntentId,
       orderId,
       piPaymentId,
       txid,
+      rowCount: result.rowCount,
     }
+
   );
+
 } catch (error) {
   logPiPaymentFail(
     "UPSERT_FAILED",
@@ -417,16 +413,10 @@ if (
       txid,
       error:
         error instanceof Error
-
           ? error.message
-
           : String(error),
-
     }
-
   );
-
   throw error;
-
 }
 }
