@@ -17,6 +17,7 @@ import type {
 import {
   createSettlementEventOnce,
 } from "./settlement.event";
+import { makeEventHash } from "./settlement.utils";
 
 import {
   createSettlementJournalOnce,
@@ -29,7 +30,14 @@ import {
 export async function createEscrow(
   input: CreateEscrowInput
 ): Promise<string> {
-
+const journalHash = makeEventHash({
+  escrowId,
+  paymentIntentId: input.paymentIntentId,
+  buyerId: input.buyerId,
+  sellerId: input.sellerId,
+  amount: input.amount,
+  txid: input.txid,
+});
   const existed =
     await query<{ id: string }>(
       `
@@ -164,30 +172,31 @@ export async function createEscrow(
   =================================================== */
 
   await createSettlementJournalOnce({
-    ownerId:
-      input.buyerId,
+  ownerId: input.buyerId,
+  ownerType: "BUYER",
 
-    ownerType:
-      "BUYER",
+  refId: escrowId,
+  refTable: "escrow_entries",
 
-    refId:
-      escrowId,
+  entryType: "ESCROW_HOLD",
+  direction: "DEBIT",
+  amount: input.amount,
+  note: "Buyer funds moved into escrow",
+  eventHash: journalHash,
 
-    refTable:
-      "escrow_entries",
+  metadata: {
+    escrowId,
+    paymentIntentId: input.paymentIntentId,
+    orderId: input.orderId,
+    buyerId: input.buyerId,
+    sellerId: input.sellerId,
+    amount: input.amount,
+    txid: input.txid,
+    piPaymentId: input.piPaymentId,
+  },
 
-    entryType:
-      "ESCROW_HOLD",
-
-    direction:
-      "DEBIT",
-
-    amount:
-      input.amount,
-
-    note:
-      "Buyer funds moved into escrow",
-  });
+  createdBy: "settlement.escrow",
+});
 
   return escrowId;
 }
