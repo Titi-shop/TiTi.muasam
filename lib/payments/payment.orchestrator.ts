@@ -335,15 +335,10 @@ console.log(
     creditId,
   }
 );
-    await withTransaction(async (client) => {
-  await linkReceiptSettlement(
-    client,
-    {
-      paymentIntentId,
-      escrowId,
-      sellerCreditId: creditId,
-    }
-  );
+    await linkReceiptSettlementByIds({
+  paymentIntentId,
+  escrowId,
+  sellerCreditId: creditId,
 });
 
     await auditFinalizeDone(
