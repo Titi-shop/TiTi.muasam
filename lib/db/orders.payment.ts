@@ -239,7 +239,7 @@ export async function finalizePaidOrderFromIntent(
 );
 
     await finalizePaymentIntent({
-      client,
+
       paymentIntentId,
       piPaymentId,
       txid,
