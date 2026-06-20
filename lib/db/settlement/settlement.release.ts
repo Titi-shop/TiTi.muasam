@@ -434,10 +434,13 @@ if (walletUpdate.rowCount !== 1) {
       `
       UPDATE orders
 SET
-  fulfillment_status='completed',
-  completed_at=NOW(),
-  updated_at=NOW()
-WHERE id=$1
+  fulfillment_status = 'completed',
+  settlement_status = 'SETTLED',
+  shipment_status = 'DELIVERED',
+  delivery_status = 'DELIVERED',
+  completed_at = NOW(),
+  updated_at = NOW()
+WHERE id = $1
   AND fulfillment_status <> 'completed'
       `,
       [
