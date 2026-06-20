@@ -204,39 +204,39 @@ export async function finalizePaidOrderFromIntent(
         "ORDER_CREATED",
     });
 
-    await upsertPaymentReceipt({
-      client,
-      paymentIntentId,
-      buyerId:
-        intent.buyer_id,
-      orderId,
-      piPaymentId,
-      txid,
-      expectedAmount,
-      verifiedAmount,
-      receiverWallet,
-      piPayload,
-      rpcPayload,
-    });
+    await upsertPaymentReceipt(
+  client,
+  {
+    paymentIntentId,
+    buyerId: intent.buyer_id,
+    orderId,
+    piPaymentId,
+    txid,
+    expectedAmount,
+    verifiedAmount,
+    receiverWallet,
+    piPayload,
+    rpcPayload,
+  }
+);
 
-    await upsertPiPayment({
-      client,
-      paymentIntentId,
-      orderId,
-      buyerId:
-        intent.buyer_id,
-      country:
-        intent.country,
-      zone:
-        intent.zone,
-      piPaymentId,
-      txid,
-      expectedAmount,
-      verifiedAmount,
-      receiverWallet,
-      piPayload,
-      rpcPayload,
-    });
+    await upsertPiPayment(
+  client,
+  {
+    paymentIntentId,
+    orderId,
+    buyerId: intent.buyer_id,
+    country: intent.country,
+    zone: intent.zone,
+    piPaymentId,
+    txid,
+    expectedAmount,
+    verifiedAmount,
+    receiverWallet,
+    piPayload,
+    rpcPayload,
+  }
+);
 
     await finalizePaymentIntent({
       client,
