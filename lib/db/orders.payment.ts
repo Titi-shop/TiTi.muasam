@@ -238,12 +238,22 @@ export async function finalizePaidOrderFromIntent(
   }
 );
 
-    await finalizePaymentIntent({
+    console.log(
+  "[PAYMENT][FINALIZE_INTENT_CALL]"
+);
 
-      paymentIntentId,
-      piPaymentId,
-      txid,
-    });
+await finalizePaymentIntent(
+  client,
+  {
+    paymentIntentId,
+    piPaymentId,
+    txid,
+  }
+);
+
+console.log(
+  "[PAYMENT][FINALIZE_INTENT_DONE]"
+);
 
     return {
       ok: true,
