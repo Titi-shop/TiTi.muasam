@@ -114,11 +114,10 @@ export type ValidateFinalizePaymentInput = {
 
   paymentIntentId: string;
 
-  txid: string;
-
   verifiedAmount: number;
-
   receiverWallet: string;
+
+  txid: string;
 
   rpcPayload: RpcPayload;
 
@@ -128,7 +127,19 @@ export type ValidateFinalizePaymentInput = {
 export type FinalizeValidationResult = {
   shipping: ShippingSnapshot;
 
-  pricing: PricingSnapshot;
+  pricing: {
+    subtotal: number;
+    shipping_fee: number;
+    total: number;
+
+    items: Array<{
+      product_id: string;
+      variant_id: string | null;
+      quantity: number;
+      unit_price: number;
+      subtotal: number;
+    }>;
+  };
 
   expectedAmount: number;
 };
