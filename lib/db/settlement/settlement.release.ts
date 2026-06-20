@@ -441,18 +441,12 @@ if (
     await client.query(
       `
       UPDATE orders
-
-      SET
-        fulfillment_status =
-          'completed',
-
-        completed_at =
-          NOW(),
-
-        updated_at =
-          NOW()
-
-      WHERE id = $1
+SET
+  fulfillment_status='completed',
+  completed_at=NOW(),
+  updated_at=NOW()
+WHERE id=$1
+  AND fulfillment_status <> 'completed'
       `,
       [
         escrow.order_id,
