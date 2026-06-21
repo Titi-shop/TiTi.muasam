@@ -49,60 +49,90 @@ export default function AdminWithdrawTable() {
   ]);
 
   async function loadWithdraws() {
-    try {
-      const res =
-        await apiAuthFetch(
-          "/api/admin/withdraws"
-        );
+  try {
+    console.log(
+      "[ADMIN_WITHDRAWS][LOAD_START]"
+    );
 
-      const data =
-        await res.json();
+    const res =
+      await apiAuthFetch(
+        "/api/admin/withdraws"
+      );
 
-      if (!res.ok) {
-        throw new Error(
-          data?.error ??
-            "LOAD_FAILED"
-        );
+    console.log(
+      "[ADMIN_WITHDRAWS][HTTP]",
+      {
+        status: res.status,
       }
+    );
 
-      setRows(
-        Array.isArray(data?.rows)
-          ? data.rows
-          : []
+    const data =
+      await res.json();
+
+    console.log(
+      "[ADMIN_WITHDRAWS][DATA]",
+      data
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        data?.error ??
+          "LOAD_FAILED"
       );
-    } catch (err) {
-      console.error(
-        "[ADMIN_WITHDRAWS]",
-        err
-      );
-    } finally {
-      setTableLoading(false);
     }
-  }
 
-  if (
-    authLoading ||
-    tableLoading
-  ) {
-    return (
-      <div className="p-4">
-        {t.loading ??
-          "Loading..."}
-      </div>
+    const nextRows =
+      Array.isArray(
+        data?.rows
+      )
+        ? data.rows
+        : [];
+
+    console.log(
+      "[ADMIN_WITHDRAWS][ROWS]",
+      {
+        count:
+          nextRows.length,
+      }
+    );
+
+    if (
+      nextRows.length > 0
+    ) {
+      console.log(
+        "[ADMIN_WITHDRAWS][FIRST_ROW]",
+        nextRows[0]
+      );
+    }
+
+    setRows(nextRows);
+  } catch (err) {
+    console.error(
+      "[ADMIN_WITHDRAWS][ERROR]",
+      err
+    );
+  } finally {
+    console.log(
+      "[ADMIN_WITHDRAWS][DONE]"
+    );
+
+    setTableLoading(
+      false
     );
   }
+}
 
-  if (!rows.length) {
-    return (
-      <div className="p-6 text-center">
-        No withdraw requests
-      </div>
-    );
-  }
 async function handlePay(
   withdrawalId: string
 ) {
   try {
+    console.log(
+      "[ADMIN_PAY][START]",
+      {
+        withdrawalId,
+      }
+    );
+
     const res =
       await apiAuthFetch(
         `/api/admin/withdraws/${withdrawalId}/pay`,
@@ -111,8 +141,20 @@ async function handlePay(
         }
       );
 
+    console.log(
+      "[ADMIN_PAY][HTTP]",
+      {
+        status: res.status,
+      }
+    );
+
     const data =
       await res.json();
+
+    console.log(
+      "[ADMIN_PAY][RESPONSE]",
+      data
+    );
 
     if (!res.ok) {
       throw new Error(
@@ -121,21 +163,29 @@ async function handlePay(
       );
     }
 
+    console.log(
+      "[ADMIN_PAY][RELOAD]"
+    );
+
     await loadWithdraws();
+
+    console.log(
+      "[ADMIN_PAY][SUCCESS]"
+    );
 
     alert(
       t.pay_marked_processing ??
-      "Withdrawal marked as processing"
+        "Withdrawal marked as processing"
     );
   } catch (err) {
     console.error(
-      "[ADMIN_PAY]",
+      "[ADMIN_PAY][ERROR]",
       err
     );
 
     alert(
       t.pay_failed ??
-      "Payment failed"
+        "Payment failed"
     );
   }
 }
