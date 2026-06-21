@@ -24,9 +24,13 @@ export default function AdminWithdrawTable() {
     piReady,
   } = useAuth();
 
-  const [rows, setRows] = useState<Row[]>([]);
-  const [tableLoading, setTableLoading] =
-    useState(true);
+  const [rows, setRows] =
+    useState<Row[]>([]);
+
+  const [
+    tableLoading,
+    setTableLoading,
+  ] = useState(true);
 
   useEffect(() => {
     if (
@@ -62,9 +66,7 @@ export default function AdminWithdrawTable() {
       }
 
       setRows(
-        Array.isArray(
-          data?.rows
-        )
+        Array.isArray(data?.rows)
           ? data.rows
           : []
       );
@@ -74,9 +76,7 @@ export default function AdminWithdrawTable() {
         err
       );
     } finally {
-      setTableLoading(
-        false
-      );
+      setTableLoading(false);
     }
   }
 
@@ -92,43 +92,103 @@ export default function AdminWithdrawTable() {
     );
   }
 
+  if (!rows.length) {
+    return (
+      <div className="p-6 text-center">
+        No withdraw requests
+      </div>
+    );
+  }
+
   return (
-    <div className="overflow-auto">
-      <table className="w-full border">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>User</th>
-            <th>Wallet</th>
-            <th>Amount</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <td>{row.id}</td>
-              <td>{row.user_id}</td>
-              <td>
-                {row.wallet_address}
-              </td>
-              <td>
+    <div className="space-y-4">
+      {rows.map((row) => (
+        <div
+          key={row.id}
+          className="
+            rounded-xl
+            border
+            p-4
+            shadow-sm
+          "
+        >
+          <div className="flex justify-between">
+            <div>
+              <div className="font-semibold">
                 {row.amount} π
-              </td>
-              <td>
-                {row.status}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </div>
 
-      {!rows.length && (
-        <div className="p-4 text-center">
-          No withdraw requests
+              <div className="text-xs opacity-70">
+                {row.status}
+              </div>
+            </div>
+
+            <div className="text-xs opacity-70">
+              {new Date(
+                row.requested_at
+              ).toLocaleString()}
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <div className="text-xs opacity-70">
+              User ID
+            </div>
+
+            <div className="break-all text-sm">
+              {row.user_id}
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <div className="text-xs opacity-70">
+              Withdraw Wallet
+            </div>
+
+            <div className="break-all text-sm">
+              {row.withdraw_wallet}
+            </div>
+          </div>
+
+          <div className="mt-4 flex gap-2">
+            <button
+              className="
+                rounded-lg
+                border
+                px-3
+                py-2
+                text-sm
+              "
+            >
+              Details
+            </button>
+
+            <button
+              className="
+                rounded-lg
+                border
+                px-3
+                py-2
+                text-sm
+              "
+            >
+              Approve
+            </button>
+
+            <button
+              className="
+                rounded-lg
+                border
+                px-3
+                py-2
+                text-sm
+              "
+            >
+              Reject
+            </button>
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }
