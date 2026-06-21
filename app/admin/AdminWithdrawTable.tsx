@@ -99,7 +99,46 @@ export default function AdminWithdrawTable() {
       </div>
     );
   }
+async function handlePay(
+  withdrawalId: string
+) {
+  try {
+    const res =
+      await apiAuthFetch(
+        `/api/admin/withdraws/${withdrawalId}/pay`,
+        {
+          method: "POST",
+        }
+      );
 
+    const data =
+      await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        data?.error ??
+          "PAY_FAILED"
+      );
+    }
+
+    await loadWithdraws();
+
+    alert(
+      t.pay_marked_processing ??
+      "Withdrawal marked as processing"
+    );
+  } catch (err) {
+    console.error(
+      "[ADMIN_PAY]",
+      err
+    );
+
+    alert(
+      t.pay_failed ??
+      "Payment failed"
+    );
+  }
+}
   return (
     <div className="space-y-4">
       {rows.map((row) => (
@@ -164,16 +203,21 @@ export default function AdminWithdrawTable() {
             </button>
 
             <button
-              className="
-                rounded-lg
-                border
-                px-3
-                py-2
-                text-sm
-              "
-            >
-              Approve
-            </button>
+  onClick={() =>
+    void handlePay(
+      row.id
+    )
+  }
+  className="
+    rounded-lg
+    border
+    px-3
+    py-2
+    text-sm
+  "
+>
+  Pay
+</button>
 
             <button
               className="
