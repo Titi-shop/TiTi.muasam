@@ -61,6 +61,11 @@ export async function getAllProducts(
         `,
         [limit]
       );
+console.log(
+    "⏱️ SQL getAllProducts:",
+    performance.now() - t0
+  );
+
 
     log(
       "GET_ALL_SUCCESS",
