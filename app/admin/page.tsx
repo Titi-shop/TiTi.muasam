@@ -1,43 +1,88 @@
-import { redirect } from "next/navigation";
-import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
-import { query } from "@/lib/db";
-import AdminWithdrawTable from "./AdminWithdrawTable";
+"use client";
 
-export default async function AdminPage() {
-  return (
-    <main className="p-4">
-      <h1 className="text-2xl font-bold">
-        Admin Dashboard
-      </h1>
+import { useEffect, useState } from "react";
 
-      <div className="mt-6 grid gap-4">
-        <div className="rounded-xl border p-4">
-          <h2 className="font-semibold">
-            Withdraw Requests
-          </h2>
-          <p className="text-sm opacity-70">
-            Coming soon
-          </p>
-        </div>
+import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
-        <div className="rounded-xl border p-4">
-          <h2 className="font-semibold">
-            Orders
-          </h2>
-          <p className="text-sm opacity-70">
-            Coming soon
-          </p>
-        </div>
+type Row = {
+  id: string;
+  user_id: string;
+  wallet_address: string;
+  amount: string;
+  status: string;
+  requested_at: string;
+};
 
-        <div className="rounded-xl border p-4">
-          <h2 className="font-semibold">
-            Sellers
-          </h2>
-          <p className="text-sm opacity-70">
-            Coming soon
-          </p>
-        </div>
+export default function AdminWithdrawTable() {
+  const { t } = useTranslation();
+
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void loadWithdraws();
+  }, []);
+
+  async function loadWithdraws() {
+    try {
+      const res = await apiAuthFetch(
+        "/api/admin/withdraws"
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data?.error ??
+            "LOAD_FAILED"
+        );
+      }
+
+      setRows(data.rows ?? []);
+    } catch (err) {
+      console.error(
+        "[ADMIN_WITHDRAWS]",
+        err
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div>
+        {t.loading ?? "Loading..."}
       </div>
-    </main>
+    );
+  }
+
+  return (
+    <div className="overflow-auto">
+      <table className="w-full border">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Wallet</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td>{row.id}</td>
+              <td>{row.user_id}</td>
+              <td>{row.wallet_address}</td>
+              <td>{row.amount} π</td>
+              <td>{row.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
