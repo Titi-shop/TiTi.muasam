@@ -227,11 +227,24 @@ export default function CustomerMenu() {
     <HelpCircle size={22} color={active ? "#f97316" : "currentColor"} />
   ),
 },
-      {user?.is_admin && (
-  <Link href="/admin">
-    Admin Panel
-  </Link>
-)}
+     ...(user?.is_admin
+  ? [
+      {
+        label: "Admin",
+        icon: (active: boolean) => (
+          <User
+            size={22}
+            color={
+              active
+                ? "#f97316"
+                : "currentColor"
+            }
+          />
+        ),
+        path: "/admin",
+      },
+    ]
+  : []),
 
 {
   label: isSeller
