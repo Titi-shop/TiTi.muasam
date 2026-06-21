@@ -1,67 +1,33 @@
 import { NextResponse } from "next/server";
 
-import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
-import { query } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth/guard";
 
 import {
-  getWithdrawRequests,
-} from "@/lib/db/withdraw.requests";
+  getWalletWithdrawals,
+} from "@/lib/db/wallet/wallet.withdraw";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const auth =
-      await getUserFromBearer();
-
-    if (!auth) {
-      return NextResponse.json(
-        { error: "UNAUTHORIZED" },
-        { status: 401 }
-      );
-    }
-
-    const adminRes =
-      await query(
-        `
-        SELECT is_admin
-        FROM users
-        WHERE id = $1
-        LIMIT 1
-        `,
-        [auth.userId]
-      );
-
-    if (
-      !adminRes.rows[0]
-        ?.is_admin
-    ) {
-      return NextResponse.json(
-        { error: "FORBIDDEN" },
-        { status: 403 }
-      );
-    }
+    await requireAdmin();
 
     const rows =
-      await getWithdrawRequests();
+      await getWalletWithdrawals();
 
     return NextResponse.json({
       success: true,
       rows,
     });
-  } catch (error) {
-    console.error(
-      "[ADMIN_WITHDRAWS]",
-      error
-    );
-
+  } catch {
     return NextResponse.json(
       {
-        error:
-          "SERVER_ERROR",
+        error: "FORBIDDEN",
       },
-      { status: 500 }
+      {
+        status: 403,
+      }
     );
   }
 }
