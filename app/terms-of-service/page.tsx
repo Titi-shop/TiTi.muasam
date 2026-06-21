@@ -84,4 +84,4 @@ We may modify these Terms at any time. Continued use of the platform constitutes
 
 13. Contact
 
-support@app.titi.onl
+support@titi.onl
