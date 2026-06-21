@@ -93,22 +93,6 @@ export async function createWalletWithdrawal(
 
       const withdrawalId =
         randomUUID();
-
-      /* ===============================================
-         DEBIT WALLET
-      =============================================== */
-
-      await debitWallet({
-        client:
-          client as WalletClient,
-
-        userId:
-          params.userId,
-
-        amount:
-          params.amount,
-      });
-
       /* ===============================================
          INSERT WITHDRAWAL
       =============================================== */
@@ -153,33 +137,16 @@ if (withdrawRs.rowCount !== 1) {
       =============================================== */
 
       await createWalletJournal({
-        client:
-          client as WalletClient,
-
-        ownerId:
-          params.userId,
-
-        ownerType:
-          "SELLER",
-
-        refId:
-          withdrawalId,
-
-        refTable:
-          "wallet_withdrawals",
-
-        entryType:
-          "SELLER_WITHDRAW",
-
-        direction:
-          "DEBIT",
-
-        amount:
-          params.amount,
-
-        note:
-          "Wallet withdrawal request",
-      });
+  client: client as WalletClient,
+  ownerId: params.userId,
+  ownerType: "SELLER",
+  refId: withdrawalId,
+  refTable: "wallet_withdrawals",
+  entryType: "WITHDRAW_REQUEST",
+  direction: "INFO",
+  amount: params.amount,
+  note: "Withdrawal request submitted",
+});
 
       /* ===============================================
          DONE
