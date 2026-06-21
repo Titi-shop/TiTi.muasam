@@ -15,7 +15,10 @@ import type {
 const APP_MERCHANT_WALLET = (
   process.env.PI_MERCHANT_WALLET || ""
 ).trim();
-
+console.log(
+  "[MERCHANT_WALLET_ENV]",
+  APP_MERCHANT_WALLET
+);
 /* =========================================================
    HELPERS
 ========================================================= */
