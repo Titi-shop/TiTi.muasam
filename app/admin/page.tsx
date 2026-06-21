@@ -16,7 +16,7 @@ type Row = {
 
 export default function AdminWithdrawTable() {
   const { t } = useTranslation();
-
+   const { user, loading, piReady } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
