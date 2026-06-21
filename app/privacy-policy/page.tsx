@@ -106,4 +106,4 @@ We may update this Privacy Policy from time to time. Continued use of the Platfo
 
 For privacy-related questions, contact:
 
-support@app.titi.onl
+support@titi.onl
