@@ -452,7 +452,21 @@ export default function WalletWithdrawModal({
           />
 
         </div>
-      
+      <div
+  className="
+    mt-4
+    rounded-xl
+    border
+    border-yellow-500/20
+    bg-yellow-500/10
+    p-3
+    text-xs
+    text-yellow-600
+  "
+>
+  Withdrawal requests are reviewed manually.
+  Funds are not transferred instantly.
+</div>
 
         {/* ACTIONS */}
 
@@ -483,22 +497,7 @@ export default function WalletWithdrawModal({
               .common_cancel ??
               "Cancel"}
           </button>
-          <div
-  className="
-    mt-4
-    rounded-xl
-    border
-    border-yellow-500/20
-    bg-yellow-500/10
-    p-3
-    text-xs
-    text-yellow-600
-  "
->
-  Withdrawal requests are reviewed manually.
-  Funds are not transferred instantly.
-</div>
-
+          
           {/* SUBMIT */}
 
           <button
