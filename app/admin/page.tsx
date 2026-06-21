@@ -11,21 +11,22 @@ export default async function AdminPage() {
   }
 
   const userRes = await query(
-    `
-    SELECT role
-    FROM users
-    WHERE id = $1
-    LIMIT 1
-    `,
-    [auth.userId]
-  );
+  `
+  SELECT is_admin
+  FROM users
+  WHERE id = $1
+  LIMIT 1
+  `,
+  [auth.userId]
+);
 
-  const role = userRes.rows[0]?.role;
-
-  if (role !== "admin") {
-    redirect("/");
-  }
-
+if (!userRes.rows[0]?.is_admin) {
+  redirect("/");
+}
+console.log(
+  "[ADMIN]",
+  userRes.rows[0]
+);
   const withdraws = await query(
     `
     SELECT
