@@ -50,6 +50,7 @@ export async function getAllProducts(
   );
 
   try {
+    const t0 = performance.now();
     const result =
       await query<ProductRow>(
         `
