@@ -1,227 +1,191 @@
-Privacy Policy for Titi Marketplace
-
-Last Updated: June 22, 2026
-
-Introduction
-
-Titi Marketplace (“Titi”, “we”, “us”, or “our”) operates an online marketplace built on the Pi Network ecosystem. This Privacy Policy explains how we collect, use, store, and protect information when you access or use our website, application, and related services.
-
-By using Titi Marketplace, you agree to the collection and use of information in accordance with this Privacy Policy.
-
-⸻
-
-Definitions
-
-Account
-
-An account created through Pi Network authentication that allows a user to access marketplace features.
-
-Application
-
-Titi Marketplace, including the website, mobile interfaces, APIs, and related services.
-
-Personal Data
-
-Any information that can identify an individual directly or indirectly.
-
-Service
-
-The marketplace platform operated by Titi Marketplace.
-
-User
-
-Any buyer, seller, visitor, or account holder using the Service.
-
-Pi Network
-
-The blockchain ecosystem and authentication services operated by Pi Network.
-
-⸻
-
-Information We Collect
-
-Pi Network Account Information
-
-When you sign in using Pi Network, we may receive:
-
-* Pi username
-* Pi user identifier
-* Authentication information provided by Pi Network
-* Wallet information necessary for payments and withdrawals
-
-Marketplace Information
-
-We may collect:
-
-* Profile information
-* Seller information
-* Store information
-* Product listings
-* Product descriptions
-* Product images
-* Order history
-* Purchase history
-* Sales history
-
-Shipping Information
-
-For order fulfillment, we may collect:
-
-* Recipient name
-* Shipping address
-* Region and country
-* Postal code (if applicable)
-* Contact information provided for delivery
-
-Payment Information
-
-We may collect information related to:
-
-* Pi payments
-* Payment identifiers
-* Blockchain transaction identifiers
-* Withdrawal requests
-* Settlement records
-* Escrow records
-
-Titi Marketplace does not store wallet private keys or wallet recovery phrases.
-
-Device and Usage Information
-
-We may automatically collect:
-
-* IP address
-* Browser type
-* Device type
-* Operating system
-* Pages visited
-* Access times
-* Diagnostic and security logs
-
-⸻
-
-How We Use Information
-
-We use collected information to:
-
-* Create and manage accounts
-* Process orders
-* Facilitate marketplace transactions
-* Process Pi payments
-* Process seller settlements
-* Process withdrawal requests
-* Deliver products and services
-* Prevent fraud and abuse
-* Detect suspicious activity
-* Improve platform performance
-* Comply with legal obligations
-* Provide customer support
-
-⸻
-
-Sharing of Information
-
-We do not sell personal information.
-
-Information may be shared only when necessary with:
-
-Shipping Providers
-
-To deliver purchased products.
-
-Technical Service Providers
-
-To host, maintain, and secure the platform.
-
-Payment and Blockchain Services
-
-To verify and process Pi Network transactions.
-
-Legal Authorities
-
-When required by law, court order, or governmental request.
-
-⸻
-
-Blockchain Transparency
-
-Transactions executed on the Pi Network blockchain may become publicly visible through blockchain records.
-
-Users acknowledge that blockchain transactions may be permanent and may not be modified or deleted after confirmation.
-
-⸻
-
-Data Retention
-
-We retain information only as long as reasonably necessary to:
-
-* Maintain user accounts
-* Complete transactions
-* Resolve disputes
-* Prevent fraud
-* Meet legal obligations
-* Maintain financial records
-
-Certain records may be retained after account closure when required by law or security requirements.
-
-⸻
-
-Account Deletion
-
-Users may request deletion of their account information by contacting support.
-
-Certain records related to completed transactions, dispute resolution, fraud prevention, and legal compliance may be retained as permitted by law.
-
-Blockchain transaction records cannot generally be removed from the blockchain.
-
-⸻
-
-Security
-
-We implement reasonable technical and organizational safeguards to protect user information.
-
-These measures may include:
-
-* Encrypted communications
-* Access controls
-* Authentication systems
-* Activity monitoring
-* Security logging
-
-However, no internet-based system can guarantee absolute security.
-
-⸻
-
-Children’s Privacy
-
-Titi Marketplace is not intended for children under the minimum age required by applicable laws or Pi Network policies.
-
-We do not knowingly collect personal information from children who are not legally permitted to use the Service.
-
-⸻
-
-International Data Transfers
-
-Your information may be processed and stored in countries where our hosting providers, service providers, or infrastructure providers operate.
-
-By using the Service, you consent to such processing and transfers.
-
-⸻
-
-Changes to This Privacy Policy
-
-We may update this Privacy Policy from time to time.
-
-Updated versions will be published on this page with a revised “Last Updated” date.
-
-Continued use of the Service after changes become effective constitutes acceptance of the updated Privacy Policy.
-
-⸻
-
-Contact Us
-
-If you have questions regarding this Privacy Policy, please contact:
-
-support@titi.onl
-
-Website: https://titi.onl
+// app/terms-of-service/page.tsx
+
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service | Titi Marketplace",
+  description: "Terms of Service for Titi Marketplace",
+};
+
+export default function TermsOfServicePage() {
+  return (
+    <main className="mx-auto max-w-4xl px-6 py-10">
+      <h1 className="mb-6 text-4xl font-bold">Terms of Service</h1>
+
+      <p className="mb-8 text-sm opacity-70">
+        Last Updated: June 22, 2026
+      </p>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-semibold">
+          1. Acceptance of Terms
+        </h2>
+        <p>
+          By accessing or using Titi Marketplace, you agree to comply with and
+          be bound by these Terms of Service.
+        </p>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-semibold">
+          2. Marketplace Services
+        </h2>
+        <p>
+          Titi Marketplace is an online marketplace built on the Pi Network
+          ecosystem where users can buy, sell, and manage products using Pi
+          Network supported payment methods.
+        </p>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-semibold">
+          3. User Accounts
+        </h2>
+
+        <ul className="list-disc pl-6">
+          <li>Users access the platform using Pi Network authentication.</li>
+          <li>Users are responsible for account security.</li>
+          <li>Users must provide accurate information.</li>
+          <li>Users may not impersonate other individuals.</li>
+        </ul>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-semibold">
+          4. Seller Responsibilities
+        </h2>
+
+        <ul className="list-disc pl-6">
+          <li>Provide accurate product information.</li>
+          <li>Maintain inventory accuracy.</li>
+          <li>Ship products within a reasonable timeframe.</li>
+          <li>Comply with applicable laws.</li>
+          <li>Honor accepted orders.</li>
+        </ul>
+
+        <p className="mt-3">
+          Sellers are solely responsible for products listed and sold through
+          the platform.
+        </p>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-semibold">
+          5. Buyer Responsibilities
+        </h2>
+
+        <ul className="list-disc pl-6">
+          <li>Review product information before purchase.</li>
+          <li>Provide accurate shipping information.</li>
+          <li>Complete payments honestly.</li>
+          <li>Use dispute procedures in good faith.</li>
+        </ul>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-semibold">
+          6. Payments
+        </h2>
+
+        <p>
+          Payments may be processed using Pi Network and associated payment
+          infrastructure.
+        </p>
+
+        <ul className="mt-3 list-disc pl-6">
+          <li>Blockchain transactions may be irreversible.</li>
+          <li>Users must verify payment details before confirmation.</li>
+          <li>Titi Marketplace does not control the Pi blockchain.</li>
+        </ul>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-semibold">
+          7. Escrow and Settlement
+        </h2>
+
+        <p>
+          Funds may be temporarily held for settlement, order processing,
+          dispute resolution, or fraud prevention purposes.
+        </p>
+
+        <p className="mt-3">
+          Titi Marketplace reserves the right to delay settlement while
+          verification or dispute investigations are ongoing.
+        </p>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-semibold">
+          8. Withdrawals
+        </h2>
+
+        <ul className="list-disc pl-6">
+          <li>Withdrawal requests may be reviewed before processing.</li>
+          <li>Users are responsible for wallet address accuracy.</li>
+          <li>Suspicious withdrawals may be delayed or rejected.</li>
+          <li>Security verification may be required.</li>
+        </ul>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-semibold">
+          9. Prohibited Activities
+        </h2>
+
+        <ul className="list-disc pl-6">
+          <li>Fraud or deceptive conduct.</li>
+          <li>Sale of illegal products.</li>
+          <li>Money laundering activities.</li>
+          <li>Unauthorized access to systems.</li>
+          <li>Abuse of marketplace services.</li>
+          <li>Distribution of malicious software.</li>
+        </ul>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-semibold">
+          10. Account Suspension
+        </h2>
+
+        <p>
+          We reserve the right to suspend or terminate accounts involved in
+          fraud, abuse, security threats, or violations of these Terms.
+        </p>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-semibold">
+          11. Limitation of Liability
+        </h2>
+
+        <p>
+          Titi Marketplace is provided on an "as is" basis. To the fullest
+          extent permitted by law, we are not liable for indirect or
+          consequential damages arising from use of the platform.
+        </p>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-semibold">
+          12. Changes to Terms
+        </h2>
+
+        <p>
+          We may update these Terms from time to time. Continued use of the
+          platform after changes become effective constitutes acceptance of the
+          updated Terms.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-2xl font-semibold">
+          13. Contact Information
+        </h2>
+
+        <p>Email: support@titi.onl</p>
+        <p>Website: https://titi.onl</p>
+      </section>
+    </main>
+  );
+}
