@@ -23,7 +23,15 @@ import {
 import type {
   WalletClient,
 } from "./wallet.types";
-
+function vlog(
+  step: string,
+  data?: unknown
+) {
+  console.log(
+    `[WALLET_WITHDRAW][${step}]`,
+    data ?? ""
+  );
+}
 /* =====================================================
    TYPES
 ===================================================== */
@@ -140,17 +148,7 @@ if (withdrawRs.rowCount !== 1) {
     "WITHDRAWAL_CREATE_FAILED"
   );
 }
-      type WalletWithdrawalRow = {
-  id: string;
-  user_id: string;
-  amount: string;
-  currency: string;
-  withdraw_wallet: string;
-  status: string;
-  requested_at: string;
-};
-
-
+      
       /* ===============================================
          DONE
       =============================================== */
