@@ -37,14 +37,18 @@ export async function getUserRoleByUserId(
 export async function upsertUserFromPi(
   pi_uid: string,
   username: string
-): Promise<{ id: string; role: string | null }> {
+): Promise<{
+  id: string;
+  role: string | null;
+  is_admin: boolean;
+}> {
   const res = await query(
     `
     INSERT INTO users (pi_uid, username)
     VALUES ($1, $2)
     ON CONFLICT (pi_uid)
     DO UPDATE SET username = EXCLUDED.username
-    RETURNING id, role
+    RETURNING id, role, is_admin
     `,
     [pi_uid, username]
   );
