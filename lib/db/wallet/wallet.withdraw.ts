@@ -8,6 +8,7 @@ import {
 } from "crypto";
 
 import {
+  query,
   withTransaction,
 } from "@/lib/db";
 
@@ -165,28 +166,35 @@ if (withdrawRs.rowCount !== 1) {
 export async function getWalletWithdrawals(): Promise<
   WalletWithdrawalRow[]
 > {
-  const res = await withTransaction(
-    async (client) => {
-      const rs =
-        await client.query<WalletWithdrawalRow>(
-          `
-          SELECT
-            id,
-            user_id,
-            amount,
-            currency,
-            withdraw_wallet,
-            status,
-            requested_at
-          FROM wallet_withdrawals
-          ORDER BY requested_at DESC
-          `
-        );
+  vlog("LIST_START");
 
-      return rs.rows;
-    }
-  );
+  const rs =
+    await query<WalletWithdrawalRow>(
+      `
+      SELECT
+        id,
+        user_id,
+        amount,
+        currency,
+        withdraw_wallet,
+        status,
+        requested_at
+      FROM wallet_withdrawals
+      ORDER BY requested_at DESC
+      `
+    );
 
-  return res;
+  vlog("LIST_DONE", {
+    count:
+      rs.rows.length,
+  });
+
+  if (rs.rows.length) {
+    vlog(
+      "FIRST_ROW",
+      rs.rows[0]
+    );
+  }
+
+  return rs.rows;
 }
-
