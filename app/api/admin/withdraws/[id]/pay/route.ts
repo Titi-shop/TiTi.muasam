@@ -203,8 +203,8 @@ vlog(
 await markWithdrawalProcessing(
   withdrawal.id,
   piPaymentId,
-  user.pi_uid,
-  `Withdraw ${withdrawal.id}`
+  `Withdraw ${withdrawal.id}`,
+  user.pi_uid
 );
 vlog(
   "MARK_PROCESSING_DONE",
