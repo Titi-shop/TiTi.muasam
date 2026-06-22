@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-
+import {
+  createA2UPayment,
+} from "@/lib/pi/pi.a2u";
 import {
   requireAdmin,
 } from "@/lib/auth/guard";
@@ -166,11 +168,7 @@ await markWithdrawalProcessing(
   withdrawal.id,
   piPaymentId
 );
-    await markWithdrawalProcessing(
-      withdrawal.id,
-      piPaymentId
-    );
-
+    
     vlog(
       "MARK_PROCESSING_DONE"
     );
