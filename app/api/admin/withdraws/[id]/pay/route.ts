@@ -137,7 +137,7 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            "WITHDRAWAL_NOT_APPROVED",
+            "INVALID_STATUS",
         },
         {
           status: 400,
