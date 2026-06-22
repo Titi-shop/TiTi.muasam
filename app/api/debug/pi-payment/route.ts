@@ -10,7 +10,9 @@ export async function GET() {
   try {
     const payment =
       await getA2UPayment(
-        "ISykghVaEeOCL1zJKdpEhVEBcKYb"
+        "const payment =
+  await getA2UPayment(
+    "zSXzKrZ5UeiSB2fMDBN3XSQQQlWp"
       );
 
     console.log(
