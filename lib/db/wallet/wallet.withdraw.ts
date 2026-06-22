@@ -281,10 +281,10 @@ export async function approveWalletWithdrawal(
 export async function markWithdrawalProcessing(
   withdrawalId: string,
   piPaymentId: string,
-  piPaymentMemo: string,
-  piUid: string,
-  piPaymentMemo: string
-): Promise<void> {
+  piPaymentMemo?: string,
+  piUid?: string,
+  blockchainNetwork?: string
+): Promise<void>
   vlog("MARK_PROCESSING_START", {
     withdrawalId,
     piPaymentId,
