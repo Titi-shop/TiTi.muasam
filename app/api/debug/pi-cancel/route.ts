@@ -10,7 +10,7 @@ export const runtime =
 export async function GET() {
   try {
     const paymentId =
-      "ISykghVaEeOCL1zJKdpEhVEBcKYb";
+      "zSXzKrZ5UeiSB2fMDBN3XSQQQlWp";
 
     await cancelA2UPayment(
       paymentId
