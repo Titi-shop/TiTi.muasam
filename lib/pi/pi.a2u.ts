@@ -1,7 +1,8 @@
 // =====================================================
 // lib/pi/pi.a2u.ts
 // =====================================================
-
+import * as StellarSdk
+  from "@stellar/stellar-sdk";
 const PI_API =
   process.env.PI_API_URL;
 
@@ -32,7 +33,11 @@ if (!PI_KEY) {
 const PI_SEED =
   process.env
     .PI_WALLET_PRIVATE_SEED;
-
+if (!PI_SEED) {
+  throw new Error(
+    "MISSING_PI_WALLET_PRIVATE_SEED"
+  );
+}
 vlog(
   "ENV_CHECK",
   {
@@ -305,6 +310,49 @@ export async function completeA2UPayment(
     {
       paymentId,
     }
+  );
+}
+/* =====================================================
+   SUBMIT PAYMENT
+===================================================== */
+
+export async function submitA2UPayment(
+  paymentId: string
+): Promise<string> {
+
+  vlog(
+    "SUBMIT_START",
+    { paymentId }
+  );
+
+  const payment =
+    await getA2UPayment(
+      paymentId
+    );
+
+  vlog(
+    "SUBMIT_PAYMENT",
+    payment
+  );
+
+  if (
+    payment.transaction?.txid
+  ) {
+    vlog(
+      "SUBMIT_ALREADY_EXISTS",
+      {
+        txid:
+          payment.transaction.txid,
+      }
+    );
+
+    return payment
+      .transaction
+      .txid;
+  }
+
+  throw new Error(
+    "SUBMIT_NOT_IMPLEMENTED"
   );
 }
 /* =====================================================
