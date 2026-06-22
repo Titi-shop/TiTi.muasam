@@ -448,18 +448,31 @@ export async function submitA2UPayment(
     submitResult
   );
 
-  const txid =
-    String(
-      submitResult.id
-    );
+  return {
+  txid: String(
+    submitResult.id
+  ),
 
-  vlog(
-    "TXID",
-    txid
-  );
+  ledger:
+    submitResult.ledger
+      ? Number(
+          submitResult.ledger
+        )
+      : null,
 
-  return txid;
-}
+  memo:
+    typeof submitResult.memo ===
+    "string"
+      ? submitResult.memo
+      : payment.identifier,
+
+  fee:
+    submitResult.fee_charged
+      ? String(
+          submitResult.fee_charged
+        )
+      : null,
+};
 /* =====================================================
    CANCEL PAYMENT
 ===================================================== */
