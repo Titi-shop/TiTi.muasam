@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/auth/guard";
 import {
   getWithdrawalById,
   retryWithdrawal,
-} from "@/lib/db/wallet/withdrawals";
+} from "@/lib/db/wallet.withdrawals";
 
 export async function POST(
   _req: Request,
