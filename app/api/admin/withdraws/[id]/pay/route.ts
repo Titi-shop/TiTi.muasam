@@ -202,7 +202,8 @@ vlog(
 ===================== */
 await markWithdrawalProcessing(
   withdrawal.id,
-  piPaymentId
+  piPaymentId,
+  `Withdraw ${withdrawal.id}`
 );
 vlog(
   "MARK_PROCESSING_DONE",
@@ -223,10 +224,12 @@ vlog(
   }
 );
 
-const txid =
+const submitResult =
   await submitA2UPayment(
     piPaymentId
   );
+const txid =
+  submitResult.txid;
 
 vlog(
   "SUBMIT_DONE",
@@ -248,7 +251,10 @@ vlog(
 );
 await markWithdrawalCompleted(
   withdrawal.id,
-  txid
+  submitResult.txid,
+  submitResult.ledger,
+  submitResult.memo,
+  submitResult.fee
 );
 
 vlog(
