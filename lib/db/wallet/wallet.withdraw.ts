@@ -177,15 +177,22 @@ export async function getWalletWithdrawals(): Promise<
     await query<WalletWithdrawalRow>(
       `
       SELECT
-        id,
-        user_id,
-        amount,
-        currency,
-        withdraw_wallet,
-        status,
-        requested_at
-      FROM wallet_withdrawals
-      ORDER BY requested_at DESC
+  id,
+  user_id,
+  amount,
+  currency,
+  withdraw_wallet,
+  status,
+  requested_at,
+  pi_payment_id,
+  blockchain_txid,
+  paid_at,
+  completed_at,
+  fail_reason,
+  retry_count
+FROM wallet_withdrawals
+ORDER BY requested_at DESC
+      
       `
     );
 
@@ -407,4 +414,33 @@ retry_count
 
   return rs.rows[0] ?? null;
 }
+export async function getWithdrawalByPaymentId(
+  piPaymentId: string
+): Promise<WalletWithdrawalRow | null> {
 
+  const rs =
+    await query<WalletWithdrawalRow>(
+      `
+      SELECT
+        id,
+        user_id,
+        amount,
+        currency,
+        withdraw_wallet,
+        status,
+        requested_at,
+        pi_payment_id,
+        blockchain_txid,
+        paid_at,
+        completed_at,
+        fail_reason,
+        retry_count
+      FROM wallet_withdrawals
+      WHERE pi_payment_id = $1
+      LIMIT 1
+      `,
+      [piPaymentId]
+    );
+
+  return rs.rows[0] ?? null;
+}
