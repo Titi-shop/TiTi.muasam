@@ -328,7 +328,6 @@ export async function markWithdrawalCompleted(
   blockchainFromAddress?: string,
   blockchainToAddress?: string,
   blockchainNetwork?: string
-)
 ): Promise<void> {
   vlog("MARK_COMPLETED_START", {
   withdrawalId,
