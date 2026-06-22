@@ -280,7 +280,8 @@ export async function approveWalletWithdrawal(
 }
 export async function markWithdrawalProcessing(
   withdrawalId: string,
-  piPaymentId: string
+  piPaymentId: string,
+  piPaymentMemo: string
 ): Promise<void> {
   vlog("MARK_PROCESSING_START", {
     withdrawalId,
@@ -288,20 +289,21 @@ export async function markWithdrawalProcessing(
   });
 
   const rs = await query(
-    `
-    UPDATE wallet_withdrawals
-    SET
-  status='PROCESSING',
-  pi_payment_id=$2,
-  pi_payment_memo=$3
-    WHERE id = $1
-      AND status = 'APPROVED'
-    `,
-    [
-      withdrawalId,
-      piPaymentId,
-    ]
-  );
+  `
+  UPDATE wallet_withdrawals
+  SET
+    status = 'PROCESSING',
+    pi_payment_id = $2,
+    pi_payment_memo = $3
+  WHERE id = $1
+    AND status = 'APPROVED'
+  `,
+  [
+    withdrawalId,
+    piPaymentId,
+    piPaymentMemo,
+  ]
+);
 
   vlog("MARK_PROCESSING_RESULT", {
     rowCount: rs.rowCount,
@@ -315,34 +317,42 @@ export async function markWithdrawalProcessing(
 }
 export async function markWithdrawalCompleted(
   withdrawalId: string,
-  blockchainTxid: string
+  blockchainTxid: string,
+  blockchainLedger: number | null,
+  blockchainMemo: string | null,
+  blockchainFee: string | null
 ): Promise<void> {
   vlog("MARK_COMPLETED_START", {
-    withdrawalId,
-    blockchainTxid,
-    blockchain_txid,
-blockchain_ledger,
-blockchain_memo,
-blockchain_fee,
-  });
+  withdrawalId,
+  blockchainTxid,
+  blockchainLedger,
+  blockchainMemo,
+  blockchainFee,
+});
 
   const rs = await query(
-    `
-    UPDATE wallet_withdrawals
-    SET
-      status = 'COMPLETED',
-      blockchain_txid = $2,
-      txid = $2,
-      paid_at = NOW(),
-      completed_at = NOW()
-    WHERE id = $1
-      AND status = 'PROCESSING'
-    `,
-    [
-      withdrawalId,
-      blockchainTxid,
-    ]
-  );
+  `
+  UPDATE wallet_withdrawals
+  SET
+    status = 'COMPLETED',
+    blockchain_txid = $2,
+    txid = $2,
+    blockchain_ledger = $3,
+    blockchain_memo = $4,
+    blockchain_fee = $5,
+    paid_at = NOW(),
+    completed_at = NOW()
+  WHERE id = $1
+    AND status = 'PROCESSING'
+  `,
+  [
+    withdrawalId,
+    blockchainTxid,
+    blockchainLedger,
+    blockchainMemo,
+    blockchainFee,
+  ]
+);
 
   vlog("MARK_COMPLETED_RESULT", {
     rowCount: rs.rowCount,
