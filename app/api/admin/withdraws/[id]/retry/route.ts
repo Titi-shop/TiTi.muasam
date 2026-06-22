@@ -41,7 +41,7 @@ export async function POST(
     );
 
     const withdrawal =
-      await getWithdrawalById(id);
+  await getWalletWithdrawalById(id);
 
     if (!withdrawal) {
       return NextResponse.json(
