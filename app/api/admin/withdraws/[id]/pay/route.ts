@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   createA2UPayment,
+  submitA2UPayment,
+  completeA2UPayment,
 } from "@/lib/pi/pi.a2u";
 import {
   requireAdmin,
@@ -11,6 +13,8 @@ import {
 import {
   getWalletWithdrawalById,
   markWithdrawalProcessing,
+  markWithdrawalCompleted,
+  markWithdrawalFailed,
 } from "@/lib/db/wallet/wallet.withdraw";
 
 export const runtime = "nodejs";
@@ -193,14 +197,48 @@ vlog(
     piPaymentId,
   }
 );
-await markWithdrawalProcessing(
-  withdrawal.id,
-  piPaymentId
-);
-    
     vlog(
-      "MARK_PROCESSING_DONE"
-    );
+  "SUBMIT_START",
+  {
+    piPaymentId,
+  }
+);
+    const txid =
+  await submitA2UPayment(
+    piPaymentId
+  );
+
+vlog(
+  "SUBMIT_DONE",
+  {
+    txid,
+  }
+);
+    await completeA2UPayment(
+  piPaymentId,
+  txid
+);
+
+vlog(
+  "COMPLETE_DONE",
+  {
+    piPaymentId,
+    txid,
+  }
+);
+await markWithdrawalCompleted(
+  withdrawal.id,
+  txid
+);
+
+vlog(
+  "MARK_COMPLETED_DONE",
+  {
+    withdrawalId:
+      withdrawal.id,
+    txid,
+  }
+);
 
     /* =====================
        RESPONSE
@@ -209,14 +247,15 @@ await markWithdrawalProcessing(
     vlog("SUCCESS");
 
     return NextResponse.json({
-      success: true,
-      withdrawal_id:
-        withdrawal.id,
-      pi_payment_id:
-        piPaymentId,
-      status:
-        "PROCESSING",
-    });
+  success: true,
+  withdrawal_id:
+    withdrawal.id,
+  pi_payment_id:
+    piPaymentId,
+  txid,
+  status:
+    "COMPLETED",
+});
   } catch (error) {
     console.error(
       "[ADMIN_PAY_WITHDRAW][ERROR]",
