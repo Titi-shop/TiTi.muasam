@@ -100,6 +100,9 @@ export type A2USubmitResult = {
   ledger: number | null;
   memo: string | null;
   fee: string | null;
+  fromAddress?: string;
+  toAddress?: string;
+  network?: string;
 };
 /* =====================================================
    INTERNAL REQUEST
@@ -343,29 +346,32 @@ export async function submitA2UPayment(
   if (
   payment.transaction?.txid
 ) {
-    vlog(
-      "SUBMIT_ALREADY_EXISTS",
-      {
-        txid:
-          payment.transaction.txid,
-      }
-    );
+  vlog(
+    "SUBMIT_ALREADY_EXISTS",
+    {
+      txid:
+        payment.transaction.txid,
+    }
+  );
 
-    return {
-  txid,
-  ledger: submitResult.ledger,
-  fee: submitResult.fee_charged,
-  memo: submitResult.memo,
+  return {
+    txid:
+      payment.transaction.txid,
 
-  fromAddress:
-    payment.from_address,
+    ledger: null,
+    memo:
+      payment.memo ?? null,
+    fee: null,
 
-  toAddress:
-    payment.to_address,
+    fromAddress:
+      payment.from_address,
 
-  network:
-    payment.network,
-};
+    toAddress:
+      payment.to_address,
+
+    network:
+      "Pi Testnet",
+  };
 }
 
   const keypair =
@@ -480,6 +486,13 @@ export async function submitA2UPayment(
           submitResult.fee_charged
         )
       : null,
+
+  fromAddress:
+    submitResult.source_account,
+  toAddress:
+    payment.to_address,
+  network:
+    "Pi Testnet",
 };
 }
 /* =====================================================
