@@ -189,6 +189,63 @@ async function handlePay(
     );
   }
 }
+  async function handleSync(
+  withdrawalId: string
+) {
+  try {
+    console.log(
+      "[ADMIN_SYNC][START]",
+      {
+        withdrawalId,
+      }
+    );
+
+    const res =
+      await apiAuthFetch(
+        `/api/admin/withdraws/${withdrawalId}/sync`,
+        {
+          method: "POST",
+        }
+      );
+
+    console.log(
+      "[ADMIN_SYNC][HTTP]",
+      {
+        status: res.status,
+      }
+    );
+
+    const data =
+      await res.json();
+
+    console.log(
+      "[ADMIN_SYNC][RESPONSE]",
+      data
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        data?.error ??
+          "SYNC_FAILED"
+      );
+    }
+
+    await loadWithdraws();
+
+    alert(
+      "Withdrawal synced"
+    );
+  } catch (err) {
+    console.error(
+      "[ADMIN_SYNC][ERROR]",
+      err
+    );
+
+    alert(
+      "Sync failed"
+    );
+  }
+}
   async function handleApprove(
   withdrawalId: string
 ) {
@@ -329,7 +386,28 @@ async function handlePay(
 >
   Pay
 </button>
-
+<button
+  onClick={() =>
+    void handleSync(
+      row.id
+    )
+  }
+  disabled={
+    row.status !==
+      "PROCESSING" &&
+    row.status !==
+      "APPROVED"
+  }
+  className="
+    rounded-lg
+    border
+    px-3
+    py-2
+    text-sm
+  "
+>
+  Sync
+</button>
             <button
               className="
                 rounded-lg
