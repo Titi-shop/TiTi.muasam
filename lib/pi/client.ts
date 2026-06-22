@@ -58,13 +58,30 @@ async function piRequest<T>(
   path: string,
   init: RequestInit
 ): Promise<T> {
+   console.log(
+  "[PI_CLIENT][REQUEST_URL]",
+  `${PI_API}${path}`
+);
+
+console.log(
+  "[PI_CLIENT][REQUEST_HEADERS]",
+  init.headers
+);
   const res = await fetch(`${PI_API}${path}`, {
     ...init,
     cache: "no-store",
   });
 
   const text = await res.text();
+console.log(
+  "[PI_CLIENT][RAW_RESPONSE]",
+  text
+);
 
+console.log(
+  "[PI_CLIENT][STATUS]",
+  res.status
+);
   let json: unknown = null;
 
   try {
