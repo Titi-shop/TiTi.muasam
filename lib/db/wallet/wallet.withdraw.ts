@@ -222,3 +222,146 @@ export async function approveWalletWithdrawal(
     );
   }
 }
+export async function markWithdrawalProcessing(
+  withdrawalId: string,
+  piPaymentId: string
+): Promise<void> {
+  vlog("MARK_PROCESSING_START", {
+    withdrawalId,
+    piPaymentId,
+  });
+
+  const rs = await query(
+    `
+    UPDATE wallet_withdrawals
+    SET
+      status = 'PROCESSING',
+      pi_payment_id = $2
+    WHERE id = $1
+      AND status = 'APPROVED'
+    `,
+    [
+      withdrawalId,
+      piPaymentId,
+    ]
+  );
+
+  vlog("MARK_PROCESSING_RESULT", {
+    rowCount: rs.rowCount,
+  });
+
+  if (rs.rowCount !== 1) {
+    throw new Error(
+      "WITHDRAWAL_PROCESSING_FAILED"
+    );
+  }
+}
+export async function markWithdrawalCompleted(
+  withdrawalId: string,
+  blockchainTxid: string
+): Promise<void> {
+  vlog("MARK_COMPLETED_START", {
+    withdrawalId,
+    blockchainTxid,
+  });
+
+  const rs = await query(
+    `
+    UPDATE wallet_withdrawals
+    SET
+      status = 'COMPLETED',
+      blockchain_txid = $2,
+      txid = $2,
+      paid_at = NOW(),
+      completed_at = NOW()
+    WHERE id = $1
+      AND status = 'PROCESSING'
+    `,
+    [
+      withdrawalId,
+      blockchainTxid,
+    ]
+  );
+
+  vlog("MARK_COMPLETED_RESULT", {
+    rowCount: rs.rowCount,
+  });
+
+  if (rs.rowCount !== 1) {
+    throw new Error(
+      "WITHDRAWAL_COMPLETE_FAILED"
+    );
+  }
+}
+export async function markWithdrawalFailed(
+  withdrawalId: string,
+  reason: string
+): Promise<void> {
+  vlog("MARK_FAILED_START", {
+    withdrawalId,
+    reason,
+  });
+
+  const rs = await query(
+    `
+    UPDATE wallet_withdrawals
+    SET
+      status = 'FAILED',
+      fail_reason = $2,
+      retry_count =
+        COALESCE(retry_count,0)+1
+    WHERE id = $1
+    `,
+    [
+      withdrawalId,
+      reason,
+    ]
+  );
+
+  vlog("MARK_FAILED_RESULT", {
+    rowCount: rs.rowCount,
+  });
+
+  if (rs.rowCount !== 1) {
+    throw new Error(
+      "WITHDRAWAL_FAIL_UPDATE_FAILED"
+    );
+  }
+}
+export async function getWalletWithdrawalById(
+  withdrawalId: string
+): Promise<WalletWithdrawalRow | null> {
+  vlog(
+    "GET_WITHDRAWAL_START",
+    withdrawalId
+  );
+
+  const rs =
+    await query<WalletWithdrawalRow>(
+      `
+      SELECT
+        id,
+        user_id,
+        amount,
+        currency,
+        withdraw_wallet,
+        status,
+        requested_at
+      FROM wallet_withdrawals
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [withdrawalId]
+    );
+
+  vlog(
+    "GET_WITHDRAWAL_RESULT",
+    {
+      found:
+        rs.rows.length > 0,
+    }
+  );
+
+  return rs.rows[0] ?? null;
+}
+
