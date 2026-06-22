@@ -72,7 +72,11 @@ export async function getPiAccessToken(
     throw new Error("PI_SDK_NOT_AVAILABLE");
   }
 
-  const scopes = ["username", "payments"];
+  const scopes = [
+  "username",
+  "payments",
+  "wallet_address",
+];
 
   authPromise = (async () => {
     try {
