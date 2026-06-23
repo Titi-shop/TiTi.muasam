@@ -23,14 +23,30 @@ export type A2URpcVerifyResult = {
 
   stage: string;
   reason: string;
+
   txid: string;
+
   amount: number | null;
+
   sender: string | null;
   receiver: string | null;
+
   ledger: number | null;
+
   confirmed: boolean;
   memo: string | null;
   rpcReachable: boolean;
+  txStatus: string | null;
+  chainReference: string | null;
+  createdAt: string | null;
+  parseLayer: string | null;
+  hasMeta: boolean;
+  hasEvents: boolean;
+
+  senderFound: boolean;
+  receiverFound: boolean;
+  amountFound: boolean;
+
   raw: unknown;
 };
 
@@ -345,36 +361,50 @@ export async function verifyA2UWithdrawal(
     };
   }
 
-  return {
-    verified: true,
+    return {
+  verified: true,
 
-    stage: "RPC_OK",
-    reason: "NONE",
+  stage: "RPC_OK",
+  reason: "NONE",
 
-    txid,
+  txid,
 
-    amount:
-      rpc.amount,
+  amount: rpc.amount,
 
-    sender:
-      rpc.sender,
+  sender: rpc.sender,
+  receiver: rpc.receiver,
 
-    receiver:
-      rpc.receiver,
+  ledger: rpc.ledger,
 
-    ledger:
-      rpc.ledger,
+  confirmed: rpc.confirmed,
 
-    confirmed:
-      rpc.confirmed,
+  memo: rpc.memo,
 
-    memo:
-      rpc.memo,
+  rpcReachable: true,
 
-    rpcReachable:
-      true,
+  txStatus: rpc.txStatus ?? null,
+  chainReference: rpc.hash ?? txid,
 
-    raw:
-      rpc.raw,
-  };
+  createdAt: rpc.createdAt ?? null,
+
+  parseLayer:
+    rpc.debug.parseLayer ?? null,
+
+  hasMeta:
+    rpc.debug.hasMeta,
+
+  hasEvents:
+    rpc.debug.hasEvents,
+
+  senderFound:
+    rpc.debug.senderFound,
+
+  receiverFound:
+    rpc.debug.receiverFound,
+
+  amountFound:
+    rpc.debug.amountFound,
+
+  raw: rpc.raw,
+};
 }
