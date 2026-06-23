@@ -347,90 +347,113 @@ export async function markWithdrawalProcessing(
   }
 }
 export async function markWithdrawalCompleted(
-  await withTransaction(
-  async (client) => {
+  withdrawalId: string,
+  blockchainTxid: string,
+  blockchainLedger?: number,
+  blockchainMemo?: string,
+  blockchainFee?: string,
+  blockchainFromAddress?: string,
+  blockchainToAddress?: string,
+  blockchainNetwork?: string
+): Promise<void> {
 
-    const withdrawalRs =
-      await client.query<{
-        user_id: string;
-        amount: string;
-      }>(
-        `
-        SELECT
-          user_id,
-          amount
-        FROM wallet_withdrawals
-        WHERE id = $1
-        FOR UPDATE
-        `,
-        [withdrawalId]
-      );
-
-    if (
-      withdrawalRs.rowCount !== 1
-    ) {
-      throw new Error(
-        "WITHDRAWAL_NOT_FOUND"
-      );
-    }
-
-    const withdrawal =
-      withdrawalRs.rows[0];
-
-    await finalizeReservedBalance(
-      withdrawal.user_id,
-      Number(
-        withdrawal.amount
-      ),
-      client
-    );
-
-    const rs =
-      await client.query(
-  `
-  UPDATE wallet_withdrawals
-  SET
-    status = 'COMPLETED',
-
-    blockchain_txid = $2,
-    txid = $2,
-
-    blockchain_ledger = $3,
-    blockchain_memo = $4,
-    blockchain_fee = $5,
-
-    blockchain_from_address = $6,
-    blockchain_to_address = $7,
-    blockchain_network = $8,
-
-    paid_at = NOW(),
-    completed_at = NOW()
-
-  WHERE id = $1
-    AND status = 'PROCESSING'
-  `,
-  [
+  vlog("MARK_COMPLETED_START", {
     withdrawalId,
     blockchainTxid,
-    blockchainLedger,
-    blockchainMemo,
-    blockchainFee,
-    blockchainFromAddress,
-    blockchainToAddress,
-    blockchainNetwork,
-  ]
-);
+  });
 
-if (
-  rs.rowCount !== 1
-) {
-  throw new Error(
-    "WITHDRAWAL_COMPLETE_FAILED"
+  await withTransaction(
+    async (client) => {
+
+      const withdrawalRs =
+        await client.query<{
+          user_id: string;
+          amount: string;
+        }>(
+          `
+          SELECT
+            user_id,
+            amount
+          FROM wallet_withdrawals
+          WHERE id = $1
+          FOR UPDATE
+          `,
+          [withdrawalId]
+        );
+
+      if (
+        withdrawalRs.rowCount !== 1
+      ) {
+        throw new Error(
+          "WITHDRAWAL_NOT_FOUND"
+        );
+      }
+
+      const withdrawal =
+        withdrawalRs.rows[0];
+
+      await finalizeReservedBalance(
+        withdrawal.user_id,
+        Number(
+          withdrawal.amount
+        ),
+        client
+      );
+
+      const rs =
+        await client.query(
+          `
+          UPDATE wallet_withdrawals
+          SET
+            status = 'COMPLETED',
+
+            blockchain_txid = $2,
+            txid = $2,
+
+            blockchain_ledger = $3,
+            blockchain_memo = $4,
+            blockchain_fee = $5,
+
+            blockchain_from_address = $6,
+            blockchain_to_address = $7,
+            blockchain_network = $8,
+
+            paid_at = NOW(),
+            completed_at = NOW()
+
+          WHERE id = $1
+            AND status = 'PROCESSING'
+          `,
+          [
+            withdrawalId,
+            blockchainTxid,
+            blockchainLedger,
+            blockchainMemo,
+            blockchainFee,
+            blockchainFromAddress,
+            blockchainToAddress,
+            blockchainNetwork,
+          ]
+        );
+
+      if (
+        rs.rowCount !== 1
+      ) {
+        throw new Error(
+          "WITHDRAWAL_COMPLETE_FAILED"
+        );
+      }
+    }
+  );
+
+  vlog(
+    "MARK_COMPLETED_DONE",
+    {
+      withdrawalId,
+      blockchainTxid,
+    }
   );
 }
-
-}
-);
 export async function markWithdrawalFailed(
   withdrawalId: string,
   reason: string
