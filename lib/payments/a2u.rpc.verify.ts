@@ -1,7 +1,9 @@
 // lib/payments/a2u.rpc.verify.ts
 
 import { getRpcTransaction } from "@/lib/rpc/client";
-import { getWithdrawalById } from "@/lib/db/wallet/wallet.withdraw";
+import {
+  getWalletWithdrawalById,
+} from "@/lib/db/wallet/wallet.withdraw";
 
 const APP_MERCHANT_WALLET =
   process.env.PI_MERCHANT_WALLET?.trim() ?? "";
@@ -21,22 +23,14 @@ export type A2URpcVerifyResult = {
 
   stage: string;
   reason: string;
-
   txid: string;
-
   amount: number | null;
-
   sender: string | null;
   receiver: string | null;
-
   ledger: number | null;
-
   confirmed: boolean;
-
   memo: string | null;
-
   rpcReachable: boolean;
-
   raw: unknown;
 };
 
@@ -51,9 +45,9 @@ export async function verifyA2UWithdrawal(
   });
 
   const withdrawal =
-    await getWithdrawalById(
-      withdrawalId
-    );
+  await getWalletWithdrawalById(
+    withdrawalId
+  );
 
   if (!withdrawal) {
     return {
@@ -61,22 +55,14 @@ export async function verifyA2UWithdrawal(
 
       stage: "WITHDRAWAL_NOT_FOUND",
       reason: "WITHDRAWAL_NOT_FOUND",
-
       txid,
-
       amount: null,
-
       sender: null,
       receiver: null,
-
       ledger: null,
-
       confirmed: false,
-
       memo: null,
-
       rpcReachable: false,
-
       raw: null,
     };
   }
@@ -188,10 +174,11 @@ export async function verifyA2UWithdrawal(
     );
 
   if (
-    rpc.amount === null ||
-    rpc.amount !==
-      expectedAmount
-  ) {
+  rpc.amount === null ||
+  Math.abs(
+    rpc.amount - expectedAmount
+  ) > 0.00000001
+) {
     return {
       verified: false,
 
