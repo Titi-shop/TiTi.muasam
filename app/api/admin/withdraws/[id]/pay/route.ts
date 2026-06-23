@@ -31,7 +31,6 @@ export type RpcRawTransaction = {
   latestLedger?: number;
   oldestLedger?: number;
   applicationOrder?: number;
-  memo_type?: string;
 
   resultJson?: {
     fee_charged?: string | number;
@@ -41,6 +40,12 @@ export type RpcRawTransaction = {
     tx?: {
       tx?: {
         source_account?: string;
+
+        memo?: {
+          text?: string;
+          id?: string;
+          hash?: string;
+        };
       };
     };
   };
@@ -330,6 +335,8 @@ console.log(
   "[DEBUG_RPC_RAW_TYPE]",
   typeof rpc.raw
 );
+    const raw =
+  rpc.raw as RpcRawTransaction;
     await insertA2URpcLog({
   withdrawalId: withdrawal.id,
   piPaymentId,
@@ -401,7 +408,22 @@ sourceAccount:
   rpc.sender,
 
 memoType:
-  raw?.memo_type ?? null,
+  raw?.envelopeJson
+    ?.tx
+    ?.tx
+    ?.memo?.text
+    ? "text"
+    : raw?.envelopeJson
+        ?.tx
+        ?.tx
+        ?.memo?.id
+      ? "id"
+      : raw?.envelopeJson
+          ?.tx
+          ?.tx
+          ?.memo?.hash
+        ? "hash"
+        : null,
 
   memo: rpc.memo,
   createdAt: rpc.createdAt,
