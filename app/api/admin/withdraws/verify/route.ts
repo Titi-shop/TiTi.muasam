@@ -64,14 +64,13 @@ export async function GET() {
           );
 
         vlog(
-          "PAYMENT_STATUS",
-          {
-            withdrawalId:
-              withdrawal.id,
-            status:
-              payment.status,
-          }
-        );
+  "PAYMENT_FULL",
+  JSON.stringify(
+    payment,
+    null,
+    2
+  )
+);
 
         if (
           payment.status
