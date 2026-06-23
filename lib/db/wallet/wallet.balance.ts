@@ -291,3 +291,209 @@ export async function debitWallet(
     }
   );
 }
+export async function reserveWalletBalance(
+  userId: string,
+  amount: number,
+  client?: WalletClient
+) {
+  if (amount <= 0) {
+    throw new Error(
+      "INVALID_AMOUNT"
+    );
+  }
+
+  if (client) {
+    const { rows } =
+      await client.query<WalletRow>(
+        `
+        SELECT
+          available_balance,
+          pending_balance
+        FROM wallets
+        WHERE user_id = $1
+        LIMIT 1
+        FOR UPDATE
+        `,
+        [userId]
+      );
+
+    if (!rows.length) {
+      throw new Error(
+        "WALLET_NOT_FOUND"
+      );
+    }
+
+    const available =
+      toNumberSafe(
+        rows[0]
+          .available_balance,
+        "available_balance"
+      );
+
+    if (available < amount) {
+      throw new Error(
+        "INSUFFICIENT_AVAILABLE_BALANCE"
+      );
+    }
+
+    const rs =
+      await client.query(
+        `
+        UPDATE wallets
+        SET
+          available_balance =
+            available_balance - $1,
+
+          pending_balance =
+            pending_balance + $1,
+
+          wallet_version =
+            wallet_version + 1,
+
+          updated_at =
+            NOW()
+
+        WHERE user_id = $2
+        `,
+        [
+          amount,
+          userId,
+        ]
+      );
+
+    if (rs.rowCount !== 1) {
+      throw new Error(
+        "WALLET_RESERVE_FAILED"
+      );
+    }
+
+    return;
+  }
+
+  return withTransaction(
+    async (tx) => {
+      await reserveWalletBalance(
+        userId,
+        amount,
+        tx
+      );
+    }
+  );
+}
+export async function releaseReservedBalance(
+  userId: string,
+  amount: number,
+  client?: WalletClient
+) {
+  if (amount <= 0) {
+    throw new Error(
+      "INVALID_AMOUNT"
+    );
+  }
+
+  if (client) {
+    const rs =
+      await client.query(
+        `
+        UPDATE wallets
+        SET
+          available_balance =
+            available_balance + $1,
+
+          pending_balance =
+            pending_balance - $1,
+
+          wallet_version =
+            wallet_version + 1,
+
+          updated_at =
+            NOW()
+
+        WHERE user_id = $2
+          AND pending_balance >= $1
+        `,
+        [
+          amount,
+          userId,
+        ]
+      );
+
+    if (rs.rowCount !== 1) {
+      throw new Error(
+        "WALLET_RELEASE_FAILED"
+      );
+    }
+
+    return;
+  }
+
+  return withTransaction(
+    async (tx) => {
+      await releaseReservedBalance(
+        userId,
+        amount,
+        tx
+      );
+    }
+  );
+}
+export async function finalizeReservedBalance(
+  userId: string,
+  amount: number,
+  client?: WalletClient
+) {
+  if (amount <= 0) {
+    throw new Error(
+      "INVALID_AMOUNT"
+    );
+  }
+
+  if (client) {
+    const rs =
+      await client.query(
+        `
+        UPDATE wallets
+        SET
+          balance =
+            balance - $1,
+
+          pending_balance =
+            pending_balance - $1,
+
+          wallet_version =
+            wallet_version + 1,
+
+          last_debit_at =
+            NOW(),
+
+          updated_at =
+            NOW()
+
+        WHERE user_id = $2
+          AND pending_balance >= $1
+        `,
+        [
+          amount,
+          userId,
+        ]
+      );
+
+    if (rs.rowCount !== 1) {
+      throw new Error(
+        "WALLET_FINALIZE_FAILED"
+      );
+    }
+
+    return;
+  }
+
+  return withTransaction(
+    async (tx) => {
+      await finalizeReservedBalance(
+        userId,
+        amount,
+        tx
+      );
+    }
+  );
+}
