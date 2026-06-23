@@ -26,7 +26,7 @@ function vlog(
   );
 }
 
-export async function POST() {
+export async function GET() {
   try {
     vlog("START");
 
