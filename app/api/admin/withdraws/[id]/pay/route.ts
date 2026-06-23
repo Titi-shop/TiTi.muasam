@@ -293,65 +293,90 @@ vlog(
   rpc
 );
     await insertA2URpcLog({
-  withdrawalId:
-    withdrawal.id,
-
+  withdrawalId: withdrawal.id,
   piPaymentId,
 
   txid,
+  verified: rpc.verified,
 
-  verified:
-    rpc.verified,
+  stage: rpc.stage,
+  reason: rpc.reason,
 
-  amount:
-    rpc.amount,
+  amount: rpc.amount,
+  expectedAmount: Number(
+    withdrawal.amount
+  ),
 
-  sender:
+  sender: rpc.sender,
+  receiver: rpc.receiver,
+
+  expectedReceiver:
+    withdrawal.withdraw_wallet,
+
+  amountMatch:
+    rpc.amount !== null,
+
+  receiverMatch:
+    rpc.receiver?.toLowerCase() ===
+    withdrawal.withdraw_wallet.toLowerCase(),
+
+  senderMatch: true,
+
+  verificationHash: null,
+
+  ledger: rpc.ledger,
+
+  txStatus: rpc.txStatus,
+  chainReference: rpc.chainReference,
+
+  rpcReachable: rpc.rpcReachable,
+  confirmed: rpc.confirmed,
+
+  parseLayer: rpc.parseLayer,
+
+  hasMeta: rpc.hasMeta,
+  hasEvents: rpc.hasEvents,
+
+  senderFound: rpc.senderFound,
+  receiverFound: rpc.receiverFound,
+  amountFound: rpc.amountFound,
+
+  feeStroops:
+    Number(
+      (payload as any)?.resultJson?.fee_charged
+    ) || null,
+
+  latestLedger:
+    Number(
+      (payload as any)?.latestLedger
+    ) || null,
+
+  oldestLedger:
+    Number(
+      (payload as any)?.oldestLedger
+    ) || null,
+
+  applicationOrder:
+    Number(
+      (payload as any)?.applicationOrder
+    ) || null,
+
+  sourceAccount:
+    (payload as any)?.envelopeJson
+      ?.tx?.tx?.source_account ??
     rpc.sender,
 
-  receiver:
-    rpc.receiver,
+  memoType:
+    (payload as any)?.envelopeJson
+      ?.tx?.tx?.memo?.text
+      ? "text"
+      : null,
 
-  ledger:
-    rpc.ledger,
+  memo: rpc.memo,
+  createdAt: rpc.createdAt,
 
-  memo:
-    rpc.memo,
-
-  txStatus:
-    rpc.txStatus,
-
-  chainReference:
-    rpc.chainReference,
-
-  createdAt:
-    rpc.createdAt,
-
-  rpcReachable:
-    rpc.rpcReachable,
-
-  parseLayer:
-    rpc.parseLayer,
-
-  hasMeta:
-    rpc.hasMeta,
-
-  hasEvents:
-    rpc.hasEvents,
-
-  senderFound:
-    rpc.senderFound,
-
-  receiverFound:
-    rpc.receiverFound,
-
-  amountFound:
-    rpc.amountFound,
-
-  payload:
-    rpc.raw,
+  payload: rpc.raw,
 });
-
 vlog(
   "RPC_LOG_SAVED",
   {
