@@ -59,51 +59,130 @@ export async function GET() {
         );
 
         const payment =
-          await getA2UPayment(
-            withdrawal.pi_payment_id
-          );
+  await getA2UPayment(
+    withdrawal.pi_payment_id
+  );
 
-        vlog(
-  "PAYMENT_FULL",
-  JSON.stringify(
-    payment,
-    null,
-    2
-  )
+vlog(
+  "PAYMENT_SNAPSHOT",
+  {
+    withdrawalId:
+      withdrawal.id,
+
+    paymentId:
+      withdrawal.pi_payment_id,
+
+    amount:
+      payment.amount,
+
+    direction:
+      payment.direction,
+
+    network:
+      payment.network,
+
+    fromAddress:
+      payment.from_address,
+
+    toAddress:
+      payment.to_address,
+
+    developerApproved:
+      payment.status
+        ?.developer_approved,
+
+    transactionVerified:
+      payment.status
+        ?.transaction_verified,
+
+    developerCompleted:
+      payment.status
+        ?.developer_completed,
+
+    cancelled:
+      payment.status
+        ?.cancelled,
+
+    userCancelled:
+      payment.status
+        ?.user_cancelled,
+
+    hasTransaction:
+      !!payment.transaction,
+
+    transaction:
+      payment.transaction ??
+      null,
+  }
 );
 
         if (
-          payment.status
-            ?.cancelled ||
-          payment.status
-            ?.user_cancelled
-        ) {
-          await markWithdrawalFailed(
-            withdrawal.id,
-            "PAYMENT_CANCELLED"
-          );
+  payment.status
+    ?.cancelled ||
+  payment.status
+    ?.user_cancelled
+) {
 
-          continue;
-        }
+  vlog(
+    "PAYMENT_CANCELLED",
+    {
+      withdrawalId:
+        withdrawal.id,
+
+      paymentId:
+        withdrawal.pi_payment_id,
+    }
+  );
+
+  await markWithdrawalFailed(
+    withdrawal.id,
+    "PAYMENT_CANCELLED"
+  );
+
+  continue;
+}
 
         if (
-          !payment.status
-            ?.transaction_verified
-        ) {
-          vlog(
-            "WAITING_VERIFY",
-            {
-              withdrawalId:
-                withdrawal.id,
-            }
-          );
+  !payment.status
+    ?.transaction_verified
+) {
 
-          continue;
-        }
+  vlog(
+    "WAITING_BLOCKCHAIN_VERIFY",
+    {
+      withdrawalId:
+        withdrawal.id,
+
+      paymentId:
+        withdrawal.pi_payment_id,
+
+      transaction:
+        payment.transaction ??
+        null,
+
+      status:
+        payment.status,
+    }
+  );
+
+  continue;
+}
 
         const txid =
-          payment.transaction
-            ?.txid;
+  payment.transaction
+    ?.txid;
+
+vlog(
+  "TRANSACTION_LOOKUP",
+  {
+    withdrawalId:
+      withdrawal.id,
+    txid,
+    transaction:
+      payment.transaction ??
+      null,
+  }
+);
 
         if (!txid) {
           vlog(
@@ -136,12 +215,52 @@ export async function GET() {
             txid
           );
         }
+vlog(
+  "PI_COMPLETE_START",
+  {
+    withdrawalId:
+      withdrawal.id,
 
+    paymentId:
+      withdrawal.pi_payment_id,
+
+    txid,
+  }
+);
+        vlog(
+  "PI_COMPLETE_DONE",
+  {
+    withdrawalId:
+      withdrawal.id,
+
+    paymentId:
+      withdrawal.pi_payment_id,
+
+    txid,
+  }
+);
         await markWithdrawalCompleted(
           withdrawal.id,
           txid
         );
+vlog(
+  "DB_COMPLETE_START",
+  {
+    withdrawalId:
+      withdrawal.id,
 
+    txid,
+  }
+);
+        vlog(
+  "DB_COMPLETE_DONE",
+  {
+    withdrawalId:
+      withdrawal.id,
+
+    txid,
+  }
+);
         completed++;
 
         vlog(
