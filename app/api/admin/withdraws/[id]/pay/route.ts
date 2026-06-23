@@ -25,7 +25,25 @@ import {
 export const runtime = "nodejs";
 export const dynamic =
   "force-dynamic";
+export type RpcRawTransaction = {
+  ledger?: number;
+  latestLedger?: number;
+  oldestLedger?: number;
+  applicationOrder?: number;
+  memo_type?: string;
 
+  resultJson?: {
+    fee_charged?: string | number;
+  };
+
+  envelopeJson?: {
+    tx?: {
+      tx?: {
+        source_account?: string;
+      };
+    };
+  };
+};
 function vlog(
   step: string,
   data?: unknown
@@ -351,33 +369,28 @@ console.log(
   amountFound: rpc.amountFound,
 
   feeStroops:
-  Number(
-    (rpc.raw as any)?.resultJson?.fee_charged
-  ) || null,
+  raw?.resultJson?.fee_charged
+    ? Number(raw.resultJson.fee_charged)
+    : null,
 
 latestLedger:
-  Number(
-    (rpc.raw as any)?.latestLedger
-  ) || null,
+  raw?.latestLedger ?? null,
 
 oldestLedger:
-  Number(
-    (rpc.raw as any)?.oldestLedger
-  ) || null,
+  raw?.oldestLedger ?? null,
 
 applicationOrder:
-  Number(
-    (rpc.raw as any)?.applicationOrder
-  ) || null,
+  raw?.applicationOrder ?? null,
 
 sourceAccount:
-  (rpc.raw as any)?.envelopeJson
-    ?.tx?.tx?.source_account ??
+  raw?.envelopeJson
+    ?.tx
+    ?.tx
+    ?.source_account ??
   rpc.sender,
 
 memoType:
-  (rpc.raw as any)?.memo_type ??
-  null,
+  raw?.memo_type ?? null,
 
   memo: rpc.memo,
   createdAt: rpc.createdAt,
