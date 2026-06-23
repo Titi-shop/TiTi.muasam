@@ -82,5 +82,35 @@ export type RpcVerifyResult = {
   createdAt: string | null;
   memo: string | null;
 };
+export type ParsedRpcTransaction = {
+  hash: string;
 
+  ledger: number | null;
+
+  amount: number | null;
+
+  sender: string | null;
+  receiver: string | null;
+
+  memo: string | null;
+  createdAt: string | null;
+
+  txStatus: string | null;
+
+  confirmed: boolean;
+  rpcReachable: boolean;
+
+  raw: unknown;
+
+  debug: {
+    amountFound: boolean;
+    senderFound: boolean;
+    receiverFound: boolean;
+
+    parseLayer: string;
+
+    hasMeta: boolean;
+    hasEvents: boolean;
+  };
+};
 
