@@ -13,7 +13,9 @@ import {
 } from "@/lib/db";
 
 import {
-  debitWallet,
+  reserveWalletBalance,
+  releaseReservedBalance,
+  finalizeReservedBalance,
 } from "./wallet.balance";
 
 import {
