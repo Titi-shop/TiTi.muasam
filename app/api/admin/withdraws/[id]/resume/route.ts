@@ -107,7 +107,38 @@ export async function POST(
       await getA2UPayment(
         withdrawal.pi_payment_id
       );
+vlog(
+  "PAYMENT_STATUS",
+  {
+    paymentId:
+      withdrawal.pi_payment_id,
 
+    developerApproved:
+      payment.status
+        ?.developer_approved,
+
+    transactionVerified:
+      payment.status
+        ?.transaction_verified,
+
+    developerCompleted:
+      payment.status
+        ?.developer_completed,
+
+    cancelled:
+      payment.status
+        ?.cancelled,
+
+    userCancelled:
+      payment.status
+        ?.user_cancelled,
+
+    txid:
+      payment.transaction
+        ?.txid ??
+      null,
+  }
+);
     vlog(
       "PAYMENT",
       payment
@@ -135,6 +166,33 @@ export async function POST(
       payment.transaction
         ?.txid;
 
+    if (
+  payment.status
+    ?.developer_completed &&
+  withdrawal.blockchain_txid
+) {
+  vlog(
+    "ALREADY_COMPLETED_ON_PI",
+    {
+      withdrawalId:
+        withdrawal.id,
+
+      txid:
+        withdrawal.blockchain_txid,
+    }
+  );
+
+  await markWithdrawalCompleted(
+    withdrawal.id,
+    withdrawal.blockchain_txid
+  );
+
+  return NextResponse.json({
+    success: true,
+    status:
+      "RECOVERED",
+  });
+}
     if (!txid) {
       return NextResponse.json({
         success: false,
@@ -163,9 +221,17 @@ export async function POST(
     }
 
     await markWithdrawalCompleted(
-      withdrawal.id,
-      txid
-    );
+  withdrawal.id,
+  txid,
+
+  undefined,
+  undefined,
+  undefined,
+
+  payment.from_address,
+  payment.to_address,
+  payment.network
+);
 
     vlog(
       "COMPLETED",
