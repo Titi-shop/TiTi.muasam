@@ -1,7 +1,7 @@
 // lib/payments/a2u.rpc.verify.ts
 
 import { getRpcTransaction } from "@/lib/rpc/client";
-import { getWithdrawalById } from "@/lib/db/wallet.withdrawals";
+import { getWithdrawalById } from "@/lib/db/wallet/wallet.withdrawals";
 
 const APP_MERCHANT_WALLET =
   process.env.PI_MERCHANT_WALLET?.trim() ?? "";
