@@ -65,7 +65,7 @@ export async function verifyA2UWithdrawal(
     withdrawalId
   );
 
-  if (!withdrawal) {
+  
     if (!withdrawal) {
   return {
     verified: false,
