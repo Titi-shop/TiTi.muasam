@@ -1,5 +1,3 @@
-// lib/payments/a2u.rpc.verify.ts
-
 import { getRpcTransaction } from "@/lib/rpc/client";
 import {
   getWalletWithdrawalById,
@@ -34,105 +32,125 @@ export type A2URpcVerifyResult = {
   ledger: number | null;
 
   confirmed: boolean;
+
   memo: string | null;
+
   rpcReachable: boolean;
+
   txStatus: string | null;
+
   chainReference: string | null;
+
   createdAt: string | null;
+
   parseLayer: string | null;
+
   hasMeta: boolean;
+
   hasEvents: boolean;
-feeStroops: number | null;
-latestLedger: number | null;
-oldestLedger: number | null;
-applicationOrder: number | null;
-sourceAccount: string | null;
-memoType: string | null;
+
   senderFound: boolean;
+
   receiverFound: boolean;
+
   amountFound: boolean;
 
+  feeStroops: number | null;
+
+  latestLedger: number | null;
+
+  oldestLedger: number | null;
+
+  applicationOrder: number | null;
+
+  sourceAccount: string | null;
+
+  memoType: string | null;
+
   raw: unknown;
-  
 };
 
-export async function verifyA2UWithdrawal(
-  withdrawalId: string,
-  txid: string
-): Promise<A2URpcVerifyResult> {
-
-  log("START", {
-    withdrawalId,
-    txid,
-  });
-
-  const withdrawal =
-  await getWalletWithdrawalById(
-    withdrawalId
-  );
-
-  
-    if (!withdrawal) {
+function fail(
+  txid: string,
+  stage: string,
+  reason: string
+): A2URpcVerifyResult {
   return {
     verified: false,
 
-    stage: "WITHDRAWAL_NOT_FOUND",
-    reason: "WITHDRAWAL_NOT_FOUND",
+    stage,
+    reason,
 
     txid,
 
     amount: null,
+
     sender: null,
     receiver: null,
 
     ledger: null,
 
     confirmed: false,
+
     memo: null,
 
     rpcReachable: false,
 
     txStatus: null,
+
     chainReference: null,
+
     createdAt: null,
 
     parseLayer: null,
 
     hasMeta: false,
+
     hasEvents: false,
 
     senderFound: false,
+
     receiverFound: false,
+
     amountFound: false,
-    feeStroops:
 
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.fee ?? null,
-  latestLedger:
-    Number(raw?.latestLedger)
-      || null,
-  oldestLedger:
-    Number(raw?.oldestLedger)
-      || null,
-  applicationOrder:
-    Number(raw?.applicationOrder)
-      || null,
-  sourceAccount:
+    feeStroops: null,
 
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.source_account
-      ?? rpc.sender,
-  memoType:
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.memo
-      ? "text"
-      : null,
+    latestLedger: null,
+
+    oldestLedger: null,
+
+    applicationOrder: null,
+
+    sourceAccount: null,
+
+    memoType: null,
+
     raw: null,
   };
 }
+
+export async function verifyA2UWithdrawal(
+  withdrawalId: string,
+  txid: string
+): Promise<A2URpcVerifyResult> {
+  log("START", {
+    withdrawalId,
+    txid,
+  });
+
+  const withdrawal =
+    await getWalletWithdrawalById(
+      withdrawalId
+    );
+
+  if (!withdrawal) {
+    return fail(
+      txid,
+      "WITHDRAWAL_NOT_FOUND",
+      "WITHDRAWAL_NOT_FOUND"
+    );
+  }
 
   const rpc =
     await getRpcTransaction(
@@ -160,134 +178,20 @@ export async function verifyA2UWithdrawal(
   });
 
   if (!rpc.rpcReachable) {
-    return {
-      verified: false,
-
-      stage:
-        "RPC_UNREACHABLE",
-
-      reason:
-        "RPC_UNREACHABLE",
-
+    return fail(
       txid,
-
-    amount: null,
-    sender: null,
-    receiver: null,
-
-    ledger: null,
-
-    confirmed: false,
-    memo: null,
-
-    rpcReachable: false,
-
-    txStatus: null,
-    chainReference: null,
-    createdAt: null,
-
-    parseLayer: null,
-
-    hasMeta: false,
-    hasEvents: false,
-
-    senderFound: false,
-    receiverFound: false,
-    amountFound: false,
-feeStroops:
-
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.fee ?? null,
-  latestLedger:
-    Number(raw?.latestLedger)
-      || null,
-  oldestLedger:
-    Number(raw?.oldestLedger)
-      || null,
-  applicationOrder:
-    Number(raw?.applicationOrder)
-      || null,
-  sourceAccount:
-
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.source_account
-      ?? rpc.sender,
-  memoType:
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.memo
-      ? "text"
-      : null,
-    raw: null,
-  };
-}
+      "RPC_UNREACHABLE",
+      "RPC_UNREACHABLE"
+    );
+  }
 
   if (!rpc.confirmed) {
-    return {
-      verified: false,
-
-      stage:
-        "TX_NOT_CONFIRMED",
-
-      reason:
-        "TX_NOT_CONFIRMED",
-
+    return fail(
       txid,
-
-    amount: null,
-    sender: null,
-    receiver: null,
-
-    ledger: null,
-
-    confirmed: false,
-    memo: null,
-
-    rpcReachable: false,
-
-    txStatus: null,
-    chainReference: null,
-    createdAt: null,
-
-    parseLayer: null,
-
-    hasMeta: false,
-    hasEvents: false,
-
-    senderFound: false,
-    receiverFound: false,
-    amountFound: false,
-feeStroops:
-
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.fee ?? null,
-  latestLedger:
-    Number(raw?.latestLedger)
-      || null,
-  oldestLedger:
-    Number(raw?.oldestLedger)
-      || null,
-  applicationOrder:
-    Number(raw?.applicationOrder)
-      || null,
-  sourceAccount:
-
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.source_account
-      ?? rpc.sender,
-  memoType:
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.memo
-      ? "text"
-      : null,
-    raw: null,
-  };
-}
+      "TX_NOT_CONFIRMED",
+      "TX_NOT_CONFIRMED"
+    );
+  }
 
   const expectedAmount =
     Number(
@@ -295,214 +199,42 @@ feeStroops:
     );
 
   if (
-  rpc.amount === null ||
-  Math.abs(
-    rpc.amount - expectedAmount
-  ) > 0.00000001
-) {
-    return {
-      verified: false,
-
-      stage:
-        "AMOUNT_MISMATCH",
-
-      reason:
-        "AMOUNT_MISMATCH",
-
+    rpc.amount === null ||
+    Math.abs(
+      rpc.amount -
+        expectedAmount
+    ) > 0.00000001
+  ) {
+    return fail(
       txid,
-
-    amount: null,
-    sender: null,
-    receiver: null,
-
-    ledger: null,
-
-    confirmed: false,
-    memo: null,
-
-    rpcReachable: false,
-
-    txStatus: null,
-    chainReference: null,
-    createdAt: null,
-
-    parseLayer: null,
-
-    hasMeta: false,
-    hasEvents: false,
-
-    senderFound: false,
-    receiverFound: false,
-    amountFound: false,
-feeStroops:
-
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.fee ?? null,
-  latestLedger:
-    Number(raw?.latestLedger)
-      || null,
-  oldestLedger:
-    Number(raw?.oldestLedger)
-      || null,
-  applicationOrder:
-    Number(raw?.applicationOrder)
-      || null,
-  sourceAccount:
-
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.source_account
-      ?? rpc.sender,
-  memoType:
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.memo
-      ? "text"
-      : null,
-    raw: null,
-  };
-}
+      "AMOUNT_MISMATCH",
+      "AMOUNT_MISMATCH"
+    );
+  }
 
   if (
     rpc.sender
       ?.toLowerCase() !==
-    APP_MERCHANT_WALLET
-      .toLowerCase()
+    APP_MERCHANT_WALLET.toLowerCase()
   ) {
-    return {
-      verified: false,
-
-      stage:
-        "SENDER_MISMATCH",
-
-      reason:
-        "SENDER_MISMATCH",
-
+    return fail(
       txid,
-
-    amount: null,
-    sender: null,
-    receiver: null,
-
-    ledger: null,
-
-    confirmed: false,
-    memo: null,
-
-    rpcReachable: false,
-
-    txStatus: null,
-    chainReference: null,
-    createdAt: null,
-
-    parseLayer: null,
-
-    hasMeta: false,
-    hasEvents: false,
-
-    senderFound: false,
-    receiverFound: false,
-    amountFound: false,
-feeStroops:
-
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.fee ?? null,
-  latestLedger:
-    Number(raw?.latestLedger)
-      || null,
-  oldestLedger:
-    Number(raw?.oldestLedger)
-      || null,
-  applicationOrder:
-    Number(raw?.applicationOrder)
-      || null,
-  sourceAccount:
-
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.source_account
-      ?? rpc.sender,
-  memoType:
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.memo
-      ? "text"
-      : null,
-    raw: null,
-  };
-}
+      "SENDER_MISMATCH",
+      "SENDER_MISMATCH"
+    );
+  }
 
   if (
     rpc.receiver
       ?.toLowerCase() !==
-    withdrawal.withdraw_wallet
-      .toLowerCase()
+    withdrawal.withdraw_wallet.toLowerCase()
   ) {
-    return {
-      verified: false,
-
-      stage:
-        "RECEIVER_MISMATCH",
-
-      reason:
-        "RECEIVER_MISMATCH",
-
+    return fail(
       txid,
-
-    amount: null,
-    sender: null,
-    receiver: null,
-
-    ledger: null,
-
-    confirmed: false,
-    memo: null,
-
-    rpcReachable: false,
-
-    txStatus: null,
-    chainReference: null,
-    createdAt: null,
-
-    parseLayer: null,
-
-    hasMeta: false,
-    hasEvents: false,
-
-    senderFound: false,
-    receiverFound: false,
-    amountFound: false,
-feeStroops:
-
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.fee ?? null,
-  latestLedger:
-    Number(raw?.latestLedger)
-      || null,
-  oldestLedger:
-    Number(raw?.oldestLedger)
-      || null,
-  applicationOrder:
-    Number(raw?.applicationOrder)
-      || null,
-  sourceAccount:
-
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.source_account
-      ?? rpc.sender,
-  memoType:
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.memo
-      ? "text"
-      : null,
-    raw: null,
-  };
-}
+      "RECEIVER_MISMATCH",
+      "RECEIVER_MISMATCH"
+    );
+  }
 
   if (
     withdrawal.pi_payment_id &&
@@ -510,139 +242,80 @@ feeStroops:
     rpc.memo !==
       withdrawal.pi_payment_id
   ) {
-    return {
-      verified: false,
-
-      stage:
-        "MEMO_MISMATCH",
-
-      reason:
-        "MEMO_MISMATCH",
-
+    return fail(
       txid,
+      "MEMO_MISMATCH",
+      "MEMO_MISMATCH"
+    );
+  }
 
-    amount: null,
-    sender: null,
-    receiver: null,
+  return {
+    verified: true,
 
-    ledger: null,
+    stage: "RPC_OK",
 
-    confirmed: false,
-    memo: null,
+    reason: "NONE",
 
-    rpcReachable: false,
+    txid,
 
-    txStatus: null,
-    chainReference: null,
-    createdAt: null,
+    amount: rpc.amount,
 
-    parseLayer: null,
+    sender: rpc.sender,
 
-    hasMeta: false,
-    hasEvents: false,
+    receiver: rpc.receiver,
 
-    senderFound: false,
-    receiverFound: false,
-    amountFound: false,
-feeStroops:
+    ledger: rpc.ledger,
 
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.fee ?? null,
-  latestLedger:
-    Number(raw?.latestLedger)
-      || null,
-  oldestLedger:
-    Number(raw?.oldestLedger)
-      || null,
-  applicationOrder:
-    Number(raw?.applicationOrder)
-      || null,
-  sourceAccount:
+    confirmed: rpc.confirmed,
 
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.source_account
-      ?? rpc.sender,
-  memoType:
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.memo
-      ? "text"
-      : null,
-    raw: null,
+    memo: rpc.memo,
+
+    rpcReachable:
+      rpc.rpcReachable,
+
+    txStatus:
+      rpc.txStatus,
+
+    chainReference:
+      rpc.hash,
+
+    createdAt:
+      rpc.createdAt,
+
+    parseLayer:
+      rpc.debug.parseLayer,
+
+    hasMeta:
+      rpc.debug.hasMeta,
+
+    hasEvents:
+      rpc.debug.hasEvents,
+
+    senderFound:
+      rpc.debug.senderFound,
+
+    receiverFound:
+      rpc.debug.receiverFound,
+
+    amountFound:
+      rpc.debug.amountFound,
+
+    feeStroops: null,
+
+    latestLedger: null,
+
+    oldestLedger: null,
+
+    applicationOrder: null,
+
+    sourceAccount:
+      rpc.sender,
+
+    memoType:
+      rpc.memo
+        ? "text"
+        : null,
+
+    raw: rpc.raw,
   };
-}
-
-    return {
-  verified: true,
-
-  stage: "RPC_OK",
-  reason: "NONE",
-
-  txid,
-
-  amount: rpc.amount,
-
-  sender: rpc.sender,
-  receiver: rpc.receiver,
-
-  ledger: rpc.ledger,
-
-  confirmed: rpc.confirmed,
-
-  memo: rpc.memo,
-
-  rpcReachable: true,
-
-  txStatus: rpc.txStatus ?? null,
-  chainReference: rpc.hash ?? txid,
-
-  createdAt: rpc.createdAt ?? null,
-
-  parseLayer:
-    rpc.debug.parseLayer ?? null,
-
-  hasMeta:
-    rpc.debug.hasMeta,
-
-  hasEvents:
-    rpc.debug.hasEvents,
-
-  senderFound:
-    rpc.debug.senderFound,
-
-  receiverFound:
-    rpc.debug.receiverFound,
-
-  amountFound:
-    rpc.debug.amountFound,
-feeStroops:
-
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.fee ?? null,
-  latestLedger:
-    Number(raw?.latestLedger)
-      || null,
-  oldestLedger:
-    Number(raw?.oldestLedger)
-      || null,
-  applicationOrder:
-    Number(raw?.applicationOrder)
-      || null,
-  sourceAccount:
-
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.source_account
-      ?? rpc.sender,
-  memoType:
-    (
-      raw?.envelopeJson as any
-    )?.tx?.tx?.memo
-      ? "text"
-      : null,
-  raw: rpc.raw,
-};
 }
