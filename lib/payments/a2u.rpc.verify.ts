@@ -281,7 +281,18 @@ let chainAmountConsensus:
     Number(
       withdrawal.amount
     );
-
+console.log(
+  "[VERIFY_AMOUNT_CHECK]",
+  {
+    expectedAmount,
+    rpcAmount: rpc.amount,
+    diff:
+      rpc.amount !== null
+        ? rpc.amount -
+          expectedAmount
+        : null,
+  }
+);
   if (
     rpc.amount === null ||
     Math.abs(
