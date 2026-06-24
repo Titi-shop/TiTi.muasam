@@ -136,15 +136,22 @@ function deepFindNumber(
   return null;
 }
 
-function normalizeAmount(amount: number | null): number | null {
-  if (amount === null) return null;
+const STROOPS_PER_PI = 10_000_000;
 
-  // detect stroop format
-  if (amount > 1_000_000) {
-    return amount / 10_000_000;
+function normalizeAmount(
+  amount: number | null
+): number | null {
+  if (amount === null) {
+    return null;
   }
 
-  return amount;
+  /**
+   * RPC getTransaction đang trả amount
+   * dưới dạng stroops.
+   *
+   * Chuẩn hoá toàn bộ hệ thống về PI.
+   */
+  return amount / STROOPS_PER_PI;
 }
 
 /* =========================================================
@@ -405,11 +412,8 @@ export async function getRpcTransaction(
     ===================================================== */
 
     let amount: number | null = null;
-
     let sender: string | null = null;
-
     let receiver: string | null = null;
-
     let parseLayer = "NONE";
 
     /* ===== LAYER A ===== */
@@ -423,11 +427,8 @@ export async function getRpcTransaction(
       parsedEnvelope.receiver
     ) {
       amount = parsedEnvelope.amount;
-
       sender = parsedEnvelope.sender;
-
       receiver = parsedEnvelope.receiver;
-
       parseLayer = "ENVELOPE_JSON";
     }
 
@@ -447,29 +448,29 @@ export async function getRpcTransaction(
         parsedEvents.receiver
       ) {
         amount = parsedEvents.amount;
-
         sender = parsedEvents.sender;
-
         receiver = parsedEvents.receiver;
-
         parseLayer = "EVENTS";
       }
     }
-
     log("PARSE_RESULT", {
-      txid: clean,
-      amount,
-      sender,
-      receiver,
-      ledger,
-      confirmed,
-      memo,
-      parseLayer,
-    });
+  txid: clean,
+  amount,
+  sender,
+  receiver,
+  ledger,
+  confirmed,
+  memo,
+  parseLayer,
+});
+log("NORMALIZED_AMOUNT", {
+  txid: clean,
+  amount,
+});
 
-    return {
-      hash:
-        str(result.txHash) ?? clean,
+return {
+  hash:
+    str(result.txHash) ?? clean,
       ledger,
       amount,
       sender,
