@@ -58,6 +58,17 @@ applicationOrder: number | null;
 sourceAccount: string | null;
 memoType: string | null;
 };
+export type RpcVerificationRow = {
+  withdrawal_id: string;
+  txid: string;
+  ledger: number | null;
+  sender: string | null;
+  receiver: string | null;
+  memo: string | null;
+  network: string | null;
+  verified: boolean;
+  stage: string;
+};
 
 function log(
   tag: string,
@@ -291,4 +302,32 @@ getRpcVerificationByWithdrawalId(
     result.rows[0] ??
     null
   );
+}
+export async function getVerifiedRpcByWithdrawalId(
+  withdrawalId: string
+): Promise<RpcVerificationRow | null> {
+
+  const rs = await query<RpcVerificationRow>(
+    `
+    SELECT
+      withdrawal_id,
+      txid,
+      ledger,
+      sender,
+      receiver,
+      memo,
+      network,
+      verified,
+      stage
+    FROM rpc_verification_logs
+    WHERE withdrawal_id = $1
+      AND verified = true
+      AND stage = 'RPC_OK'
+    ORDER BY created_at DESC
+    LIMIT 1
+    `,
+    [withdrawalId]
+  );
+
+  return rs.rows[0] ?? null;
 }
