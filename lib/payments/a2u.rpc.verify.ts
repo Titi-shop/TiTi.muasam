@@ -103,6 +103,22 @@ receiverBalanceDelta:
   null,
 chainAmountConsensus:
   null,
+    expectedAmount:
+    number | null,
+  expectedReceiver:
+    string | null,
+  expectedSender:
+    string | null,
+  expectedMemo:
+    string | null,
+  amountMatch:
+    boolean | null,
+  receiverMatch:
+    boolean | null,
+  senderMatch:
+    boolean | null,
+  memoMatch:
+    boolean | null,
     raw: null,
   };
 }
@@ -115,7 +131,26 @@ export async function verifyA2UWithdrawal(
     withdrawalId,
     txid,
   });
+const amountMatch =
+  rpc.amount !== null &&
+  Math.abs(
+    rpc.amount -
+    expectedAmount
+  ) < 0.00000001;
 
+const senderMatch =
+  rpc.sender?.toLowerCase() ===
+  APP_MERCHANT_WALLET.toLowerCase();
+
+const receiverMatch =
+  rpc.receiver?.toLowerCase() ===
+  withdrawal.withdraw_wallet.toLowerCase();
+
+const memoMatch =
+  !withdrawal.pi_payment_id
+    ? true
+    : rpc.memo ===
+      withdrawal.pi_payment_id;
   const withdrawal =
     await getWalletWithdrawalById(
       withdrawalId
@@ -345,7 +380,118 @@ console.log(
       "MEMO_MISMATCH"
     );
   }
+await insertA2URpcLog({
+  withdrawalId,
+  piPaymentId:
+    withdrawal.pi_payment_id,
+  txid,
 
+  verified: true,
+  stage: "RPC_OK",
+  reason: "NONE",
+
+  amount: rpc.amount,
+  expectedAmount,
+
+  sender: rpc.sender,
+  receiver: rpc.receiver,
+
+  expectedReceiver:
+    withdrawal.withdraw_wallet,
+
+  expectedSender:
+    APP_MERCHANT_WALLET,
+
+  amountMatch,
+  receiverMatch,
+  senderMatch,
+
+  expectedMemo:
+    withdrawal.pi_payment_id,
+
+  memoMatch,
+  memoFound:
+    rpc.memo !== null,
+
+  network: "Pi Testnet",
+
+  verificationVersion: 1,
+  verificationMethod:
+    "RPC",
+
+  verificationHash:
+    rpc.hash,
+
+  ledger:
+    rpc.ledger,
+
+  txStatus:
+    rpc.txStatus,
+
+  chainReference:
+    rpc.hash,
+
+  rpcReachable:
+    rpc.rpcReachable,
+
+  confirmed:
+    rpc.confirmed,
+
+  parseLayer:
+    rpc.debug.parseLayer,
+
+  hasMeta:
+    rpc.debug.hasMeta,
+
+  hasEvents:
+    rpc.debug.hasEvents,
+
+  senderFound:
+    rpc.debug.senderFound,
+
+  receiverFound:
+    rpc.debug.receiverFound,
+
+  amountFound:
+    rpc.debug.amountFound,
+
+  feeStroops: null,
+  feePi: null,
+
+  latestLedger: null,
+  oldestLedger: null,
+  applicationOrder: null,
+
+  chainPaymentAmount,
+  chainEventAmount,
+
+  senderBalanceDelta,
+  receiverBalanceDelta,
+  chainAmountConsensus,
+  verificationSnapshot: {
+    amountMatch,
+    senderMatch,
+    receiverMatch,
+    memoMatch,
+  },
+
+  sourceAccount:
+    rpc.sender,
+
+  memoType:
+    rpc.memo
+      ? "text"
+      : null,
+
+  memo:
+    rpc.memo,
+
+  createdAt:
+    rpc.createdAt,
+
+  payload:
+    rpc.raw,
+});
   return {
     verified: true,
     stage: "RPC_OK",
