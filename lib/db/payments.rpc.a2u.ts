@@ -250,3 +250,45 @@ verification_snapshot,
     txid: input.txid,
   });
 }
+export async function
+getRpcVerificationByTxid(
+  txid: string
+) {
+  const result =
+    await query(
+      `
+      SELECT *
+      FROM rpc_verification_logs
+      WHERE txid = $1
+      LIMIT 1
+      `,
+      [txid]
+    );
+
+  return (
+    result.rows[0] ??
+    null
+  );
+}
+
+export async function
+getRpcVerificationByWithdrawalId(
+  withdrawalId: string
+) {
+  const result =
+    await query(
+      `
+      SELECT *
+      FROM rpc_verification_logs
+      WHERE withdrawal_id = $1
+      ORDER BY created_at DESC
+      LIMIT 1
+      `,
+      [withdrawalId]
+    );
+
+  return (
+    result.rows[0] ??
+    null
+  );
+}
