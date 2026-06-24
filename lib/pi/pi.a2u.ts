@@ -471,54 +471,24 @@ export async function submitA2UPayment(
     submitResult
   );
 
-  return {
-  txid: String(
+const txid =
+  String(
     submitResult.id
-  ),
+  );
 
-  ledger:
-    submitResult.ledger
-      ? Number(
-          submitResult.ledger
-        )
-      : null,
-
-  memo:
-    typeof submitResult.memo ===
-    "string"
-      ? submitResult.memo
-      : payment.identifier,
-
-  fee:
-    submitResult.fee_charged
-      ? String(
-          submitResult.fee_charged
-        )
-      : null,
-
-  fromAddress:
-    submitResult.source_account,
-  toAddress:
-    payment.to_address,
-  network:
-    "Pi Testnet",
-};
-  const rpc =
+const rpc =
   await verifyA2UWithdrawal(
     withdrawalId,
     txid
   );
 
-vlog(
-  "RPC_VERIFY_RESULT",
-  rpc
-);
-  if (!rpc.verified) {
+if (!rpc.verified) {
   throw new Error(
     `RPC_VERIFY_FAILED:${rpc.reason}`
   );
 }
-  await markWithdrawalCompleted(
+
+await markWithdrawalCompleted(
   withdrawalId,
   txid,
   rpc.ledger ?? undefined,
@@ -528,6 +498,23 @@ vlog(
   rpc.receiver ?? undefined,
   undefined
 );
+
+return {
+  txid,
+  ledger:
+    rpc.ledger,
+  memo:
+    rpc.memo,
+  fee: null,
+  fromAddress:
+    rpc.sender ??
+    undefined,
+  toAddress:
+    rpc.receiver ??
+    undefined,
+  network:
+    "Pi Testnet",
+};
 }
 /* =====================================================
    CANCEL PAYMENT
