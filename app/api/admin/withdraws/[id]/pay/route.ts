@@ -13,7 +13,6 @@ import {
 import {
   getWalletWithdrawalById,
   markWithdrawalProcessing,
-  markWithdrawalCompleted,
   markWithdrawalFailed,
 } from "@/lib/db/wallet/wallet.withdraw";
 export const runtime = "nodejs";
