@@ -154,9 +154,9 @@ verification_snapshot,
   $40,$41,$42,$43,$44,
   $45::jsonb,
   $46,$47,$48,$49,
-  ::jsonb,
-  NOW(),
-  NOW()
+$50::jsonb,
+NOW(),
+NOW()
   )
   ON CONFLICT (txid)
   DO UPDATE SET
@@ -296,34 +296,33 @@ verification_snapshot =
 
     input.amount,
     input.expectedAmount,
-
     input.sender,
-    input.receiver,
-    input.expectedReceiver,
+input.receiver,
+input.expectedReceiver,
+input.expectedSender,
+input.amountMatch,
+input.receiverMatch,
+input.senderMatch,
+input.expectedMemo,
+input.memoMatch,
+input.memoFound,
+input.network,
 
-    input.amountMatch,
-    input.receiverMatch,
-    input.senderMatch,
+input.verificationVersion,
+input.verificationMethod,
 
-    input.verificationHash,
-
+input.verificationHash,
     input.ledger,
-
     input.txStatus,
     input.chainReference,
-
     input.rpcReachable,
     input.confirmed,
-
     input.parseLayer,
-
     input.hasMeta,
     input.hasEvents,
-
     input.senderFound,
     input.receiverFound,
     input.amountFound,
-
     input.feeStroops,
     input.latestLedger,
     input.oldestLedger,
