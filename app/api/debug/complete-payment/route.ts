@@ -8,8 +8,8 @@ import {
 export async function GET() {
   try {
     await completeA2UPayment(
-      "CP0gwhA1bROOpxwQQoWUc7Y0hAAH",
-      "8804d7a417b556fbddf7f2ea63c3676ab23424453022aeaae98788bd210b1906"
+      "MJyx1oJzbtLxkUYi5cJoLkQ86WEV",
+      "8c527c6b07cc3e8a00a19a9cf5c6d61be7b22fb4cbcd9f6465a3c4abb101bb4b"
     );
 
     return NextResponse.json({
