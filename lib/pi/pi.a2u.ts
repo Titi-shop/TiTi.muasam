@@ -9,6 +9,7 @@ import {
   markWithdrawalCompleted,
   getWalletWithdrawalById,
   markWithdrawalProcessing,
+  markWithdrawalFailed,
 } from "@/lib/db/wallet/wallet.withdraw";
 
 import {
@@ -672,4 +673,13 @@ export async function payWithdrawal(
     piPaymentId,
     txid: tx.txid,
   };
+}
+catch (error) {
+   if (processingStarted) {
+      await markWithdrawalFailed(
+         withdrawalId,
+         String(error)
+      );
+   }
+   throw error;
 }
