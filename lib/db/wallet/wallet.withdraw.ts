@@ -189,25 +189,7 @@ export async function getWalletWithdrawals(): Promise<
     await query<WalletWithdrawalRow>(
       `
       SELECT
-  id,
-  user_id,
-  amount,
-  currency,
-  withdraw_wallet,
-  status,
-  requested_at,
-  pi_payment_id,
-  blockchain_txid,
-
-  blockchain_ledger,
-  blockchain_memo,
-  blockchain_fee,
-  pi_payment_memo,
-
-  paid_at,
-  completed_at,
-  fail_reason,
-  retry_count
+  *
 FROM wallet_withdrawals
 ORDER BY requested_at DESC
       
@@ -625,28 +607,15 @@ export async function getWalletWithdrawalById(
   );
 
   const rs =
-    await query<WalletWithdrawalRow>(
-      `
-      SELECT
-        id,
-        user_id,
-        amount,
-        currency,
-        withdraw_wallet,
-        status,
-        requested_at,
-        pi_payment_id,
-blockchain_txid,
-paid_at,
-completed_at,
-fail_reason,
-retry_count
-      FROM wallet_withdrawals
-      WHERE id = $1
-      LIMIT 1
-      `,
-      [withdrawalId]
-    );
+  await query<WalletWithdrawalRow>(
+    `
+    SELECT *
+    FROM wallet_withdrawals
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [withdrawalId]
+  );
 
   vlog(
     "GET_WITHDRAWAL_RESULT",
@@ -666,19 +635,7 @@ export async function getWithdrawalByPaymentId(
     await query<WalletWithdrawalRow>(
       `
       SELECT
-        id,
-        user_id,
-        amount,
-        currency,
-        withdraw_wallet,
-        status,
-        requested_at,
-        pi_payment_id,
-        blockchain_txid,
-        paid_at,
-        completed_at,
-        fail_reason,
-        retry_count
+        *
       FROM wallet_withdrawals
       WHERE pi_payment_id = $1
       LIMIT 1
@@ -699,19 +656,7 @@ export async function getProcessingWithdrawals(): Promise<
     await query<WalletWithdrawalRow>(
       `
       SELECT
-        id,
-        user_id,
-        amount,
-        currency,
-        withdraw_wallet,
-        status,
-        requested_at,
-        pi_payment_id,
-        blockchain_txid,
-        paid_at,
-        completed_at,
-        fail_reason,
-        retry_count
+        *
       FROM wallet_withdrawals
       WHERE status = 'PROCESSING'
       ORDER BY requested_at ASC
