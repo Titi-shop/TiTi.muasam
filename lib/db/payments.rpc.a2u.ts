@@ -76,11 +76,6 @@ export async function insertA2URpcLog(
     withdrawalId: input.withdrawalId,
     txid: input.txid,
   });
-
-log("INSERT_START", {
-  withdrawalId: input.withdrawalId,
-  txid: input.txid,
-});
   const values = [
   input.withdrawalId,
   input.piPaymentId,
@@ -137,18 +132,7 @@ log("INSERT_START", {
 
   input.sourceAccount,
   input.memoType,
-
   input.memo,
-
-  input.expectedMemo,
-  input.memoMatch,
-  input.memoFound,
-
-  input.network,
-
-  input.verificationVersion,
-  input.verificationMethod,
-
   input.createdAt,
 
   JSON.stringify(input.payload ?? {}),
@@ -430,18 +414,7 @@ input.verificationHash,
 
     input.sourceAccount,
     input.memoType,
-
     input.memo,
-
-input.expectedMemo,
-input.memoMatch,
-input.memoFound,
-
-input.network,
-
-input.verificationVersion,
-input.verificationMethod,
-
 input.createdAt,
 
 JSON.stringify(
