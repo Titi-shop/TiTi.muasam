@@ -82,56 +82,39 @@ export async function insertA2URpcLog(
   INSERT INTO rpc_verification_logs (
     withdrawal_id,
     pi_payment_id,
-
     txid,
     verified,
-
     stage,
     reason,
-
     amount,
     expected_amount,
-
     sender,
     receiver,
     expected_receiver,
 expected_sender,
-
 amount_match,
 receiver_match,
 sender_match,
-
 expected_memo,
 memo_match,
 memo_found,
-
 network,
-
 verification_version,
 verification_method,
-
     verification_hash,
-
     ledger,
-
     tx_status,
     chain_reference,
-
     rpc_reachable,
     confirmed,
-
     parse_layer,
-
     has_meta,
     has_events,
-
     sender_found,
     receiver_found,
     amount_found,
-
     fee_stroops,
 fee_pi,
-
 latest_ledger,
 oldest_ledger,
 application_order,
@@ -145,47 +128,36 @@ verification_snapshot,
     memo_type,
     memo,
     created_at_chain,
-
     payload,
-
     created_at,
     updated_at
   )
   VALUES (
-    $1,$2,
+  $1,$2,
+  $3,$4,
+  $5,$6,
+  $7,$8,
+  $9,$10,$11,$12,
+  $13,$14,$15,
+  $16,$17,$18,
+  $19,
+  $20,$21,
+  $22,
+  $23,
+  $24,$25,$26,
+  $27,$28,
+  $29,
+  $30,$31,
+  $32,$33,$34,
+  $35,$36,
+  $37,$38,$39,
+  $40,$41,$42,$43,$44,
+  $45::jsonb,
+  $46,$47,$48,$49,
+  $50::jsonb,
 
-    $3,$4,
-
-    $5,$6,
-
-    $7,$8,
-
-   $9,$10,$11,$12,
-
-$13,$14,$15,
-
-$16,$17,$18,
-
-$19,
-
-$20,
-
-$21,$22,
-
-    $23,
-
-    $24,$25,$26,
-
-    $27,$28,$29,$30,
-
-    $31,$32,
-
-    $33,$34,
-
-    $35,$36,$37,$38,$39::jsonb,
-
-    NOW(),
-    NOW()
+  NOW(),
+  NOW()
   )
   ON CONFLICT (txid)
   DO UPDATE SET
