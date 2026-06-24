@@ -77,79 +77,84 @@ export async function insertA2URpcLog(
     txid: input.txid,
   });
   const values = [
-  input.withdrawalId,
-  input.piPaymentId,
+  input.withdrawalId,           // $1
+  input.piPaymentId,            // $2
 
-  input.txid,
-  input.verified,
+  input.txid,                   // $3
+  input.verified,               // $4
 
-  input.stage,
-  input.reason,
+  input.stage,                  // $5
+  input.reason,                 // $6
 
-  input.amount,
-  input.expectedAmount,
+  input.amount,                 // $7
+  input.expectedAmount,         // $8
 
-  input.sender,
-  input.receiver,
-  input.expectedReceiver,
-  input.expectedSender,
+  input.sender,                 // $9
+  input.receiver,               // $10
 
-  input.amountMatch,
-  input.receiverMatch,
-  input.senderMatch,
+  input.expectedReceiver,       // $11
+  input.expectedSender,         // $12
 
-  input.expectedMemo,
-  input.memoMatch,
-  input.memoFound,
+  input.amountMatch,            // $13
+  input.receiverMatch,          // $14
+  input.senderMatch,            // $15
 
-  input.network,
+  input.expectedMemo,           // $16
+  input.memoMatch,              // $17
+  input.memoFound,              // $18
 
-  input.verificationVersion,
-  input.verificationMethod,
+  input.network,                // $19
 
-  input.verificationHash,
+  input.verificationVersion,    // $20
+  input.verificationMethod,     // $21
 
-  input.ledger,
-  input.txStatus,
-  input.chainReference,
+  input.verificationHash,       // $22
 
-  input.rpcReachable,
-  input.confirmed,
+  input.ledger,                 // $23
+  input.txStatus,               // $24
+  input.chainReference,         // $25
 
-  input.parseLayer,
+  input.rpcReachable,           // $26
+  input.confirmed,              // $27
 
-  input.hasMeta,
-  input.hasEvents,
+  input.parseLayer,             // $28
 
-  input.senderFound,
-  input.receiverFound,
-  input.amountFound,
+  input.hasMeta,                // $29
+  input.hasEvents,              // $30
 
-  input.feeStroops,
-  input.latestLedger,
-  input.oldestLedger,
-  input.applicationOrder,
+  input.senderFound,            // $31
+  input.receiverFound,          // $32
+  input.amountFound,            // $33
 
-  input.sourceAccount,
-  input.memoType,
-  input.memo,
-  input.createdAt,
+  input.feeStroops,             // $34
+  input.feePi,                  // $35
 
-  JSON.stringify(input.payload ?? {}),
+  input.latestLedger,           // $36
+  input.oldestLedger,           // $37
 
-  input.feePi,
+  input.applicationOrder,       // $38
 
-  input.chainPaymentAmount,
-  input.chainEventAmount,
+  input.chainPaymentAmount,     // $39
+  input.chainEventAmount,       // $40
 
-  input.senderBalanceDelta,
-  input.receiverBalanceDelta,
+  input.senderBalanceDelta,     // $41
+  input.receiverBalanceDelta,   // $42
 
-  input.chainAmountConsensus,
+  input.chainAmountConsensus,   // $43
 
   JSON.stringify(
     input.verificationSnapshot ?? {}
-  ),
+  ),                            // $44
+
+  input.sourceAccount,          // $45
+  input.memoType,               // $46
+
+  input.memo,                   // $47
+  input.createdAt,              // $48
+
+  JSON.stringify(
+    input.payload ?? {}
+  ),                            // $49
 ];
 
 console.log(
@@ -213,8 +218,6 @@ verification_snapshot,
     memo,
     created_at_chain,
     payload,
-    created_at,
-    updated_at
   )
   VALUES (
   $1,$2,
@@ -235,207 +238,12 @@ verification_snapshot,
   $32,$33,$34,
   $35,$36,
   $37,$38,$39,
-  $40,$41,$42,$43,$44,
-  $45::jsonb,
-  $46,$47,$48,$49,
-$50::jsonb,
-NOW(),
-NOW()
+  $40,$41,$42,$43,
+  $44,::jsonb,
+  $45,$46,$47,$48,
+  $49::jsonb,
   )
-  ON CONFLICT (txid)
-  DO UPDATE SET
-
-    verified = EXCLUDED.verified,
-
-    stage = EXCLUDED.stage,
-    reason = EXCLUDED.reason,
-
-    amount = EXCLUDED.amount,
-    expected_amount =
-      EXCLUDED.expected_amount,
-
-    sender = EXCLUDED.sender,
-    receiver = EXCLUDED.receiver,
-
-    expected_receiver =
-      EXCLUDED.expected_receiver,
-expected_sender =
-  EXCLUDED.expected_sender,
-    amount_match =
-      EXCLUDED.amount_match,
-
-    receiver_match =
-      EXCLUDED.receiver_match,
-
-    sender_match =
-      EXCLUDED.sender_match,
-expected_memo =
-  EXCLUDED.expected_memo,
-
-memo_match =
-  EXCLUDED.memo_match,
-
-memo_found =
-  EXCLUDED.memo_found,
-
-network =
-  EXCLUDED.network,
-
-verification_version =
-  EXCLUDED.verification_version,
-
-verification_method =
-  EXCLUDED.verification_method,
   
-    verification_hash =
-      EXCLUDED.verification_hash,
-
-    ledger = EXCLUDED.ledger,
-
-    tx_status =
-      EXCLUDED.tx_status,
-
-    chain_reference =
-      EXCLUDED.chain_reference,
-
-    rpc_reachable =
-      EXCLUDED.rpc_reachable,
-
-    confirmed =
-      EXCLUDED.confirmed,
-
-    parse_layer =
-      EXCLUDED.parse_layer,
-
-    has_meta =
-      EXCLUDED.has_meta,
-
-    has_events =
-      EXCLUDED.has_events,
-
-    sender_found =
-      EXCLUDED.sender_found,
-
-    receiver_found =
-      EXCLUDED.receiver_found,
-
-    amount_found =
-      EXCLUDED.amount_found,
-
-    fee_stroops =
-      EXCLUDED.fee_stroops,
-     fee_pi =
-       EXCLUDED.fee_pi,
-    latest_ledger =
-      EXCLUDED.latest_ledger,
-
-    oldest_ledger =
-      EXCLUDED.oldest_ledger,
-
-    application_order =
-      EXCLUDED.application_order,
-chain_payment_amount =
-  EXCLUDED.chain_payment_amount,
-
-chain_event_amount =
-  EXCLUDED.chain_event_amount,
-
-sender_balance_delta =
-  EXCLUDED.sender_balance_delta,
-
-receiver_balance_delta =
-  EXCLUDED.receiver_balance_delta,
-
-chain_amount_consensus =
-  EXCLUDED.chain_amount_consensus,
-
-verification_snapshot =
-  EXCLUDED.verification_snapshot,
-    source_account =
-      EXCLUDED.source_account,
-
-    memo_type =
-      EXCLUDED.memo_type,
-
-    memo =
-      EXCLUDED.memo,
-
-    created_at_chain =
-      EXCLUDED.created_at_chain,
-
-    payload =
-      EXCLUDED.payload,
-
-    updated_at = NOW()
-  `,
-  [
-    input.withdrawalId,
-    input.piPaymentId,
-
-    input.txid,
-    input.verified,
-
-    input.stage,
-    input.reason,
-
-    input.amount,
-    input.expectedAmount,
-    input.sender,
-input.receiver,
-input.expectedReceiver,
-input.expectedSender,
-input.amountMatch,
-input.receiverMatch,
-input.senderMatch,
-input.expectedMemo,
-input.memoMatch,
-input.memoFound,
-input.network,
-
-input.verificationVersion,
-input.verificationMethod,
-
-input.verificationHash,
-    input.ledger,
-    input.txStatus,
-    input.chainReference,
-    input.rpcReachable,
-    input.confirmed,
-    input.parseLayer,
-    input.hasMeta,
-    input.hasEvents,
-    input.senderFound,
-    input.receiverFound,
-    input.amountFound,
-    input.feeStroops,
-    input.latestLedger,
-    input.oldestLedger,
-    input.applicationOrder,
-
-    input.sourceAccount,
-    input.memoType,
-    input.memo,
-input.createdAt,
-
-JSON.stringify(
-  input.payload ?? {}
-),
-
-input.feePi,
-
-input.chainPaymentAmount,
-input.chainEventAmount,
-
-input.senderBalanceDelta,
-input.receiverBalanceDelta,
-
-input.chainAmountConsensus,
-
-JSON.stringify(
-  input.verificationSnapshot ??
-    {}
-),
-  ]
 );
 
   log("INSERT_DONE", {
