@@ -125,11 +125,7 @@ export async function verifyA2UWithdrawal(
     txid,
   });
 
-const memoMatch =
-  !withdrawal.pi_payment_id
-    ? true
-    : rpc.memo ===
-      withdrawal.pi_payment_id;
+
   const withdrawal =
     await getWalletWithdrawalById(
       withdrawalId
