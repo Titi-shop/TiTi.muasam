@@ -322,6 +322,85 @@ const rpc =
     .digest("hex");
 const raw =
   rpc.raw as RpcRawTransaction;
+    /* =====================
+   RPC AUDIT FIELDS
+===================== */
+
+const network =
+  tx.network ??
+  "PI_TESTNET";
+
+const expectedSender =
+  tx.fromAddress;
+
+const expectedMemo =
+  piPaymentId;
+
+const memoValue =
+  raw?.envelopeJson
+    ?.tx
+    ?.tx
+    ?.memo?.text ??
+  raw?.envelopeJson
+    ?.tx
+    ?.tx
+    ?.memo?.id ??
+  raw?.envelopeJson
+    ?.tx
+    ?.tx
+    ?.memo?.hash ??
+  null;
+
+const memoFound =
+  memoValue !== null;
+
+const memoMatch =
+  memoValue ===
+  expectedMemo;
+
+const senderMatch =
+  rpc.sender?.toLowerCase() ===
+  expectedSender.toLowerCase();
+
+const verificationMethod =
+  "RPC_GET_TRANSACTION_V6";
+
+const feeStroops =
+  raw?.resultJson?.fee_charged
+    ? Number(
+        raw.resultJson
+          .fee_charged
+      )
+    : null;
+
+const feePi =
+  feeStroops !== null
+    ? feeStroops /
+      10000000
+    : null;
+
+const verificationSnapshot =
+{
+  txid,
+
+  ledger:
+    rpc.ledger,
+
+  status:
+    rpc.txStatus,
+
+  amount:
+    rpc.amount,
+
+  sender:
+    rpc.sender,
+
+  receiver:
+    rpc.receiver,
+
+  memo:
+    memoValue,
+};
 vlog(
   "RPC_VERIFY_RESULT",
   rpc
@@ -356,15 +435,18 @@ console.log(
 
   expectedReceiver:
     withdrawal.withdraw_wallet,
-
+    expectedSender,
   amountMatch:
-    rpc.amount !== null,
+  rpc.amount !== null &&
+  Number(
+    withdrawal.amount
+  ) === rpc.amount,
 
   receiverMatch:
     rpc.receiver?.toLowerCase() ===
     withdrawal.withdraw_wallet.toLowerCase(),
 
-  senderMatch: true,
+  senderMatch,
 
   verificationHash,
 
@@ -425,9 +507,46 @@ memoType:
         : null,
 
   memo: rpc.memo,
-  createdAt: rpc.createdAt,
 
-  payload: rpc.raw,
+network,
+
+expectedSender,
+
+expectedMemo,
+
+memoMatch,
+
+memoFound,
+
+verificationVersion:
+  1,
+
+verificationMethod,
+
+feePi,
+
+verificationSnapshot,
+
+chainPaymentAmount:
+  null,
+
+chainEventAmount:
+  null,
+
+senderBalanceDelta:
+  null,
+
+receiverBalanceDelta:
+  null,
+
+chainAmountConsensus:
+  null,
+
+createdAt:
+  rpc.createdAt,
+
+payload:
+  rpc.raw,
 });
 vlog(
   "RPC_LOG_SAVED",
