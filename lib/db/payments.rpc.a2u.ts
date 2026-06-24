@@ -154,8 +154,7 @@ verification_snapshot,
   $40,$41,$42,$43,$44,
   $45::jsonb,
   $46,$47,$48,$49,
-  $50::jsonb,
-
+  ::jsonb,
   NOW(),
   NOW()
   )
