@@ -268,12 +268,6 @@ const tx =
 
 const txid =
   tx.txid;
-
-if (!rpc.verified) {
-  throw new Error(
-    `RPC_VERIFY_FAILED:${rpc.reason}`
-  );
-}
 vlog(
   "SUBMIT_DONE",
   {
@@ -288,30 +282,6 @@ await completeA2UPayment(
   "COMPLETE_DONE",
   {
     piPaymentId,
-    txid,
-  }
-);
-
-await markWithdrawalCompleted(
-  withdrawal.id,
-  txid,
-  rpc.ledger ??
-    tx.ledger,
-  rpc.memo ??
-    tx.memo,
-  tx.fee,
-  rpc.sender ??
-    tx.fromAddress,
-  rpc.receiver ??
-    tx.toAddress,
-  tx.network
-);
-
-vlog(
-  "MARK_COMPLETED_DONE",
-  {
-    withdrawalId:
-      withdrawal.id,
     txid,
   }
 );
