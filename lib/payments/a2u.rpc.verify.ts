@@ -103,22 +103,15 @@ receiverBalanceDelta:
   null,
 chainAmountConsensus:
   null,
-    expectedAmount:
-    number | null,
-  expectedReceiver:
-    string | null,
-  expectedSender:
-    string | null,
-  expectedMemo:
-    string | null,
-  amountMatch:
-    boolean | null,
-  receiverMatch:
-    boolean | null,
-  senderMatch:
-    boolean | null,
-  memoMatch:
-    boolean | null,
+    expectedAmount: null,
+expectedReceiver: null,
+expectedSender: null,
+expectedMemo: null,
+
+amountMatch: null,
+receiverMatch: null,
+senderMatch: null,
+memoMatch: null,
     raw: null,
   };
 }
@@ -131,20 +124,6 @@ export async function verifyA2UWithdrawal(
     withdrawalId,
     txid,
   });
-const amountMatch =
-  rpc.amount !== null &&
-  Math.abs(
-    rpc.amount -
-    expectedAmount
-  ) < 0.00000001;
-
-const senderMatch =
-  rpc.sender?.toLowerCase() ===
-  APP_MERCHANT_WALLET.toLowerCase();
-
-const receiverMatch =
-  rpc.receiver?.toLowerCase() ===
-  withdrawal.withdraw_wallet.toLowerCase();
 
 const memoMatch =
   !withdrawal.pi_payment_id
@@ -168,6 +147,20 @@ const memoMatch =
     await getRpcTransaction(
       txid
     );
+  const amountMatch =
+  rpc.amount !== null &&
+  Math.abs(
+    rpc.amount -
+    expectedAmount
+  ) < 0.00000001;
+
+const senderMatch =
+  rpc.sender?.toLowerCase() ===
+  APP_MERCHANT_WALLET.toLowerCase();
+
+const receiverMatch =
+  rpc.receiver?.toLowerCase() ===
+  withdrawal.withdraw_wallet.toLowerCase();
 const raw =
   rpc.raw as
     | Record<
