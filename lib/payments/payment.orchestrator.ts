@@ -42,8 +42,7 @@ verifyStatus: "manual_review",
 
 function failResult(
   amount: number,
-  rpcAudited: boolean,
-  source: string
+  rpcAudited: boolean
 ): PaymentSettlementResult {
   return {
     ok: false,
@@ -51,15 +50,14 @@ function failResult(
     amount,
     piCompleted: false,
     rpcAudited,
-    source,
+  
   };
 }
 
 function successResult(
   orderId: string | null,
   amount: number,
-  rpcAudited: boolean,
-  source: string
+  rpcAudited: boolean
 ): PaymentSettlementResult {
   return {
     ok: true,
@@ -67,7 +65,7 @@ function successResult(
     amount,
     piCompleted: true,
     rpcAudited,
-    source,
+    
   };
 }
 
@@ -296,10 +294,8 @@ function parseReconcileRequestBody(raw: ReconcileRequestBody): {
 export async function runPaymentSettlementFromRequest(input: {
   rawBody: unknown;
   userId: string;
-  source?: string;
 }): Promise<PaymentSettlementResult | null> {
   console.log("[PAYMENT][SETTLEMENT] REQUEST_START", {
-    source: input.source,
     userId: input.userId,
   });
 
