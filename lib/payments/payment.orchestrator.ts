@@ -160,7 +160,7 @@ export async function runPaymentSettlement({
       code: guard.code,
     });
 
-    return failResult(0, false, source);
+    return failResult(0, false);
   }
 
   /* =====================================================
@@ -182,13 +182,18 @@ export async function runPaymentSettlement({
       paymentIntentId,
     });
 
-    return failResult(guard.amount ?? 0, false, source);
+    return failResult(guard.amount ?? 0, false);
   }
 
   /* =====================================================
      4. VERIFY RPC
   ===================================================== */
-
+const rpcVerified =
+  await verifyRpcPaymentForReconcile({
+    paymentIntentId,
+    piPaymentId,
+    txid,
+  });
     if (!rpcVerified.ok) {
   console.error(
     "[PAYMENT][SETTLEMENT] RPC_VERIFY_FAILED",
@@ -242,7 +247,7 @@ export async function runPaymentSettlement({
     error: e,
   });
 
-  return failResult(0, false, source);
+  return failResult(0, false);
 }
 }
 
@@ -326,6 +331,5 @@ export async function runPaymentSettlementFromRequest(input: {
     piPaymentId: parsed.piPaymentId,
     txid: parsed.txid,
     userId: input.userId,
-    source: input.source ?? "reconcile-api",
   });
 }
