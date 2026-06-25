@@ -637,5 +637,29 @@ export async function getRpcVerificationLog(
     reason: row.reason,
   });
 
-  return row;
+  return {
+  ...row,
+
+  txStatus: row.tx_status,
+  chainReference: row.chain_reference,
+
+  expectedAmount: row.expected_amount,
+  expectedReceiver: row.expected_receiver,
+
+  amountMatch: row.amount_match,
+  receiverMatch: row.receiver_match,
+  senderMatch: row.sender_match,
+
+  rpcReachable: row.rpc_reachable,
+
+  parseLayer: row.parse_layer,
+  hasMeta: row.has_meta,
+  hasEvents: row.has_events,
+
+  senderFound: row.sender_found,
+  receiverFound: row.receiver_found,
+  amountFound: row.amount_found,
+
+  createdAt: row.created_at_chain,
+};
 }
