@@ -29,7 +29,17 @@ import {
 export async function refundBuyer(
   input: RefundBuyerInput
 ): Promise<void> {
+if (!input.escrowId) {
+  throw new Error("ESCROW_ID_REQUIRED");
+}
 
+if (!input.buyerId) {
+  throw new Error("BUYER_ID_REQUIRED");
+}
+
+if (input.amount <= 0) {
+  throw new Error("INVALID_REFUND_AMOUNT");
+}
   /* ===================================================
      1. CREATE REFUND LEDGER
   =================================================== */
