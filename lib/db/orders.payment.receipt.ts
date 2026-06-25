@@ -1,5 +1,6 @@
 import { withTransaction } from "@/lib/db";
 import type { PoolClient } from "pg";
+import { getRpcVerificationLog } from "@/lib/db/payments.rpc";
 import type {
   UpsertPaymentReceiptInput,
 } from "./orders.payment.types";
@@ -29,7 +30,7 @@ export async function upsertPaymentReceipt(
   const {
     paymentIntentId,
     buyerId,
-   orderId,
+    orderId,
     expectedAmount,
     verifiedAmount,
 
@@ -40,8 +41,14 @@ export async function upsertPaymentReceipt(
     escrowId,
     sellerCreditId,
     piPayload,
-    rpcPayload,
   } = input;
+
+  const rpcPayload =
+    await getRpcVerificationLog(paymentIntentId);
+
+  if (!rpcPayload) {
+    throw new Error("RPC_LOG_NOT_FOUND");
+  }
 
   try {
   await client.query(
