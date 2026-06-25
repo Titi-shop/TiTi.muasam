@@ -496,8 +496,8 @@ if (!rpcTx.rpcReachable) {
   const txStatus =
   rpcTx.txStatus ??
   (rpcTx.confirmed
-    ? "confirmed"
-    : "unconfirmed");
+    ? "SUCCESS"
+    : "FAILED");
 
   await insertRpcLog({
     paymentIntentId,
