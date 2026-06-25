@@ -504,21 +504,8 @@ if (!verifiedLog.settlement_ready) {
 }
 
 await markWithdrawalCompleted(
-  withdrawalId,
-  verifiedLog.txid,
-  verifiedLog.ledger ??
-    undefined,
-  verifiedLog.memo ??
-    undefined,
-  undefined,
-  verifiedLog.sender ??
-    undefined,
-  verifiedLog.receiver ??
-    undefined,
-  verifiedLog.network ??
-    undefined
+    withdrawalId
 );
-
 return {
   txid:
     verifiedLog.txid,
