@@ -607,15 +607,18 @@ export async function runPaymentSettlement({
   console.log("[PAYMENT][SETTLEMENT] FINALIZE_ORDER_START", {
     paymentIntentId,
   });
-    const latestIntent =
+    const intentRow =
   await getPaymentIntent(
     paymentIntentId
   );
 
-if (
-  latestIntent?.status ===
-  "paid"
-) {
+if (!intentRow) {
+  throw new Error(
+    "INTENT_NOT_FOUND_FINALIZE"
+  );
+}
+
+if (intentRow.status === "paid") {
   console.log(
     "[PAYMENT][SETTLEMENT] ALREADY_FINALIZED"
   );
@@ -623,13 +626,14 @@ if (
   return successResult(
     null,
     Number(
-      latestIntent.total_amount
+      intentRow.total_amount
     ),
     rpcVerified.ok,
     source
   );
 }
-  await writePaymentAudit({
+
+await writePaymentAudit({
   paymentIntentId,
   eventCode: "FINALIZE_STARTED",
   stage: "FINALIZE",
@@ -643,11 +647,6 @@ if (
     step: "FINALIZE_ORDER_FROM_INTENT",
   },
 });
-    const intentRow = await getPaymentIntent(paymentIntentId);
-
-if (!intentRow) {
-  throw new Error("INTENT_NOT_FOUND_FINALIZE");
-}
   const paid = await finalizePaidOrderFromIntent({
   paymentIntentId,
   piPaymentId,
