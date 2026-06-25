@@ -68,6 +68,14 @@ export type RpcVerificationRow = {
   network: string | null;
   verified: boolean;
   stage: string;
+  amount: number | null;
+  expected_amount: number | null;
+  amount_match: boolean | null;
+  sender_match: boolean | null;
+  receiver_match: boolean | null;
+  memo_match: boolean | null;
+  chain_amount_consensus: boolean | null;
+  settlement_ready: boolean;
 };
 
 function log(
@@ -310,15 +318,23 @@ export async function getVerifiedRpcByWithdrawalId(
   const rs = await query<RpcVerificationRow>(
     `
     SELECT
-      withdrawal_id,
-      txid,
-      ledger,
-      sender,
-      receiver,
-      memo,
-      network,
-      verified,
-      stage
+  withdrawal_id,
+  txid,
+  ledger,
+  sender,
+  receiver,
+  memo,
+  network,
+  amount,
+  expected_amount,
+  amount_match,
+  sender_match,
+  receiver_match,
+  memo_match,
+  chain_amount_consensus,
+  settlement_ready,
+  verified,
+  stage
     FROM rpc_verification_logs
     WHERE withdrawal_id = $1
       AND verified = true
