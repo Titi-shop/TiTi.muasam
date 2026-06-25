@@ -145,10 +145,10 @@ if (rpc.txStatus !== "SUCCESS") {
         escrow_id,
 
         payment_intent_id,
-        order_id,
-        rpc.amount,
+order_id,
+amount,
 
-        withdrawn_amount,
+withdrawn_amount,
         reversed_amount,
 
         frozen_amount,
