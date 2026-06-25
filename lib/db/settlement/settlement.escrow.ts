@@ -333,15 +333,15 @@ export async function markRpcVerified(
 const rpc =
   await getRpcVerificationLog(paymentIntentId);
 
-if (!rpc) {
-  throw new Error("RPC_LOG_NOT_FOUND");
+if (!rpc.verified) {
+  throw new Error("RPC_NOT_VERIFIED");
 }
 
 if (!rpc.confirmed) {
   throw new Error("RPC_NOT_CONFIRMED");
 }
 
-if (rpc.txstatus !== "SUCCESS") {
+if (rpc.txStatus !== "SUCCESS") {
   throw new Error("RPC_TX_FAILED");
 }
   await createSettlementEventOnce({
