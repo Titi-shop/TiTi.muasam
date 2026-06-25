@@ -1,7 +1,7 @@
 
 import { withTransaction } from "@/lib/db";
 import { createOrder } from "@/lib/db/orders.create";
-
+import { getRpcVerificationLog } from "@/lib/db/payments.rpc";
 import {
   writePaymentAudit,
 } from "@/lib/db/payments.audit";
@@ -37,16 +37,16 @@ export async function finalizePaidOrderFromIntent(
 ): Promise<FinalizePaidOrderResult> {
   return withTransaction(async (client) => {
     const {
-      paymentIntentId,
-      piPaymentId,
-      txid,
-      verifiedAmount,
-      receiverWallet,
-      piPayload,
-      rpcPayload,
-      intent,
-    } = params;
-
+  paymentIntentId,
+  piPaymentId,
+  txid,
+  verifiedAmount,
+  receiverWallet,
+  piPayload,
+  intent,
+} = params;
+const rpcPayload =
+  await getRpcVerificationLog(paymentIntentId);
     const validation =
       await validateFinalizePayment({
         client,
