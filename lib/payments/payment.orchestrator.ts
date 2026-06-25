@@ -83,7 +83,6 @@ async function safeAuditRpc(
   console.log("[PAYMENT][RPC_VERIFY] START", {
     paymentIntentId,
     txid,
-    source,
   });
 
   try {
@@ -121,8 +120,7 @@ async function safeAuditRpc(
 async function safeCompletePi(
   paymentIntentId: string,
   piPaymentId: string,
-  txid: string,
-  source: string
+  txid: string
 ): Promise<boolean> {
   console.log("[PAYMENT][PI_COMPLETE] START", {
     paymentIntentId,
@@ -161,7 +159,6 @@ export async function runPaymentSettlement({
   piPaymentId,
   txid,
   userId,
-  source,
 }: RunPaymentSettlementInput): Promise<PaymentSettlementResult> {
   try {
   console.log("[PAYMENT][SETTLEMENT] START", {
@@ -169,7 +166,6 @@ export async function runPaymentSettlement({
     piPaymentId,
     txid,
     userId,
-    source,
   });
 
   /* =====================================================
@@ -199,8 +195,7 @@ export async function runPaymentSettlement({
       return successResult(
         guard.orderId ?? null,
         guard.amount ?? 0,
-        true,
-        source
+        true
       );
     }
 
@@ -265,8 +260,7 @@ export async function runPaymentSettlement({
   const piCompleted = await safeCompletePi(
     paymentIntentId,
     piPaymentId,
-    txid,
-    source
+    txid
   );
 
   console.log("[PAYMENT][SETTLEMENT] PI_COMPLETE_RESULT", {
@@ -281,15 +275,13 @@ export async function runPaymentSettlement({
 
     return failResult(
   rpcVerified.amount ?? 0,
-  rpcVerified.ok,
-  source
+  rpcVerified.ok
 );
   }
   return successResult(
   null,
   rpcVerified.amount ?? 0,
-  rpcVerified.ok,
-  source
+  rpcVerified.ok
 );
 
   } catch (e) {
