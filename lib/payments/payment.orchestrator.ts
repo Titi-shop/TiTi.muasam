@@ -14,7 +14,6 @@ import {
   writePaymentAudit,
 } from "@/lib/db/payments.audit";
 
-import { verifyPiPaymentForReconcile } from "@/lib/db/payments.verify";
 import { verifyRpcPaymentForReconcile } from "@/lib/db/payments.rpc";
 import { piCompletePayment } from "@/lib/pi/client";
 
@@ -338,67 +337,6 @@ export async function runPaymentSettlement({
 
     return failResult(guard.amount ?? 0, false, source);
   }
-
-  /* =====================================================
-     3. VERIFY PI
-  ===================================================== */
-
-  console.log("[PAYMENT][SETTLEMENT] PI_VERIFY_START", {
-    paymentIntentId,
-    piPaymentId,
-  });
-
-  const piVerified = await verifyPiPaymentForReconcile({
-    paymentIntentId,
-    piPaymentId,
-    userId: userId ?? "",
-    txid,
-  });
-
-  console.log("[PAYMENT][SETTLEMENT] PI_VERIFY_RESULT", {
-    paymentIntentId,
-    ok: piVerified.ok,
-    amount: piVerified.verifiedAmount,
-    receiverWallet: piVerified.receiverWallet,
-  });
-
-  if (!piVerified.ok) {
-    console.error("[PAYMENT][SETTLEMENT] PI_VERIFY_FAILED", {
-      paymentIntentId,
-    });
-
-    await auditManualReview(paymentIntentId, "PI_VERIFY_FAIL", {
-      source,
-      txid,
-      piPaymentId,
-    });
-
-    return failResult(0, false, source);
-  }
-
-  await auditPiVerified(paymentIntentId, {
-  source,
-  txid,
-  piPaymentId,
-  actorId: userId,
-  amount: piVerified.verifiedAmount,
-  receiverWallet: piVerified.receiverWallet,
-  payload: {
-    memo: piVerified.piPayload?.memo ?? null,
-    identifier:
-      piVerified.piPayload?.identifier ?? null,
-    from_address:
-      piVerified.piPayload?.from_address ?? null,
-    to_address:
-      piVerified.piPayload?.to_address ?? null,
-    developer_completed:
-      piVerified.piPayload?.status?.developer_completed ??
-      false,
-  },
-});
-  console.log("[PAYMENT][SETTLEMENT] PI_AUDIT_OK", {
-    paymentIntentId,
-  });
 
   /* =====================================================
      4. VERIFY RPC
