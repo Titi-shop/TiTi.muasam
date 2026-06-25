@@ -1,7 +1,7 @@
 // =====================================================
 // lib/db/settlement/settlement.credit.ts
 // =====================================================
-
+import { getRpcVerificationLog } from "@/lib/db/payments.rpc";
 import {
   query,
 } from "@/lib/db";
@@ -33,7 +33,22 @@ import {
 export async function creditSeller(
   input: CreditSellerInput
 ): Promise<string> {
+const rpc =
+  await getRpcVerificationLog(
+    input.paymentIntentId
+  );
 
+if (!rpc) {
+  throw new Error("RPC_LOG_NOT_FOUND");
+}
+
+if (!rpc.confirmed) {
+  throw new Error("RPC_NOT_CONFIRMED");
+}
+
+if (rpc.txStatus !== "SUCCESS") {
+  throw new Error("RPC_TX_FAILED");
+}
   console.log(
     "[SETTLEMENT][CREDIT] START",
     {
@@ -44,7 +59,7 @@ export async function creditSeller(
         input.sellerId,
 
       amount:
-        input.amount,
+        rpc.amount!,
     }
   );
 
@@ -99,7 +114,7 @@ export async function creditSeller(
           input.sellerId,
 
         amount:
-          input.amount,
+          rpc.amount!,
 
         paymentIntentId:
           input.paymentIntentId,
@@ -131,8 +146,7 @@ export async function creditSeller(
 
         payment_intent_id,
         order_id,
-
-        amount,
+        rpc.amount,
 
         withdrawn_amount,
         reversed_amount,
@@ -203,7 +217,7 @@ export async function creditSeller(
 
         $8,
 
-        NULL,
+        $9,
         NULL,
         NULL,
 
@@ -234,7 +248,7 @@ export async function creditSeller(
         input.orderId ??
           null,
 
-        input.amount,
+        rpc.amount!,
 
         input.piPaymentId ??
           null,
@@ -294,10 +308,8 @@ await createSettlementJournalOnce({
   entryType: "SELLER_CREDIT",
   direction: "CREDIT",
 
-  amount: input.amount,
-
+  amount: rpc.amount!,
   note: "Seller escrow balance frozen",
-
   eventHash: auditHash,
 
   metadata: {
@@ -306,7 +318,7 @@ await createSettlementJournalOnce({
     orderId: input.orderId,
     piPaymentId: input.piPaymentId,
     sellerId: input.sellerId,
-    amount: input.amount,
+    amount: rpc.amount,
   },
 
   createdBy: input.sellerId,
