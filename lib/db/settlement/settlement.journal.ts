@@ -73,70 +73,11 @@ params: {
   );
 
   /* ===================================================
-     CHECK EXISTED
-  =================================================== */
-
-  const existed =
-    await db.query<{
-      id: string;
-    }>(
-      `
-      SELECT id
-
-      FROM wallet_journal
-
-      WHERE owner_id = $1
-        AND ref_id = $2
-        AND entry_type = $3
-
-      LIMIT 1
-      `,
-      [
-        params.ownerId,
-        params.refId,
-        params.entryType,
-      ]
-    );
-
-  if (existed.rows.length) {
-
-    console.log(
-      "[SETTLEMENT][JOURNAL] EXISTS_SKIP",
-      {
-        ownerId:
-          params.ownerId,
-
-        refId:
-          params.refId,
-
-        entryType:
-          params.entryType,
-      }
-    );
-
-    return;
-  }
-
-  console.log(
-    "[SETTLEMENT][JOURNAL] INSERT_START",
-    {
-      ownerId:
-        params.ownerId,
-
-      refId:
-        params.refId,
-
-      entryType:
-        params.entryType,
-    }
-  );
-
-  /* ===================================================
      INSERT JOURNAL
   =================================================== */
 try {
 
-  await db.query(
+  const result = await db.query(
     `
     INSERT INTO wallet_journal (
 
@@ -173,6 +114,8 @@ try {
       $12,
       NOW()
     )
+    ON CONFLICT (event_hash)
+DO NOTHING
     `,
     [
       randomUUID(),
@@ -192,7 +135,18 @@ try {
       params.createdBy ?? null,
     ]
   );
+if ((result.rowCount ?? 0) === 0) {
+  console.log(
+    "[SETTLEMENT][JOURNAL] DUPLICATE_SKIP",
+    {
+      ownerId: params.ownerId,
+      refId: params.refId,
+      entryType: params.entryType,
+    }
+  );
 
+  return;
+}
   console.log(
     "[SETTLEMENT][JOURNAL] DONE",
     {
