@@ -3,17 +3,6 @@ import {
   guardPaymentV7,
   acquirePaymentLockV7,
 } from "@/lib/db/payments.guard";
-
-import {
-  auditDuplicateSubmit,
-  auditManualReview,
-  auditPiCompleted,
-  auditPiVerified,
-  auditRpcFailed,
-  auditRpcVerified,
-  writePaymentAudit,
-} from "@/lib/db/payments.audit";
-
 import { verifyRpcPaymentForReconcile } from "@/lib/db/payments.rpc";
 import { piCompletePayment } from "@/lib/pi/client";
 
@@ -149,12 +138,6 @@ async function safeCompletePi(
       paymentIntentId,
     });
 
-    await auditPiCompleted(paymentIntentId, {
-      source,
-      piPaymentId,
-      txid,
-    });
-
     console.log("[PAYMENT][PI_COMPLETE] AUDIT_OK", {
       paymentIntentId,
     });
@@ -165,16 +148,6 @@ async function safeCompletePi(
       paymentIntentId,
       error: e,
     });
-
-    await auditManualReview(paymentIntentId, "SETTLEMENT_FATAL", {
-    source,
-    txid,
-    piPaymentId,
-  payload: {
-    error: String(e),
-    stage: "PI_COMPLETE",
-  },
-   });
 
     return false;
   }
@@ -224,12 +197,6 @@ export async function runPaymentSettlement({
         paymentIntentId,
         orderId: guard.orderId,
       });
-
-      await auditDuplicateSubmit(paymentIntentId, {
-        source,
-        reason: "PAYMENT_ALREADY_PAID",
-      });
-
       return successResult(
         guard.orderId ?? null,
         guard.amount ?? 0,
@@ -241,10 +208,6 @@ export async function runPaymentSettlement({
     console.error("[PAYMENT][SETTLEMENT] GUARD_FAILED", {
       paymentIntentId,
       code: guard.code,
-    });
-
-    await auditManualReview(paymentIntentId, guard.code, {
-      source,
     });
 
     return failResult(0, false, source);
@@ -269,11 +232,6 @@ export async function runPaymentSettlement({
       paymentIntentId,
     });
 
-    await auditDuplicateSubmit(paymentIntentId, {
-      source,
-      reason: "LOCK_DENIED",
-    });
-
     return failResult(guard.amount ?? 0, false, source);
   }
 
@@ -296,16 +254,6 @@ export async function runPaymentSettlement({
     }
   );
 
-  await auditManualReview(
-    paymentIntentId,
-    "RPC_VERIFY_FAILED",
-    {
-      source,
-      txid,
-      piPaymentId,
-      reason: rpcVerified.reason,
-    }
-  );
 
   console.warn(
     "[PAYMENT][SETTLEMENT] RPC_SOFT_FAIL"
@@ -354,22 +302,7 @@ export async function runPaymentSettlement({
   });
 
   try {
-  await auditManualReview(
-    paymentIntentId,
-    "SETTLEMENT_FATAL",
-    {
-      source: source ?? "submit-api",
-      txid: String(txid || ""),
-      piPaymentId: String(piPaymentId || ""),
-      reason:
-        e instanceof Error
-          ? e.message
-          : String(e),
-      requiresReplay: true,
-      reconcileStage:
-        "FINALIZE_ORDER",
-    }
-    );
+
     } catch (auditError) {
      console.error(
      "[PAYMENT][AUDIT_FATAL]",
