@@ -490,14 +490,17 @@ const verifiedLog =
   await getVerifiedRpcByWithdrawalId(
     withdrawalId
   );
+  
 vlog(
   "RPC_LOG_VERIFIED",
   verifiedLog
 );
 if (!verifiedLog) {
-  throw new Error(
-    "RPC_LOG_NOT_FOUND"
-  );
+    throw new Error("RPC_LOG_NOT_FOUND");
+}
+
+if (!verifiedLog.settlement_ready) {
+    throw new Error("RPC_SETTLEMENT_NOT_READY");
 }
 
 await markWithdrawalCompleted(
