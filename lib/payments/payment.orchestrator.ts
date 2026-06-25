@@ -9,33 +9,7 @@ import { piCompletePayment } from "@/lib/pi/client";
 import type {
   RunPaymentSettlementInput,
   PaymentSettlementResult,
-  RpcAuditResult,
 } from "@/lib/payments/types";
-/* =========================================================
-   EMPTY RPC
-========================================================= */
-
-function emptyRpc(): RpcAuditResult {
-  return {
-    ok: false,
-    audited: false,
-    amount: null,
-    sender: null,
-    receiver: null,
-    ledger: null,
-    confirmed: false,
-    txStatus: "UNKNOWN",
-    chainReference: null,
-    stage: "UNSET",
-    reason: "NOT_EXECUTED",
-    payload: {},
-    createdAt: null,
-    memo: null,
-    verified: false,
-verifyStatus: "manual_review",
-  };
-}
-
 /* =========================================================
    RESULT BUILDERS
 ========================================================= */
