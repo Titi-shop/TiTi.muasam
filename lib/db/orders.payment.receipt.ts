@@ -76,7 +76,6 @@ export async function upsertPaymentReceipt(
       rpc_reason,
 
       pi_payload,
-      rpc_payload,
       merged_payload,
 
       developer_completed_at,
@@ -106,7 +105,7 @@ export async function upsertPaymentReceipt(
       $25,
       $26,$27,
       $28,$29,
-      $30,$31,
+      $30,
       now(),now(),now(),now()
     )
     ON CONFLICT (pi_payment_id)
@@ -129,7 +128,6 @@ export async function upsertPaymentReceipt(
       rpc_reason = EXCLUDED.rpc_reason,
 
       pi_payload = EXCLUDED.pi_payload,
-      rpc_payload = EXCLUDED.rpc_payload,
       merged_payload = EXCLUDED.merged_payload,
 
       pi_created_at = EXCLUDED.pi_created_at,
@@ -227,69 +225,21 @@ export async function upsertPaymentReceipt(
       }),
 
       JSON.stringify({
-        ok:
-          rpcPayload.ok ??
-          false,
+  pi_summary: {
+    amount: piPayload.amount ?? verifiedAmount,
+    memo: piPayload.memo ?? null,
+    developer_completed:
+      piPayload.status?.developer_completed ?? false,
+  },
 
-        amount:
-          rpcPayload.amount ??
-          verifiedAmount,
-
-        ledger:
-          rpcPayload.ledger ??
-          null,
-
-        sender:
-          rpcPayload.sender ??
-          null,
-
-        receiver:
-          rpcPayload.receiver ??
-          null,
-
-        confirmed:
-          rpcPayload.confirmed ??
-          true,
-
-        txStatus:
-          rpcPayload.txStatus ??
-          "CONFIRMED",
-
-        reason:
-          rpcPayload.reason ??
-          "NONE",
-      }),
-
-      JSON.stringify({
-        pi_summary: {
-          amount:
-            piPayload.amount ??
-            verifiedAmount,
-
-          memo:
-            piPayload.memo ??
-            null,
-
-          developer_completed:
-            piPayload.status
-              ?.developer_completed ??
-            false,
-        },
-
-        rpc_summary: {
-          ok:
-            rpcPayload.ok ??
-            false,
-
-          ledger:
-            rpcPayload.ledger ??
-            null,
-
-          txStatus:
-            rpcPayload.txStatus ??
-            "CONFIRMED",
-        },
-      }),
+  verification: {
+    verified: rpcPayload.ok,
+    confirmed: rpcPayload.confirmed,
+    ledger: rpcPayload.ledger,
+    txStatus: rpcPayload.txStatus,
+    chainReference: rpcPayload.chainReference,
+  },
+}),
 
       piPayload.status
         ?.developer_completed
