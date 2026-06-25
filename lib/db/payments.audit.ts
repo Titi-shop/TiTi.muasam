@@ -259,6 +259,7 @@ export const auditRpcVerified = (
       receiver: params.receiver,
       sender: params.sender,
       chainReference: params.chainReference,
+      verified: true,
     },
   });
 
