@@ -46,26 +46,7 @@ function emptyRpc(): RpcAuditResult {
 verifyStatus: "manual_review",
   };
 }
-function emptyRpcPayload(): RpcAuditResult {
-  return {
-    ok: false,
-    audited: false,
-    amount: null,
-    sender: null,
-    receiver: null,
-    ledger: null,
-    confirmed: false,
-    txStatus: "EMPTY",
-    chainReference: null,
-    stage: "EMPTY",
-    reason: "EMPTY_RPC",
-    payload: {},
-    createdAt: null,
-    memo: null,
-    verified: false,
-verifyStatus: "manual_review",
-  };
-}
+
 /* =========================================================
    RESULT BUILDERS
 ========================================================= */
@@ -136,46 +117,6 @@ async function safeAuditRpc(
   txStatus: rpc.txStatus,
   chainReference: rpc.chainReference,
 });
-
-    if (rpc.ok) {
-      await auditRpcVerified(paymentIntentId, {
-  source,
-  txid,
-  amount: rpc.amount,
-  ledger: rpc.ledger,
-  receiver: rpc.receiver,
-  sender: rpc.sender,
-  chainReference: rpc.chainReference,
-  payload: {
-    confirmed: rpc.confirmed,
-    txStatus: rpc.txStatus,
-    reason: rpc.reason,
-    createdAt: rpc.createdAt,
-  },
-});
-
-      console.log("[PAYMENT][RPC_VERIFY] AUDIT_OK", {
-        paymentIntentId,
-      });
-    } else {
-      await auditRpcFailed(paymentIntentId, {
-        source,
-        txid,
-        reason: rpc.reason,
-      });
-
-      console.log("[PAYMENT][RPC_VERIFY] AUDIT_FAIL", {
-        paymentIntentId,
-        reason: rpc.reason,
-      });
-    }
-
-    return rpc;
-  } catch (e) {
-    console.error("[PAYMENT][RPC_VERIFY] EXCEPTION", {
-      paymentIntentId,
-      error: e,
-    });
 
     await auditRpcFailed(paymentIntentId, {
       source,
