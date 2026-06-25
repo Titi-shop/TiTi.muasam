@@ -58,6 +58,8 @@ function emptyRpc(): RpcAuditResult {
     payload: {},
     createdAt: null,
     memo: null,
+    verified: false,
+verifyStatus: "manual_review",
   };
 }
 function emptyRpcPayload(): RpcAuditResult {
@@ -76,6 +78,8 @@ function emptyRpcPayload(): RpcAuditResult {
     payload: {},
     createdAt: null,
     memo: null,
+    verified: false,
+verifyStatus: "manual_review",
   };
 }
 /* =========================================================
