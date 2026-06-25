@@ -58,45 +58,6 @@ export async function createSettlementEventOnce(
     }
   );
 
-  /* ===================================================
-     CHECK EXISTED
-  =================================================== */
-
-  const existed =
-    await db.query<{
-      id: string;
-    }>(
-      `
-      SELECT id
-
-      FROM settlement_events
-
-      WHERE escrow_id = $1
-        AND event_type = $2
-
-      LIMIT 1
-      `,
-      [
-        params.escrowId,
-        params.type,
-      ]
-    );
-
-  if (existed.rows.length) {
-
-    console.log(
-      "[SETTLEMENT][EVENT] EXISTS_SKIP",
-      {
-        escrowId:
-          params.escrowId,
-
-        type:
-          params.type,
-      }
-    );
-
-    return;
-  }
 
   /* ===================================================
      BUILD HASH
@@ -139,9 +100,9 @@ export async function createSettlementEventOnce(
      INSERT EVENT
   =================================================== */
 
-  await db.query(
-    `
-    INSERT INTO settlement_events (
+  const result = await db.query(
+  `
+  INSERT INTO settlement_events (
 
       id,
 
@@ -171,6 +132,8 @@ export async function createSettlementEventOnce(
       $7,
       NOW()
     )
+    ON CONFLICT (event_hash)
+     DO NOTHING
     `,
     [
       randomUUID(),
@@ -190,7 +153,17 @@ export async function createSettlementEventOnce(
       eventHash,
     ]
   );
+if ((result.rowCount ?? 0) === 0) {
+  console.log(
+    "[SETTLEMENT][EVENT] DUPLICATE_SKIP",
+    {
+      escrowId: params.escrowId,
+      type: params.type,
+    }
+  );
 
+  return;
+}
   console.log(
     "[SETTLEMENT][EVENT] DONE",
     {
