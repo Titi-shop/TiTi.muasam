@@ -4,6 +4,7 @@ import {
   acquirePaymentLockV7,
 } from "@/lib/db/payments.guard";
 import { verifyRpcPaymentForReconcile } from "@/lib/db/payments.rpc";
+import { piCompletePayment } from "@/lib/pi/client";
 import type {
   RunPaymentSettlementInput,
   PaymentSettlementResult,
