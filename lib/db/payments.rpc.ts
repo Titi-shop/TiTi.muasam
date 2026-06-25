@@ -555,7 +555,87 @@ memo: rpcTx.memo ?? null,
   memo: rpcTx.memo ?? null,
 };
 }
-export async function getRpcVerificationByPaymentIntent(
+/* =========================================================
+   READ VERIFIED RPC LOG
+========================================================= */
+
+export async function getRpcVerificationLog(
   paymentIntentId: string
-)
+) {
+  log("DB_FETCH_RPC_LOG_START", {
+    paymentIntentId,
+  });
+
+  if (!isUUID(paymentIntentId)) {
+    throw new Error("INVALID_PAYMENT_INTENT_ID");
+  }
+
+  const rs = await query(
+    `
+    SELECT
+      payment_intent_id,
+      pi_payment_id,
+      txid,
+
+      verified,
+      stage,
+      reason,
+
+      amount,
+      expected_amount,
+
+      sender,
+      receiver,
+      expected_receiver,
+
+      amount_match,
+      receiver_match,
+      sender_match,
+
+      ledger,
+      tx_status,
+      chain_reference,
+
+      rpc_reachable,
+      confirmed,
+
+      parse_layer,
+      has_meta,
+      has_events,
+
+      sender_found,
+      receiver_found,
+      amount_found,
+
+      payload,
+
+      created_at_chain,
+      memo,
+
+      verification_hash,
+
+      verified_at,
+      created_at,
+      updated_at
+    FROM rpc_verification_logs
+    WHERE payment_intent_id = $1
+    LIMIT 1
+    `,
+    [paymentIntentId]
+  );
+
+  const row = rs.rows[0] ?? null;
+
+  if (!row) {
+    throw new Error("RPC_VERIFICATION_LOG_NOT_FOUND");
+  }
+
+  log("DB_FETCH_RPC_LOG_DONE", {
+    paymentIntentId,
+    verified: row.verified,
+    stage: row.stage,
+    reason: row.reason,
+  });
+
+  return row;
 }
