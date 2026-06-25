@@ -3,6 +3,7 @@ import { getRpcVerificationLog } from "@/lib/db/payments.rpc";
 import type { PoolClient } from "pg";
 
 import type {
+  RpcPayload,
   ShippingSnapshot,
   StrictPaymentValidationInput,
   ValidateFinalizePaymentInput,
@@ -267,12 +268,13 @@ export async function validateStrictPayment(
   client: PoolClient
 ): Promise<void> {
   const {
-    client,
     paymentIntentId,
+    expectedAmount,
     verifiedAmount,
+    merchantWallet,
     receiverWallet,
     txid,
-    intent,
+    rpcPayload,
 } = input;
 
   logValidation(
@@ -529,9 +531,8 @@ export async function validateFinalizePayment(
     verifiedAmount,
     receiverWallet,
     txid,
-    rpcPayload,
     intent,
-  } = input;
+} = input;
 
   logValidation(
     "FINALIZE_START",
