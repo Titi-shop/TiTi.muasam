@@ -217,7 +217,7 @@ withdrawn_amount,
 
         $8,
 
-        $9,
+        NULL,
         NULL,
         NULL,
 
