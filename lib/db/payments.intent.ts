@@ -305,3 +305,4 @@ vlog("GET_RESULT", {
 });
 
 return res.rows[0] ?? null;
+}
