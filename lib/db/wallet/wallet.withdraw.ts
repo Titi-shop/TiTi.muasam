@@ -363,9 +363,8 @@ export async function markWithdrawalCompleted(
 ): Promise<void> {
 
   vlog("MARK_COMPLETED_START", {
-    withdrawalId,
-    blockchainTxid,
-  });
+  withdrawalId,
+});
 
   await withTransaction(
     async (client) => {
@@ -450,15 +449,15 @@ await createWalletJournal({
           SET
             status = 'COMPLETED',
 
-            rpc.txid
+blockchain_txid = $2,
+txid = $2,
 
-            blockchain_ledger = $3,
-            blockchain_memo = $4,
-            blockchain_fee = $5,
-
-            blockchain_from_address = $6,
-            blockchain_to_address = $7,
-            blockchain_network = $8,
+blockchain_ledger = $3,
+blockchain_memo = $4,
+blockchain_fee = $5,
+blockchain_from_address = $6,
+blockchain_to_address = $7,
+blockchain_network = $8,
 
             paid_at = NOW(),
             completed_at = NOW()
