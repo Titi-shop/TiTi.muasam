@@ -6,6 +6,9 @@ import {
   writePaymentAudit,
   auditPaymentReceiptCreated,
   auditPiPaymentCreated,
+  auditPaymentIntentFinalized,
+  auditFinalizeDone,
+} from "@/lib/db/payments.audit";
 } from "@/lib/db/payments.audit";
 import {
   getPaymentIntent,
@@ -277,7 +280,25 @@ await finalizePaymentIntent(
 console.log(
   "[PAYMENT][FINALIZE_INTENT_DONE]"
 );
+await auditPaymentIntentFinalized(
+  paymentIntentId,
+  {
+    source: "orders.payment",
+    orderId,
+    piPaymentId,
+    txid,
+  }
+);
 
+await auditFinalizeDone(
+  paymentIntentId,
+  {
+    source: "orders.payment",
+    orderId,
+    piPaymentId,
+    txid,
+  }
+);
     return {
       ok: true,
       already: false,
