@@ -31,9 +31,7 @@ import type {
 } from "@/lib/db/orders.payment.types";
 
 export async function finalizePaidOrderFromIntent(
-  params: FinalizePaidOrderParams & {
-    intent: PaymentIntentRow;
-  }
+  params: FinalizePaidOrderParams
 ): Promise<FinalizePaidOrderResult> {
   return withTransaction(async (client) => {
     const {
@@ -43,10 +41,18 @@ export async function finalizePaidOrderFromIntent(
   verifiedAmount,
   receiverWallet,
   piPayload,
-  intent,
 } = params;
 const rpcPayload =
   await getRpcVerificationLog(paymentIntentId);
+    const intent =
+  await getPaymentIntentById(
+    paymentIntentId
+  );
+if (!intent) {
+  throw new Error(
+    "PAYMENT_INTENT_NOT_FOUND"
+  );
+}
     const validation =
       await validateFinalizePayment({
         client,
@@ -152,23 +158,16 @@ const rpcPayload =
       await createOrder({
         userId:
           intent.buyer_id,
-
         piPaymentId,
         txid,
-
         idempotencyKey:
           paymentIntentId,
-
         country:
           intent.country,
-
         zone:
           intent.zone,
-
         shipping,
-
         pricing,
-
         items: [
           {
             product_id:
