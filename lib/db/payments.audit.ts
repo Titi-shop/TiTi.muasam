@@ -347,3 +347,26 @@ export const auditDuplicateSubmit = (
     actorType: "system",
     payload,
   });
+export const auditPaymentReceiptCreated = (
+  paymentIntentId: string,
+  params: {
+    source?: string;
+    orderId: string;
+    piPaymentId: string;
+    txid: string;
+  }
+) =>
+  writePaymentAudit({
+    paymentIntentId,
+    eventCode: "PAYMENT_RECEIPT_CREATED",
+    stage: "FINALIZE",
+    actorType: "system",
+
+    source: params.source,
+
+    orderId: params.orderId,
+    piPaymentId: params.piPaymentId,
+    txid: params.txid,
+
+    newSettlementState: "PAYMENT_RECEIPT_CREATED",
+  });
