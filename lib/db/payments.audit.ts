@@ -1,7 +1,7 @@
 
 import { query } from "@/lib/db";
 import { createHash } from "crypto";
-
+import type { Pool, PoolClient } from "pg";
 import type {
   AuditSeverity,
   AuditStage,
@@ -61,7 +61,8 @@ async function getPreviousHash(paymentIntentId: string): Promise<string | null> 
 ========================================================= */
 
 export async function writePaymentAudit(
-  params: WriteAuditParams
+  params: WriteAuditParams,
+  db?: Pool | PoolClient
 ): Promise<void> {
   const prevHash = await getPreviousHash(params.paymentIntentId);
 
@@ -214,7 +215,8 @@ try {
 
       prevHash,
       eventHash,
-    ]
+    ],
+    db
   );
 
   console.log("[AUDIT] AFTER_INSERT");
