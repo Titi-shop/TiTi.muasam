@@ -1,6 +1,7 @@
 // =====================================================
 // lib/db/settlement/settlement.escrow.ts
 // =====================================================
+import type { PoolClient } from "pg";
 import { getRpcVerificationLog } from "@/lib/db/payments.rpc";
 import {
   query,
@@ -160,48 +161,46 @@ const journalHash = makeEventHash({
      EVENT
   =================================================== */
 
-  await createSettlementEventOnce({
+  await createSettlementEventOnce(
+  {
     escrowId,
-
-    type:
-      "ESCROW_CREATED",
-
-    source:
-      "system",
-
-    reason:
-      "PAYMENT_CAPTURED",
-
-    metadata:
-      input,
-  });
+    type: "ESCROW_CREATED",
+    source: "system",
+    reason: "PAYMENT_CAPTURED",
+    metadata: input,
+  },
+  client
+);
 
   /* ===================================================
      JOURNAL
   =================================================== */
 
-  await createSettlementJournalOnce({
-  ownerId: input.buyerId,
-  ownerType: "BUYER",
-  refId: escrowId,
-  refTable: "escrow_entries",
-  entryType: "ESCROW_HOLD",
-  direction: "DEBIT",
-  amount: input.amount,
-  note: "Buyer funds moved into escrow",
-  eventHash: journalHash,
-  metadata: {
-    escrowId,
-    paymentIntentId: input.paymentIntentId,
-    orderId: input.orderId,
-    buyerId: input.buyerId,
-    sellerId: input.sellerId,
+  await createSettlementJournalOnce(
+  {
+    ownerId: input.buyerId,
+    ownerType: "BUYER",
+    refId: escrowId,
+    refTable: "escrow_entries",
+    entryType: "ESCROW_HOLD",
+    direction: "DEBIT",
     amount: input.amount,
-    txid: input.txid,
-    piPaymentId: input.piPaymentId,
+    note: "Buyer funds moved into escrow",
+    eventHash: journalHash,
+    metadata: {
+      escrowId,
+      paymentIntentId: input.paymentIntentId,
+      orderId: input.orderId,
+      buyerId: input.buyerId,
+      sellerId: input.sellerId,
+      amount: input.amount,
+      txid: input.txid,
+      piPaymentId: input.piPaymentId,
+    },
+    createdBy: input.buyerId,
   },
-  createdBy: input.buyerId,
-});
+  client
+);
 
 return escrowId;
 }
