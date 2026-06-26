@@ -53,7 +53,7 @@ export async function createEscrow(
 
     escrowId =
       randomUUID();
-    client.query(
+    await client.query(
       `
       INSERT INTO escrow_entries (
         id,
