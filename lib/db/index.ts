@@ -51,7 +51,14 @@ export async function query<
   db: Pool | PoolClient = pool
 ): Promise<QueryResult<T>> {
 
-  return db.query(text, params);
+  console.log("[DB] QUERY_START");
+
+  const result =
+    await db.query(text, params);
+
+  console.log("[DB] QUERY_DONE");
+
+  return result;
 }
 
 /* =========================================================
