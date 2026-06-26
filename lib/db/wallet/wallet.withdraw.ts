@@ -407,11 +407,6 @@ if (!rpc) {
   );
 }
 
-if (!rpc.settlement_ready) {
-  throw new Error(
-    "RPC_SETTLEMENT_NOT_READY"
-  );
-}
       await finalizeReservedBalance(
         withdrawal.user_id,
         Number(
