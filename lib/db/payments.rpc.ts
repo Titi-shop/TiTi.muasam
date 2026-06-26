@@ -532,28 +532,13 @@ amountFound,
 createdAt: rpcTx.createdAt ?? null,
 memo: rpcTx.memo ?? null,
   });
-
+const rpcLog =
+  await getRpcVerificationLog(paymentIntentId);
   /* =====================================================
      RESULT
   ===================================================== */
 
-  return {
-  ok: verified,
-  audited: true,
-  verified,
-  amount: rpcTx.amount,
-  sender: rpcTx.sender,
-  receiver: rpcTx.receiver,
-  ledger: rpcTx.ledger,
-  confirmed: rpcTx.confirmed,
-  txStatus,
-  chainReference: rpcTx.hash,
-  payload: rpcTx.raw,
-  reason,
-  stage,
-  createdAt: rpcTx.createdAt ?? null,
-  memo: rpcTx.memo ?? null,
-};
+  return buildRpcVerifyResult(rpcLog);
 }
 /* =========================================================
    READ VERIFIED RPC LOG
