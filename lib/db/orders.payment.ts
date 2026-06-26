@@ -46,8 +46,11 @@ export async function finalizePaidOrderFromIntent(
 } = params;
 const rpcPayload =
   await getRpcVerificationLog(paymentIntentId);
+    if (!rpcPayload.verified) {
+  throw new Error("RPC_NOT_VERIFIED");
+}
     const intent =
-  await getPaymentIntentById(
+  await getPaymentIntent(
     paymentIntentId
   );
 if (!intent) {
