@@ -422,25 +422,26 @@ export const auditPaymentIntentFinalized = async (
     orderId: string;
     piPaymentId: string;
     txid: string;
-  }
+  },
+  db?: Pool | PoolClient
 ): Promise<void> => {
 
-  console.log("[AUDIT] PAYMENT_INTENT_FINALIZED START");
-
-  await writePaymentAudit({
-    paymentIntentId,
-    eventCode: "PAYMENT_INTENT_FINALIZED",
-    stage: "FINALIZE",
-    actorType: "system",
-    source: params.source,
-    orderId: params.orderId,
-    piPaymentId: params.piPaymentId,
-    txid: params.txid,
-    newPaymentStatus: "paid",
-    newSettlementState: "PAYMENT_INTENT_FINALIZED",
-  },
-       db                  
-      );
+  await writePaymentAudit(
+    {
+      paymentIntentId,
+      eventCode: "PAYMENT_INTENT_FINALIZED",
+      stage: "FINALIZE",
+      actorType: "system",
+      source: params.source,
+      orderId: params.orderId,
+      piPaymentId: params.piPaymentId,
+      txid: params.txid,
+      newPaymentStatus: "paid",
+      newSettlementState: "PAYMENT_INTENT_FINALIZED",
+    },
+    db
+  );
+}
 
   console.log("[AUDIT] PAYMENT_INTENT_FINALIZED DONE");
 };
