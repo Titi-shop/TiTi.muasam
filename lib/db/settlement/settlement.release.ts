@@ -128,24 +128,16 @@ if (rpc.txStatus !== "SUCCESS") {
   const amount = Number(escrow.amount);
 
 if (Number.isNaN(amount) || amount <= 0) {
+  console.error(
+    "[SETTLEMENT][RELEASE] INVALID_AMOUNT",
+    {
+      escrowId: escrow.id,
+      rawAmount: escrow.amount,
+    }
+  );
+
   throw new Error("INVALID_ESCROW_AMOUNT");
 }
-
-    console.error(
-      "[SETTLEMENT][RELEASE] INVALID_AMOUNT",
-      {
-        escrowId:
-          escrow.id,
-
-        rawAmount:
-          escrow.amount,
-      }
-    );
-
-    throw new Error(
-      "INVALID_ESCROW_AMOUNT"
-    );
-  }
 
   /* ===================================================
      1. RELEASE ESCROW
