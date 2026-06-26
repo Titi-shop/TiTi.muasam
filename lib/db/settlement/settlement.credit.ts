@@ -41,7 +41,9 @@ const rpc =
 if (!rpc) {
   throw new Error("RPC_LOG_NOT_FOUND");
 }
-
+if (!rpc.verified) {
+    throw new Error("RPC_NOT_VERIFIED");
+}
 if (!rpc.confirmed) {
   throw new Error("RPC_NOT_CONFIRMED");
 }
