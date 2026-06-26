@@ -152,22 +152,23 @@ if (!intent) {
       };
     }
 
-    await writePaymentAudit({
-      paymentIntentId,
-      eventCode:
-        "ORDER_FINALIZE_STARTED",
-      stage: "FINALIZE",
-      actorType: "system",
-      piPaymentId,
-      txid,
-      source: "orders.payment",
-      newSettlementState:
-        "FINALIZING_ORDER",
-      payload: {
-        verifiedAmount,
-        receiverWallet,
-      },
-    });
+    await writePaymentAudit(
+  {
+    paymentIntentId,
+    eventCode: "ORDER_FINALIZE_STARTED",
+    stage: "FINALIZE",
+    actorType: "system",
+    piPaymentId,
+    txid,
+    source: "orders.payment",
+    newSettlementState: "FINALIZING_ORDER",
+    payload: {
+      verifiedAmount,
+      receiverWallet,
+    },
+  },
+  client
+);
 
     const createdOrder =
       await createOrder({
@@ -206,19 +207,20 @@ if (!intent) {
       );
     }
 
-    await writePaymentAudit({
-      paymentIntentId,
-      eventCode:
-        "ORDER_CREATED",
-      stage: "FINALIZE",
-      actorType: "system",
-      piPaymentId,
-      txid,
-      source: "orders.payment",
-      orderId,
-      newSettlementState:
-        "ORDER_CREATED",
-    });
+    await writePaymentAudit(
+  {
+    paymentIntentId,
+    eventCode: "ORDER_CREATED",
+    stage: "FINALIZE",
+    actorType: "system",
+    piPaymentId,
+    txid,
+    source: "orders.payment",
+    orderId,
+    newSettlementState: "ORDER_CREATED",
+  },
+  client
+);
 
     await upsertPaymentReceipt(
   client,
@@ -241,7 +243,8 @@ await auditPaymentReceiptCreated(
     orderId,
     piPaymentId,
     txid,
-  }
+  },
+  client
 );
     await upsertPiPayment(
   client,
@@ -266,7 +269,8 @@ await auditPaymentReceiptCreated(
     orderId,
     piPaymentId,
     txid,
-  }
+  },
+  client
 );
 
     console.log(
@@ -304,7 +308,8 @@ await auditFinalizeDone(
     orderId,
     piPaymentId,
     txid,
-  }
+  },
+  client
 );
     console.log("[STEP] createEscrow");
     const escrowId = await createEscrow({
