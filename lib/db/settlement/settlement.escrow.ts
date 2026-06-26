@@ -28,18 +28,16 @@ import {
 ===================================================== */
 
 export async function createEscrow(
+  client: PoolClient,
   input: CreateEscrowInput
 ): Promise<string> {
 
   const existed =
-    await query<{ id: string }>(
+    await client.query<{ id: string }>(
       `
       SELECT id
-
       FROM escrow_entries
-
       WHERE payment_intent_id = $1
-
       LIMIT 1
       `,
       [
@@ -55,7 +53,7 @@ export async function createEscrow(
 
     escrowId =
       randomUUID();
-    await query(
+    client.query(
       `
       INSERT INTO escrow_entries (
         id,
