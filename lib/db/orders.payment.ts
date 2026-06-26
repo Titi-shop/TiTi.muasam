@@ -312,15 +312,18 @@ await auditFinalizeDone(
   client
 );
     console.log("[STEP] createEscrow");
-    const escrowId = await createEscrow({
-  paymentIntentId,
-  orderId,
-  buyerId: intent.buyer_id,
-  sellerId: intent.seller_id,
-  amount: verifiedAmount,
-  txid,
-  piPaymentId,
-});
+    const escrowId = await createEscrow(
+  client,
+  {
+    paymentIntentId,
+    orderId,
+    buyerId: intent.buyer_id,
+    sellerId: intent.seller_id,
+    amount: verifiedAmount,
+    txid,
+    piPaymentId,
+  }
+);
 console.log("[STEP] markPiVerified");
 await markPiVerified(
   escrowId
