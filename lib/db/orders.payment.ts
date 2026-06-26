@@ -35,6 +35,7 @@ import {
   markRpcVerified,
   linkOrder,
   creditSeller,
+  linkReceiptSettlementByIds,
 } from "@/lib/db/settlement";
 import type {
   FinalizePaidOrderParams,
@@ -333,6 +334,11 @@ await markRpcVerified(
   paymentIntentId,
   orderId,
   piPaymentId,
+});
+    await linkReceiptSettlementByIds({
+  paymentIntentId,
+  escrowId,
+  sellerCreditId,
 });
     return {
       ok: true,
