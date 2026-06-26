@@ -224,7 +224,15 @@ if (!intent) {
     piPayload,
   }
 );
-
+await auditPaymentReceiptCreated(
+  paymentIntentId,
+  {
+    source: "orders.payment",
+    orderId,
+    piPaymentId,
+    txid,
+  }
+);
     await upsertPiPayment(
   client,
   {
