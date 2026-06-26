@@ -3,8 +3,15 @@ import {
   guardPaymentV7,
   acquirePaymentLockV7,
 } from "@/lib/db/payments.guard";
+
 import { verifyRpcPaymentForReconcile } from "@/lib/db/payments.rpc";
+
 import { piCompletePayment } from "@/lib/pi/client";
+
+import {
+  finalizePaidOrderFromIntent,
+} from "@/lib/db/orders.payment";
+
 import type {
   RunPaymentSettlementInput,
   PaymentSettlementResult,
@@ -201,15 +208,28 @@ const rpcVerified =
     console.error("[PAYMENT][SETTLEMENT] STOP_AFTER_PI_COMPLETE_FAIL", {
       paymentIntentId,
     });
-
+    
+const finalized =
+  await finalizePaidOrderFromIntent({
+    paymentIntentId,
+    piPaymentId,
+    txid,
+    verifiedAmount:
+      rpcVerified.amount ?? 0,
+    receiverWallet:
+      rpcVerified.receiver ?? "",
+    piPayload:
+      rpcVerified.payload,
+  });
+    
     return failResult(
   rpcVerified.amount ?? 0,
   rpcVerified.ok
 );
   }
   return successResult(
-  null,
-  rpcVerified.amount ?? 0,
+  finalized.orderId,
+  finalized.amount,
   rpcVerified.ok
 );
 
