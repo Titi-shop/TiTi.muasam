@@ -393,3 +393,27 @@ export const auditPiPaymentCreated = (
 
     newSettlementState: "PI_PAYMENT_CREATED",
   });
+export const auditPaymentIntentFinalized = (
+  paymentIntentId: string,
+  params: {
+    source?: string;
+    orderId: string;
+    piPaymentId: string;
+    txid: string;
+  }
+) =>
+  writePaymentAudit({
+    paymentIntentId,
+    eventCode: "PAYMENT_INTENT_FINALIZED",
+    stage: "FINALIZE",
+    actorType: "system",
+
+    source: params.source,
+
+    orderId: params.orderId,
+    piPaymentId: params.piPaymentId,
+    txid: params.txid,
+
+    newPaymentStatus: "paid",
+    newSettlementState: "PAYMENT_INTENT_FINALIZED",
+  });
