@@ -41,7 +41,10 @@ function makeHash(payload: unknown): string {
    GET PREVIOUS HASH (CHAIN)
 ========================================================= */
 
-async function getPreviousHash(paymentIntentId: string): Promise<string | null> {
+async function getPreviousHash(
+  paymentIntentId: string,
+  db?: Pool | PoolClient
+): Promise<string | null> {
   const rs = await query<{ event_hash: string }>(
     `
     SELECT event_hash
@@ -50,7 +53,8 @@ async function getPreviousHash(paymentIntentId: string): Promise<string | null> 
     ORDER BY event_index DESC
     LIMIT 1
     `,
-    [paymentIntentId]
+    [paymentIntentId],
+    db
   );
 
   return rs.rows[0]?.event_hash ?? null;
@@ -64,7 +68,11 @@ export async function writePaymentAudit(
   params: WriteAuditParams,
   db?: Pool | PoolClient
 ): Promise<void> {
-  const prevHash = await getPreviousHash(params.paymentIntentId);
+  const prevHash =
+  await getPreviousHash(
+    params.paymentIntentId,
+    db
+  );
 
   const normalized = {
     paymentIntentId: params.paymentIntentId,
@@ -430,7 +438,9 @@ export const auditPaymentIntentFinalized = async (
     txid: params.txid,
     newPaymentStatus: "paid",
     newSettlementState: "PAYMENT_INTENT_FINALIZED",
-  });
+  },
+       db                  
+      );
 
   console.log("[AUDIT] PAYMENT_INTENT_FINALIZED DONE");
 };
