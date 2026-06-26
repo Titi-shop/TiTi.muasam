@@ -342,14 +342,17 @@ console.log("[STEP] linkOrder");
   orderId
 );
     console.log("[STEP] creditSeller");
-    const sellerCreditId = await creditSeller({
-  escrowId,
-  sellerId: intent.seller_id,
-  amount: expectedAmount,
-  paymentIntentId,
-  orderId,
-  piPaymentId,
-});
+    const sellerCreditId = await creditSeller(
+  client,
+  {
+    escrowId,
+    sellerId: intent.seller_id,
+    amount: expectedAmount,
+    paymentIntentId,
+    orderId,
+    piPaymentId,
+  }
+);
     console.log("[STEP] receiptLink");
     await linkReceiptSettlementByIds({
   paymentIntentId,
