@@ -136,6 +136,12 @@ export async function writePaymentAudit(
     prevHash,
   });
 
+  console.log("[AUDIT] BEFORE_INSERT", {
+  paymentIntentId: normalized.paymentIntentId,
+  eventCode: normalized.eventCode,
+});
+
+try {
   await query(
     `
     INSERT INTO payment_audit_logs (
@@ -210,6 +216,12 @@ export async function writePaymentAudit(
       eventHash,
     ]
   );
+
+  console.log("[AUDIT] AFTER_INSERT");
+} catch (err) {
+  console.error("[AUDIT][INSERT_ERROR]", err);
+  throw err;
+}
 }
 
 /* =========================================================
@@ -393,7 +405,7 @@ export const auditPiPaymentCreated = (
 
     newSettlementState: "PI_PAYMENT_CREATED",
   });
-export const auditPaymentIntentFinalized = (
+export const auditPaymentIntentFinalized = async (
   paymentIntentId: string,
   params: {
     source?: string;
@@ -401,19 +413,22 @@ export const auditPaymentIntentFinalized = (
     piPaymentId: string;
     txid: string;
   }
-) =>
-  writePaymentAudit({
+): Promise<void> => {
+
+  console.log("[AUDIT] PAYMENT_INTENT_FINALIZED START");
+
+  await writePaymentAudit({
     paymentIntentId,
     eventCode: "PAYMENT_INTENT_FINALIZED",
     stage: "FINALIZE",
     actorType: "system",
-
     source: params.source,
-
     orderId: params.orderId,
     piPaymentId: params.piPaymentId,
     txid: params.txid,
-
     newPaymentStatus: "paid",
     newSettlementState: "PAYMENT_INTENT_FINALIZED",
   });
+
+  console.log("[AUDIT] PAYMENT_INTENT_FINALIZED DONE");
+};
