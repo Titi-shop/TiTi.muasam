@@ -249,6 +249,15 @@ await auditPaymentReceiptCreated(
     piPayload,
   }
 );
+    await auditPiPaymentCreated(
+  paymentIntentId,
+  {
+    source: "orders.payment",
+    orderId,
+    piPaymentId,
+    txid,
+  }
+);
 
     console.log(
   "[PAYMENT][FINALIZE_INTENT_CALL]"
