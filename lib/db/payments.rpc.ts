@@ -282,7 +282,41 @@ input.memo,
 
 );
 }
+/* =========================================================
+   BUILD RESULT FROM RPC LOG
+========================================================= */
 
+function buildRpcVerifyResult(
+  rpcLog: Awaited<
+    ReturnType<typeof getRpcVerificationLog>
+  >
+): RpcVerifyResult {
+  return {
+    ok: rpcLog.verified,
+    audited: true,
+
+    verified: rpcLog.verified,
+
+    amount: rpcLog.amount,
+    sender: rpcLog.sender,
+    receiver: rpcLog.receiver,
+
+    ledger: rpcLog.ledger,
+
+    confirmed: rpcLog.confirmed,
+
+    txStatus: rpcLog.txStatus,
+    chainReference: rpcLog.chainReference,
+
+    payload: rpcLog.payload,
+
+    reason: rpcLog.reason,
+    stage: rpcLog.stage,
+
+    createdAt: rpcLog.createdAt,
+    memo: rpcLog.memo,
+  };
+}
 /* =========================================================
    MAIN RPC VERIFY
 ========================================================= */
