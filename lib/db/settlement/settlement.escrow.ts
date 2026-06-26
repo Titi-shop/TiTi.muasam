@@ -382,6 +382,8 @@ export async function linkOrder(
     metadata: {
       orderId,
     },
-    client
-  });
+    
+  },
+client
+   );
 }
