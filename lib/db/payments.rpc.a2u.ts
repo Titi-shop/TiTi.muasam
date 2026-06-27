@@ -327,9 +327,41 @@ const memoMatch =
   !withdrawal.pi_payment_id
     ? true
     : rpc.memo === withdrawal.pi_payment_id;
+  if (!rpc.rpcReachable) {
   throw new Error(
-    "VERIFY_NOT_IMPLEMENTED"
+    "RPC_UNREACHABLE"
   );
+}
+
+if (!rpc.confirmed) {
+  throw new Error(
+    "TX_NOT_CONFIRMED"
+  );
+}
+
+if (!amountMatch) {
+  throw new Error(
+    "AMOUNT_MISMATCH"
+  );
+}
+
+if (!senderMatch) {
+  throw new Error(
+    "SENDER_MISMATCH"
+  );
+}
+
+if (!receiverMatch) {
+  throw new Error(
+    "RECEIVER_MISMATCH"
+  );
+}
+
+if (!memoMatch) {
+  throw new Error(
+    "MEMO_MISMATCH"
+  );
+}
 }
 export async function
 getRpcVerificationByTxid(
