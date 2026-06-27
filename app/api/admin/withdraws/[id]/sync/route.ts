@@ -11,11 +11,10 @@ import {
 import {
   getWalletWithdrawalById,
   markWithdrawalCompleted,
-  markWithdrawalFailed,
 } from "@/lib/db/wallet/wallet.withdraw";
 import {
   markWithdrawalFailed,
-} from "@/lib/db/wallet/wallet.withdraw.";
+} from "@/lib/db/wallet/wallet.withdraw.failed";
 
 
 export const runtime =
