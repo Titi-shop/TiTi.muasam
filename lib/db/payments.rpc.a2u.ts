@@ -362,6 +362,97 @@ if (!memoMatch) {
     "MEMO_MISMATCH"
   );
 }
+  await insertA2URpcLog({
+  withdrawalId,
+  piPaymentId: withdrawal.pi_payment_id,
+
+  txid,
+
+  verified: true,
+  stage: "RPC_OK",
+  reason: "NONE",
+
+  amount: rpc.amount,
+  expectedAmount,
+
+  sender: rpc.sender,
+  receiver: rpc.receiver,
+
+  expectedReceiver: withdrawal.withdraw_wallet,
+  expectedSender,
+
+  amountMatch,
+  receiverMatch,
+  senderMatch,
+
+  expectedMemo: withdrawal.pi_payment_id,
+  memoMatch,
+  memoFound: rpc.memo !== null,
+
+  network: withdrawal.blockchain_network ?? "Pi Testnet",
+
+  verificationVersion: 1,
+  verificationMethod: "RPC",
+
+  verificationHash: rpc.hash,
+
+  ledger: rpc.ledger,
+
+  txStatus: rpc.txStatus,
+  chainReference: rpc.hash,
+
+  rpcReachable: rpc.rpcReachable,
+  confirmed: rpc.confirmed,
+
+  parseLayer: rpc.debug.parseLayer,
+
+  hasMeta: rpc.debug.hasMeta,
+  hasEvents: rpc.debug.hasEvents,
+
+  senderFound: rpc.debug.senderFound,
+  receiverFound: rpc.debug.receiverFound,
+  amountFound: rpc.debug.amountFound,
+
+  feeStroops: null,
+  feePi: null,
+
+  latestLedger: null,
+  oldestLedger: null,
+  applicationOrder: null,
+
+  chainPaymentAmount: null,
+  chainEventAmount: null,
+  senderBalanceDelta: null,
+  receiverBalanceDelta: null,
+  chainAmountConsensus: null,
+
+  verificationSnapshot: {
+    amountMatch,
+    senderMatch,
+    receiverMatch,
+    memoMatch,
+  },
+
+  sourceAccount: rpc.sender,
+  memoType: rpc.memo ? "text" : null,
+
+  memo: rpc.memo,
+  createdAt: rpc.createdAt,
+
+  payload: rpc.raw,
+});
+  const verified =
+  await getVerifiedRpcByWithdrawalId(
+    withdrawalId
+  );
+
+if (!verified) {
+  throw new Error(
+    "RPC_LOG_NOT_FOUND"
+  );
+}
+
+return verified;
 }
 export async function
 getRpcVerificationByTxid(
