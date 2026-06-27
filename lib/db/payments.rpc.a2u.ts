@@ -300,7 +300,58 @@ export async function verifyWithdrawalRpc(
     );
 
   log("RPC_RESULT", rpc);
+const expectedAmount =
+  Number(withdrawal.amount);
 
+const amountMatch =
+  rpc.amount !== null &&
+  Math.abs(
+    rpc.amount -
+      expectedAmount
+  ) < 0.00000001;
+
+const expectedSender =
+  process.env.PI_MERCHANT_WALLET?.trim() ?? "";
+
+const senderMatch =
+  rpc.sender?.toLowerCase() ===
+  expectedSender.toLowerCase();
+
+const receiverMatch =
+  rpc.receiver?.toLowerCase() ===
+  withdrawal.withdraw_wallet.toLowerCase();
+
+const memoMatch =
+  !withdrawal.pi_payment_id
+    ? true
+    : rpc.memo ===
+      withdrawal.pi_payment_id;
+  const expectedAmount =
+  Number(withdrawal.amount);
+
+const amountMatch =
+  rpc.amount !== null &&
+  Math.abs(
+    rpc.amount -
+      expectedAmount
+  ) < 0.00000001;
+
+const expectedSender =
+  process.env.PI_MERCHANT_WALLET?.trim() ?? "";
+
+const senderMatch =
+  rpc.sender?.toLowerCase() ===
+  expectedSender.toLowerCase();
+
+const receiverMatch =
+  rpc.receiver?.toLowerCase() ===
+  withdrawal.withdraw_wallet.toLowerCase();
+
+const memoMatch =
+  !withdrawal.pi_payment_id
+    ? true
+    : rpc.memo ===
+      withdrawal.pi_payment_id;
   throw new Error(
     "VERIFY_NOT_IMPLEMENTED"
   );
