@@ -15,7 +15,7 @@ import {
 import {
   createWithdrawalSettlementEventOnce,
   WithdrawalSettlementEvents,
-} from "@/lib/db/settlement/withdrawal.settlement.event";
+} from "@/lib/db/settlement/settlement.event.a2u";
 import {
   reserveWalletBalance,
   releaseReservedBalance,
