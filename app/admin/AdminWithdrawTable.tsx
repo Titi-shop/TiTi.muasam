@@ -388,7 +388,63 @@ async function handlePay(
     );
   }
 }
-  
+  async function handleComplete(
+  withdrawalId: string
+) {
+  try {
+    console.log(
+      "[ADMIN_COMPLETE][START]",
+      {
+        withdrawalId,
+      }
+    );
+
+    const res =
+      await apiAuthFetch(
+        `/api/admin/withdraws/${withdrawalId}/complete`,
+        {
+          method: "POST",
+        }
+      );
+
+    console.log(
+      "[ADMIN_COMPLETE][HTTP]",
+      {
+        status: res.status,
+      }
+    );
+
+    const data =
+      await res.json();
+
+    console.log(
+      "[ADMIN_COMPLETE][RESPONSE]",
+      data
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        data?.error ??
+          "COMPLETE_FAILED"
+      );
+    }
+
+    await loadWithdraws();
+
+    alert(
+      "Withdrawal completed"
+    );
+  } catch (err) {
+    console.error(
+      "[ADMIN_COMPLETE][ERROR]",
+      err
+    );
+
+    alert(
+      "Complete failed"
+    );
+  }
+}
   return (
     <div className="space-y-4">
       {rows.map((row) => (
@@ -542,6 +598,26 @@ async function handlePay(
   "
 >
   Resume
+</button>
+            <button
+  onClick={() =>
+    void handleComplete(
+      row.id
+    )
+  }
+  disabled={
+    row.status !==
+    "PROCESSING"
+  }
+  className="
+    rounded-lg
+    border
+    px-3
+    py-2
+    text-sm
+  "
+>
+  Complete
 </button>
             <button
               className="
