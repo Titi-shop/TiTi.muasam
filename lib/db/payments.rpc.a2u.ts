@@ -1,5 +1,9 @@
 import { query } from "@/lib/db";
+import { getRpcTransaction } from "@/lib/rpc/client";
 
+import {
+  getWalletWithdrawalById,
+} from "@/lib/db/wallet/wallet.withdraw";
 export type InsertA2URpcLogInput = {
   withdrawalId: string;
   piPaymentId: string | null;
@@ -268,6 +272,38 @@ verification_snapshot,
   log("INSERT_DONE", {
     txid: input.txid,
   });
+}
+export async function verifyWithdrawalRpc(
+  withdrawalId: string,
+  txid: string
+): Promise<RpcVerificationRow> {
+
+  log("VERIFY_START", {
+    withdrawalId,
+    txid,
+  });
+
+  const withdrawal =
+    await getWalletWithdrawalById(
+      withdrawalId
+    );
+
+  if (!withdrawal) {
+    throw new Error(
+      "WITHDRAWAL_NOT_FOUND"
+    );
+  }
+
+  const rpc =
+    await getRpcTransaction(
+      txid
+    );
+
+  log("RPC_RESULT", rpc);
+
+  throw new Error(
+    "VERIFY_NOT_IMPLEMENTED"
+  );
 }
 export async function
 getRpcVerificationByTxid(
