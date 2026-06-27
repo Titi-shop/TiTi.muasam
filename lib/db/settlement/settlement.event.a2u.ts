@@ -60,7 +60,9 @@ export const WithdrawalSettlementEvents = {
   BALANCE_RELEASED: "BALANCE_RELEASED",
   JOURNAL_REVERTED: "JOURNAL_REVERTED",
   WITHDRAW_FAILED: "WITHDRAW_FAILED",
+  WITHDRAW_RETRY: "WITHDRAW_RETRY",
 } as const;
+
 /* =====================================================
    LOG
 ===================================================== */
