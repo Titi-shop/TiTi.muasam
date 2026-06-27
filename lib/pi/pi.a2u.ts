@@ -379,9 +379,7 @@ export async function submitA2UPayment(
     payment.from_address,
   toAddress:
     payment.to_address,
-  network:
-    payment.network ??
-    "Pi Testnet",
+  
 };
 }
 
@@ -399,7 +397,10 @@ export async function submitA2UPayment(
     await server.loadAccount(
       keypair.publicKey()
     );
-
+const server =
+  new StellarSdk.Horizon.Server(
+    PI_HORIZON
+  );
   vlog(
     "ACCOUNT_LOADED",
     {
@@ -419,11 +420,11 @@ export async function submitA2UPayment(
   const tx =
     new StellarSdk.TransactionBuilder(
       account,
-      {
-        fee:
-          fee.toString(),
-        
-      }
+ {
+  fee: fee.toString(),
+  networkPassphrase:
+    PI_NETWORK_PASSPHRASE,
+}
     )
       .addOperation(
         StellarSdk.Operation.payment(
@@ -479,9 +480,6 @@ return {
     payment.from_address,
   toAddress:
     payment.to_address,
-  network:
-    payment.network ??
-    "Pi Testnet",
 };
 }
 /* =====================================================
