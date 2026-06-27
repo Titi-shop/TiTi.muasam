@@ -405,6 +405,7 @@ if (!rpc) {
 
       const withdrawal =
         withdrawalRs.rows[0];
+      vlog("MARK_COMPLETED_ROW", withdrawal);
       await finalizeReservedBalance(
         withdrawal.user_id,
         Number(
@@ -412,6 +413,7 @@ if (!rpc) {
         ),
         client
       );
+      vlog("FINALIZE_RESERVED_DONE");
 await createWalletJournal({
   ownerId: withdrawal.user_id,
   ownerType: "SELLER",
@@ -436,6 +438,7 @@ await createWalletJournal({
 
   client,
 });
+      vlog("JOURNAL_DONE");
       const rs =
         await client.query(
           `
@@ -470,7 +473,9 @@ rpc.receiver,
 rpc.network,
           ]
         );
-
+vlog("UPDATE_DONE", {
+  rowCount: rs.rowCount,
+});
       if (
         rs.rowCount !== 1
       ) {
@@ -506,6 +511,7 @@ export async function markWithdrawalFailed(
           `,
           [withdrawalId]
         );
+      
 vlog(
   "MARK_COMPLETED_DONE",
   {
