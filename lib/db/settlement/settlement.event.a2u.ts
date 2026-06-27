@@ -2,9 +2,13 @@
 // lib/db/settlement/settlement.event.a2u.ts
 // =====================================================
 
-import { randomUUID } from "crypto";
+import {
+  randomUUID,
+} from "crypto";
 
-import { query } from "@/lib/db";
+import {
+  query,
+} from "@/lib/db";
 
 import {
   makeEventHash,
@@ -24,22 +28,41 @@ type DbClient = {
   }>;
 };
 
-/* =====================================================
-   CREATE WITHDRAW EVENT ONCE
-===================================================== */
-
-export async function createWithdrawalSettlementEventOnce(
-  params: {
+export type WithdrawalSettlementEventInput =
+  {
     withdrawalId: string;
 
-    type: string;
+    eventType: string;
 
     source: string;
 
-    reason: string;
+    reason?: string;
 
     metadata?: unknown;
-  },
+  };
+
+/* =====================================================
+   LOG
+===================================================== */
+
+function log(
+  step: string,
+  data?: unknown
+) {
+  console.log(
+    `[A2U_SETTLEMENT] ${step}`,
+    data ?? ""
+  );
+}
+
+/* =====================================================
+   CREATE EVENT
+===================================================== */
+
+export async function
+createWithdrawalSettlementEventOnce(
+  params:
+    WithdrawalSettlementEventInput,
 
   client?: DbClient
 ): Promise<void> {
@@ -47,57 +70,47 @@ export async function createWithdrawalSettlementEventOnce(
   const db =
     client ?? { query };
 
-  console.log(
-    "[A2U_SETTLEMENT][EVENT] START",
+  log(
+    "START",
     {
       withdrawalId:
         params.withdrawalId,
 
-      type:
-        params.type,
+      eventType:
+        params.eventType,
     }
   );
 
-  /* ===================================================
-     BUILD EVENT HASH
-  =================================================== */
+  /* ===============================================
+     HASH
+  =============================================== */
 
   const payload = {
+
     withdrawalId:
       params.withdrawalId,
 
-    type:
-      params.type,
+    eventType:
+      params.eventType,
 
     source:
       params.source,
 
     reason:
-      params.reason,
+      params.reason ?? "",
 
     metadata:
       params.metadata ?? {},
   };
 
   const eventHash =
-    makeEventHash(payload);
+    makeEventHash(
+      payload
+    );
 
-  console.log(
-    "[A2U_SETTLEMENT][EVENT] INSERT_START",
-    {
-      withdrawalId:
-        params.withdrawalId,
-
-      type:
-        params.type,
-
-      eventHash,
-    }
-  );
-
-  /* ===================================================
+  /* ===============================================
      INSERT
-  =================================================== */
+  =============================================== */
 
   const result =
     await db.query(
@@ -133,19 +146,22 @@ export async function createWithdrawalSettlementEventOnce(
         NOW()
 
       )
+
       ON CONFLICT (event_hash)
+
       DO NOTHING
       `,
       [
+
         randomUUID(),
 
         params.withdrawalId,
 
-        params.type,
+        params.eventType,
 
         params.source,
 
-        params.reason,
+        params.reason ?? null,
 
         JSON.stringify(
           params.metadata ?? {}
@@ -156,31 +172,32 @@ export async function createWithdrawalSettlementEventOnce(
     );
 
   if (
-    (result.rowCount ?? 0) === 0
+    (result.rowCount ?? 0)
+    === 0
   ) {
 
-    console.log(
-      "[A2U_SETTLEMENT][EVENT] DUPLICATE_SKIP",
+    log(
+      "DUPLICATE_SKIP",
       {
         withdrawalId:
           params.withdrawalId,
 
-        type:
-          params.type,
+        eventType:
+          params.eventType,
       }
     );
 
     return;
   }
 
-  console.log(
-    "[A2U_SETTLEMENT][EVENT] DONE",
+  log(
+    "DONE",
     {
       withdrawalId:
         params.withdrawalId,
 
-      type:
-        params.type,
+      eventType:
+        params.eventType,
     }
   );
 }
