@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/guard";
-import { payWithdrawal } from "@/lib/pi/pi.a2u";
+import {
+  payWithdrawal,
+} from "@/lib/payments/a2u.orchestrator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
