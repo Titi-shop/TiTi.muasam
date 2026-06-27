@@ -448,6 +448,20 @@ if (!memoMatch) {
     withdrawalId
   );
 
+console.log(
+  "[A2U_RPC_DB] RECEIPT_START",
+  withdrawalId
+);
+
+await upsertWithdrawalReceipt(
+  withdrawalId
+);
+
+console.log(
+  "[A2U_RPC_DB] RECEIPT_DONE",
+  withdrawalId
+);
+
 if (!verified) {
   throw new Error(
     "RPC_LOG_NOT_FOUND"
@@ -455,7 +469,6 @@ if (!verified) {
 }
 
 return verified;
-}
 export async function
 getRpcVerificationByTxid(
   txid: string
