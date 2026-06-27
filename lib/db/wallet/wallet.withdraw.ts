@@ -6,12 +6,23 @@ import {
   randomUUID,
   createHash,
 } from "crypto";
+import { createHash } from "crypto";
 import {
-  getVerifiedRpcByWithdrawalId,
-} from "@/lib/db/payments.rpc.a2u";
+  finalizeReservedBalance,
+} from "./wallet.balance";
+
 import {
   createWalletJournal,
 } from "./wallet.journal";
+
+import {
+  getVerifiedRpcByWithdrawalId,
+} from "@/lib/db/payments.rpc.a2u";
+
+import {
+  createWithdrawalSettlementEventOnce,
+  WithdrawalSettlementEvents,
+} from "@/lib/db/settlement/settlement.event.a2u";
 function vlog(
   step: string,
   data?: unknown
