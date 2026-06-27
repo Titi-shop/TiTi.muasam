@@ -321,19 +321,14 @@ const receiverMatch =
   rpc.receiver?.toLowerCase() ===
   withdrawal.withdraw_wallet.toLowerCase();
 
-const memoMatch =
-  !withdrawal.pi_payment_id
-    ? true
-    : rpc.memo ===
-      withdrawal.pi_payment_id;
-  const expectedAmount =
+const expectedAmount =
   Number(withdrawal.amount);
 
 const amountMatch =
   rpc.amount !== null &&
   Math.abs(
     rpc.amount -
-      expectedAmount
+    expectedAmount
   ) < 0.00000001;
 
 const expectedSender =
@@ -350,8 +345,7 @@ const receiverMatch =
 const memoMatch =
   !withdrawal.pi_payment_id
     ? true
-    : rpc.memo ===
-      withdrawal.pi_payment_id;
+    : rpc.memo === withdrawal.pi_payment_id;
   throw new Error(
     "VERIFY_NOT_IMPLEMENTED"
   );
