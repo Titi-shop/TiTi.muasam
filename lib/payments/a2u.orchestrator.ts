@@ -120,10 +120,9 @@ export async function payWithdrawal(
       true;
 
     const tx =
-      await submitA2UPayment(
-        withdrawal.id,
-        piPaymentId
-      );
+  await submitA2UPayment(
+    piPaymentId
+  );
 
     await completeA2UPayment(
       piPaymentId,
