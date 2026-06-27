@@ -469,6 +469,7 @@ if (!verified) {
 }
 
 return verified;
+}
 export async function
 getRpcVerificationByTxid(
   txid: string
