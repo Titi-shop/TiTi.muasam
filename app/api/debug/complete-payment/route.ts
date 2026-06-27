@@ -9,7 +9,7 @@ export async function GET() {
   try {
     await completeA2UPayment(
       "oeOiODdN2R5wmHqtaVl6Zqfu8wYn",
-      "3ac6ff561637ff57ab5e307fddfc37a87648cf5f6b84f99fff5b38f32fb2be16
+      "3ac6ff561637ff57ab5e307fddfc37a87648cf5f6b84f99fff5b38f32fb2be16"
     );
 
     return NextResponse.json({
