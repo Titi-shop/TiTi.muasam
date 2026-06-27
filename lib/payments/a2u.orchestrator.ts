@@ -10,13 +10,13 @@ import {
 } from "@/lib/db/payments.rpc.a2u";
 import {
   getWalletWithdrawalById,
+  markWithdrawalCompleted,
   markWithdrawalFailed,
 } from "@/lib/db/wallet/wallet.withdraw";
 
 import {
-  markWithdrawalCompleted,
-} from "@/lib/db/wallet/wallet.withdraw.complete";
-
+  markWithdrawalProcessing,
+} from "@/lib/db/wallet/wallet.withdraw.processing";
 import {
   createA2UPayment,
   submitA2UPayment,
