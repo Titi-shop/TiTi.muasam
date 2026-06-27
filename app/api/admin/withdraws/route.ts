@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/auth/guard";
 
 import {
   getWalletWithdrawals,
-} from "@/lib/db/wallet/wallet.withdraw";
+} from "@/lib/db/wallet/wallet.withdraw.failed";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
