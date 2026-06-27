@@ -111,12 +111,13 @@ export type A2UPayment =
   };
 export type A2USubmitResult = {
   txid: string;
+
   ledger: number | null;
   memo: string | null;
   fee: string | null;
-  fromAddress?: string;
-  toAddress?: string;
-  network?: string;
+  fromAddress: string | null;
+  toAddress: string |null;
+  network: string | null;
 };
 /* =====================================================
    INTERNAL REQUEST
@@ -393,13 +394,14 @@ export async function submitA2UPayment(
     keypair.publicKey()
   );
 
-  const account =
-    await server.loadAccount(
-      keypair.publicKey()
-    );
-const server =
+  const server =
   new StellarSdk.Horizon.Server(
     PI_HORIZON
+  );
+
+const account =
+  await server.loadAccount(
+    keypair.publicKey()
   );
   vlog(
     "ACCOUNT_LOADED",
@@ -477,9 +479,11 @@ return {
   fee:
     submitResult.fee_charged ?? null,
   fromAddress:
-    payment.from_address,
+    payment.from_address ?? null,
   toAddress:
-    payment.to_address,
+    payment.to_address ?? null,
+  network:
+    payment.network ?? null,
 };
 }
 /* =====================================================
