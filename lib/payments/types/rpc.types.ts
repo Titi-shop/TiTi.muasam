@@ -85,7 +85,7 @@ export type RpcVerifyResult = {
 export type ParsedRpcTransaction = {
   hash: string;
 
-  ledger: number | null;
+  ledger: number |null;
 
   amount: number | null;
 
@@ -93,12 +93,27 @@ export type ParsedRpcTransaction = {
   receiver: string | null;
 
   memo: string | null;
+  memoType: string | null;
+
   createdAt: string | null;
 
   txStatus: string | null;
 
   confirmed: boolean;
+  successful: boolean;
+
   rpcReachable: boolean;
+
+  feeStroops: number | null;
+  feePi: number | null;
+
+  latestLedger: number | null;
+  oldestLedger: number | null;
+
+  applicationOrder: number | null;
+  operationCount: number | null;
+
+  sourceAccount: string | null;
 
   raw: unknown;
 
@@ -113,4 +128,5 @@ export type ParsedRpcTransaction = {
     hasEvents: boolean;
   };
 };
+  
 
