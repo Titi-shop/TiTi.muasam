@@ -129,99 +129,19 @@ export default function WalletHero({
   }
   onClick={onWalletClick}
 />
-        {/* DEFAULT WALLET */}
-
-<button
-  type="button"
-  onClick={onWalletClick}
-  className="
-    relative z-10
-    mt-6
-    w-full
-    rounded-2xl
-    border
-    border-white/20
-    bg-white/10
-    p-4
-    backdrop-blur-md
-    transition
-    active:scale-[0.98]
-  "
->
-
-  <div
-    className="
-      flex
-      items-center
-      justify-between
-      gap-4
-    "
-  >
-
-    <div>
-
-      <p
-        className="
-          text-xs
-          text-white/70
-        "
-      >
-        Ví mặc định
-      </p>
-
-      <p
-        className="
-          mt-1
-          font-semibold
-          tracking-wide
-        "
-      >
-        {defaultWallet
-          ? defaultWallet.address
-          : "Chưa có ví"}
-      </p>
-
-      {defaultWallet && (
-
-        <span
-          className="
-            mt-2
-            inline-flex
-            rounded-full
-            bg-green-500/20
-            px-2.5
-            py-1
-            text-[11px]
-            font-medium
-            text-green-100
-          "
-        >
-
-          {defaultWallet.verified
-            ? "Đã xác minh"
-            : "Chưa xác minh"}
-
-        </span>
-
-      )}
-
-    </div>
-
-    <span
-      className="
-        text-xl
-        text-white/70
-      "
-    >
-      ›
-    </span>
-
-  </div>
-
-</button>
-
       </div>
-
+<WalletDefaultAddress
+  wallet={
+    defaultWallet
+      ? {
+          address: defaultWallet.address,
+          network: "PI",
+          is_verified: defaultWallet.verified,
+        }
+      : null
+  }
+  onClick={onWalletClick}
+/>
       {/* ACTIONS */}
 
       <WalletActions
