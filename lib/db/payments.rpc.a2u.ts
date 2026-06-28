@@ -81,6 +81,23 @@ export type RpcVerificationRow = {
   receiver_match: boolean | null;
   memo_match: boolean | null;
   chain_amount_consensus: boolean | null;
+  tx_status: string | null;
+reason: string | null;
+confirmed: boolean;
+chain_reference: string | null;
+verification_hash: string | null;
+payload: unknown;
+rpc_reachable: boolean;
+created_at_chain: string | null;
+parse_layer: string | null;
+verification_version: number | null;
+verification_method: string | null;
+expected_sender: string | null;
+expected_receiver: string | null;
+expected_memo: string | null;
+memo_found: boolean | null;
+source_account: string | null;
+memo_type: string | null;
 
 };
 
