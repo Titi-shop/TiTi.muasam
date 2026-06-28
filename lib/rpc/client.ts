@@ -419,6 +419,14 @@ const chainPaymentAmount =
   normalizeAmount(
     num(paymentBody.amount)
   );
+
+const chainEventAmount =
+  normalizeAmount(
+    deepFindNumber(
+      asObj(result.events),
+      ["i128"]
+    )
+  );
     const memoObj = asObj(
       innerTx.memo
     );
@@ -545,6 +553,7 @@ return {
   applicationOrder,
   operationCount,
   chainPaymentAmount,
+  chainEventAmount,
   sourceAccount,
   network,
   raw: result,
@@ -572,6 +581,7 @@ return {
   ledger: null,
   amount: null,
 chainPaymentAmount: null,
+ chainEventAmount: null,
   sender: null,
   receiver: null,
 
