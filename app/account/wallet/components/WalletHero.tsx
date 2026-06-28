@@ -114,22 +114,6 @@ export default function WalletHero({
 
         </div>
 {/* DEFAULT WALLET */}
-
-<WalletDefaultAddress
-  wallet={
-    defaultWallet
-      ? {
-          address:
-            defaultWallet.address,
-          network: "PI",
-          is_verified:
-            defaultWallet.verified,
-        }
-      : null
-  }
-  onClick={onWalletClick}
-/>
-      </div>
 <WalletDefaultAddress
   wallet={
     defaultWallet
