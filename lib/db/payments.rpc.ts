@@ -66,7 +66,64 @@ function normalizeWallet(value: string | null): string {
 function sameAmount(a: number, b: number): boolean {
   return Math.abs(a - b) < 0.0000001;
 }
+function getChainPaymentAmount(
+  raw: unknown
+): number | null {
+  const obj =
+    raw as Record<string, unknown>;
 
+  const envelope =
+    obj.envelopeJson as
+      | Record<string, unknown>
+      | undefined;
+
+  const tx =
+    envelope?.tx as
+      | Record<string, unknown>
+      | undefined;
+
+  const inner =
+    tx?.tx as
+      | Record<string, unknown>
+      | undefined;
+
+  const operations =
+    inner?.operations;
+
+  if (!Array.isArray(operations)) {
+    return null;
+  }
+
+  const first =
+    operations[0] as
+      | Record<string, unknown>
+      | undefined;
+
+  const body =
+    first?.body as
+      | Record<string, unknown>
+      | undefined;
+
+  const payment =
+    body?.payment as
+      | Record<string, unknown>
+      | undefined;
+
+  const amount =
+    payment?.amount;
+
+  if (typeof amount !== "string") {
+    return null;
+  }
+
+  const stroops = Number(amount);
+
+  if (!Number.isFinite(stroops)) {
+    return null;
+  }
+
+  return stroops / 10_000_000;
+}
 function buildVerificationHash(input: {
   paymentIntentId: string;
   txid: string;
@@ -441,7 +498,10 @@ const expectedAmount =
   ===================================================== */
 
   const rpcTx = await getRpcTransaction(txid);
-
+const chainPaymentAmount =
+  getChainPaymentAmount(
+    rpcTx.raw
+  );
   log("RPC_RAW_RESULT", {
   confirmed: rpcTx.confirmed,
   amount: rpcTx.amount,
@@ -453,7 +513,9 @@ const expectedAmount =
   createdAt: rpcTx.createdAt,
   memo: rpcTx.memo,
 });
-
+log("CHAIN_PAYMENT_AMOUNT", {
+  chainPaymentAmount,
+});
   log("RPC_TRACE", {
     rpcReachable: rpcTx.rpcReachable,
     confirmed: rpcTx.confirmed,
