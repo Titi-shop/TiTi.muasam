@@ -746,7 +746,7 @@ memoType:
   rpcTx.memoType,
 
 chainPaymentAmount: null,
-chainEventAmount: null,
+chainEventAmount: rpcTx.chainEventAmount,
 
 senderBalanceDelta: null,
 receiverBalanceDelta: null,
