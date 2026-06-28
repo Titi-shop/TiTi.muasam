@@ -14,7 +14,7 @@ import {
 
 import type {
   WalletTransaction,
-} from "../wallet.api";
+} from "../wallet.types";
 
 import WalletTransactionItem
   from "./WalletTransactionItem";
@@ -40,7 +40,12 @@ export default function WalletTransactionList({
     useTranslation();
 
   return (
-    <section className="mt-6 px-4">
+    <section
+  className="
+    mt-6
+    px-5
+  "
+>
 
       <div
         className="
