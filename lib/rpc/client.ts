@@ -420,13 +420,50 @@ const chainPaymentAmount =
     num(paymentBody.amount)
   );
 
-const chainEventAmount =
-  normalizeAmount(
-    deepFindNumber(
-      asObj(result.events),
-      ["i128"]
-    )
-  );
+const contractEvents = asArr(
+  asObj(result.events).contractEventsJson
+);
+
+let chainEventAmount: number | null = null;
+
+for (const group of contractEvents) {
+  if (!Array.isArray(group)) continue;
+
+  for (const event of group) {
+    const map = asArr(
+      asObj(
+        asObj(
+          asObj(
+            asObj(event).body
+          ).v0
+        ).data
+      ).map
+    );
+
+    for (const entry of map) {
+      const item = asObj(entry);
+
+      const key = asObj(item.key);
+      const val = asObj(item.val);
+
+      if (key.symbol === "amount") {
+        chainEventAmount = normalizeAmount(
+          num(val.i128)
+        );
+
+        break;
+      }
+    }
+
+    if (chainEventAmount !== null) {
+      break;
+    }
+  }
+
+  if (chainEventAmount !== null) {
+    break;
+  }
+}
     const senderBalanceDelta: number | null = null;
 const receiverBalanceDelta: number | null = null;
     const memoObj = asObj(
