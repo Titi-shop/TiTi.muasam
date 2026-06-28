@@ -466,6 +466,13 @@ for (const group of contractEvents) {
 }
     const senderBalanceDelta: number | null = null;
 const receiverBalanceDelta: number | null = null;
+    const chainAmountConsensus =
+  chainPaymentAmount !== null &&
+  chainEventAmount !== null &&
+  Math.abs(
+    chainPaymentAmount -
+    chainEventAmount
+  ) < 0.0000001;
     const memoObj = asObj(
       innerTx.memo
     );
@@ -593,6 +600,7 @@ return {
   operationCount,
   chainPaymentAmount,
   chainEventAmount,
+  chainAmountConsensus,
 senderBalanceDelta,
 receiverBalanceDelta,
   sourceAccount,
@@ -622,9 +630,11 @@ receiverBalanceDelta,
   ledger: null,
   amount: null,
   chainPaymentAmount: null,
- chainEventAmount: null,
-  senderBalanceDelta: null,
-  receiverBalanceDelta: null,
+chainEventAmount: null,
+
+chainAmountConsensus: null,
+senderBalanceDelta: null,
+receiverBalanceDelta: null,
   sender: null,
   receiver: null,
 
