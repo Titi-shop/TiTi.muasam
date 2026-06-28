@@ -162,6 +162,39 @@ async function insertRpcLog(
     created_at,
     updated_at,
     rpc_reachable,
+    expected_sender,
+expected_memo,
+
+memo_match,
+memo_found,
+
+network,
+
+verification_version,
+verification_method,
+
+verification_snapshot,
+
+fee_stroops,
+fee_pi,
+
+latest_ledger,
+oldest_ledger,
+application_order,
+
+successful,
+operation_count,
+
+source_account,
+memo_type,
+
+chain_payment_amount,
+chain_event_amount,
+
+sender_balance_delta,
+receiver_balance_delta,
+
+chain_amount_consensus,
 confirmed,
 parse_layer,
 has_meta,
@@ -209,7 +242,8 @@ memo
 $28,
 $29,
 $30,
-$31
+$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,
+$44,$45,$46,$47,$48,$49,$50,$51,$52,$53
 )
   ON CONFLICT (txid)
   DO UPDATE SET
@@ -278,6 +312,36 @@ input.receiverFound,
 input.amountFound,
 input.createdAt,
 input.memo,
+    input.expectedSender,
+input.expectedMemo,
+
+input.memoMatch,
+input.memoFound,
+
+input.network,
+
+input.verificationVersion,
+input.verificationMethod,
+
+JSON.stringify(
+  input.verificationSnapshot ?? {}
+),
+
+input.feeStroops,
+input.feePi,
+input.latestLedger,
+input.oldestLedger,
+input.applicationOrder,
+
+input.successful,
+input.operationCount,
+input.sourceAccount,
+input.memoType,
+input.chainPaymentAmount,
+input.chainEventAmount,
+input.senderBalanceDelta,
+input.receiverBalanceDelta,
+input.chainAmountConsensus,
 ]
 
 );
@@ -565,6 +629,63 @@ amountFound,
     payload: rpcTx.raw,
 createdAt: rpcTx.createdAt ?? null,
 memo: rpcTx.memo ?? null,
+    expectedSender: null,
+expectedMemo: piPaymentId,
+
+memoMatch:
+  piPaymentId
+    ? rpcTx.memo === piPaymentId
+    : null,
+
+memoFound:
+  rpcTx.memo !== null,
+
+network:
+  rpcTx.network,
+
+verificationVersion: 1,
+
+verificationMethod: "RPC",
+
+verificationSnapshot: {
+  amountMatch,
+  receiverMatch,
+},
+
+successful:
+  rpcTx.successful,
+
+operationCount:
+  rpcTx.operationCount,
+
+feeStroops:
+  rpcTx.feeStroops,
+
+feePi:
+  rpcTx.feePi,
+
+latestLedger:
+  rpcTx.latestLedger,
+
+oldestLedger:
+  rpcTx.oldestLedger,
+
+applicationOrder:
+  rpcTx.applicationOrder,
+
+sourceAccount:
+  rpcTx.sourceAccount,
+
+memoType:
+  rpcTx.memoType,
+
+chainPaymentAmount: null,
+chainEventAmount: null,
+
+senderBalanceDelta: null,
+receiverBalanceDelta: null,
+
+chainAmountConsensus: null,
   });
 const rpcLog =
   await getRpcVerificationLog(paymentIntentId);
