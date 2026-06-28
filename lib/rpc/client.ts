@@ -427,6 +427,8 @@ const chainEventAmount =
       ["i128"]
     )
   );
+    const senderBalanceDelta: number | null = null;
+const receiverBalanceDelta: number | null = null;
     const memoObj = asObj(
       innerTx.memo
     );
@@ -582,8 +584,10 @@ receiverBalanceDelta,
   hash: clean,
   ledger: null,
   amount: null,
-chainPaymentAmount: null,
+  chainPaymentAmount: null,
  chainEventAmount: null,
+  senderBalanceDelta: null,
+  receiverBalanceDelta: null,
   sender: null,
   receiver: null,
 
