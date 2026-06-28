@@ -361,16 +361,16 @@ export async function getRpcTransaction(
       str(result.status) ??
       str(result.txStatus) ??
       null;
+const resultJson = asObj(result.resultJson);
+
 const feeStroops =
-  num(result.feeCharged) ??
-  num(result.fee_charged);
+  num(resultJson.fee_charged);
 
 const feePi =
   feeStroops === null
     ? null
     : feeStroops / STROOPS_PER_PI;
 
-    
     const confirmed =
       status === "SUCCESS" ||
       status === "FAILED" ||
