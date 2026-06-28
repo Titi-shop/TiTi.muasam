@@ -7,7 +7,7 @@ import {
 import type {
   JournalDirection,
   JournalEntryType,
-} from "@/lib/db/wallet/wallet.types";
+} from "@/app/account/wallet/wallet.types";
 import {
   toSafeNumber,
 } from "./wallet.utils";
