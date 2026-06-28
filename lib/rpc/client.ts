@@ -391,11 +391,19 @@ export async function getRpcTransaction(
        MEMO
     ===================================================== */
 
-    const memo =
-      str(memoObj.text) ??
-      str(memoObj.id) ??
-      str(memoObj.hash) ??
-      null;
+    let memo: string | null = null;
+let memoType: string | null = null;
+
+if (str(memoObj.text)) {
+  memo = str(memoObj.text);
+  memoType = "text";
+} else if (str(memoObj.id)) {
+  memo = str(memoObj.id);
+  memoType = "id";
+} else if (str(memoObj.hash)) {
+  memo = str(memoObj.hash);
+  memoType = "hash";
+}
 
     /* =====================================================
        CREATED AT
@@ -471,60 +479,85 @@ log("NORMALIZED_AMOUNT", {
 return {
   hash:
     str(result.txHash) ?? clean,
-      ledger,
-      amount,
-      sender,
-      receiver,
-      memo,
-      createdAt,
-      txStatus:
-        status ??
-        (confirmed
-          ? "SUCCESS"
-          : "UNKNOWN"),
 
-      confirmed,
-      rpcReachable: true,
-      raw: result,
-      debug: {
-        amountFound:
-          amount !== null,
-        senderFound:
-          !!sender,
-        receiverFound:
-          !!receiver,
-        parseLayer,
-        hasMeta:
-          !!result.resultMetaJson ||
-          !!result.resultMetaXdr,
+  ledger,
+  amount,
+  sender,
+  receiver,
+  memo,
+  memoType,
+  createdAt,
 
-        hasEvents:
-          !!result.events,
-      },
-    };
+  txStatus:
+    status ??
+    (confirmed
+      ? "SUCCESS"
+      : "UNKNOWN"),
+
+  confirmed,
+  successful,
+  rpcReachable: true,
+  feeStroops,
+  feePi,
+
+  latestLedger,
+  oldestLedger,
+  applicationOrder,
+  operationCount,
+  sourceAccount,
+  network,
+  raw: result,
+
+  debug: {
+    amountFound:
+      amount !== null,
+    senderFound:
+      !!sender,
+    receiverFound:
+      !!receiver,
+    parseLayer,
+    hasMeta:
+      !!result.resultMetaJson ||
+      !!result.resultMetaXdr,
+    hasEvents:
+      !!result.events,
+  },
+};
   } catch (e) {
     err("GET_TX_FAIL", e);
 
     return {
-      hash: clean,
-      ledger: null,
-      amount: null,
-      sender: null,
-      receiver: null,
-      memo: null,
-      createdAt: null,
-      txStatus: null,
-      confirmed: false,
-      rpcReachable: false,
-      raw: {},
-      debug: {
-        amountFound: false,
-        senderFound: false,
-        receiverFound: false,
-        parseLayer: "FAIL",
-        hasMeta: false,
-        hasEvents: false,
-      },
-    };
+  hash: clean,
+  ledger: null,
+  amount: null,
+  sender: null,
+  receiver: null,
+
+  memo: null,
+  memoType: null,
+  createdAt: null,
+  txStatus: null,
+  confirmed: false,
+  successful: false,
+  rpcReachable: false,
+  feeStroops: null,
+  feePi: null,
+  latestLedger: null,
+  oldestLedger: null,
+
+  applicationOrder: null,
+  operationCount: null,
+  sourceAccount: null,
+  network: null,
+  raw: {},
+  debug: {
+    amountFound: false,
+    senderFound: false,
+    receiverFound: false,
+    parseLayer: "FAIL",
+    hasMeta: false,
+    hasEvents: false,
+  },
+};
   }
 }
