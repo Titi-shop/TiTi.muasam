@@ -571,6 +571,7 @@ return {
   hash: clean,
   ledger: null,
   amount: null,
+chainPaymentAmount: null,
   sender: null,
   receiver: null,
 
