@@ -89,51 +89,50 @@ export default function WalletHero({
 
       {/* TOP */}
 
-      <div
-        className="
-          relative z-10 flex items-start
-          justify-between gap-4
-        "
-      >
+ <div
+  className="
+    relative z-10 flex items-start
+    justify-between gap-4
+  "
+>
 
-        <div>
+  <div>
 
-          <p className="text-sm text-white/80">
-            {t.wallet_balance ??
-              "Wallet Balance"}
-          </p>
+    <p className="text-sm text-white/80">
+      {t.wallet_balance ??
+        "Wallet Balance"}
+    </p>
 
-          <h1
-            className="
-              mt-3 text-4xl
-              font-black tracking-tight
-            "
-          >
-            π {formatPi(balance)}
-          </h1>
+    <h1
+      className="
+        mt-3 text-4xl
+        font-black tracking-tight
+      "
+    >
+      π {formatPi(balance)}
+    </h1>
 
-        </div>
-{/* DEFAULT WALLET */}
-<WalletDefaultAddress
-  wallet={
-    defaultWallet
-      ? {
-          address: defaultWallet.address,
-          network: "PI",
-          is_verified: defaultWallet.verified,
-        }
-      : null
-  }
-  onClick={onWalletClick}
+  </div>
+
+  <WalletDefaultAddress
+    wallet={
+      defaultWallet
+        ? {
+            address: defaultWallet.address,
+            network: "PI",
+            is_verified: defaultWallet.verified,
+          }
+        : null
+    }
+    onClick={onWalletClick}
+  />
+
+</div>
+
+<WalletActions
+  onWithdraw={onWithdraw}
 />
-      {/* ACTIONS */}
 
-      <WalletActions
-        onWithdraw={
-          onWithdraw
-        }
-      />
-
-    </section>
+</section>
   );
 }
