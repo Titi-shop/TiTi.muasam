@@ -93,7 +93,8 @@ export default function WalletPage() {
         {/* HERO */}
 
 <WalletHero
-  balance={balance}
+  balance={balance.balance}
+  defaultWallet={defaultWallet}
   refreshing={refreshing}
   defaultWallet={{
     address: "GABCD...XYZ123",
