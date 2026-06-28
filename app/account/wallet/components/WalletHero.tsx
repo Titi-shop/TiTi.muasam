@@ -113,7 +113,7 @@ export default function WalletHero({
 
         </div>
 
-        <{/* DEFAULT WALLET */}
+        {/* DEFAULT WALLET */}
 
 <button
   type="button"
