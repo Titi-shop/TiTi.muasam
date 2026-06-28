@@ -361,12 +361,38 @@ export async function getRpcTransaction(
       str(result.status) ??
       str(result.txStatus) ??
       null;
+const feeStroops =
+  num(result.feeCharged) ??
+  num(result.fee_charged);
 
+const feePi =
+  feeStroops === null
+    ? null
+    : feeStroops / STROOPS_PER_PI;
+
+    
     const confirmed =
       status === "SUCCESS" ||
       status === "FAILED" ||
       ledger !== null;
+const successful =
+  status === "SUCCESS";
 
+const latestLedger =
+  num(result.latestLedger);
+
+const oldestLedger =
+  num(result.oldestLedger);
+
+const applicationOrder =
+  num(result.applicationOrder);
+
+const operationCount =
+  num(result.operationCount);
+
+const network =
+  str(result.network) ??
+  "Pi Testnet";
     /* =====================================================
        ENVELOPE
     ===================================================== */
@@ -386,6 +412,10 @@ export async function getRpcTransaction(
     const memoObj = asObj(
       innerTx.memo
     );
+    const sourceAccount =
+  str(innerTx.source_account) ??
+  str(result.sourceAccount) ??
+  null;
 
     /* =====================================================
        MEMO
