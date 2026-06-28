@@ -12,7 +12,7 @@ import {
 
 export type WithdrawPayload = {
   amount: number;
-  withdrawWallet: string;
+  walletAddressId: string;
 };
 
 export type WithdrawResponse = {
@@ -51,11 +51,15 @@ export async function createWithdraw(
      VALIDATE WALLET
   =================================================== */
 
-  const wallet =
-    payload.withdrawWallet
-      .trim();
+  const walletAddressId =
+  payload.walletAddressId.trim();
 
-  if (!wallet) {
+if (!walletAddressId) {
+  return {
+    success: false,
+    error: "INVALID_WALLET",
+  };
+}
 
     return {
       success: false,
@@ -81,14 +85,10 @@ export async function createWithdraw(
               "application/json",
           },
 
-          body:
-            JSON.stringify({
-              amount:
-                payload.amount,
-
-              withdrawWallet:
-                wallet,
-            }),
+          body: JSON.stringify({
+  amount: payload.amount,
+  walletAddressId,
+}),
         }
       );
 
