@@ -407,13 +407,7 @@ export async function verifyRpcPaymentForReconcile({
 
     throw new Error("INVALID_RPC_VERIFY_INPUT");
   }
-const chainAmountConsensus =
-    rpcTx.chainPaymentAmount !== null &&
-    rpcTx.chainEventAmount !== null &&
-    sameAmount(
-        rpcTx.chainPaymentAmount,
-        rpcTx.chainEventAmount
-    );
+
   /* =====================================================
      FETCH INTENT
   ===================================================== */
@@ -447,6 +441,13 @@ const expectedAmount =
   ===================================================== */
 
   const rpcTx = await getRpcTransaction(txid);
+  const chainAmountConsensus =
+  rpcTx.chainPaymentAmount !== null &&
+  rpcTx.chainEventAmount !== null &&
+  sameAmount(
+    rpcTx.chainPaymentAmount,
+    rpcTx.chainEventAmount
+  );
   log("RPC_RAW_RESULT", {
   confirmed: rpcTx.confirmed,
   amount: rpcTx.amount,
@@ -687,6 +688,9 @@ sourceAccount:
 
 memoType:
   rpcTx.memoType,
+
+chainPaymentAmount:
+    rpcTx.chainPaymentAmount,
 
 chainEventAmount:
     rpcTx.chainEventAmount,
