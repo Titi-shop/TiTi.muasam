@@ -11,7 +11,7 @@ import {
 
 import type {
   WalletTransaction,
-} from "../wallet.api";
+} from "../wallet.types";
 
 import {
   formatPi,
@@ -42,26 +42,37 @@ export default function WalletTransactionItem({
   return (
     <div
       className="
-        flex items-center
-        justify-between gap-4
-        border-b border-orange-500/5
-        p-4 last:border-b-0
+        flex
+        items-center
+        justify-between
+        gap-4
+        border-b
+        border-orange-500/5
+        p-4
+        last:border-b-0
       "
     >
 
       {/* LEFT */}
+
       <div
         className="
-          flex min-w-0
-          items-center gap-3
+          flex
+          min-w-0
+          items-center
+          gap-3
         "
       >
 
         <div
           className={`
-            flex h-12 w-12
-            shrink-0 items-center
-            justify-center rounded-2xl
+            flex
+            h-12
+            w-12
+            shrink-0
+            items-center
+            justify-center
+            rounded-2xl
             ${
               isCredit
                 ? "bg-green-500/10 text-green-500"
@@ -69,6 +80,7 @@ export default function WalletTransactionItem({
             }
           `}
         >
+
           {isCredit ? (
             <ArrowDownLeft
               size={20}
@@ -78,41 +90,48 @@ export default function WalletTransactionItem({
               size={20}
             />
           )}
+
         </div>
 
         <div className="min-w-0">
 
           <p
             className="
-              truncate text-sm
+              truncate
+              text-sm
               font-semibold
               text-[var(--foreground)]
             "
           >
             {getEntryLabel(
-              item.entry_type
+              item.entryType
             )}
           </p>
 
           <p
             className="
-              mt-1 text-xs
+              mt-1
+              text-xs
               text-[var(--text-muted)]
             "
           >
             {formatTime(
-              item.created_at
+              item.createdAt
             )}
           </p>
+
         </div>
+
       </div>
 
       {/* RIGHT */}
+
       <div className="text-right">
 
         <p
           className={`
-            text-sm font-bold
+            text-sm
+            font-bold
             ${
               isCredit
                 ? "text-green-500"
@@ -120,6 +139,7 @@ export default function WalletTransactionItem({
             }
           `}
         >
+
           {isCredit
             ? "+"
             : "-"}
@@ -128,8 +148,12 @@ export default function WalletTransactionItem({
           {formatPi(
             item.amount
           )}
+
         </p>
+
       </div>
+
     </div>
   );
+
 }
