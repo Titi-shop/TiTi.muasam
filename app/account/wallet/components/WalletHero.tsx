@@ -25,12 +25,15 @@ import {
 
 type Props = {
   balance: number;
-
   refreshing: boolean;
+  defaultWallet?: {
+    address: string;
+    verified: boolean;
+  } | null;
 
   onRefresh: () => void;
-
   onWithdraw: () => void;
+  onWalletClick?: () => void;
 };
 
 /* =====================================================
