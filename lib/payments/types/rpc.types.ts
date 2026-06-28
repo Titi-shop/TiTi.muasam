@@ -88,7 +88,7 @@ export type ParsedRpcTransaction = {
   ledger: number |null;
 
   amount: number | null;
-
+  chainPaymentAmount: number | null;
   sender: string | null;
   receiver: string | null;
 
