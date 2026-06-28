@@ -164,8 +164,8 @@ export async function upsertWithdrawalReceipt(
       rpc.confirmed ?? rpc.verified,
       rpc.ledger,
       rpc.txid,
-      rpc.txStatus, 
-      rpc.stage,
+      rpc.tx_status,
+      rpc.tx_status,
       rpc.stage,
       rpc.memo,
     ]
