@@ -446,11 +446,20 @@ latestLedger: rpc.latestLedger,
 oldestLedger: rpc.oldestLedger,
 applicationOrder: rpc.applicationOrder,
 
-chainPaymentAmount: null,
-chainEventAmount: null,
-senderBalanceDelta: null,
-receiverBalanceDelta: null,
-chainAmountConsensus: null,
+chainPaymentAmount:
+  rpc.chainPaymentAmount,
+
+chainEventAmount:
+  rpc.chainEventAmount,
+
+senderBalanceDelta:
+  rpc.senderBalanceDelta,
+
+receiverBalanceDelta:
+  rpc.receiverBalanceDelta,
+
+chainAmountConsensus:
+  rpc.chainAmountConsensus,
 
 verificationSnapshot: {
   amountMatch,
