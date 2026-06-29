@@ -105,12 +105,9 @@ const router =
   defaultWallet={
     defaultWallet
       ? {
-          address:
-            defaultWallet.address,
-          network:
-            defaultWallet.network,
-          is_verified:
-            defaultWallet.isVerified,
+          address: defaultWallet.address,
+          network: defaultWallet.network,
+          is_verified: defaultWallet.isVerified,
         }
       : null
   }
@@ -118,10 +115,13 @@ const router =
     void refresh();
   }}
   onWalletClick={() => {
-  router.push(
-    "/account/wallet/addresses"
-  );
-}}
+    router.push(
+      "/account/wallet/addresses"
+    );
+  }}
+  onWithdraw={() => {
+    setWithdrawOpen(true);
+  }}
 />
 
         {/* STATS */}
