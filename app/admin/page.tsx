@@ -5,7 +5,12 @@ export const fetchCache = "force-no-store";
 
 import {
   Suspense,
+  useEffect,
 } from "react";
+
+import {
+  useRouter,
+} from "next/navigation";
 
 import {
   useAuth,
@@ -26,7 +31,38 @@ function AdminContent() {
     piReady,
   } = useAuth();
 
-  /* ================= LOADING ================= */
+  const router =
+    useRouter();
+
+  /* ===================================================
+     REDIRECT
+  =================================================== */
+
+  useEffect(() => {
+
+    if (
+      loading ||
+      !piReady
+    ) {
+      return;
+    }
+
+    if (
+      !user?.is_admin
+    ) {
+      router.replace("/404");
+    }
+
+  }, [
+    loading,
+    piReady,
+    user,
+    router,
+  ]);
+
+  /* ===================================================
+     LOADING
+  =================================================== */
 
   if (
     loading ||
@@ -51,21 +87,19 @@ function AdminContent() {
     );
   }
 
-  /* ================= ADMIN ================= */
+  /* ===================================================
+     WAIT REDIRECT
+  =================================================== */
 
   if (
     !user?.is_admin
   ) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <h1 className="text-xl font-semibold">
-          404
-        </h1>
-      </main>
-    );
+    return null;
   }
 
-  /* ================= PAGE ================= */
+  /* ===================================================
+     PAGE
+  =================================================== */
 
   return (
     <main className="p-4">
