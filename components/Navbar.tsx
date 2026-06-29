@@ -20,7 +20,7 @@ import { toggleDarkMode } from "@/lib/theme";
 export default function Navbar() {
   const { lang, setLang } = useTranslation();
   const { cart } = useCart();
-
+const { user } = useAuth();
   const [dark, setDark] = useState(false);
 
   /* ================= THEME SYNC ================= */
@@ -89,10 +89,14 @@ export default function Navbar() {
 
           {/* LOGO */}
 
+        const logoHref =
+  user?.is_admin
+    ? "/admin"
+    : "/";
           <Link
-            href="/"
-            className="flex items-center gap-2"
-          >
+  href={logoHref}
+  className="flex items-center gap-2"
+>
             <div
               className="relative h-8 w-8 overflow-hidden rounded border"
               style={{
