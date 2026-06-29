@@ -118,55 +118,62 @@ export async function POST(
       );
     }
 
-    /* =================================================
-       WALLET
-    ================================================= */
+  /* =================================================
+   WALLET
+================================================= */
 
-    const walletAddressId =
-  typeof data.walletAddressId === "string"
+const walletAddressId =
+  typeof data.walletAddressId ===
+  "string"
     ? data.walletAddressId.trim()
     : "";
 
 if (!walletAddressId) {
+
   return NextResponse.json(
     {
-      error: "INVALID_WALLET",
+      error:
+        "INVALID_WALLET",
     },
     {
       status: 400,
     }
   );
 }
-    const wallet =
+
+const wallet =
   await getWalletAddressById(
     userId,
     walletAddressId
   );
 
 if (!wallet) {
+
   return NextResponse.json(
     {
-      error: "INVALID_WALLET",
+      error:
+        "INVALID_WALLET",
     },
     {
       status: 400,
     }
   );
 }
-
     /* =================================================
-       CREATE
-    ================================================= */
+   CREATE
+================================================= */
 
-    const withdrawal =
-      await createWalletWithdrawal({
-        userId,
+const withdrawal =
+  await createWalletWithdrawal({
 
-        amount,
+    userId,
 
-        withdrawWallet,
-      });
+    amount,
 
+    withdrawWallet:
+      wallet.address,
+
+  });
     /* =================================================
        SUCCESS
     ================================================= */
