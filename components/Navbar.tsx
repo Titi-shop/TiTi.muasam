@@ -10,7 +10,9 @@ import {
 } from "lucide-react";
 
 import { useMemo, useEffect, useState } from "react";
-
+import {
+  useAuth,
+} from "@/app/context/AuthContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { availableLanguages } from "@/app/lib/i18n";
 import { useCart } from "@/app/context/CartContext";
@@ -20,9 +22,12 @@ import { toggleDarkMode } from "@/lib/theme";
 export default function Navbar() {
   const { lang, setLang } = useTranslation();
   const { cart } = useCart();
-const { user } = useAuth();
   const [dark, setDark] = useState(false);
-
+const { user } = useAuth();
+const logoHref =
+  user?.is_admin
+    ? "/admin"
+    : "/";
   /* ================= THEME SYNC ================= */
 
   useEffect(() => {
@@ -89,11 +94,7 @@ const { user } = useAuth();
 
           {/* LOGO */}
 
-        const logoHref =
-  user?.is_admin
-    ? "/admin"
-    : "/";
-          <Link
+        <Link
   href={logoHref}
   className="flex items-center gap-2"
 >
