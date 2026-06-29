@@ -1,7 +1,14 @@
+// =====================================================
+// app/account/page.tsx
+// =====================================================
+
 "use client";
 
-import { useState } from "react";
-import { LogOut } from "lucide-react";
+export const dynamic = "force-dynamic";
+
+import { useRouter } from "next/navigation";
+import { LogOut, ArrowRight } from "lucide-react";
+
 import { useAuth } from "@/context/AuthContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
@@ -9,158 +16,261 @@ import AccountHeader from "@/components/AccountHeader";
 import OrderSummary from "@/components/OrderSummary";
 import CustomerMenu from "@/components/customerMenu";
 
+/* =====================================================
+   PAGE
+===================================================== */
+
 export default function AccountPage() {
-  const { t } = useTranslation();
-  const { user, loading, pilogin, logout, piReady } = useAuth();
 
-  const [agreed, setAgreed] = useState(false);
+  const router =
+    useRouter();
 
-  /* =========================
+  const { t } =
+    useTranslation();
+
+  const {
+    user,
+    loading,
+    logout,
+    piReady,
+  } = useAuth();
+
+  /* ===================================================
      LOADING
-  ========================= */
-  if (loading) return null;
+  =================================================== */
 
-  /* =========================
-     NOT LOGGED IN
-  ========================= */
-  if (!user) {
+  if (
+    loading ||
+    !piReady
+  ) {
+
     return (
+
       <main
         className="
           min-h-screen
-          flex
-          items-center
-          justify-center
-          px-6
-          transition-colors
+          p-4
+          space-y-4
         "
-        style={{
-          backgroundColor: "var(--background)",
-          color: "var(--foreground)",
-        }}
       >
-        <div className="w-full max-w-sm">
-          {/* FIXED HEIGHT CONTAINER */}
+
+        {Array.from({
+          length: 5,
+        }).map((_, i) => (
+
           <div
-            className="rounded-3xl p-6 shadow-sm border"
-            style={{
-              backgroundColor: "var(--card-bg)",
-              borderColor: "var(--border-color)",
-            }}
-          >
-            <h1 className="text-2xl font-semibold text-center mb-8">
-              {t.account}
-            </h1>
+            key={i}
+            className="
+              h-24
+              rounded-2xl
+              animate-pulse
+              bg-gray-200
+            "
+          />
 
-            {/* BUTTON WRAPPER FIX HEIGHT */}
-            <div className="h-[52px]">
-              <button
-                onClick={pilogin}
-                disabled={!piReady || !agreed}
-                className={`
-                  w-full
-                  h-[52px]
-                  rounded-2xl
-                  font-semibold
-                  text-white
-                  shadow
-                  transition-all
-                  duration-200
-                  ${
-                    piReady && agreed
-                      ? "bg-orange-600 hover:bg-orange-700 active:scale-[0.98]"
-                      : "bg-gray-400 cursor-not-allowed"
-                  }
-                `}
-              >
-                {t.login}
-              </button>
-            </div>
+        ))}
 
-            {/* TERMS */}
-            <div className="mt-5 flex items-start gap-3 text-sm leading-relaxed">
-              <input
-                type="checkbox"
-                checked={agreed}
-                onChange={() => setAgreed((v) => !v)}
-                className="
-                  mt-1
-                  w-4
-                  h-4
-                  accent-orange-500
-                  shrink-0
-                "
-              />
-
-              <label
-                style={{
-                  color: "var(--muted-foreground)",
-                }}
-              >
-                {t.i_agree}{" "}
-                <a
-                  href="https://www.termsfeed.com/live/32e8bf86-ceaf-4eb6-990e-cd1fa0b0775e"
-                  target="_blank"
-                  className="text-orange-600 underline font-medium"
-                >
-                  {t.terms_of_use}
-                </a>{" "}
-                {t.and}{" "}
-                <a
-                  href="https://www.termsfeed.com/live/8e33a9fd-71e7-4536-8033-9c8b329f3f25"
-                  target="_blank"
-                  className="text-orange-600 underline font-medium"
-                >
-                  {t.privacy_policy}
-                </a>
-              </label>
-            </div>
-          </div>
-        </div>
       </main>
+
     );
+
   }
 
-  /* =========================
-     LOGGED IN
-  ========================= */
+  /* ===================================================
+     GUEST
+  =================================================== */
+
+  if (!user) {
+
+    return (
+
+      <main
+        className="
+          min-h-screen
+          px-4
+          py-8
+          space-y-5
+        "
+        style={{
+          background:
+            "var(--background)",
+        }}
+      >
+
+        <div
+          className="
+            rounded-3xl
+            p-6
+            border
+            shadow-sm
+          "
+          style={{
+            background:
+              "var(--card-bg)",
+            borderColor:
+              "var(--border-color)",
+          }}
+        >
+
+          <h1
+            className="
+              text-2xl
+              font-bold
+            "
+          >
+            {t.account}
+          </h1>
+
+          <p
+            className="
+              mt-2
+              text-sm
+              opacity-70
+            "
+          >
+            Welcome to TITI Marketplace
+          </p>
+
+        </div>
+
+        {/* MENU */}
+
+        <div
+          className="
+            rounded-3xl
+            border
+            overflow-hidden
+          "
+          style={{
+            background:
+              "var(--card-bg)",
+            borderColor:
+              "var(--border-color)",
+          }}
+        >
+
+          {[
+            "Wallet",
+            "Orders",
+            "Seller Center",
+            "Support",
+          ].map((item) => (
+
+            <div
+              key={item}
+              className="
+                flex
+                items-center
+                justify-between
+                px-5
+                py-4
+                border-b
+                last:border-0
+              "
+              style={{
+                borderColor:
+                  "var(--border-color)",
+              }}
+            >
+
+              <span>
+                {item}
+              </span>
+
+              <ArrowRight
+                size={18}
+              />
+
+            </div>
+
+          ))}
+
+        </div>
+
+        {/* LOGIN */}
+
+        <button
+          onClick={() =>
+            router.push(
+              "/pilogin"
+            )
+          }
+          className="
+            h-14
+            w-full
+            rounded-2xl
+            bg-orange-600
+            text-white
+            font-semibold
+            transition
+            active:scale-95
+          "
+        >
+          Continue with Pi
+        </button>
+
+      </main>
+
+    );
+
+  }
+
+  /* ===================================================
+     MEMBER
+  =================================================== */
+
   return (
+
     <main
-      className="min-h-screen pb-28 space-y-4 transition-colors"
+      className="
+        min-h-screen
+        pb-28
+        space-y-4
+      "
       style={{
-        backgroundColor: "var(--background)",
+        background:
+          "var(--background)",
       }}
     >
+
       <AccountHeader />
+
       <OrderSummary />
+
       <CustomerMenu />
 
-      {/* LOGOUT */}
-      <section className="mx-4 mt-6">
+      <section className="mx-4">
+
         <button
           onClick={logout}
           className="
-            w-full
-            py-4
-            rounded-2xl
-            bg-red-500
-            hover:bg-red-600
-            active:scale-[0.98]
-            text-white
             flex
+            h-14
+            w-full
             items-center
             justify-center
             gap-3
+            rounded-2xl
+            bg-red-500
             font-semibold
-            text-lg
-            shadow
-            transition-all
+            text-white
+            transition
+            active:scale-95
           "
         >
-          <LogOut size={22} />
+
+          <LogOut
+            size={20}
+          />
+
           {t.logout}
+
         </button>
+
       </section>
+
     </main>
+
   );
+
 }
