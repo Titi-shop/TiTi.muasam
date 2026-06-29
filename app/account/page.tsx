@@ -6,11 +6,25 @@
 
 export const dynamic = "force-dynamic";
 
-import { useRouter } from "next/navigation";
-import { LogOut, ArrowRight } from "lucide-react";
+import {
+  useEffect,
+} from "react";
 
-import { useAuth } from "@/context/AuthContext";
-import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
+import {
+  useRouter,
+} from "next/navigation";
+
+import {
+  LogOut,
+} from "lucide-react";
+
+import {
+  useAuth,
+} from "@/context/AuthContext";
+
+import {
+  useTranslationClient as useTranslation,
+} from "@/app/lib/i18n/client";
 
 import AccountHeader from "@/components/AccountHeader";
 import OrderSummary from "@/components/OrderSummary";
@@ -34,6 +48,31 @@ export default function AccountPage() {
     logout,
     piReady,
   } = useAuth();
+
+  /* ===================================================
+     REDIRECT TO LOGIN
+  =================================================== */
+
+  useEffect(() => {
+
+    if (
+      !loading &&
+      piReady &&
+      !user
+    ) {
+
+      router.replace(
+        "/pilogin"
+      );
+
+    }
+
+  }, [
+    loading,
+    piReady,
+    user,
+    router,
+  ]);
 
   /* ===================================================
      LOADING
@@ -77,141 +116,12 @@ export default function AccountPage() {
   }
 
   /* ===================================================
-     GUEST
+     WAIT REDIRECT
   =================================================== */
 
   if (!user) {
 
-    return (
-
-      <main
-        className="
-          min-h-screen
-          px-4
-          py-8
-          space-y-5
-        "
-        style={{
-          background:
-            "var(--background)",
-        }}
-      >
-
-        <div
-          className="
-            rounded-3xl
-            p-6
-            border
-            shadow-sm
-          "
-          style={{
-            background:
-              "var(--card-bg)",
-            borderColor:
-              "var(--border-color)",
-          }}
-        >
-
-          <h1
-            className="
-              text-2xl
-              font-bold
-            "
-          >
-            {t.account}
-          </h1>
-
-          <p
-            className="
-              mt-2
-              text-sm
-              opacity-70
-            "
-          >
-            Welcome to TITI Marketplace
-          </p>
-
-        </div>
-
-        {/* MENU */}
-
-        <div
-          className="
-            rounded-3xl
-            border
-            overflow-hidden
-          "
-          style={{
-            background:
-              "var(--card-bg)",
-            borderColor:
-              "var(--border-color)",
-          }}
-        >
-
-          {[
-            "Wallet",
-            "Orders",
-            "Seller Center",
-            "Support",
-          ].map((item) => (
-
-            <div
-              key={item}
-              className="
-                flex
-                items-center
-                justify-between
-                px-5
-                py-4
-                border-b
-                last:border-0
-              "
-              style={{
-                borderColor:
-                  "var(--border-color)",
-              }}
-            >
-
-              <span>
-                {item}
-              </span>
-
-              <ArrowRight
-                size={18}
-              />
-
-            </div>
-
-          ))}
-
-        </div>
-
-        {/* LOGIN */}
-
-        <button
-          onClick={() =>
-            router.push(
-              "/pilogin"
-            )
-          }
-          className="
-            h-14
-            w-full
-            rounded-2xl
-            bg-orange-600
-            text-white
-            font-semibold
-            transition
-            active:scale-95
-          "
-        >
-          Continue with Pi
-        </button>
-
-      </main>
-
-    );
+    return null;
 
   }
 
@@ -228,7 +138,7 @@ export default function AccountPage() {
         space-y-4
       "
       style={{
-        background:
+        backgroundColor:
           "var(--background)",
       }}
     >
@@ -252,8 +162,8 @@ export default function AccountPage() {
             gap-3
             rounded-2xl
             bg-red-500
-            font-semibold
             text-white
+            font-semibold
             transition
             active:scale-95
           "
