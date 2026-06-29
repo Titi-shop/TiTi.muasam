@@ -33,7 +33,15 @@ export async function fetchWallet():
           "no-store",
       }
     );
-
+const addressResponse =
+  await apiAuthFetch(
+    "/api/wallet/addresses",
+    {
+      cache: "no-store",
+    }
+  );
+  const addressJson: unknown =
+  await addressResponse.json();
   if (!response.ok) {
 
     return {
@@ -172,21 +180,16 @@ export async function fetchWallet():
      WALLETS
   =================================================== */
 
-  const wallets:
-    WalletAddress[] =
-      Array.isArray(
-        data.wallets
-      )
-        ? data.wallets
-            .map((item) => {
+  const addressData =
+  typeof addressJson === "object" &&
+  addressJson !== null
+    ? addressJson as Record<string, unknown>
+    : {};
 
-              if (
-                typeof item !==
-                  "object" ||
-                item === null
-              ) {
-                return null;
-              }
+const wallets: WalletAddress[] =
+  Array.isArray(addressData.wallets)
+    ? ...
+    : [];
 
               const wallet =
                 item as Record<
