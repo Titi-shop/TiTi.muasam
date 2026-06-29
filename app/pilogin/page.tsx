@@ -7,32 +7,16 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
+
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-import {
-  ShieldCheck,
-  Wallet,
-  ShoppingBag,
-  Store,
-  Loader2,
-} from "lucide-react";
-
-import {
-  useAuth,
-} from "@/context/AuthContext";
-
-import {
-  useTranslationClient as useTranslation,
-} from "@/app/lib/i18n/client";
-
-/* =====================================================
-   PAGE
-===================================================== */
+import { useAuth } from "@/context/AuthContext";
+import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 export default function PiLoginPage() {
 
-  const router =
-    useRouter();
+  const router = useRouter();
 
   const { t } =
     useTranslation();
@@ -49,18 +33,8 @@ export default function PiLoginPage() {
     setAgreed,
   ] = useState(false);
 
-  const [
-    submitting,
-    setSubmitting,
-  ] = useState(false);
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
   /* ===================================================
-     LOGIN SUCCESS
+     ALREADY LOGIN
   =================================================== */
 
   useEffect(() => {
@@ -69,7 +43,11 @@ export default function PiLoginPage() {
       !loading &&
       user
     ) {
-      router.replace("/account");
+
+      router.replace(
+        "/account"
+      );
+
     }
 
   }, [
@@ -79,33 +57,32 @@ export default function PiLoginPage() {
   ]);
 
   /* ===================================================
-     LOGIN
+     LOADING
   =================================================== */
 
-  async function handleLogin() {
+  if (
+    loading
+  ) {
 
-    try {
-
-      setSubmitting(true);
-
-      setError("");
-
-      await pilogin();
-
-    } catch {
-
-      setError(
-        t.login_failed ??
-        "Login failed."
-      );
-
-      setSubmitting(false);
-    }
+    return (
+      <main
+        className="
+          flex
+          min-h-screen
+          items-center
+          justify-center
+        "
+      >
+        <div className="text-sm opacity-70">
+          Loading...
+        </div>
+      </main>
+    );
 
   }
 
   /* ===================================================
-     UI
+     PAGE
   =================================================== */
 
   return (
@@ -116,7 +93,7 @@ export default function PiLoginPage() {
         min-h-screen
         items-center
         justify-center
-        px-6
+        px-5
       "
       style={{
         background:
@@ -143,86 +120,41 @@ export default function PiLoginPage() {
 
         {/* LOGO */}
 
-        <div className="mb-8 text-center">
+        <div className="flex justify-center">
 
-          <div
-            className="
-              mx-auto
-              flex
-              h-20
-              w-20
-              items-center
-              justify-center
-              rounded-full
-              bg-orange-100
-            "
-          >
-
-            <ShieldCheck
-              size={38}
-              className="text-orange-600"
-            />
-
-          </div>
-
-          <h1
-            className="
-              mt-5
-              text-3xl
-              font-bold
-            "
-          >
-            TITI
-          </h1>
-
-          <p
-            className="
-              mt-2
-              text-sm
-              opacity-70
-            "
-          >
-            Secure Marketplace powered by Pi
-          </p>
-
-        </div>
-
-        {/* FEATURES */}
-
-        <div className="space-y-4">
-
-          <Feature
-            icon={<Wallet size={18} />}
-            text="Wallet & Payments"
-          />
-
-          <Feature
-            icon={<ShoppingBag size={18} />}
-            text="Orders & Tracking"
-          />
-
-          <Feature
-            icon={<Store size={18} />}
-            text="Seller Center"
-          />
-
-          <Feature
-            icon={<ShieldCheck size={18} />}
-            text="Secure Authentication"
+          <Image
+            src="/banners/3D035BE4-0822-403D-9631-6C4CF674A519.png"
+            alt="TITI"
+            width={72}
+            height={72}
+            className="rounded-2xl"
           />
 
         </div>
+
+        {/* TITLE */}
+
+        <h1 className="mt-6 text-center text-3xl font-bold">
+
+          TITI
+
+        </h1>
+
+        <p
+          className="
+            mt-2
+            text-center
+            text-sm
+            opacity-70
+          "
+        >
+          Sign in using your
+          Pi Network account.
+        </p>
 
         {/* TERMS */}
 
-        <div
-          className="
-            mt-8
-            flex
-            items-start
-            gap-3
-          "
-        >
+        <div className="mt-8 flex items-start gap-3">
 
           <input
             type="checkbox"
@@ -236,147 +168,100 @@ export default function PiLoginPage() {
               mt-1
               h-4
               w-4
+              accent-orange-600
             "
           />
 
-          <span
+          <label
             className="
               text-sm
-              opacity-70
+              leading-6
+              opacity-80
             "
           >
-            {t.i_agree ??
-              "I agree to the Terms of Use and Privacy Policy"}
-          </span>
+
+            {t.i_agree}{" "}
+
+            <a
+              href="https://www.termsfeed.com/live/32e8bf86-ceaf-4eb6-990e-cd1fa0b0775e"
+              target="_blank"
+              className="
+                font-medium
+                text-orange-600
+                underline
+              "
+            >
+              {t.terms_of_use}
+            </a>
+
+            {" "}
+
+            {t.and}
+
+            {" "}
+
+            <a
+              href="https://www.termsfeed.com/live/8e33a9fd-71e7-4536-8033-9c8b329f3f25"
+              target="_blank"
+              className="
+                font-medium
+                text-orange-600
+                underline
+              "
+            >
+              {t.privacy_policy}
+            </a>
+
+          </label>
 
         </div>
 
-        {/* ERROR */}
-
-        {error && (
-
-          <div
-            className="
-              mt-5
-              rounded-xl
-              bg-red-100
-              p-3
-              text-sm
-              text-red-600
-            "
-          >
-            {error}
-          </div>
-
-        )}
-
-        {/* BUTTON */}
+        {/* LOGIN */}
 
         <button
-          type="button"
-          onClick={handleLogin}
+          onClick={pilogin}
           disabled={
             !piReady ||
-            !agreed ||
-            submitting
+            !agreed
           }
-          className="
+          className={`
             mt-8
-            flex
             h-14
             w-full
-            items-center
-            justify-center
             rounded-2xl
-            bg-orange-600
             font-semibold
             text-white
             transition
-            disabled:cursor-not-allowed
-            disabled:opacity-50
-          "
+
+            ${
+              piReady &&
+              agreed
+                ? "bg-orange-600 hover:bg-orange-700 active:scale-95"
+                : "cursor-not-allowed bg-gray-400"
+            }
+          `}
         >
 
-          {submitting ? (
-
-            <>
-
-              <Loader2
-                size={18}
-                className="
-                  mr-2
-                  animate-spin
-                "
-              />
-
-              Authenticating...
-
-            </>
-
-          ) : (
-
-            t.login ??
-            "Continue with Pi"
-
-          )}
+          Continue with Pi Network
 
         </button>
+
+        {/* FOOTER */}
+
+        <p
+          className="
+            mt-6
+            text-center
+            text-xs
+            opacity-60
+          "
+        >
+          Powered by Pi Network
+        </p>
 
       </div>
 
     </main>
-
-  );
-
-}
-
-/* =====================================================
-   FEATURE
-===================================================== */
-
-function Feature({
-  icon,
-  text,
-}: {
-  icon: React.ReactNode;
-  text: string;
-}) {
-
-  return (
-
-    <div
-      className="
-        flex
-        items-center
-        gap-3
-      "
-    >
-
-      <div
-        className="
-          flex
-          h-10
-          w-10
-          items-center
-          justify-center
-          rounded-xl
-          bg-orange-100
-          text-orange-600
-        "
-      >
-        {icon}
-      </div>
-
-      <span
-        className="
-          text-sm
-          font-medium
-        "
-      >
-        {text}
-      </span>
-
-    </div>
 
   );
 
