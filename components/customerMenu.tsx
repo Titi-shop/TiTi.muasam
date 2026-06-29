@@ -220,6 +220,14 @@ export default function CustomerMenu() {
   ),
   path: "/customer/address",
 },
+
+{
+  label: t.support ?? "Support",
+  icon: (active) => (
+    <HelpCircle size={22} color={active ? "#f97316" : "currentColor"} />
+  ),
+},
+
 {
   label: isSeller
     ? t.seller_center || "Seller Center"
