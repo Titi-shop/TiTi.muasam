@@ -16,7 +16,7 @@ import {
   getMessagesByRoomId,
   getRoomById,
   isParticipant,
-  getChatTemplateByCode,
+  getChatTemplateContent,
 } from "@/lib/db/chat";
 
 export const runtime = "nodejs";
@@ -113,17 +113,30 @@ export async function GET(
   await getMessagesByRoomId(
     roomId
   );
-
-let welcome = null;
+console.log(
+  "[CHAT][GET] MESSAGE_COUNT",
+  messages.length
+);
+let welcome: string | null =
+  null;
 
 if (
   messages.length === 0
 ) {
 
+  console.log(
+    "[CHAT][GET] LOAD_WELCOME"
+  );
+
   welcome =
-    await getChatTemplateByCode(
+    await getChatTemplateContent(
       "support_welcome"
     );
+
+  console.log(
+    "[CHAT][GET] WELCOME",
+    welcome
+  );
 
 }
    return NextResponse.json({
