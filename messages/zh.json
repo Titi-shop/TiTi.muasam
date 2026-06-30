@@ -748,7 +748,16 @@
   "i_agree": "我同意",
   "terms_of_use": "服务条款",
   "privacy_policy": "隐私政策",
-  "and": "和"
+  "and": "和",
+  
+  "wallet_address": "钱包地址",
+  "wallet_address_subtitle": "绑定您的 Pi Network 钱包。",
+  "pi_wallet_address": "Pi 钱包地址",
+  "wallet_address_hint": "仅支持 Pi Network 钱包地址。",
+  "save_wallet": "保存钱包",
+  "saving": "保存中...",
+  "wallet_save_failed": "保存钱包失败。"
+
 
 
 
