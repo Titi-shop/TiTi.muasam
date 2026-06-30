@@ -437,21 +437,7 @@ export default function WalletWithdrawModal({
             }}
             placeholder="0.00"
             className="
-              w-full
-              rounded-2xl
-              border
-              border-[var(--nav-border)]
-              bg-[var(--background)]
-              px-4
-              py-3.5
-              text-sm
-              text-[var(--foreground)]
-              outline-none
-              transition-all
-              placeholder:text-[var(--text-muted)]
-              focus:border-primary
-              focus:ring-2
-              focus:ring-primary/10
+           input
             "
           />
 
@@ -484,19 +470,11 @@ export default function WalletWithdrawModal({
             onClick={onClose}
             disabled={loading}
             className="
-              flex-1
-              rounded-2xl
-              border
-              border-[var(--nav-border)]
-              bg-[var(--card-secondary)]
-              py-3.5
-              text-sm
-              font-semibold
-              text-[var(--foreground)]
-              transition-all
-              active:scale-95
-              disabled:opacity-60
-            "
+btn-secondary
+flex-1
+py-3.5
+disabled:opacity-60
+"
           >
             {t.common_cancel ??
               "Cancel"}
@@ -509,21 +487,15 @@ export default function WalletWithdrawModal({
             }}
             disabled={loading}
             className="
-              flex
-              flex-1
-              items-center
-              justify-center
-              gap-2
-              rounded-2xl
-              bg-primary
-              py-3.5
-              text-sm
-              font-semibold
-              text-white
-              transition-all
-              active:scale-95
-              disabled:opacity-60
-            "
+btn-primary
+flex
+flex-1
+items-center
+justify-center
+gap-2
+py-3.5
+disabled:opacity-60
+"
           >
 
             {loading && (
