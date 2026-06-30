@@ -1,14 +1,20 @@
+// =====================================================
+// app/account/wallet/components/WalletDefaultAddress.tsx
+// =====================================================
+
 "use client";
 
 import {
-  ChevronRight,
-  CheckCircle2,
   AlertCircle,
+  CheckCircle2,
+  ChevronRight,
   Wallet,
 } from "lucide-react";
+
 import {
   useTranslationClient as useTranslation,
 } from "@/app/lib/i18n/client";
+
 import {
   formatWalletAddress,
 } from "../wallet.utils";
@@ -18,19 +24,13 @@ import {
 ===================================================== */
 
 type Props = {
-
   wallet: {
-
     address: string;
-
     network: string;
-
     is_verified: boolean;
-
   } | null;
 
   onClick?: () => void;
-
 };
 
 /* =====================================================
@@ -38,155 +38,181 @@ type Props = {
 ===================================================== */
 
 export default function WalletDefaultAddress({
-
   wallet,
-
   onClick,
-
 }: Props) {
-const { t } =
-  useTranslation();
+
+  const { t } =
+    useTranslation();
+
   return (
 
     <button
       type="button"
       onClick={onClick}
       className="
-        mt-6
+        card
+        mt-5
+        flex
         w-full
-        rounded-2xl
-        border border-white/20
-        bg-white/10
-        backdrop-blur-md
-        p-4
-        transition
+        items-center
+        justify-between
+        gap-4
+        px-4
+        py-3
+        text-left
         active:scale-[0.98]
       "
     >
 
+      {/* ================= LEFT ================= */}
+
       <div
         className="
           flex
+          min-w-0
+          flex-1
           items-center
-          justify-between
-          gap-4
+          gap-3
         "
       >
+
+        {/* ICON */}
 
         <div
           className="
             flex
+            h-10
+            w-10
+            shrink-0
             items-center
-            gap-3
+            justify-center
+            rounded-xl
+            bg-primary/10
+            text-primary
           "
         >
 
-          <div
-            className="
-              flex
-              h-11
-              w-11
-              items-center
-              justify-center
-              rounded-xl
-              bg-white/15
-            "
-          >
-
-            <Wallet size={20} />
-
-          </div>
-
-          <div
-            className="
-              text-left
-            "
-          >
-
-            <p
-              className="
-                text-xs
-                text-muted
-              "
-            >
-              {t.wallet_default}
-            </p>
-
-            <p
-              className="
-                mt-1
-                font-semibold
-                tracking-wide
-              "
-            >
-
-              {wallet
-                ? formatWalletAddress(
-                    wallet.address
-                  )
-                : "{t.wallet_not_linked}"}
-
-            </p>
-
-            {wallet && (
-
-              <div
-                className="
-                  mt-1
-                  flex
-                  items-center
-                  gap-1
-                  text-xs
-                "
-              >
-
-                {wallet.is_verified ? (
-
-                  <>
-
-                   <CheckCircle2
-  size={13}
-  className="text-success"
-/>
-
-                  <span className="text-success">
-  {t.wallet_verified}
-</span>
-
-                  </>
-
-                ) : (
-
-                  <>
-
-                   <AlertCircle
-  size={13}
-  className="text-warning"
-/>
-
-                  <AlertCircle
-  size={13}
-  className="text-warning"
-/>
-
-                  </>
-
-                )}
-
-              </div>
-
-            )}
-
-          </div>
+          <Wallet
+            size={18}
+          />
 
         </div>
 
-        <ChevronRight
-  size={18}
-  className="text-muted"
-/>
+        {/* CONTENT */}
+
+        <div className="min-w-0 flex-1">
+
+          <p
+            className="
+              text-xs
+              text-muted
+            "
+          >
+            {t.wallet_default ??
+              "Default Wallet"}
+          </p>
+
+          <p
+            className="
+              mt-1
+              truncate
+              text-sm
+              font-semibold
+            "
+            style={{
+              color:
+                "var(--text-primary)",
+            }}
+          >
+
+            {wallet
+              ? formatWalletAddress(
+                  wallet.address
+                )
+              : (
+                  t.wallet_not_linked ??
+                  "No wallet linked"
+                )}
+
+          </p>
+
+          {wallet && (
+
+            <div
+              className="
+                mt-1
+                flex
+                items-center
+                gap-1
+                text-xs
+              "
+            >
+
+              {wallet.is_verified ? (
+
+                <>
+
+                  <CheckCircle2
+                    size={12}
+                    className="
+                      text-success
+                    "
+                  />
+
+                  <span
+                    className="
+                      text-success
+                    "
+                  >
+                    {t.wallet_verified ??
+                      "Verified"}
+                  </span>
+
+                </>
+
+              ) : (
+
+                <>
+
+                  <AlertCircle
+                    size={12}
+                    className="
+                      text-warning
+                    "
+                  />
+
+                  <span
+                    className="
+                      text-warning
+                    "
+                  >
+                    {t.wallet_unverified ??
+                      "Unverified"}
+                  </span>
+
+                </>
+
+              )}
+
+            </div>
+
+          )}
+
+        </div>
 
       </div>
+
+      {/* ================= RIGHT ================= */}
+
+      <ChevronRight
+        size={18}
+        className="
+          shrink-0
+          text-muted
+        "
+      />
+
     </button>
 
   );
