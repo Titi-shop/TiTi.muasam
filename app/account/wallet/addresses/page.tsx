@@ -183,7 +183,7 @@ export default function WalletAddressesPage() {
               text-[var(--foreground)]
             "
           >
-            Wallet Address
+            t.wallet_address
           </h1>
 
           <p
@@ -193,7 +193,7 @@ export default function WalletAddressesPage() {
               text-[var(--text-muted)]
             "
           >
-            Link your Pi Network wallet.
+            t.wallet_address_subtitle
           </p>
 
         </div>
@@ -240,7 +240,7 @@ export default function WalletAddressesPage() {
             text-[var(--foreground)]
           "
         >
-          Pi Wallet Address
+          t.pi_wallet_address
         </label>
 
         <input
@@ -279,7 +279,7 @@ export default function WalletAddressesPage() {
             text-[var(--text-muted)]
           "
         >
-          Only Pi Network wallet addresses are supported.
+          t.wallet_address_hint
         </p>
 
         {error && (
@@ -339,8 +339,8 @@ export default function WalletAddressesPage() {
           )}
 
           {loading
-            ? "Saving..."
-            : "Save Wallet"}
+            ? "t.saving..."
+            : "t.save_wallet"}
 
         </button>
 
