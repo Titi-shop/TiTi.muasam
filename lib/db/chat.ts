@@ -75,23 +75,25 @@ export async function createSupportRoom(
   const room = roomResult.rows[0];
 
   await query(
-    `
-      INSERT INTO chat_participants
-      (
-        room_id,
-        participant_id,
-        role
-      )
-      VALUES
-      ($1,$2,'user'),
-      ($1,$3,'admin')
-    `,
-    [
-      room.id,
-      userId,
-      adminId,
-    ]
-  );
+`
+INSERT INTO chat_participants
+(
+    room_id,
+    participant_id,
+    role
+)
+VALUES
+(
+    $1,
+    $2,
+    'user'
+)
+`,
+[
+    room.id,
+    userId,
+]
+);
 
   return room;
 }
