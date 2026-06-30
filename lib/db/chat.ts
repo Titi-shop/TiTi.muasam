@@ -127,6 +127,16 @@ export async function createMessage(
   senderId: string,
   content: string
 ): Promise<ChatMessage> {
+
+  console.log(
+    "[CHAT][DB] INSERT MESSAGE",
+    {
+      roomId,
+      senderId,
+      content,
+    }
+  );
+
   const result = await query<ChatMessage>(
     `
       INSERT INTO chat_messages
