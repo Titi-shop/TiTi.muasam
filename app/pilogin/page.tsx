@@ -255,17 +255,20 @@ export default function PiLoginPage() {
 
             {t.i_agree}{" "}
 
-            <Link
-              href="/terms-of-service"
-              target="_blank"
-              className="
-                text-primary
-                underline
-                font-medium
-              "
-            >
-              {t.terms_of_use}
-            </Link>
+          <Link
+  href="/terms-of-service"
+  target="_blank"
+  className="
+    font-semibold
+    text-primary
+    underline
+    underline-offset-4
+    transition-opacity
+    hover:opacity-80
+  "
+>
+  {t.terms_of_use}
+</Link>
 
             {" "}
 
@@ -273,17 +276,20 @@ export default function PiLoginPage() {
 
             {" "}
 
-            <Link
-              href="/privacy-policy"
-              target="_blank"
-              className="
-                text-primary
-                underline
-                font-medium
-              "
-            >
-              {t.privacy_policy}
-            </Link>
+          <Link
+  href="/privacy-policy"
+  target="_blank"
+  className="
+    font-semibold
+    text-primary
+    underline
+    underline-offset-4
+    transition-opacity
+    hover:opacity-80
+  "
+>
+  {t.privacy_policy}
+</Link>
 
           </label>
 
