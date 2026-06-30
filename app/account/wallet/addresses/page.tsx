@@ -339,8 +339,8 @@ export default function WalletAddressesPage() {
           )}
 
           {loading
-            ? "{t.saving...}"
-            : "{t.save_wallet}"}
+  ? (t.saving ?? "Saving...")
+  : (t.save_wallet ?? "Save Wallet")}
 
         </button>
 
