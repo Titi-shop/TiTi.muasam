@@ -85,15 +85,60 @@ await loadMessages(data.room.id);
 
   setMessages(data.messages);
 }
-  function handleSend() {
-    if (!input.trim()) return;
-
-    // Chưa kết nối API.
-    console.log("Send:", input);
-
-    setInput("");
+  async function handleSend() {
+  if (!roomId) {
+    return;
   }
 
+  const content = input.trim();
+
+  if (!content) {
+    return;
+  }
+
+  try {
+    const token = await getPiAccessToken();
+
+    if (!token) {
+      return;
+    }
+
+    const res = await fetch(
+      "/api/chat/messages",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          roomId,
+          content,
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      const error = await res.json();
+
+      console.error(
+        "[CHAT][SEND]",
+        error
+      );
+
+      return;
+    }
+
+    setInput("");
+
+    await loadMessages(roomId);
+  } catch (err) {
+    console.error(
+      "[CHAT][SEND]",
+      err
+    );
+  }
+}
   return (
     <main className="flex min-h-[100dvh] flex-col bg-gray-100">
       {/* Header */}
