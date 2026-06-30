@@ -193,14 +193,19 @@ export async function POST(
         }
       );
     }
-
+console.log(
+  "[CHAT][POST] START"
+);
     const message =
       await createMessage(
         roomId,
         auth.userId,
         content
       );
-
+console.log(
+  "[CHAT][POST] CREATED",
+  message
+);
     return NextResponse.json({
       message,
     });
