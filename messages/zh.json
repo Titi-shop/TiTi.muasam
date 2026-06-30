@@ -756,7 +756,11 @@
   "wallet_address_hint": "仅支持 Pi Network 钱包地址。",
   "save_wallet": "保存钱包",
   "saving": "保存中...",
-  "wallet_save_failed": "保存钱包失败。"
+  "wallet_save_failed": "保存钱包失败。",
+  "wallet_select": "选择钱包",
+  "wallet_verified": "已验证",
+  "wallet_unverified": "未验证"
+
 
 
 
