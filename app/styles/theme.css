@@ -159,3 +159,10 @@
   --color-danger: #ef4444;
   --color-info: #3b82f6;
 }
+:root {
+  --color-link: #d97706;
+}
+
+.theme-dark {
+  --color-link: #fbbf24;
+}
