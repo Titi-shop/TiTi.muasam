@@ -1,9 +1,11 @@
 // app/account/messages/page.tsx
 
 "use client";
+import { useEffect, useMemo, useState } from "react";
 
-import { useMemo, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
+import { getPiAccessToken } from "@/lib/piAuth";
 type ChatMessage = {
   id: string;
   sender: "admin" | "user";
@@ -13,7 +15,21 @@ type ChatMessage = {
 
 export default function MessagesPage() {
   const [input, setInput] = useState("");
+const {
+  user,
+  loading,
+} = useAuth();
 
+const [roomId, setRoomId] =
+  useState<string | null>(null);
+  useEffect(() => {
+  if (loading) return;
+
+  if (!user) return;
+
+  loadRoom();
+}, [loading, user]);
+  
   const messages = useMemo<ChatMessage[]>(
     () => [
       {
@@ -28,16 +44,39 @@ export default function MessagesPage() {
         content: "Bạn cần chúng tôi hỗ trợ vấn đề gì?",
         createdAt: "09:01",
       },
-      {
-        id: "3",
-        sender: "user",
-        content: "Tôi muốn hỏi về đơn hàng của mình.",
-        createdAt: "09:02",
-      },
+      
     ],
     []
   );
+async function loadRoom() {
+  try {
+    const token =
+      await getPiAccessToken();
 
+    if (!token) {
+      return;
+    }
+
+    const res =
+      await fetch("/api/chat/room", {
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+      });
+
+    if (!res.ok) {
+      return;
+    }
+
+    const data =
+      await res.json();
+
+    setRoomId(data.room.id);
+  } catch (err) {
+    console.error(err);
+  }
+}
   function handleSend() {
     if (!input.trim()) return;
 
