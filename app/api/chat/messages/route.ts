@@ -59,22 +59,37 @@ export async function GET(
       );
     }
 
-    const participant =
-      await isParticipant(
-        roomId,
-        auth.userId
-      );
-
-    if (!participant) {
-      return NextResponse.json(
-        {
-          error: "FORBIDDEN",
-        },
-        {
-          status: 403,
-        }
-      );
+    if (!auth.userId) {
+  return NextResponse.json(
+    {
+      error: "FORBIDDEN",
+    },
+    {
+      status: 403,
     }
+  );
+}
+
+if (auth.role !== "admin") {
+
+  const participant =
+    await isParticipant(
+      roomId,
+      auth.userId
+    );
+
+  if (!participant) {
+    return NextResponse.json(
+      {
+        error: "FORBIDDEN",
+      },
+      {
+        status: 403,
+      }
+    );
+  }
+
+}
 
     const messages =
       await getMessagesByRoomId(
