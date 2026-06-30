@@ -3,7 +3,7 @@
 // =========================================================
 
 import { NextRequest, NextResponse } from "next/server";
-
+import { getUserAdminFlag } from "@/lib/db/users";
 import { requireAuth } from "@/lib/auth/guard";
 
 import {
@@ -121,10 +121,12 @@ export async function GET(
       );
     }
 
-    if (
-      auth.role !==
-      "admin"
-    ) {
+    const isAdmin =
+  await getUserAdminFlag(
+    auth.userId
+  );
+
+if (!isAdmin) {
       console.log(
         "[CHAT][GET][CHECK_PARTICIPANT]"
       );
@@ -276,7 +278,12 @@ export async function POST(
   );
 }
 
-if (auth.role !== "admin") {
+const isAdmin =
+  await getUserAdminFlag(
+    auth.userId
+  );
+
+if (!isAdmin) {
 
   const participant =
     await isParticipant(
