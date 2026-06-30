@@ -255,12 +255,12 @@ export default function PiLoginPage() {
 
             {t.i_agree}{" "}
 
-          <Link
+       <Link
   href="/terms-of-service"
   target="_blank"
   className="
     font-semibold
-    text-primary
+    text-amber-600
     underline
     underline-offset-4
     transition-opacity
@@ -269,19 +269,18 @@ export default function PiLoginPage() {
 >
   {t.terms_of_use}
 </Link>
-
             {" "}
 
             {t.and}
 
             {" "}
 
-          <Link
+       <Link
   href="/privacy-policy"
   target="_blank"
   className="
     font-semibold
-    text-primary
+    text-amber-600
     underline
     underline-offset-4
     transition-opacity
