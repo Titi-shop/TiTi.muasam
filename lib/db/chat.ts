@@ -51,8 +51,7 @@ export async function getSupportRoomByUserId(
 ========================================================= */
 
 export async function createSupportRoom(
-  userId: string,
-  adminId: string
+  userId: string
 ): Promise<ChatRoom> {
   const roomResult = await query<ChatRoom>(
     `
