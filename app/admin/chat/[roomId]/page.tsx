@@ -147,11 +147,57 @@ export default function AdminChatRoomPage() {
         "[ADMIN_CHAT_ROOM]",
         err
       );
-
     }
+  }
+async function handleSend() {
+
+  if (!input.trim()) {
+    return;
+  }
+
+  try {
+
+    const res =
+      await apiAuthFetch(
+        "/api/chat/messages",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            roomId,
+            content: input,
+          }),
+        }
+      );
+
+    const data =
+      await res.json();
+
+    console.log(
+      "[ADMIN_CHAT_ROOM][SEND]",
+      data
+    );
+
+    if (!res.ok) {
+      return;
+    }
+
+    setInput("");
+
+    await loadMessages();
+
+  } catch (err) {
+
+    console.error(
+      err
+    );
 
   }
 
+}
   /* =====================================================
      LOADING
   ===================================================== */
@@ -283,10 +329,13 @@ export default function AdminChatRoomPage() {
             className="flex-1 rounded-full border px-4 py-3"
           />
 
-          <button
-            type="button"
-            className="rounded-full bg-blue-600 px-6 py-3 text-white"
-          >
+    <button
+  type="button"
+  onClick={() => {
+    void handleSend();
+  }}
+  className="rounded-full bg-blue-600 px-6 py-3 text-white"
+>
             Gửi
           </button>
 
