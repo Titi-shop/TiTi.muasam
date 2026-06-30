@@ -21,8 +21,8 @@ export type ChatRoom = {
 export type ChatMessage = {
   id: string;
   room_id: string;
-  sender_id: string;
-  message_type: "text";
+  sender_id: string | null;
+  message_type: "text" | "system";
   content: string;
   created_at: Date;
 };
@@ -321,12 +321,12 @@ export async function createSystemMessage(
         content
       )
       VALUES
-      (
-        $1,
-        NULL,
-        'text',
-        $2
-      )
+(
+  $1,
+  NULL,
+  'system',
+  $2
+)
     `,
     [
       roomId,
