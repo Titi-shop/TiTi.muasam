@@ -759,7 +759,12 @@
   "wallet_address_hint": "Only Pi Network wallet addresses are supported.",
   "save_wallet": "Save Wallet",
   "saving": "Saving...",
-  "wallet_save_failed": "Failed to save wallet."
+  "wallet_save_failed": "Failed to save wallet.",
+  
+  "wallet_select": "Select Wallet",
+  "wallet_verified": "Verified",
+  "wallet_unverified": "Unverified"
+
 
 
 
