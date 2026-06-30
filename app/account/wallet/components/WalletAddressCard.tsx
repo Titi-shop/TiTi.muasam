@@ -18,7 +18,9 @@ import type {
 import {
   formatWalletAddress,
 } from "../wallet.utils";
-
+import {
+  useTranslationClient as useTranslation,
+} from "@/app/lib/i18n/client";
 /* =====================================================
    TYPES
 ===================================================== */
@@ -35,7 +37,8 @@ type Props = {
 /* =====================================================
    COMPONENT
 ===================================================== */
-
+const { t } =
+  useTranslation();
 export default function WalletAddressCard({
 
   wallet,
@@ -51,10 +54,7 @@ export default function WalletAddressCard({
       onClick={onClick}
       className="
         w-full
-        rounded-2xl
-        border
-        border-[var(--nav-border)]
-        bg-[var(--card-bg)]
+        card-flat
         p-4
         transition-all
         active:scale-[0.98]
@@ -108,17 +108,19 @@ export default function WalletAddressCard({
             <p
               className="
                 text-xs
-                text-[var(--text-muted)]
+                text-muted
               "
             >
-              Wallet Address
+              {t.wallet_address}
             </p>
 
             <p
               className="
                 mt-1
                 font-semibold
-                text-[var(--foreground)]
+                style={{
+  color: "var(--text-primary)",
+}}
               "
             >
 
@@ -126,7 +128,7 @@ export default function WalletAddressCard({
                 ? formatWalletAddress(
                     wallet.address
                   )
-                : "Select wallet"}
+                : "{t.wallet_select}"}
 
             </p>
 
@@ -142,7 +144,7 @@ export default function WalletAddressCard({
                 "
               >
 
-                {wallet.isVerified ? (
+                {wallet_verified ? (
 
                   <>
 
@@ -158,7 +160,7 @@ export default function WalletAddressCard({
                         text-green-500
                       "
                     >
-                      Verified
+                      {t.wallet_verified}
                     </span>
 
                   </>
@@ -179,7 +181,7 @@ export default function WalletAddressCard({
                         text-yellow-500
                       "
                     >
-                      Unverified
+                      {t.wallet_unverified}
                     </span>
 
                   </>
