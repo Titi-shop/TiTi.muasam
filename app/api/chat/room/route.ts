@@ -22,10 +22,6 @@ export const runtime = "nodejs";
    GET SUPPORT ROOM
 ========================================================= */
 
-// =========================================================
-// GET SUPPORT ROOM
-// =========================================================
-
 export async function GET() {
 
   try {
@@ -51,22 +47,17 @@ export async function GET() {
 
     }
 
-    const template =
+    const welcome =
       await getChatTemplateByCode(
         "support_welcome"
       );
 
-    return NextResponse.json({
-      room,
-      welcome: template
-        ? {
-            id: template.id,
-            code: template.code,
-            title: template.title,
-            content: template.content,
-          }
-        : null,
-    });
+    return NextResponse.json(
+      {
+        room,
+        welcome,
+      }
+    );
 
   } catch (err) {
 
