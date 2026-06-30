@@ -170,56 +170,63 @@ setWelcome(data.welcome ?? null);
       </header>
 
       {/* Messages */}
-      <section className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="mx-auto flex max-w-3xl flex-col gap-4">
-          {messages.map((message) => {
-      {welcome && (
-  <div className="flex justify-start">
-    <div className="max-w-[80%] rounded-2xl bg-white px-4 py-3 shadow-sm">
-      <p className="whitespace-pre-wrap text-sm">
-        {welcome}
-      </p>
-    </div>
-  </div>
-)}
-            const isUser =
-  message.sender_id === user?.id;
+    <section className="flex-1 overflow-y-auto px-4 py-6">
+  <div className="mx-auto flex max-w-3xl flex-col gap-4">
 
-            return (
-              <div
-                key={message.id}
-                className={`flex ${
-                  isUser ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${
-                    isUser
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-900"
-                  }`}
-                >
-                  <p className="mb-2 text-sm whitespace-pre-wrap">
-                    {message.content}
-                  </p>
-
-                  <div
-                    className={`text-xs ${
-                      isUser
-                        ? "text-blue-100"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    {new Date(
-  message.created_at
-).toLocaleTimeString()}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+    {welcome && (
+      <div className="flex justify-start">
+        <div className="max-w-[80%] rounded-2xl bg-white px-4 py-3 shadow-sm">
+          <p className="whitespace-pre-wrap text-sm">
+            {welcome}
+          </p>
         </div>
-      </section>
+      </div>
+    )}
+
+    {messages.map((message) => {
+
+      const isUser =
+        message.sender_id === user?.id;
+
+      return (
+        <div
+          key={message.id}
+          className={`flex ${
+            isUser
+              ? "justify-end"
+              : "justify-start"
+          }`}
+        >
+          <div
+            className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${
+              isUser
+                ? "bg-blue-600 text-white"
+                : "bg-white text-gray-900"
+            }`}
+          >
+            <p className="mb-2 whitespace-pre-wrap text-sm">
+              {message.content}
+            </p>
+
+            <div
+              className={`text-xs ${
+                isUser
+                  ? "text-blue-100"
+                  : "text-gray-500"
+              }`}
+            >
+              {new Date(
+                message.created_at
+              ).toLocaleTimeString()}
+            </div>
+          </div>
+        </div>
+      );
+
+    })}
+
+  </div>
+</section>
 
       {/* Input */}
       <footer
