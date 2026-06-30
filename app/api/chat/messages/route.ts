@@ -13,6 +13,7 @@ import {
 
 import {
   createMessage,
+  createSystemMessage,
   getMessagesByRoomId,
   getRoomById,
   isParticipant,
@@ -113,35 +114,57 @@ export async function GET(
   await getMessagesByRoomId(
     roomId
   );
+
 console.log(
   "[CHAT][GET] MESSAGE_COUNT",
   messages.length
 );
-let welcome: string | null =
-  null;
 
 if (
   messages.length === 0
 ) {
 
   console.log(
-    "[CHAT][GET] LOAD_WELCOME"
+    "[CHAT][GET] CREATE_SYSTEM_MESSAGE"
   );
 
-  welcome =
+  const content =
     await getChatTemplateContent(
       "support_welcome"
     );
 
   console.log(
-    "[CHAT][GET] WELCOME",
-    welcome
+    "[CHAT][GET] TEMPLATE",
+    content
   );
 
+  if (content) {
+
+    await createSystemMessage(
+      roomId,
+      content
+    );
+
+    console.log(
+      "[CHAT][GET] SYSTEM_MESSAGE_CREATED"
+    );
+
+    messages =
+      await getMessagesByRoomId(
+        roomId
+      );
+
+    console.log(
+      "[CHAT][GET] RELOAD_MESSAGES",
+      messages.length
+    );
+
+  }
+
 }
-   return NextResponse.json({
+
+return NextResponse.json({
   messages,
-  welcome,
 });
   } catch (err) {
 
