@@ -802,7 +802,10 @@
   "wallet_address_hint": "Chỉ hỗ trợ địa chỉ ví Pi Network.",
   "save_wallet": "Lưu địa chỉ ví",
   "saving": "Đang lưu...",
-  "wallet_save_failed": "Không thể lưu địa chỉ ví."
+  "wallet_save_failed": "Không thể lưu địa chỉ ví.",
+  "wallet_select": "Chọn ví",
+  "wallet_verified": "Đã xác minh",
+  "wallet_unverified": "Chưa xác minh"
 
 
 
