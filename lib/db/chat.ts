@@ -299,6 +299,15 @@ export async function createSystemWelcomeMessage(
   roomId: string
 ): Promise<void> {
 
+  const content =
+`👋 Xin chào!
+
+Cảm ơn bạn đã liên hệ Titi Marketplace.
+
+Chúng tôi sẽ phản hồi bạn sớm nhất có thể.
+
+Trong lúc chờ, bạn có thể mô tả vấn đề chi tiết để chúng tôi hỗ trợ nhanh hơn.`;
+
   await query(
     `
       INSERT INTO chat_messages
@@ -311,20 +320,15 @@ export async function createSystemWelcomeMessage(
       VALUES
       (
         $1,
-        NULL,
+        $2,
         'text',
-        $2
+        $3
       )
     `,
     [
       roomId,
-      `👋 Xin chào!
-
-Cảm ơn bạn đã liên hệ Titi Marketplace.
-
-Chúng tôi sẽ phản hồi bạn sớm nhất có thể.
-
-Trong lúc chờ, bạn có thể mô tả vấn đề chi tiết để chúng tôi hỗ trợ nhanh hơn.`,
+      SYSTEM_USER_ID,
+      content,
     ]
   );
 
@@ -332,14 +336,14 @@ Trong lúc chờ, bạn có thể mô tả vấn đề chi tiết để chúng t
     `
       UPDATE chat_rooms
       SET
+        updated_at = NOW(),
         last_message = $2,
-        last_message_at = NOW(),
-        updated_at = NOW()
+        last_message_at = NOW()
       WHERE id = $1
     `,
     [
       roomId,
-      "👋 Xin chào! Cảm ơn bạn đã liên hệ Titi Marketplace.",
+      content,
     ]
   );
 
