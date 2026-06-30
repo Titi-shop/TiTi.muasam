@@ -18,7 +18,9 @@ import type {
 import {
   formatWalletAddress,
 } from "../wallet.utils";
-
+import {
+  useTranslationClient as useTranslation,
+} from "@/app/lib/i18n/client";
 /* =====================================================
    TYPES
 ===================================================== */
@@ -48,17 +50,14 @@ type Props = {
 export default function WalletAddressSheet({
 
   open,
-
   wallets,
-
   selected,
-
   onSelect,
-
   onClose,
 
 }: Props) {
-
+const { t } =
+  useTranslation();
   if (!open) {
     return null;
   }
@@ -118,7 +117,7 @@ export default function WalletAddressSheet({
               text-[var(--foreground)]
             "
           >
-            Select Wallet
+            {t.wallet_select}
           </h2>
 
           <button
@@ -154,25 +153,24 @@ export default function WalletAddressSheet({
 
                 }}
                 className="
-                  flex
-                  w-full
-                  items-center
-                  justify-between
-                  rounded-2xl
-                  border
-                  border-[var(--nav-border)]
-                  p-4
-                  text-left
-                "
+  card-flat
+  flex
+  w-full
+  items-center
+  justify-between
+  p-4
+  text-left
+"
               >
 
                 <div>
 
                   <p
-                    className="
-                      font-semibold
-                    "
-                  >
+  className="font-semibold"
+  style={{
+    color: "var(--text-primary)",
+  }}
+>
                     {formatWalletAddress(
                       wallet.address
                     )}
@@ -195,12 +193,12 @@ export default function WalletAddressSheet({
                         <CheckCircle2
                           size={13}
                           className="
-                            text-green-500
+                            text-success
                           "
                         />
 
                         <span>
-                          Verified
+                          {t.wallet_verified}
                         </span>
 
                       </>
@@ -212,12 +210,12 @@ export default function WalletAddressSheet({
                         <AlertCircle
                           size={13}
                           className="
-                            text-yellow-500
+                            text-warning
                           "
                         />
 
                         <span>
-                          Unverified
+                          {t.wallet_unverified}
                         </span>
 
                       </>
