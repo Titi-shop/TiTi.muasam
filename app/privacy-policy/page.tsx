@@ -887,6 +887,4 @@ export default function PrivacyPolicyPage() {
     </main>
   );
 }
-    </main>
-  );
-}
+    
