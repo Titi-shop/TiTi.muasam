@@ -37,8 +37,6 @@ type Props = {
 /* =====================================================
    COMPONENT
 ===================================================== */
-const { t } =
-  useTranslation();
 export default function WalletAddressCard({
 
   wallet,
@@ -46,7 +44,8 @@ export default function WalletAddressCard({
   onClick,
 
 }: Props) {
-
+const { t } =
+  useTranslation();
   return (
 
     <button
@@ -114,21 +113,24 @@ export default function WalletAddressCard({
               {t.wallet_address}
             </p>
 
-            <p
-              className="
-                mt-1
-                font-semibold
-                style={{
-  color: "var(--text-primary)",
-}}
-              "
-            >
+           <p
+  className="
+    mt-1
+    font-semibold
+  "
+  style={{
+    color: "var(--text-primary)",
+  }}
+>
 
               {wallet
                 ? formatWalletAddress(
                     wallet.address
                   )
-                : "{t.wallet_select}"}
+                : (
+    t.wallet_select ??
+    "Select Wallet"
+  )
 
             </p>
 
@@ -144,21 +146,17 @@ export default function WalletAddressCard({
                 "
               >
 
-                {wallet_verified ? (
+              {wallet.isVerified ? (
 
                   <>
 
                     <CheckCircle2
                       size={13}
-                      className="
-                        text-green-500
-                      "
+                      className="text-success"
                     />
 
                     <span
-                      className="
-                        text-green-500
-                      "
+                      className="text-success"
                     >
                       {t.wallet_verified}
                     </span>
@@ -171,15 +169,11 @@ export default function WalletAddressCard({
 
                     <AlertCircle
                       size={13}
-                      className="
-                        text-yellow-500
-                      "
+                      className="text-warning"
                     />
 
                     <span
-                      className="
-                        text-yellow-500
-                      "
+                      className="text-warning"
                     >
                       {t.wallet_unverified}
                     </span>
