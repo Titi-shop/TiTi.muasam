@@ -1,6 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useRouter,
+} from "next/navigation";
+
+import {
+  useAuth,
+} from "@/context/AuthContext";
 
 type Room = {
   id: string;
@@ -45,17 +56,93 @@ const demoMessages: Message[] = [
 ];
 
 export default function AdminChatPage() {
-  const [selectedRoom] = useState("1");
+  const {
+    user,
+    loading,
+    piReady,
+  } = useAuth();
+
+  const router = useRouter();
+
+  const [selectedRoom] =
+    useState("1");
+
   const [messages] =
-    useState<Message[]>(demoMessages);
+    useState<Message[]>(
+      demoMessages
+    );
 
   const [input, setInput] =
     useState("");
+
+  /* =====================================================
+     AUTH
+  ===================================================== */
+
+  useEffect(() => {
+    if (
+      loading ||
+      !piReady
+    ) {
+      return;
+    }
+
+    if (
+      !user?.is_admin
+    ) {
+      router.replace("/404");
+    }
+  }, [
+    loading,
+    piReady,
+    user,
+    router,
+  ]);
+
+  /* =====================================================
+     LOADING
+  ===================================================== */
+
+  if (
+    loading ||
+    !piReady
+  ) {
+    return (
+      <main className="p-4 space-y-4">
+        {Array.from({
+          length: 5,
+        }).map((_, index) => (
+          <div
+            key={index}
+            className="
+              h-24
+              animate-pulse
+              rounded-xl
+              bg-gray-200
+            "
+          />
+        ))}
+      </main>
+    );
+  }
+
+  /* =====================================================
+     WAIT REDIRECT
+  ===================================================== */
+
+  if (!user?.is_admin) {
+    return null;
+  }
+
+  /* =====================================================
+     PAGE
+  ===================================================== */
 
   return (
     <main className="flex h-[100dvh] bg-gray-100">
 
       {/* Sidebar */}
+
       <aside className="w-72 border-r bg-white">
 
         <div className="border-b p-4">
@@ -90,6 +177,7 @@ export default function AdminChatPage() {
       </aside>
 
       {/* Chat */}
+
       <section className="flex flex-1 flex-col">
 
         <header className="border-b bg-white p-4">
@@ -103,7 +191,8 @@ export default function AdminChatPage() {
           {messages.map((message) => {
 
             const isAdmin =
-              message.sender === "admin";
+              message.sender ===
+              "admin";
 
             return (
               <div
@@ -149,14 +238,16 @@ export default function AdminChatPage() {
             <input
               value={input}
               onChange={(e) =>
-                setInput(e.target.value)
+                setInput(
+                  e.target.value
+                )
               }
               placeholder="Nhập tin nhắn..."
               className="flex-1 rounded-full border px-4 py-3"
             />
 
             <button
-              className="rounded-full bg-blue-600 px-6 text-white"
+              className="rounded-full bg-blue-600 px-6 py-3 text-white"
             >
               Gửi
             </button>
