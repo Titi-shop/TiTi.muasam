@@ -12,21 +12,21 @@ import {
 } from "@/lib/auth/guard";
 
 import {
-  createMessage,
+  createSupportRoom,
+  createSystemWelcomeMessage,
   getMessagesByRoomId,
-  getRoomById,
-  isParticipant,
+  getSupportRoomByUserId,
 } from "@/lib/db/chat";
 
 export const runtime = "nodejs";
-
-/* =========================================================
-   GET MESSAGES
-========================================================= */
+// =========================================================
+// GET MESSAGES
+// =========================================================
 
 export async function GET(
   request: NextRequest
 ) {
+
   try {
 
     const auth =
@@ -37,57 +37,7 @@ export async function GET(
     }
 
     if (!auth.userId) {
-      return NextResponse.json(
-        {
-          error: "FORBIDDEN",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
 
-    const roomId =
-      request.nextUrl.searchParams.get(
-        "roomId"
-      );
-
-    if (!roomId) {
-      return NextResponse.json(
-        {
-          error:
-            "INVALID_ROOM_ID",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    const room =
-      await getRoomById(
-        roomId
-      );
-
-    if (!room) {
-      return NextResponse.json(
-        {
-          error:
-            "ROOM_NOT_FOUND",
-        },
-        {
-          status: 404,
-        }
-      );
-    }
-
-    const participant =
-      await isParticipant(
-        roomId,
-        auth.userId
-      );
-
-    if (!participant) {
       return NextResponse.json(
         {
           error:
@@ -97,12 +47,86 @@ export async function GET(
           status: 403,
         }
       );
+
     }
 
-    const messages =
+    const roomId =
+      request.nextUrl.searchParams.get(
+        "roomId"
+      );
+
+    if (!roomId) {
+
+      return NextResponse.json(
+        {
+          error:
+            "INVALID_ROOM_ID",
+        },
+        {
+          status: 400,
+        }
+      );
+
+    }
+
+    const room =
+      await getRoomById(
+        roomId
+      );
+
+    if (!room) {
+
+      return NextResponse.json(
+        {
+          error:
+            "ROOM_NOT_FOUND",
+        },
+        {
+          status: 404,
+        }
+      );
+
+    }
+
+    const participant =
+      await isParticipant(
+        roomId,
+        auth.userId
+      );
+
+    if (!participant) {
+
+      return NextResponse.json(
+        {
+          error:
+            "FORBIDDEN",
+        },
+        {
+          status: 403,
+        }
+      );
+
+    }
+
+    let messages =
       await getMessagesByRoomId(
         roomId
       );
+
+    if (
+      messages.length === 0
+    ) {
+
+      await createSystemWelcomeMessage(
+        roomId
+      );
+
+      messages =
+        await getMessagesByRoomId(
+          roomId
+        );
+
+    }
 
     return NextResponse.json({
       messages,
@@ -126,6 +150,7 @@ export async function GET(
     );
 
   }
+
 }
 
 /* =========================================================
