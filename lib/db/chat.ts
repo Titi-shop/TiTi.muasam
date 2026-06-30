@@ -44,6 +44,15 @@ export type SupportChatData = {
     content: string;
   } | null;
 };
+export type ChatTemplate = {
+  id: string;
+  code: string;
+  title: string;
+  content: string;
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
 /* =========================================================
    GET SUPPORT ROOM BY USER
 ========================================================= */
@@ -298,59 +307,30 @@ ORDER BY
   return result.rows;
 }
 /* =========================================================
-   MARK WELCOME SENT
+   GET CHAT TEMPLATE BY CODE
 ========================================================= */
 
-export async function markWelcomeSent(
-  roomId: string
-): Promise<void> {
-  await query(
-    `
-      UPDATE chat_rooms
-      SET welcome_sent = TRUE
-      WHERE id = $1
-    `,
-    [roomId]
+export async function getChatTemplateByCode(
+  code: string
+): Promise<ChatTemplate | null> {
+
+  const result =
+    await query<ChatTemplate>(
+      `
+        SELECT *
+        FROM chat_templates
+        WHERE
+          code = $1
+          AND is_active = TRUE
+        LIMIT 1
+      `,
+      [
+        code,
+      ]
+    );
+
+  return (
+    result.rows[0] ?? null
   );
-}
-/* =========================================================
-   GET SUPPORT CHAT DATA
-========================================================= */
-
-export async function getSupportChatData(
-  userId: string
-): Promise<SupportChatData> {
-
-  let room =
-    await getSupportRoomByUserId(
-      userId
-    );
-
-  if (!room) {
-
-    room =
-      await createSupportRoom(
-        userId
-      );
-
-  }
-
-  const template =
-    await getChatTemplateByCode(
-      "support_welcome"
-    );
-
-  return {
-    room,
-    welcome:
-      template
-        ? {
-            title:
-              template.title,
-            content:
-              template.content,
-          }
-        : null,
-  };
 
 }
