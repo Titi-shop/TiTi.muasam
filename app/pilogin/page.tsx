@@ -268,17 +268,10 @@ export default function PiLoginPage() {
 
             {" "}
 
-       <Link
+   <Link
   href="/privacy-policy"
-  target="_blank"
-  className="
-    font-semibold
-    text-amber-600
-    underline
-    underline-offset-4
-    transition-opacity
-    hover:opacity-80
-  "
+  style={{ color: "var(--color-link)" }}
+  className="font-semibold underline underline-offset-4"
 >
   {t.privacy_policy}
 </Link>
