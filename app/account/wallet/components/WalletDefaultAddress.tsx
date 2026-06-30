@@ -6,7 +6,9 @@ import {
   AlertCircle,
   Wallet,
 } from "lucide-react";
-
+import {
+  useTranslationClient as useTranslation,
+} from "@/app/lib/i18n/client";
 import {
   formatWalletAddress,
 } from "../wallet.utils";
@@ -42,7 +44,8 @@ export default function WalletDefaultAddress({
   onClick,
 
 }: Props) {
-
+const { t } =
+  useTranslation();
   return (
 
     <button
@@ -103,10 +106,10 @@ export default function WalletDefaultAddress({
             <p
               className="
                 text-xs
-                text-white/70
+                text-muted
               "
             >
-              Ví mặc định
+              {t.wallet_default}
             </p>
 
             <p
@@ -121,7 +124,7 @@ export default function WalletDefaultAddress({
                 ? formatWalletAddress(
                     wallet.address
                   )
-                : "Chưa liên kết ví"}
+                : "{t.wallet_not_linked}"}
 
             </p>
 
@@ -141,13 +144,14 @@ export default function WalletDefaultAddress({
 
                   <>
 
-                    <CheckCircle2
-                      size={13}
-                    />
+                   <CheckCircle2
+  size={13}
+  className="text-success"
+/>
 
-                    <span>
-                      Đã xác minh
-                    </span>
+                  <span className="text-success">
+  {t.wallet_verified}
+</span>
 
                   </>
 
@@ -155,13 +159,15 @@ export default function WalletDefaultAddress({
 
                   <>
 
-                    <AlertCircle
-                      size={13}
-                    />
+                   <AlertCircle
+  size={13}
+  className="text-warning"
+/>
 
-                    <span>
-                      Chưa xác minh
-                    </span>
+                  <AlertCircle
+  size={13}
+  className="text-warning"
+/>
 
                   </>
 
@@ -176,11 +182,11 @@ export default function WalletDefaultAddress({
         </div>
 
         <ChevronRight
-          size={18}
-        />
+  size={18}
+  className="text-muted"
+/>
 
       </div>
-
     </button>
 
   );
