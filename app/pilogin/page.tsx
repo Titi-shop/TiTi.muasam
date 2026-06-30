@@ -255,17 +255,10 @@ export default function PiLoginPage() {
 
             {t.i_agree}{" "}
 
-       <Link
+    <Link
   href="/terms-of-service"
-  target="_blank"
-  className="
-    font-semibold
-    text-amber-600
-    underline
-    underline-offset-4
-    transition-opacity
-    hover:opacity-80
-  "
+  style={{ color: "var(--color-link)" }}
+  className="font-semibold underline underline-offset-4"
 >
   {t.terms_of_use}
 </Link>
