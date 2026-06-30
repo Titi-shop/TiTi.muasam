@@ -783,7 +783,18 @@
 
   "common_cancel": "Hủy",
   "common_processing": "Đang xử lý...",
-  "sale_date_required": "Vui lòng chọn thời gian bắt đầu và kết thúc khuyến mãi"
+  "sale_date_required": "Vui lòng chọn thời gian bắt đầu và kết thúc khuyến mãi",
+  
+  "login_title": "TITI Marketplace",
+  "login_subtitle": "Đăng nhập bằng tài khoản Pi Network của bạn",
+  "continue_with_pi": "Tiếp tục với Pi Network",
+  "powered_by_pi": "Được hỗ trợ bởi Pi Network",
+  "login_not_ready": "Pi Network chưa sẵn sàng.",
+  "login_loading": "Đang tải...",
+  "i_agree": "Tôi đồng ý với",
+  "terms_of_use": "Điều khoản dịch vụ",
+  "privacy_policy": "Chính sách bảo mật",
+  "and": "và"
 
 
 
