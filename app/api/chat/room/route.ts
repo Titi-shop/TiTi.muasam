@@ -13,7 +13,6 @@ import {
 import {
   createSupportRoom,
   getSupportRoomByUserId,
-  getChatTemplateByCode,
 } from "@/lib/db/chat";
 
 export const runtime = "nodejs";
@@ -47,10 +46,7 @@ export async function GET() {
 
     }
 
-    const welcome =
-      await getChatTemplateByCode(
-        "support_welcome"
-      );
+  
 
     return NextResponse.json(
       {
