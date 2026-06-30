@@ -35,6 +35,8 @@ const [roomId, setRoomId] =
 }, [loading, user]);
   
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [welcome, setWelcome] =
+  useState<string | null>(null);
   async function loadRoom() {
   try {
     const token =
@@ -83,7 +85,10 @@ await loadMessages(data.room.id);
 
   const data = await res.json();
 
-  setMessages(data.messages);
+console.log("[CHAT]", data);
+
+setMessages(data.messages ?? []);
+setWelcome(data.welcome ?? null);
 }
   async function handleSend() {
   if (!roomId) {
@@ -168,6 +173,15 @@ await loadMessages(data.room.id);
       <section className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
           {messages.map((message) => {
+      {welcome && (
+  <div className="flex justify-start">
+    <div className="max-w-[80%] rounded-2xl bg-white px-4 py-3 shadow-sm">
+      <p className="whitespace-pre-wrap text-sm">
+        {welcome}
+      </p>
+    </div>
+  </div>
+)}
             const isUser =
   message.sender_id === user?.id;
 
