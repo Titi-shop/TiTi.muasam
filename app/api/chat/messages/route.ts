@@ -12,10 +12,11 @@ import {
 } from "@/lib/auth/guard";
 
 import {
-  createSupportRoom,
+  createMessage,
   createSystemWelcomeMessage,
   getMessagesByRoomId,
-  getSupportRoomByUserId,
+  getRoomById,
+  isParticipant,
 } from "@/lib/db/chat";
 
 export const runtime = "nodejs";
