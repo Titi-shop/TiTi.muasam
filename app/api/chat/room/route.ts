@@ -1,15 +1,5 @@
-// =========================================================
-// app/api/chat/room/route.ts
-// =========================================================
-
-import {
-  NextResponse,
-} from "next/server";
-
-import {
-  requireAuth,
-} from "@/lib/auth/guard";
-
+import { NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/guard";
 import {
   createSupportRoom,
   getSupportRoomByUserId,
@@ -17,16 +7,10 @@ import {
 
 export const runtime = "nodejs";
 
-/* =========================================================
-   GET SUPPORT ROOM
-========================================================= */
-
 export async function GET() {
-
   try {
 
-    const auth =
-      await requireAuth();
+    const auth = await requireAuth();
 
     if (!auth.ok) {
       return auth.response;
@@ -38,22 +22,15 @@ export async function GET() {
       );
 
     if (!room) {
-
       room =
         await createSupportRoom(
           auth.userId
         );
-
     }
 
-  
-
-    return NextResponse.json(
-      {
-        room,
-        welcome,
-      }
-    );
+    return NextResponse.json({
+      room,
+    });
 
   } catch (err) {
 
@@ -64,8 +41,7 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        error:
-          "INTERNAL_SERVER_ERROR",
+        error: "INTERNAL_SERVER_ERROR",
       },
       {
         status: 500,
@@ -73,5 +49,4 @@ export async function GET() {
     );
 
   }
-
 }
