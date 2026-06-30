@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/AuthContext";
@@ -16,7 +17,8 @@ import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 export default function PiLoginPage() {
 
-  const router = useRouter();
+  const router =
+    useRouter();
 
   const { t } =
     useTranslation();
@@ -60,23 +62,70 @@ export default function PiLoginPage() {
      LOADING
   =================================================== */
 
-  if (
-    loading
-  ) {
+  if (loading) {
 
     return (
+
       <main
         className="
+          fixed
+          inset-0
           flex
-          min-h-screen
           items-center
           justify-center
         "
+        style={{
+          background:
+            "var(--background)",
+        }}
       >
-        <div className="text-sm opacity-70">
-          Loading...
+
+        <div
+          className="
+            card
+            w-full
+            max-w-sm
+            animate-fade-in
+            text-center
+          "
+        >
+
+          <div
+            className="
+              skeleton
+              mx-auto
+              mb-5
+              h-16
+              w-16
+              rounded-2xl
+            "
+          />
+
+          <div
+            className="
+              skeleton
+              mx-auto
+              mb-3
+              h-6
+              w-40
+              rounded-lg
+            "
+          />
+
+          <div
+            className="
+              skeleton
+              mx-auto
+              h-4
+              w-56
+              rounded-lg
+            "
+          />
+
         </div>
+
       </main>
+
     );
 
   }
@@ -88,37 +137,39 @@ export default function PiLoginPage() {
   return (
 
     <main
-  className="
-    fixed
-    inset-0
-    flex
-    items-center
-    justify-center
-    overflow-hidden
-    px-5
-  "
-  style={{
-    background: "var(--background)",
-    paddingTop: "env(safe-area-inset-top)",
-    paddingBottom: "env(safe-area-inset-bottom)",
-  }}
->
-   <div
-  className="
-    w-full
-    max-w-md
-    rounded-3xl
-    border
-    p-8
-    shadow-sm
-  "
-  style={{
-    background: "var(--card-bg)",
-    borderColor: "var(--border-color)",
-  }}
->
+      className="
+        fixed
+        inset-0
+        flex
+        items-center
+        justify-center
+        overflow-hidden
+        px-5
+      "
+      style={{
+        background:
+          "var(--background)",
+        paddingTop:
+          "env(safe-area-inset-top)",
+        paddingBottom:
+          "env(safe-area-inset-bottom)",
+      }}
+    >
 
-        {/* LOGO */}
+      <div
+        className="
+          card
+          animate-scale-in
+          w-full
+          max-w-md
+          px-8
+          py-8
+        "
+      >
+
+        {/* ======================
+            LOGO
+        ====================== */}
 
         <div className="flex justify-center">
 
@@ -127,34 +178,56 @@ export default function PiLoginPage() {
             alt="TITI"
             width={72}
             height={72}
-            className="rounded-2xl"
+            priority
+            className="radius-lg"
           />
 
         </div>
 
-        {/* TITLE */}
+        {/* ======================
+            TITLE
+        ====================== */}
 
-        <h1 className="mt-6 text-center text-3xl font-bold">
-
-          TITI
-
+        <h1
+          className="
+            mt-6
+            text-center
+            text-3xl
+            font-bold
+          "
+          style={{
+            color:
+              "var(--text-primary)",
+          }}
+        >
+          {t.login_title ??
+            "TITI Marketplace"}
         </h1>
 
         <p
           className="
-            mt-2
+            mt-3
             text-center
             text-sm
-            opacity-70
+            text-muted
           "
         >
-          Sign in using your
-          Pi Network account.
+          {t.login_subtitle ??
+            "Sign in with your Pi Network account"}
         </p>
 
-        {/* TERMS */}
+        {/* ======================
+            TERMS
+        ====================== */}
 
-        <div className="mt-8 flex items-start gap-3">
+        <div
+          className="
+            mt-8
+            flex
+            items-start
+            gap-3
+          "
+        >
 
           <input
             type="checkbox"
@@ -168,7 +241,7 @@ export default function PiLoginPage() {
               mt-1
               h-4
               w-4
-              accent-orange-600
+              accent-orange-500
             "
           />
 
@@ -176,23 +249,23 @@ export default function PiLoginPage() {
             className="
               text-sm
               leading-6
-              opacity-80
+              text-muted
             "
           >
 
             {t.i_agree}{" "}
 
-            <a
+            <Link
               href="/terms-of-service"
               target="_blank"
               className="
-                font-medium
-                text-orange-600
+                text-primary
                 underline
+                font-medium
               "
             >
               {t.terms_of_use}
-            </a>
+            </Link>
 
             {" "}
 
@@ -200,23 +273,25 @@ export default function PiLoginPage() {
 
             {" "}
 
-            <a
+            <Link
               href="/privacy-policy"
               target="_blank"
               className="
-                font-medium
-                text-orange-600
+                text-primary
                 underline
+                font-medium
               "
             >
               {t.privacy_policy}
-            </a>
+            </Link>
 
           </label>
 
         </div>
 
-        {/* LOGIN */}
+          {/* ======================
+            LOGIN
+        ====================== */}
 
         <button
           onClick={pilogin}
@@ -224,40 +299,72 @@ export default function PiLoginPage() {
             !piReady ||
             !agreed
           }
-          className={`
-            mt-8
-            h-14
-            w-full
-            rounded-2xl
-            font-semibold
-            text-white
-            transition
-
-            ${
-              piReady &&
-              agreed
-                ? "bg-orange-600 hover:bg-orange-700 active:scale-95"
-                : "cursor-not-allowed bg-gray-400"
-            }
-          `}
+          className={
+            piReady &&
+            agreed
+              ? "btn-primary mt-8 h-14 w-full"
+              : "btn-primary mt-8 h-14 w-full opacity-50 cursor-not-allowed"
+          }
         >
-
-          Continue with Pi Network
-
+          {t.continue_with_pi ??
+            "Continue with Pi Network"}
         </button>
 
-        {/* FOOTER */}
+        {/* ======================
+            NOT READY
+        ====================== */}
 
-        <p
+        {!piReady && (
+
+          <p
+            className="
+              mt-4
+              text-center
+              text-xs
+              text-warning
+            "
+          >
+            {t.login_not_ready ??
+              "Pi Network is not ready."}
+          </p>
+
+        )}
+
+        {/* ======================
+            FOOTER
+        ====================== */}
+
+        <div
           className="
-            mt-6
+            mt-8
+            border-t
+            border-default
+            pt-6
             text-center
-            text-xs
-            opacity-60
           "
         >
-          Powered by Pi Network
-        </p>
+
+          <p
+            className="
+              text-xs
+              text-muted
+            "
+          >
+            {t.powered_by_pi ??
+              "Powered by Pi Network"}
+          </p>
+
+          <p
+            className="
+              mt-2
+              text-xs
+              text-muted
+            "
+          >
+            © 2026 TITI Marketplace
+          </p>
+
+        </div>
 
       </div>
 
@@ -266,3 +373,4 @@ export default function PiLoginPage() {
   );
 
 }
+        
