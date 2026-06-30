@@ -11,6 +11,11 @@ export type ChatRoom = {
   created_by: string;
   created_at: Date;
   updated_at: Date;
+
+  last_message: string | null;
+  last_message_at: Date | null;
+  unread_count_user: number;
+  unread_count_admin: number;
 };
 
 export type ChatMessage = {
@@ -26,6 +31,9 @@ export type AdminChatRoom = {
   room_type: "support" | "seller" | "group";
   status: "open" | "closed";
   updated_at: Date;
+  last_message: string | null;
+  last_message_at: Date | null;
+  unread_count_admin: number;
   user_id: string;
   username: string;
 };
@@ -171,13 +179,19 @@ export async function createMessage(
   );
 
   await query(
-    `
-      UPDATE chat_rooms
-      SET updated_at = NOW()
-      WHERE id = $1
-    `,
-    [roomId]
-  );
+  `
+    UPDATE chat_rooms
+    SET
+      updated_at = NOW(),
+      last_message = $2,
+      last_message_at = NOW()
+    WHERE id = $1
+  `,
+  [
+    roomId,
+    content,
+  ]
+);
 
   return result.rows[0];
 }
@@ -234,21 +248,27 @@ export async function getAdminRooms(): Promise<AdminChatRoom[]> {
   const result = await query<AdminChatRoom>(
     `
       SELECT
-        r.id AS room_id,
-        r.room_type,
-        r.status,
-        r.updated_at,
-        u.id AS user_id,
-        u.username
-      FROM chat_rooms r
-      INNER JOIN chat_participants p
-        ON p.room_id = r.id
-      INNER JOIN users u
-        ON u.id = p.participant_id
-      WHERE
-        p.role = 'user'
-      ORDER BY
-        r.updated_at DESC
+  r.id AS room_id,
+  r.room_type,
+  r.status,
+  r.updated_at,
+
+  r.last_message,
+  r.last_message_at,
+  r.unread_count_admin,
+
+  u.id AS user_id,
+  u.username
+FROM chat_rooms r
+INNER JOIN chat_participants p
+  ON p.room_id = r.id
+INNER JOIN users u
+  ON u.id = p.participant_id
+WHERE
+  p.role = 'user'
+ORDER BY
+  r.last_message_at DESC NULLS LAST,
+  r.updated_at DESC
     `
   );
 
