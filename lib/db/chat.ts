@@ -141,7 +141,8 @@ export async function getMessagesByRoomId(
 export async function createMessage(
   roomId: string,
   senderId: string,
-  content: string
+  content: string,
+  isAdmin: boolean
 ): Promise<ChatMessage> {
 
   console.log(
