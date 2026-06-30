@@ -25,35 +25,14 @@ type Message = {
   time: string;
 };
 
-const rooms: Room[] = [
-  {
-    id: "1",
-    username: "Hung",
-  },
-  {
-    id: "2",
-    username: "Minh",
-  },
-  {
-    id: "3",
-    username: "Lan",
-  },
-];
-
-const demoMessages: Message[] = [
-  {
-    id: "1",
-    sender: "user",
-    content: "Xin chào Admin",
-    time: "09:00",
-  },
-  {
-    id: "2",
-    sender: "admin",
-    content: "Chào bạn, mình có thể giúp gì?",
-    time: "09:01",
-  },
-];
+type Room = {
+  room_id: string;
+  user_id: string;
+  username: string;
+  room_type: string;
+  status: string;
+  updated_at: string;
+};
 
 export default function AdminChatPage() {
   const {
@@ -64,14 +43,22 @@ export default function AdminChatPage() {
 
   const router = useRouter();
 
-  const [selectedRoom] =
-    useState("1");
+  const [
+  selectedRoom,
+  setSelectedRoom,
+] = useState<string | null>(null);
 
-  const [messages] =
-    useState<Message[]>(
-      demoMessages
-    );
-
+  const [
+  messages,
+  setMessages,
+] =
+  useState<Message[]>([]);
+const [
+  rooms,
+  setRooms,
+] =
+  useState<Room[]>([]);
+  
   const [input, setInput] =
     useState("");
 
@@ -98,7 +85,99 @@ export default function AdminChatPage() {
     user,
     router,
   ]);
+useEffect(() => {
+  if (
+    loading ||
+    !piReady ||
+    !user?.is_admin
+  ) {
+    return;
+  }
 
+  void loadRooms();
+
+}, [
+  loading,
+  piReady,
+  user,
+]);
+  async function loadRooms() {
+  try {
+
+    const res =
+      await apiAuthFetch(
+        "/api/admin/chat/rooms"
+      );
+
+    const data =
+      await res.json();
+
+    if (!res.ok) {
+      return;
+    }
+
+    const nextRooms =
+      Array.isArray(
+        data.rooms
+      )
+        ? data.rooms
+        : [];
+
+    setRooms(
+      nextRooms
+    );
+
+    if (
+      nextRooms.length >
+      0
+    ) {
+      setSelectedRoom(
+        nextRooms[0]
+          .room_id
+      );
+
+      await loadMessages(
+        nextRooms[0]
+          .room_id
+      );
+    }
+
+  } catch (err) {
+    console.error(
+      "[ADMIN_CHAT]",
+      err
+    );
+  }
+}
+  async function loadMessages(
+  roomId: string
+) {
+  try {
+
+    const res =
+      await apiAuthFetch(
+        `/api/chat/messages?roomId=${roomId}`
+      );
+
+    const data =
+      await res.json();
+
+    if (!res.ok) {
+      return;
+    }
+
+    setMessages(
+      Array.isArray(
+        data.messages
+      )
+        ? data.messages
+        : []
+    );
+
+  } catch (err) {
+    console.error(err);
+  }
+}
   /* =====================================================
      LOADING
   ===================================================== */
@@ -154,14 +233,24 @@ export default function AdminChatPage() {
         <div className="overflow-y-auto">
 
           {rooms.map((room) => (
-            <button
-              key={room.id}
-              className={`w-full border-b px-4 py-4 text-left transition ${
-                room.id === selectedRoom
-                  ? "bg-blue-50"
-                  : "hover:bg-gray-50"
-              }`}
-            >
+  <button
+    key={room.room_id}
+    type="button"
+    onClick={() => {
+      setSelectedRoom(
+        room.room_id
+      );
+
+      void loadMessages(
+        room.room_id
+      );
+    }}
+    className={`w-full border-b px-4 py-4 text-left transition ${
+      room.room_id === selectedRoom
+        ? "bg-blue-50"
+        : "hover:bg-gray-50"
+    }`}
+  >
               <div className="font-medium">
                 {room.username}
               </div>
