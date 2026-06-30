@@ -306,12 +306,18 @@ if (!isAdmin) {
 console.log(
   "[CHAT][POST] START"
 );
-    const message =
-      await createMessage(
-        roomId,
-        auth.userId,
-        content
-      );
+    const isAdmin =
+  await getUserAdminFlag(
+    auth.userId
+  );
+
+const message =
+  await createMessage(
+    roomId,
+    auth.userId,
+    content,
+    isAdmin
+  );
 console.log(
   "[CHAT][POST] CREATED",
   message
