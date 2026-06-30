@@ -163,3 +163,48 @@ export async function createMessage(
 
   return result.rows[0];
 }
+
+/* =========================================================
+   GET ROOM BY ID
+========================================================= */
+
+export async function getRoomById(
+  roomId: string
+): Promise<ChatRoom | null> {
+  const result = await query<ChatRoom>(
+    `
+      SELECT *
+      FROM chat_rooms
+      WHERE id = $1
+      LIMIT 1
+    `,
+    [roomId]
+  );
+
+  return result.rows[0] ?? null;
+}
+
+/* =========================================================
+   CHECK ROOM PARTICIPANT
+========================================================= */
+
+export async function isParticipant(
+  roomId: string,
+  userId: string
+): Promise<boolean> {
+  const result = await query<{ exists: number }>(
+    `
+      SELECT 1 AS exists
+      FROM chat_participants
+      WHERE room_id = $1
+        AND participant_id = $2
+      LIMIT 1
+    `,
+    [
+      roomId,
+      userId,
+    ]
+  );
+
+  return result.rowCount > 0;
+}
