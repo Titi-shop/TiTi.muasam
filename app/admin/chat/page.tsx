@@ -12,18 +12,7 @@ import {
 import {
   useAuth,
 } from "@/context/AuthContext";
-
-type Room = {
-  id: string;
-  username: string;
-};
-
-type Message = {
-  id: string;
-  sender: "user" | "admin";
-  content: string;
-  time: string;
-};
+import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
 type Room = {
   room_id: string;
@@ -42,25 +31,6 @@ export default function AdminChatPage() {
   } = useAuth();
 
   const router = useRouter();
-
-  const [
-  selectedRoom,
-  setSelectedRoom,
-] = useState<string | null>(null);
-
-  const [
-  messages,
-  setMessages,
-] =
-  useState<Message[]>([]);
-const [
-  rooms,
-  setRooms,
-] =
-  useState<Room[]>([]);
-  
-  const [input, setInput] =
-    useState("");
 
   /* =====================================================
      AUTH
@@ -127,20 +97,10 @@ useEffect(() => {
       nextRooms
     );
 
-    if (
-      nextRooms.length >
-      0
-    ) {
-      setSelectedRoom(
-        nextRooms[0]
-          .room_id
-      );
-
-      await loadMessages(
-        nextRooms[0]
-          .room_id
-      );
-    }
+    console.log(
+  "[ADMIN_CHAT][ROOMS]",
+  nextRooms
+);
 
   } catch (err) {
     console.error(
@@ -149,35 +109,7 @@ useEffect(() => {
     );
   }
 }
-  async function loadMessages(
-  roomId: string
-) {
-  try {
-
-    const res =
-      await apiAuthFetch(
-        `/api/chat/messages?roomId=${roomId}`
-      );
-
-    const data =
-      await res.json();
-
-    if (!res.ok) {
-      return;
-    }
-
-    setMessages(
-      Array.isArray(
-        data.messages
-      )
-        ? data.messages
-        : []
-    );
-
-  } catch (err) {
-    console.error(err);
-  }
-}
+  
   /* =====================================================
      LOADING
   ===================================================== */
@@ -237,18 +169,19 @@ useEffect(() => {
     key={room.room_id}
     type="button"
     onClick={() => {
-      setSelectedRoom(
-        room.room_id
-      );
-
-      void loadMessages(
-        room.room_id
-      );
-    }}
-    className={`w-full border-b px-4 py-4 text-left transition ${
-      room.room_id === selectedRoom
-        ? "bg-blue-50"
-        : "hover:bg-gray-50"
+  router.push(
+    `/admin/chat/${room.room_id}`
+  );
+}}
+    className="
+w-full
+border-b
+px-4
+py-4
+text-left
+transition
+hover:bg-gray-50
+"
     }`}
   >
               <div className="font-medium">
@@ -260,92 +193,65 @@ useEffect(() => {
               </div>
             </button>
           ))}
-
         </div>
-
       </aside>
+     <main className="min-h-screen bg-gray-100">
 
-      {/* Chat */}
+  <header className="border-b bg-white p-4">
 
-      <section className="flex flex-1 flex-col">
+    <h1 className="text-xl font-bold">
+      Chat Support
+    </h1>
 
-        <header className="border-b bg-white p-4">
-          <h2 className="font-semibold">
-            Hung
-          </h2>
-        </header>
+  </header>
 
-        <div className="flex-1 overflow-y-auto p-4">
+  <section className="bg-white">
 
-          {messages.map((message) => {
+    {rooms.map((room) => (
 
-            const isAdmin =
-              message.sender ===
-              "admin";
+      <button
+        key={room.room_id}
+        type="button"
+        onClick={() => {
+          router.push(
+            `/admin/chat/${room.room_id}`
+          );
+        }}
+        className="
+          flex
+          w-full
+          items-center
+          justify-between
+          border-b
+          px-4
+          py-4
+          hover:bg-gray-50
+        "
+      >
 
-            return (
-              <div
-                key={message.id}
-                className={`mb-4 flex ${
-                  isAdmin
-                    ? "justify-end"
-                    : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-sm rounded-2xl px-4 py-3 ${
-                    isAdmin
-                      ? "bg-blue-600 text-white"
-                      : "bg-white"
-                  }`}
-                >
-                  <div>
-                    {message.content}
-                  </div>
+        <div>
 
-                  <div
-                    className={`mt-2 text-xs ${
-                      isAdmin
-                        ? "text-blue-100"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    {message.time}
-                  </div>
-                </div>
-              </div>
-            );
-
-          })}
-
-        </div>
-
-        <footer className="border-t bg-white p-4">
-
-          <div className="flex gap-3">
-
-            <input
-              value={input}
-              onChange={(e) =>
-                setInput(
-                  e.target.value
-                )
-              }
-              placeholder="Nhập tin nhắn..."
-              className="flex-1 rounded-full border px-4 py-3"
-            />
-
-            <button
-              className="rounded-full bg-blue-600 px-6 py-3 text-white"
-            >
-              Gửi
-            </button>
-
+          <div className="font-semibold">
+            {room.username}
           </div>
 
-        </footer>
+          <div className="text-sm text-gray-500">
+            Support Chat
+          </div>
 
-      </section>
+        </div>
+
+        <div className="text-xs text-gray-400">
+          →
+        </div>
+
+      </button>
+
+    ))}
+
+  </section>
+
+</main>
 
     </main>
   );
