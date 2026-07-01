@@ -575,183 +575,243 @@ export async function markReturnReceivedBySeller(
   }
 
   try {
-    return await withTransaction(
-      async (client) => {
 
-        const {
-          rows,
-        } =
-          await client.query<{
-            refund_amount: string;
-            order_id: string;
-          }>(
+    const result =
+      await withTransaction(
+        async (client) => {
+
+          /* ==========================================
+             LOAD RETURN
+          ========================================== */
+
+          const {
+            rows,
+          } =
+            await client.query<{
+              refund_amount: string;
+              order_id: string;
+              seller_id: string;
+            }>(
+              `
+              SELECT
+                refund_amount,
+                order_id,
+                seller_id
+              FROM returns
+              WHERE id = $1
+                AND seller_id = $2
+                AND status = 'shipping_back'
+                AND deleted_at IS NULL
+              FOR UPDATE
+              `,
+              [
+                returnId,
+                sellerId,
+              ]
+            );
+
+          const ret = rows[0];
+
+          if (!ret) {
+            return {
+              success: false,
+            };
+          }
+
+          const amount =
+            Number(
+              ret.refund_amount ?? 0
+            );
+
+          if (
+            !Number.isFinite(amount) ||
+            amount <= 0
+          ) {
+            throw new Error(
+              "INVALID_AMOUNT"
+            );
+          }
+
+          /* ==========================================
+             LOAD BUYER
+          ========================================== */
+
+          const {
+            rows: orderRows,
+          } =
+            await client.query<{
+              buyer_id: string;
+            }>(
+              `
+              SELECT buyer_id
+              FROM orders
+              WHERE id = $1
+              LIMIT 1
+              `,
+              [ret.order_id]
+            );
+
+          const buyerId =
+            orderRows[0]?.buyer_id;
+
+          if (!buyerId) {
+            throw new Error(
+              "BUYER_NOT_FOUND"
+            );
+          }
+
+          /* ==========================================
+             ENSURE WALLET
+          ========================================== */
+
+          await client.query(
             `
-            SELECT
-              refund_amount,
-              order_id
+            INSERT INTO wallets (
+              user_id,
+              balance
+            )
+            VALUES ($1, 0)
 
-            FROM returns
+            ON CONFLICT (user_id)
+            DO NOTHING
+            `,
+            [buyerId]
+          );
 
-            WHERE id = $1
-              AND seller_id = $2
-              AND status = 'shipping_back'
-              AND deleted_at IS NULL
+          /* ==========================================
+             REFUND BUYER
+          ========================================== */
 
-            FOR UPDATE
+          await client.query(
+            `
+            UPDATE wallets
+            SET
+              balance = balance + $1,
+              updated_at = NOW()
+            WHERE user_id = $2
             `,
             [
-              returnId,
-              sellerId,
+              amount,
+              buyerId,
             ]
           );
 
-        const ret = rows[0];
+          /* ==========================================
+             WALLET JOURNAL
+          ========================================== */
 
-        if (!ret) {
-          return false;
-        }
-
-        const amount =
-          Number(
-            ret.refund_amount ??
-              0
-          );
-
-        if (
-          !Number.isFinite(
-            amount
-          ) ||
-          amount <= 0
-        ) {
-          throw new Error(
-            "INVALID_AMOUNT"
-          );
-        }
-
-        const {
-          rows:
-            orderRows,
-        } =
-          await client.query<{
-            buyer_id: string;
-          }>(
-            `
-            SELECT buyer_id
-
-            FROM orders
-
-            WHERE id = $1
-
-            LIMIT 1
-            `,
-            [ret.order_id]
-          );
-
-        const buyerId =
-          orderRows[0]
-            ?.buyer_id;
-
-        if (!buyerId) {
-          throw new Error(
-            "BUYER_NOT_FOUND"
-          );
-        }
-
-        await client.query(
-          `
-          INSERT INTO wallets (
-            user_id,
-            balance
-          )
-          VALUES ($1, 0)
-
-          ON CONFLICT (
-            user_id
-          )
-          DO NOTHING
-          `,
-          [buyerId]
-        );
-
-        await client.query(
-          `
-          UPDATE wallets
-
-          SET
-            balance =
-              balance + $1,
-            updated_at = NOW()
-
-          WHERE user_id = $2
-          `,
-          [
-            amount,
-            buyerId,
-          ]
-        );
-
-        await client.query(
-          `
-          INSERT INTO wallet_journal (
-            owner_id,
-            owner_type,
-            entry_type,
-            direction,
-            amount,
-            currency,
-            note,
-            ref_id,
-            ref_table
-          )
-          VALUES (
-            $1,
-            'BUYER',
-            'BUYER_REFUND',
-            'CREDIT',
-            $2,
-            'PI',
-            'Return refund',
-            $3,
-            'returns'
-          )
-          `,
-          [
-            buyerId,
-            amount,
-            returnId,
-          ]
-        );
-
-        const updateRes =
           await client.query(
             `
-            UPDATE returns
-
-            SET
-              status = 'refunded',
-              refunded_at = NOW(),
-              received_at = NOW(),
-              updated_at = NOW()
-
-            WHERE id = $1
+            INSERT INTO wallet_journal (
+              owner_id,
+              owner_type,
+              entry_type,
+              direction,
+              amount,
+              currency,
+              note,
+              ref_id,
+              ref_table
+            )
+            VALUES (
+              $1,
+              'BUYER',
+              'BUYER_REFUND',
+              'CREDIT',
+              $2,
+              'PI',
+              'Return refund',
+              $3,
+              'returns'
+            )
             `,
-            [returnId]
+            [
+              buyerId,
+              amount,
+              returnId,
+            ]
           );
 
-        return (
-          updateRes.rowCount >
-          0
+          /* ==========================================
+             UPDATE RETURN
+          ========================================== */
+
+          const updateRes =
+            await client.query(
+              `
+              UPDATE returns
+              SET
+                status = 'refunded',
+                refunded_at = NOW(),
+                received_at = NOW(),
+                updated_at = NOW()
+              WHERE id = $1
+              `,
+              [returnId]
+            );
+
+          return {
+            success:
+              updateRes.rowCount > 0,
+
+            buyerId,
+
+            sellerId:
+              ret.seller_id,
+
+            returnId,
+          };
+        }
+      );
+
+    /* ==========================================
+       NOTIFICATIONS
+    ========================================== */
+
+    if (result.success) {
+
+      try {
+
+        await sendNotification({
+          userId: result.sellerId!,
+          type: "refund_completed",
+          category: "wallet",
+          title: "Hoàn tiền đã hoàn tất",
+          message:
+            "Bạn đã xác nhận nhận hàng trả và hoàn tiền cho người mua.",
+          priority: "normal",
+        });
+
+        await sendNotification({
+          userId: result.buyerId!,
+          type: "refund_completed",
+          category: "wallet",
+          title: "Bạn đã nhận được tiền hoàn",
+          message:
+            "Tiền hoàn đã được chuyển vào ví của bạn.",
+          priority: "high",
+        });
+
+      } catch (err) {
+
+        console.error(
+          "[NOTIFICATION][REFUND_COMPLETED]",
+          err
         );
+
       }
-    );
+
+    }
+
+    return result.success;
 
   } catch (error) {
+
     console.error(
       "[RETURN][RECEIVED]",
       {
         message:
-          error instanceof
-          Error
+          error instanceof Error
             ? error.message
             : "UNKNOWN",
       }
