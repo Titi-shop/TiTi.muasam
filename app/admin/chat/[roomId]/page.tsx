@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -53,7 +54,21 @@ export default function AdminChatRoomPage() {
     useState<
       ChatMessage[]
     >([]);
+const bottomRef =
+  useRef<HTMLDivElement>(null);
 
+function scrollToBottom() {
+
+  bottomRef.current?.scrollIntoView({
+    behavior: "smooth",
+  });
+
+}
+  useEffect(() => {
+
+  scrollToBottom();
+
+}, [messages]);
   const [
     input,
     setInput,
@@ -160,8 +175,27 @@ export default function AdminChatRoomPage() {
       return;
     }
 
-    try {
+    const optimisticMessage: ChatMessage = {
 
+  id:
+    `temp-${Date.now()}`,
+
+  room_id:
+    roomId,
+
+  sender_id:
+    user!.id,
+
+  message_type:
+    "text",
+
+  content,
+
+  created_at:
+    new Date().toISOString(),
+
+};
+    try {
       const res =
         await apiAuthFetch(
           "/api/admin/chat/messages",
@@ -182,18 +216,25 @@ export default function AdminChatRoomPage() {
         return;
       }
 
-      setInput("");
+      const data =
+  await res.json();
 
-      await loadMessages();
+setMessages((prev) =>
 
+  prev.map((m) =>
+
+    m.id ===
+    optimisticMessage.id
+      ? data.message
+      : m
+  )
+
+);
     } catch (err) {
-
       console.error(
         err
       );
-
     }
-
   }
 
   /* =====================================================
@@ -320,6 +361,7 @@ export default function AdminChatRoomPage() {
 
             }
           )}
+          <div ref={bottomRef} />
 
         </div>
 
