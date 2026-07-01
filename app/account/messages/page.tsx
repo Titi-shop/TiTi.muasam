@@ -87,6 +87,7 @@ console.log("[CHAT]", data);
 
 setMessages(data.messages ?? []);
 }
+  console.log("[CHAT][UI] SEND_START");
   async function handleSend() {
   if (!roomId) {
     return;
@@ -99,27 +100,39 @@ setMessages(data.messages ?? []);
   }
 
   try {
-    const token = await getPiAccessToken();
+    console.time("[CHAT][UI] GET_TOKEN");
+
+const token =
+  await getPiAccessToken();
+
+console.timeEnd("[CHAT][UI] GET_TOKEN");
 
     if (!token) {
       return;
     }
 
-    const res = await fetch(
-      "/api/chat/messages",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          roomId,
-          content,
-        }),
-      }
-    );
+    console.time("[CHAT][UI] POST_MESSAGE");
 
+const res = await fetch(
+  "/api/chat/messages",
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      roomId,
+      content,
+    }),
+  }
+);
+
+console.timeEnd("[CHAT][UI] POST_MESSAGE");
+console.log(
+  "[CHAT][UI] POST_STATUS",
+  res.status
+);
     if (!res.ok) {
       const error = await res.json();
 
@@ -133,7 +146,10 @@ setMessages(data.messages ?? []);
 
     setInput("");
 
-    await loadMessages(roomId);
+    console.time("[CHAT][UI] RELOAD_MESSAGES");
+
+await loadMessages(roomId);
+console.timeEnd("[CHAT][UI] RELOAD_MESSAGES");
   } catch (err) {
     console.error(
       "[CHAT][SEND]",
@@ -141,6 +157,7 @@ setMessages(data.messages ?? []);
     );
   }
 }
+  console.log("[CHAT][UI] SEND_DONE");
   return (
     <main className="flex min-h-[100dvh] flex-col bg-gray-100">
       {/* Header */}
