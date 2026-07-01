@@ -81,6 +81,7 @@ export type EscrowReleaseRow = {
   order_id: string;
   payment_intent_id: string | null;
   seller_id: string;
+  buyer_id: string;
   amount: string;
   status: string;
   release_status: string;
