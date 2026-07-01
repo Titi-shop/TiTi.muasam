@@ -72,6 +72,7 @@ const [roomId, setRoomId] =
 }, [messages]);
   async function loadRoom() {
   try {
+
     const token =
       await getPiAccessToken();
 
@@ -82,8 +83,7 @@ const [roomId, setRoomId] =
     const res =
       await fetch("/api/chat/room", {
         headers: {
-          Authorization:
-            `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -95,43 +95,33 @@ const [roomId, setRoomId] =
       await res.json();
 
     setRoomId(data.room.id);
-const cached =
-  localStorage.getItem(
-    `chat:${data.room.id}`
-  );
 
-if (cached) {
+    const cached =
+      localStorage.getItem(
+        `chat:${data.room.id}`
+      );
 
-  try {
+    if (cached) {
+      try {
+        setMessages(
+          JSON.parse(cached)
+        );
+      } catch {}
+    }
 
-    setMessages(
-      JSON.parse(cached)
-    );
-
-  } catch {}
-
-}
     const messages =
-  data.messages ?? [];
-
-setMessages(messages);
-
-localStorage.setItem(
-  `chat:${data.room.id}`,
-  JSON.stringify(messages)
-);
-const messages =
-  data.messages ?? [];
+      data.messages ?? [];
 localStorage.setItem(
   `chat:${roomId}`,
   JSON.stringify(newMessages)
 );
-setMessages(messages);
+    setMessages(messages);
 
-localStorage.setItem(
-  `chat:${data.room.id}`,
-  JSON.stringify(messages)
-);
+    localStorage.setItem(
+      `chat:${data.room.id}`,
+      JSON.stringify(messages)
+    );
+
   } catch (err) {
     console.error(err);
   }
