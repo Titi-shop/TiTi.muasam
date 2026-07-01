@@ -47,8 +47,10 @@ export async function findReleasableEscrows(
     await client.query<EscrowReleaseRow>(
       `
       SELECT
+  SELECT
   id,
   order_id,
+  buyer_id,
   payment_intent_id,
   seller_id,
   amount,
