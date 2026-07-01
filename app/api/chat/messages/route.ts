@@ -15,6 +15,7 @@ import {
   createMessage,
   createSystemMessage,
   getMessagesByRoomId,
+  getMessagesAfter,
   getRoomById,
   isParticipant,
   getChatTemplateContent,
@@ -56,7 +57,10 @@ export async function GET(
       request.nextUrl.searchParams.get(
         "roomId"
       );
-
+const after =
+  request.nextUrl.searchParams.get(
+    "after"
+  );
     if (!roomId) {
 
       return NextResponse.json(
@@ -110,10 +114,24 @@ export async function GET(
 
     }
 
-    let messages =
-  await getMessagesByRoomId(
-    roomId
-  );
+    let messages;
+
+if (after) {
+
+  messages =
+    await getMessagesAfter(
+      roomId,
+      after
+    );
+
+} else {
+
+  messages =
+    await getMessagesByRoomId(
+      roomId
+    );
+
+}
 
 console.log(
   "[CHAT][GET] MESSAGE_COUNT",
