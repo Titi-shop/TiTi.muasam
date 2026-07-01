@@ -15,51 +15,101 @@ export async function PATCH(
 ) {
   try {
     const auth = await requireSeller();
-    if (!auth.ok) return auth.response;
 
-    const userId = auth.userId;
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const orderId = params?.id;
 
     if (!isValidId(orderId)) {
-      console.warn("[ORDER][SELLER][CANCEL][INVALID_ID]", { orderId });
-      return NextResponse.json({ error: "INVALID_ORDER_ID" }, { status: 400 });
+      console.warn(
+        "[ORDER][SELLER][CANCEL][INVALID_ID]",
+        { orderId }
+      );
+
+      return NextResponse.json(
+        {
+          error: "INVALID_ORDER_ID",
+        },
+        {
+          status: 400,
+        }
+      );
     }
 
-    const body = await req.json().catch(() => ({}));
+    const body =
+      await req.json().catch(() => ({}));
 
     const cancelReason =
       typeof body?.cancel_reason === "string"
         ? body.cancel_reason.trim()
         : null;
 
-    console.log("[ORDER][SELLER][CANCEL][INPUT]", {
-      orderId,
-      userId,
-      cancelReason,
-    });
-
-    const updated = await cancelOrderBySeller(
-      orderId,
-      userId,
-      cancelReason
+    console.log(
+      "[ORDER][SELLER][CANCEL][INPUT]",
+      {
+        orderId,
+        userId: auth.userId,
+        cancelReason,
+      }
     );
 
-    if (!updated) {
+    const result =
+      await cancelOrderBySeller(
+        orderId,
+        auth.userId,
+        cancelReason
+      );
+
+    console.log(
+      "[ORDER][SELLER][CANCEL][RESULT]",
+      result
+    );
+
+    if (!result.success) {
       return NextResponse.json(
-        { error: "NOTHING_UPDATED" },
-        { status: 400 }
+        {
+          error: "NOTHING_UPDATED",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    console.log("[ORDER][SELLER][CANCEL][SUCCESS]", { orderId });
+    console.log(
+      "[ORDER][SELLER][CANCEL][SUCCESS]",
+      {
+        orderId,
+        buyerId: result.buyerId,
+        sellerId: result.sellerId,
+      }
+    );
 
-    return NextResponse.json({ success: true });
-
-  } catch (err) {
-    console.error("[ORDER][SELLER][CANCEL][ERROR]", {
-      message: err instanceof Error ? err.message : "UNKNOWN",
+    return NextResponse.json({
+      success: true,
     });
 
-    return NextResponse.json({ error: "FAILED" }, { status: 500 });
+  } catch (err) {
+
+    console.error(
+      "[ORDER][SELLER][CANCEL][ERROR]",
+      {
+        message:
+          err instanceof Error
+            ? err.message
+            : "UNKNOWN",
+      }
+    );
+
+    return NextResponse.json(
+      {
+        error: "FAILED",
+      },
+      {
+        status: 500,
+      }
+    );
   }
 }
