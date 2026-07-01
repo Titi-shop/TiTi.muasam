@@ -364,6 +364,7 @@ if (!buyerId) {
         return {
   success: res.rowCount > 0,
   buyerId,
+  sellerId,
 };
          
       }
@@ -371,7 +372,14 @@ if (!buyerId) {
 if (result.success) {
 
   try {
-
+await sendNotification({
+  userId: result.sellerId,
+  type: "return_approved",
+  category: "order",
+  title: "Bạn đã chấp nhận yêu cầu trả hàng",
+  message: "Địa chỉ trả hàng đã được gửi cho người mua.",
+  priority: "normal",
+});
     await sendNotification({
       userId: result.buyerId,
       type: "return_approved",
