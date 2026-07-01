@@ -14,7 +14,9 @@ import {
 import {
   createSettlementJournalOnce,
 } from "./settlement.journal";
-
+import {
+  sendNotification,
+} from "@/lib/services/notifications.service";
 /* =====================================================
    DB CLIENT TYPE
 ===================================================== */
@@ -602,7 +604,58 @@ WHERE id = $1
         escrow.id,
     }
   );
+/* ===================================================
+   9. NOTIFICATIONS
+=================================================== */
 
+try {
+
+  await sendNotification({
+    userId: escrow.seller_id,
+    type: "order_completed",
+    category: "wallet",
+    title: "Tiền đã được giải ngân",
+    message:
+      "Tiền từ đơn hàng đã được chuyển vào ví khả dụng của bạn.",
+    orderId: escrow.order_id,
+    priority: "high",
+  });
+
+  const orderResult = await client.query<{
+    buyer_id: string;
+  }>(
+    `
+    SELECT buyer_id
+    FROM orders
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [escrow.order_id]
+  );
+
+  if (orderResult.rows.length) {
+
+    await sendNotification({
+      userId: orderResult.rows[0].buyer_id,
+      type: "order_completed",
+      category: "order",
+      title: "Đơn hàng đã hoàn thành",
+      message:
+        "Đơn hàng của bạn đã hoàn tất.",
+      orderId: escrow.order_id,
+      priority: "normal",
+    });
+
+  }
+
+} catch (err) {
+
+  console.error(
+    "[NOTIFICATION][ORDER_COMPLETED]",
+    err
+  );
+
+}
   /* ===================================================
      COMPLETE
   =================================================== */
