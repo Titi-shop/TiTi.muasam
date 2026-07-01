@@ -157,23 +157,6 @@ export async function POST(
       );
     }
 
-    const room =
-      await getRoomById(
-        roomId
-      );
-
-    if (!room) {
-      return NextResponse.json(
-        {
-          error:
-            "ROOM_NOT_FOUND",
-        },
-        {
-          status: 404,
-        }
-      );
-    }
-
     const message =
       await createMessage(
         roomId,
