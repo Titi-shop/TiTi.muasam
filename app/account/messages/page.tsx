@@ -94,7 +94,10 @@ const [roomId, setRoomId] =
       await res.json();
 
     setRoomId(data.room.id);
-await loadMessages(data.room.id);
+
+setMessages(
+  data.messages ?? []
+);
   } catch (err) {
     console.error(err);
   }
@@ -103,7 +106,6 @@ await loadMessages(data.room.id);
   const token = await getPiAccessToken();
 
   if (!token) return;
-
   const res = await fetch(
     `/api/chat/messages?roomId=${roomId}`,
     {
@@ -122,11 +124,11 @@ const newMessages =
 setMessages((old) => {
 
   if (
-    JSON.stringify(old) ===
-    JSON.stringify(newMessages)
-  ) {
-    return old;
-  }
+  old.length === newMessages.length &&
+  old.at(-1)?.id === newMessages.at(-1)?.id
+) {
+  return old;
+}
 
   return newMessages;
 
