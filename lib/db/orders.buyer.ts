@@ -259,7 +259,16 @@ export async function getOrderByBuyerId(
 /* =========================================================
    COMPLETE ORDER
 ========================================================= */
-
+type CompleteOrderResult = {
+  status:
+    | "SUCCESS"
+    | "NOT_FOUND"
+    | "FORBIDDEN"
+    | "INVALID_STATUS";
+  buyerId?: string;
+  sellerId?: string;
+  orderId?: string;
+};
 export async function completeOrderByBuyer(
   orderId: string,
   userId: string
@@ -335,11 +344,8 @@ export async function completeOrderByBuyer(
 
         SET
           fulfillment_status = 'delivered',
-
           delivered_at = NOW(),
-
           updated_at = NOW()
-
         WHERE order_id = $1
           AND fulfillment_status = 'shipped'
         `,
@@ -473,23 +479,46 @@ export async function cancelOrderByBuyer(
   orderId: string,
   userId: string,
   reason?: string | null
-): Promise<"SUCCESS" | "NOT_FOUND" | "FORBIDDEN" | "INVALID_STATUS"> {
-  return withTransaction(async (client) => {
+ ): Promise<{
+  status:
+    | "SUCCESS"
+    | "NOT_FOUND"
+    | "FORBIDDEN"
+    | "INVALID_STATUS";
+  buyerId?: string;
+  sellerId?: string;
+  orderId?: string;
+}> {
+ 
+  const result =
+  await withTransaction(async (client) => {
     const { rows } = await client.query<{
-      buyer_id: string;
-      fulfillment_status: string;
-    }>(
+  buyer_id: string;
+  seller_id: string;
+  fulfillment_status: string;
+}>(
       `
-      SELECT buyer_id, fulfillment_status
-      FROM orders
-      WHERE id = $1
+      SELECT
+  buyer_id,
+  seller_id,
+  fulfillment_status
+FROM orders
+WHERE id = $1
       `,
       [orderId]
     );
 
     const order = rows[0];
-    if (!order) return "NOT_FOUND";
-    if (order.buyer_id !== userId) return "FORBIDDEN";
+    if (!order) {
+  return {
+    status: "NOT_FOUND",
+  };
+}
+    if (order.buyer_id !== userId) {
+  return {
+    status: "FORBIDDEN",
+  };
+}
 
     if (
       !["pending", "pending_fulfillment", "processing"].includes(
@@ -524,6 +553,46 @@ export async function cancelOrderByBuyer(
       [orderId, reason ?? null]
     );
 
-    return "SUCCESS";
+    return {
+  status: "SUCCESS",
+  buyerId: order.buyer_id,
+  sellerId: order.seller_id,
+  orderId,
+};
   });
+  if (result.status === "SUCCESS") {
+
+  try {
+
+    await sendNotification({
+      userId: result.buyerId!,
+      type: "order_cancelled",
+      category: "order",
+      title: "Đã hủy đơn hàng",
+      message: "Bạn đã hủy đơn hàng thành công.",
+      orderId: result.orderId!,
+    });
+
+    await sendNotification({
+      userId: result.sellerId!,
+      type: "order_cancelled",
+      category: "order",
+      title: "Đơn hàng đã bị hủy",
+      message: "Người mua đã hủy đơn hàng.",
+      orderId: result.orderId!,
+      priority: "high",
+    });
+
+  } catch (err) {
+
+    console.error(
+      "[NOTIFICATION][ORDER_CANCELLED]",
+      err
+    );
+
+  }
+
+}
+
+return result.status;
 }
