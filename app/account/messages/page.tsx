@@ -1,4 +1,5 @@
 
+
 "use client";
 import {
   useEffect,
@@ -35,6 +36,7 @@ const [roomId, setRoomId] =
 
   const timer =
     setInterval(() => {
+
   if (
     document.visibilityState === "visible"
   ) {
@@ -52,6 +54,7 @@ const [roomId, setRoomId] =
   
   useEffect(() => {
   if (loading) return;
+
   if (!user) return;
 
   loadRoom();
@@ -72,7 +75,6 @@ const [roomId, setRoomId] =
 }, [messages]);
   async function loadRoom() {
   try {
-
     const token =
       await getPiAccessToken();
 
@@ -83,7 +85,8 @@ const [roomId, setRoomId] =
     const res =
       await fetch("/api/chat/room", {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization:
+            `Bearer ${token}`,
         },
       });
 
@@ -96,32 +99,9 @@ const [roomId, setRoomId] =
 
     setRoomId(data.room.id);
 
-    const cached =
-      localStorage.getItem(
-        `chat:${data.room.id}`
-      );
-
-    if (cached) {
-      try {
-        setMessages(
-          JSON.parse(cached)
-        );
-      } catch {}
-    }
-
-    const messages =
-      data.messages ?? [];
-localStorage.setItem(
-  `chat:${roomId}`,
-  JSON.stringify(newMessages)
+setMessages(
+  data.messages ?? []
 );
-    setMessages(messages);
-
-    localStorage.setItem(
-      `chat:${data.room.id}`,
-      JSON.stringify(messages)
-    );
-
   } catch (err) {
     console.error(err);
   }
@@ -158,6 +138,7 @@ setMessages((old) => {
 
 });
 }
+  
   async function handleSend() {
   if (!roomId) {
     return;
@@ -192,6 +173,8 @@ try {
   const token =
     await getPiAccessToken();
 
+console.timeEnd("[CHAT][UI] GET_TOKEN");
+
     if (!token) {
       return;
     }
@@ -214,6 +197,8 @@ const res = await fetch(
 );
 
 console.timeEnd("[CHAT][UI] POST_MESSAGE");
+console.log(
+  "[CHAT][UI] POST_STATUS",
   res.status
 );
     if (!res.ok) {
