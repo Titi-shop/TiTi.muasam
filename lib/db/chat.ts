@@ -154,6 +154,9 @@ export async function getMessagesByRoomId(
 ========================================================= */
 
 export async function createMessage(
+  console.time(
+  "[CHAT][DB] CREATE_MESSAGE"
+);
   roomId: string,
   senderId: string,
   content: string,
@@ -168,7 +171,17 @@ export async function createMessage(
       content,
     }
   );
+console.time(
+  "[CHAT][DB] INSERT_MESSAGE"
+);
 
+console.log(
+  "[CHAT][DB] INSERT_START",
+  {
+    roomId,
+    senderId,
+  }
+);
   const result = await query<ChatMessage>(
     `
       INSERT INTO chat_messages
@@ -185,6 +198,14 @@ export async function createMessage(
         'text',
         $3
       )
+      console.timeEnd(
+  "[CHAT][DB] INSERT_MESSAGE"
+);
+
+console.log(
+  "[CHAT][DB] INSERT_DONE",
+  result.rows[0]?.id
+);
       RETURNING *
     `,
     [
@@ -193,7 +214,13 @@ export async function createMessage(
       content,
     ]
   );
+console.time(
+  "[CHAT][DB] UPDATE_ROOM"
+);
 
+console.log(
+  "[CHAT][DB] UPDATE_ROOM_START"
+);
   await query(
   `
     UPDATE chat_rooms
@@ -224,7 +251,16 @@ export async function createMessage(
     isAdmin,
   ]
 );
+console.timeEnd(
+  "[CHAT][DB] UPDATE_ROOM"
+);
 
+console.log(
+  "[CHAT][DB] UPDATE_ROOM_DONE"
+);
+  console.timeEnd(
+  "[CHAT][DB] CREATE_MESSAGE"
+);
   return result.rows[0];
 }
 
