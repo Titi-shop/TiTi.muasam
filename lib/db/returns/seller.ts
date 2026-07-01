@@ -435,43 +435,120 @@ export async function rejectReturnBySeller(
   }
 
   try {
-    return await withTransaction(
-      async (client) => {
 
-        const res =
-          await client.query(
-            `
-            UPDATE returns
+    const result =
+      await withTransaction(
+        async (client) => {
 
-            SET
-              status = 'rejected',
-              rejected_at = NOW(),
-              updated_at = NOW()
+          /* ==========================================
+             GET RETURN
+          ========================================== */
 
-            WHERE id = $1
-              AND seller_id = $2
-              AND status = 'pending'
-              AND deleted_at IS NULL
-            `,
-            [
-              returnId,
-              sellerId,
-            ]
-          );
+          const { rows } =
+            await client.query<{
+              buyer_id: string;
+            }>(
+              `
+              SELECT buyer_id
+              FROM returns
+              WHERE id = $1
+                AND seller_id = $2
+                AND deleted_at IS NULL
+              LIMIT 1
+              `,
+              [
+                returnId,
+                sellerId,
+              ]
+            );
 
-        return (
-          res.rowCount > 0
+          const ret = rows[0];
+
+          if (!ret) {
+            return {
+              success: false,
+            };
+          }
+
+          /* ==========================================
+             UPDATE RETURN
+          ========================================== */
+
+          const res =
+            await client.query(
+              `
+              UPDATE returns
+              SET
+                status = 'rejected',
+                rejected_at = NOW(),
+                updated_at = NOW()
+              WHERE id = $1
+                AND seller_id = $2
+                AND status = 'pending'
+                AND deleted_at IS NULL
+              `,
+              [
+                returnId,
+                sellerId,
+              ]
+            );
+
+          return {
+            success: res.rowCount > 0,
+            buyerId: ret.buyer_id,
+            sellerId,
+          };
+        }
+      );
+
+    /* ==========================================
+       NOTIFICATION
+    ========================================== */
+
+    if (result.success) {
+
+      try {
+
+        await sendNotification({
+          userId: result.sellerId!,
+          type: "return_rejected",
+          category: "order",
+          title: "Bạn đã từ chối yêu cầu trả hàng",
+          message:
+            "Yêu cầu trả hàng đã bị từ chối.",
+          priority: "normal",
+        });
+
+        await sendNotification({
+          userId: result.buyerId!,
+          type: "return_rejected",
+          category: "order",
+          title: "Yêu cầu trả hàng đã bị từ chối",
+          message:
+            "Người bán đã từ chối yêu cầu trả hàng của bạn.",
+          priority: "high",
+        });
+
+      } catch (err) {
+
+        console.error(
+          "[NOTIFICATION][RETURN_REJECTED]",
+          err
         );
+
       }
-    );
+
+    }
+
+    return result.success;
 
   } catch (error) {
+
     console.error(
       "[RETURN][REJECT]",
       {
         message:
-          error instanceof
-          Error
+          error instanceof Error
             ? error.message
             : "UNKNOWN",
       }
