@@ -471,10 +471,41 @@ export async function cancelOrderBySeller(
   orderId: string,
   sellerId: string,
   reason: string | null
-): Promise<boolean> {
+): Promise<{
+  success: boolean;
+  buyerId?: string;
+  sellerId?: string;
+  orderId?: string;
+}> {
   try {
-    return await withTransaction(
+    const result =
+  await withTransaction(
       async (client) => {
+        const { rows } =
+  await client.query<{
+    buyer_id: string;
+    seller_id: string;
+  }>(
+    `
+    SELECT
+      buyer_id,
+      seller_id
+    FROM orders
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [orderId]
+  );
+
+const order = rows[0];
+
+if (!order) {
+
+  return {
+    success: false,
+  };
+
+}
         const res =
           await client.query(
             `
@@ -510,7 +541,9 @@ export async function cancelOrderBySeller(
             }
           );
 
-          return false;
+          return {
+  success: false,
+};
         }
 
         await syncOrderFulfillmentStatus(
@@ -523,7 +556,12 @@ export async function cancelOrderBySeller(
           { orderId }
         );
 
-        return true;
+        return {
+  success: true,
+  buyerId: order.buyer_id,
+  sellerId: order.seller_id,
+  orderId,
+};
       }
     );
   } catch (err) {
@@ -540,6 +578,41 @@ export async function cancelOrderBySeller(
     throw new Error(
       "DB_ERROR"
     );
+    if (result.success) {
+
+  try {
+
+    await sendNotification({
+      userId: result.sellerId!,
+      type: "order_cancelled",
+      category: "order",
+      title: "Bạn đã hủy đơn hàng",
+      message:
+        "Đơn hàng đã được hủy.",
+      orderId: result.orderId!,
+    });
+
+    await sendNotification({
+      userId: result.buyerId!,
+      type: "order_cancelled",
+      category: "order",
+      title: "Đơn hàng đã bị hủy",
+      message:
+        "Người bán đã hủy đơn hàng.",
+      orderId: result.orderId!,
+      priority: "high",
+    });
+
+  } catch (err) {
+
+    console.error(
+      "[NOTIFICATION][SELLER_CANCEL]",
+      err
+    );
+  }
+}
+
+return result.success;
   }
 }
 
