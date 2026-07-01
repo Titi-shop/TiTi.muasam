@@ -1,5 +1,7 @@
 import { query, withTransaction } from "@/lib/db";
-
+import {
+  sendNotification,
+} from "@/lib/services/notifications.service";
 /* =====================================================
    TYPES (V7 STRICT)
 ===================================================== */
@@ -271,7 +273,8 @@ export async function approveReturnBySeller(
   }
 
   try {
-    return await withTransaction(
+    const result =
+  await withTransaction(
       async (client) => {
 
         const {
@@ -314,7 +317,27 @@ export async function approveReturnBySeller(
             "RETURN_ADDRESS_REQUIRED"
           );
         }
+const { rows: returnRows } =
+  await client.query<{
+    buyer_id: string;
+  }>(
+    `
+    SELECT buyer_id
+    FROM returns
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [returnId]
+  );
 
+const buyerId =
+  returnRows[0]?.buyer_id;
+
+if (!buyerId) {
+  throw new Error(
+    "BUYER_NOT_FOUND"
+  );
+}
         const res =
           await client.query(
             `
@@ -338,12 +361,39 @@ export async function approveReturnBySeller(
             ]
           );
 
-        return (
-          res.rowCount > 0
-        );
+        return {
+  success: res.rowCount > 0,
+  buyerId,
+};
+         
       }
     );
+if (result.success) {
 
+  try {
+
+    await sendNotification({
+      userId: result.buyerId,
+      type: "return_approved",
+      category: "order",
+      title: "Yêu cầu trả hàng đã được chấp nhận",
+      message:
+        "Người bán đã chấp nhận yêu cầu trả hàng của bạn.",
+      priority: "high",
+    });
+
+  } catch (err) {
+
+    console.error(
+      "[NOTIFICATION][RETURN_APPROVED]",
+      err
+    );
+
+  }
+
+}
+
+return result.success;
   } catch (error) {
     console.error(
       "[RETURN][APPROVE]",
