@@ -259,7 +259,8 @@ export async function startShippingBySeller(
 
   try {
 
-    return await withTransaction(
+  const result =
+    await withTransaction(
       async (client) => {
 
         /* =====================================================
@@ -313,7 +314,27 @@ export async function startShippingBySeller(
            buyer app reads:
            orders.fulfillment_status
         ===================================================== */
+const order =
+  await client.query<{
+    buyer_id: string;
+  }>(
+    `
+    SELECT buyer_id
+    FROM orders
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [orderId]
+  );
 
+const buyerId =
+  order.rows[0]?.buyer_id;
+
+if (!buyerId) {
+  throw new Error(
+    "BUYER_NOT_FOUND"
+  );
+}
         await client.query(
           `
           UPDATE orders
@@ -392,16 +413,38 @@ console.log(
         );
 
         console.log(
-          "[ORDER][SELLER][SHIP][SUCCESS]",
-          {
-            orderId,
-            sellerId,
-          }
-        );
+  "[ORDER][SELLER][SHIP][SUCCESS]",
+  {
+    orderId,
+    sellerId,
+  }
+);
 
-        return true;
-      }
+return {
+  ok: true,
+  buyerId,
+};
+            }
     );
+
+    await sendNotification({
+      userId: result.buyerId,
+
+      type: "order_shipping",
+
+      category: "order",
+
+      title: "Đơn hàng đang được giao",
+
+      message:
+        "Người bán đã giao đơn hàng cho đơn vị vận chuyển.",
+
+      orderId,
+
+      priority: "normal",
+    });
+
+    return result.ok;
 
   } catch (err) {
 
