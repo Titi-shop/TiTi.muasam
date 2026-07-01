@@ -470,7 +470,8 @@ export async function createReturn(
 export async function cancelReturnByBuyer(
   returnId: string,
   buyerId: string
-): Promise<void> {
+): Promise<boolean> {
+
   if (
     !isValidUuid(returnId) ||
     !isValidUuid(buyerId)
@@ -478,21 +479,133 @@ export async function cancelReturnByBuyer(
     error("INVALID_INPUT");
   }
 
-  const { rowCount } = await query(
-    `
-    UPDATE returns
-    SET
-      status = 'cancelled',
-      cancelled_at = now()
-    WHERE id = $1
-      AND buyer_id = $2
-      AND status = 'pending'
-    `,
-    [returnId, buyerId]
-  );
+  try {
 
-  if (rowCount === 0) {
-    error("RETURN_NOT_CANCELABLE");
+    const result =
+      await withTransaction(
+        async (client) => {
+
+          /* ==========================================
+             LOAD RETURN
+          ========================================== */
+
+          const {
+            rows,
+          } =
+            await client.query<{
+              seller_id: string;
+            }>(
+              `
+              SELECT
+                seller_id
+              FROM returns
+              WHERE id = $1
+                AND buyer_id = $2
+                AND status = 'pending'
+                AND deleted_at IS NULL
+              LIMIT 1
+              `,
+              [
+                returnId,
+                buyerId,
+              ]
+            );
+
+          const ret = rows[0];
+
+          if (!ret) {
+
+            return {
+              success: false,
+            };
+
+          }
+
+          /* ==========================================
+             CANCEL RETURN
+          ========================================== */
+
+          const update =
+            await client.query(
+              `
+              UPDATE returns
+              SET
+                status = 'cancelled',
+                cancelled_at = NOW(),
+                updated_at = NOW()
+              WHERE id = $1
+              `,
+              [returnId]
+            );
+
+          return {
+            success:
+              update.rowCount > 0,
+
+            buyerId,
+
+            sellerId:
+              ret.seller_id,
+
+            returnId,
+          };
+        }
+      );
+
+    /* ==========================================
+       NOTIFICATIONS
+    ========================================== */
+
+    if (result.success) {
+
+      try {
+
+        await sendNotification({
+          userId: result.buyerId!,
+          type: "return_rejected",
+          category: "order",
+          title: "Bạn đã hủy yêu cầu trả hàng",
+          message:
+            "Yêu cầu trả hàng của bạn đã được hủy.",
+          priority: "normal",
+        });
+
+        await sendNotification({
+          userId: result.sellerId!,
+          type: "return_rejected",
+          category: "order",
+          title: "Người mua đã hủy yêu cầu trả hàng",
+          message:
+            "Yêu cầu trả hàng đã được người mua hủy.",
+          priority: "normal",
+        });
+
+      } catch (err) {
+
+        console.error(
+          "[NOTIFICATION][RETURN_CANCELLED]",
+          err
+        );
+
+      }
+
+    }
+
+    return result.success;
+
+  } catch (err) {
+
+    console.error(
+      "[RETURN][BUYER][CANCEL]",
+      {
+        message:
+          err instanceof Error
+            ? err.message
+            : "UNKNOWN",
+      }
+    );
+
+    throw err;
   }
 }
 
