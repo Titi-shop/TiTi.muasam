@@ -405,7 +405,28 @@ console.log("[STEP] linkOrder");
         priority:
           "normal",
       });
+await sendNotification({
+  userId:
+    result.sellerId,
 
+  type:
+    "seller_new_order",
+
+  category:
+    "order",
+
+  title:
+    "Có đơn hàng mới",
+
+  message:
+    "Bạn vừa nhận được một đơn hàng mới.",
+
+  orderId:
+    result.orderId,
+
+  priority:
+    "high",
+});
     }
 
   } catch (err) {
