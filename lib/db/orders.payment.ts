@@ -420,7 +420,7 @@ console.log("[STEP] linkOrder");
   return result;
 
 }
-}
+
 export async function linkReceiptSettlementByIds(input: {
   paymentIntentId: string;
   escrowId: string;
