@@ -52,7 +52,6 @@ const [roomId, setRoomId] =
   
   useEffect(() => {
   if (loading) return;
-
   if (!user) return;
 
   loadRoom();
@@ -96,9 +95,42 @@ const [roomId, setRoomId] =
       await res.json();
 
     setRoomId(data.room.id);
+const cached =
+  localStorage.getItem(
+    `chat:${data.room.id}`
+  );
 
-setMessages(
-  data.messages ?? []
+if (cached) {
+
+  try {
+
+    setMessages(
+      JSON.parse(cached)
+    );
+
+  } catch {}
+
+}
+    const messages =
+  data.messages ?? [];
+
+setMessages(messages);
+
+localStorage.setItem(
+  `chat:${data.room.id}`,
+  JSON.stringify(messages)
+);
+const messages =
+  data.messages ?? [];
+localStorage.setItem(
+  `chat:${roomId}`,
+  JSON.stringify(newMessages)
+);
+setMessages(messages);
+
+localStorage.setItem(
+  `chat:${data.room.id}`,
+  JSON.stringify(messages)
 );
   } catch (err) {
     console.error(err);
