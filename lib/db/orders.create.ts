@@ -113,7 +113,7 @@ if (existingOrder.rows.length) {
       `
       SELECT id, seller_id, name, price,
              sale_price, sale_start, sale_end,
-             thumbnail, is_active, deleted_at, stock
+             thumbnail, is_active, deleted_at, stock, reserved_stock
       FROM products
       WHERE id = ANY($1::uuid[])
       FOR UPDATE
@@ -134,12 +134,13 @@ if (existingOrder.rows.length) {
         ? await client.query<any>(
             `
             SELECT
-  id,
-  product_id,
-  price,
-  sale_price,
-  stock,
-  is_active
+    id,
+    product_id,
+    price,
+    sale_price,
+    stock,
+    reserved_stock,
+    is_active
 FROM product_variants
 WHERE id = ANY($1::uuid[])
 FOR UPDATE
@@ -178,9 +179,9 @@ if (!p) {
 const qty = Math.max(item.quantity, 1);
 
 if (
+  !item.variant_id &&
   p.stock !== null &&
-  Number(p.stock) < qty &&
-  !item.variant_id
+  Number(p.stock) - Number(p.reserved_stock ?? 0) < qty
 ) {
   throw new Error("OUT_OF_STOCK");
 }
@@ -217,13 +218,13 @@ if (item.variant_id) {
   }
 
   if (
-    v.stock !== null &&
-    Number(v.stock) < qty
-  ) {
-    throw new Error(
-      "OUT_OF_STOCK"
-    );
-  }
+  v.stock !== null &&
+  Number(v.stock) -
+    Number(v.reserved_stock ?? 0) <
+    qty
+) {
+  throw new Error("OUT_OF_STOCK");
+}
 }
 
 /* =========================================
@@ -290,9 +291,11 @@ for (const item of orderItems) {
     res = await client.query(
       `
       UPDATE product_variants
-      SET stock = stock - $1
-      WHERE id = $2
-      AND stock >= $1
+SET
+    stock = stock - $1,
+    reserved_stock = reserved_stock - $1
+WHERE id = $2
+AND reserved_stock >= $1
       `,
       [
         item.qty,
@@ -325,11 +328,12 @@ for (const item of orderItems) {
     res = await client.query(
       `
       UPDATE products
-      SET
-        stock = stock - $1,
-        sold = sold + $1
-      WHERE id = $2
-      AND stock >= $1
+SET
+    stock = stock - $1,
+    reserved_stock = reserved_stock - $1,
+    sold = sold + $1
+WHERE id = $2
+AND reserved_stock >= $1
       `,
       [
         item.qty,
