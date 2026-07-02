@@ -468,3 +468,30 @@ export async function findExpiredPaymentIntents(
 
   return res.rows;
 }
+export async function expirePaymentIntentFlow({
+  client,
+  intent,
+}: {
+  client: any;
+  intent: ExpiredPaymentIntentRow;
+}) {
+  await releaseReservedStock(
+    client,
+    intent.product_id,
+    intent.variant_id,
+    intent.quantity
+  );
+
+  await client.query(
+    `
+    UPDATE payment_intents
+    SET
+      status = 'expired',
+      payment_state = 'EXPIRED',
+      provider_status = 'EXPIRED',
+      updated_at = NOW()
+    WHERE id = $1
+    `,
+    [intent.id]
+  );
+}
