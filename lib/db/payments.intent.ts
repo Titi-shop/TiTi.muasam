@@ -89,8 +89,15 @@ if (
   throw new Error("VARIANT_OUT_OF_STOCK");
 }
 
-    return;
-  }
+await client.query(
+  `
+  UPDATE product_variants
+  SET reserved_stock = reserved_stock + $1
+  WHERE id = $2
+  `,
+  [quantity, variantId]
+);
+return;
 
   const res = await client.query(
     `
@@ -120,6 +127,14 @@ if (
 ) {
   throw new Error("OUT_OF_STOCK");
 }
+    await client.query(
+  `
+  UPDATE products
+  SET reserved_stock = reserved_stock + $1
+  WHERE id = $2
+  `,
+  [quantity, productId]
+);
 }
 /* =========================================================
    MAIN
