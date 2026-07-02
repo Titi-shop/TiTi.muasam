@@ -51,6 +51,72 @@ function makeExpiresAt(): Date {
     Date.now() + 30 * 60 * 1000
   );
 }
+async function lockAndValidateInventory(
+  client: any,
+  productId: string,
+  variantId: string | null,
+  quantity: number
+) {
+  if (variantId) {
+    const res = await client.query(
+      `
+      SELECT
+        id,
+        product_id,
+        stock,
+        is_unlimited
+      FROM product_variants
+      WHERE id = $1
+        AND product_id = $2
+      FOR UPDATE
+      `,
+      [variantId, productId]
+    );
+
+    if (!res.rows.length) {
+      throw new Error("VARIANT_NOT_FOUND");
+    }
+
+    const variant = res.rows[0];
+
+    if (
+      !variant.is_unlimited &&
+      variant.stock !== null &&
+      Number(variant.stock) < quantity
+    ) {
+      throw new Error("VARIANT_OUT_OF_STOCK");
+    }
+
+    return;
+  }
+
+  const res = await client.query(
+    `
+    SELECT
+      id,
+      stock,
+      is_unlimited
+    FROM products
+    WHERE id = $1
+    FOR UPDATE
+    `,
+    [productId]
+  );
+
+  if (!res.rows.length) {
+    throw new Error("PRODUCT_NOT_FOUND");
+  }
+
+  const product = res.rows[0];
+
+  if (
+    !product.is_unlimited &&
+    product.stock !== null &&
+    Number(product.stock) < quantity
+  ) {
+    throw new Error("OUT_OF_STOCK");
+  }
+}
 /* =========================================================
    MAIN
 ========================================================= */
@@ -123,7 +189,14 @@ export async function createPiPaymentIntent({
     }
 
     vlog("OWNER_OK", { seller_id });
+await lockAndValidateInventory(
+  client,
+  productId,
+  variantId ?? null,
+  quantity
+);
 
+vlog("INVENTORY_OK");
     /* =====================================================
        3. IDS
     ===================================================== */
