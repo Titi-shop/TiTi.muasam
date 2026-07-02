@@ -453,3 +453,39 @@ export async function getProcessingWithdrawals(): Promise<
 
   return rs.rows;
 }
+export async function markWithdrawalFailed(
+  withdrawalId: string,
+  reason: string
+): Promise<void> {
+
+  vlog("MARK_FAILED_START", {
+    withdrawalId,
+    reason,
+  });
+
+  const rs = await query(
+    `
+    UPDATE wallet_withdrawals
+    SET
+      status = 'FAILED',
+      fail_reason = $2,
+      updated_at = NOW()
+    WHERE id = $1
+      AND status = 'PROCESSING'
+    `,
+    [
+      withdrawalId,
+      reason,
+    ]
+  );
+
+  vlog("MARK_FAILED_DONE", {
+    rowCount: rs.rowCount,
+  });
+
+  if (rs.rowCount !== 1) {
+    throw new Error(
+      "WITHDRAWAL_FAIL_UPDATE_FAILED"
+    );
+  }
+}
