@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireSeller } from "@/lib/auth/guard";
-import { getReturnsBySeller } from "@/lib/db/returns";
+import { getReturnsBySeller } from "@/lib/services/returns/seller.service";
 
 export const runtime = "nodejs";
 
