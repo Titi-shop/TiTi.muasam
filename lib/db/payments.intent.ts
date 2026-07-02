@@ -412,3 +412,33 @@ vlog("GET_RESULT", {
 
 return res.rows[0] ?? null;
 }
+export async function releaseReservedStock(
+  client: any,
+  productId: string,
+  variantId: string | null,
+  quantity: number
+) {
+  if (variantId) {
+    await client.query(
+      `
+      UPDATE product_variants
+      SET reserved_stock =
+        GREATEST(reserved_stock - $1, 0)
+      WHERE id = $2
+      `,
+      [quantity, variantId]
+    );
+
+    return;
+  }
+
+  await client.query(
+    `
+    UPDATE products
+    SET reserved_stock =
+      GREATEST(reserved_stock - $1, 0)
+    WHERE id = $2
+    `,
+    [quantity, productId]
+  );
+}
