@@ -24,7 +24,9 @@ export async function processExpiredPaymentIntentJob() {
       FOR UPDATE
       `
     );
+for (const intent of res.rows) {
 
+}
     return {
       success: true,
       processed: 0,
