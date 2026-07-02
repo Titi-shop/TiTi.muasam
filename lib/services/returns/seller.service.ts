@@ -65,3 +65,39 @@ export async function receiveSellerReturn(
     sellerId
   );
 }
+/* =====================================================
+   BACKWARD COMPATIBILITY
+===================================================== */
+
+export const getReturnsBySeller = listSellerReturns;
+
+export const getReturnDetail = getSellerReturn;
+
+export async function updateReturnStatus(
+  sellerId: string,
+  returnId: string,
+  action: "approve" | "reject" | "received"
+) {
+  switch (action) {
+    case "approve":
+      return approveSellerReturn(
+        sellerId,
+        returnId
+      );
+
+    case "reject":
+      return rejectSellerReturn(
+        sellerId,
+        returnId
+      );
+
+    case "received":
+      return receiveSellerReturn(
+        sellerId,
+        returnId
+      );
+
+    default:
+      throw new Error("INVALID_ACTION");
+  }
+}
