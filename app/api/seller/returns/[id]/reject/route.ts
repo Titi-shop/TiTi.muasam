@@ -4,9 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSeller } from "@/lib/auth/guard";
 
 import {
-  getReturnByIdForSeller,
-  rejectReturnBySeller,
-} from "@/lib/db/returns";
+  rejectReturn,
+} from "@/lib/services/returns/seller.service";
 
 export const runtime = "nodejs";
 
@@ -30,6 +29,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+
     const auth = await requireSeller();
 
     if (!auth.ok) {
@@ -42,38 +42,42 @@ export async function POST(
       return errorJson("INVALID_RETURN_ID");
     }
 
-    const existing = await getReturnByIdForSeller(
+    await rejectReturn(
       returnId,
       auth.userId
     );
-
-    if (!existing) {
-      return errorJson("NOT_FOUND", 404);
-    }
-
-    if (existing.status !== "pending") {
-      return errorJson("INVALID_STATUS");
-    }
-
-    const updated = await rejectReturnBySeller(
-      returnId,
-      auth.userId
-    );
-
-    if (!updated) {
-      return errorJson("UPDATE_FAILED");
-    }
 
     return NextResponse.json({
       success: true,
     });
 
   } catch (error) {
-    console.error("[SELLER_RETURN_REJECT]", error);
 
-    return NextResponse.json(
-      { error: "INTERNAL_SERVER_ERROR" },
-      { status: 500 }
+    console.error(
+      "[SELLER_RETURN_REJECT]",
+      error
     );
+
+    const code =
+      error instanceof Error
+        ? error.message
+        : "INTERNAL_SERVER_ERROR";
+
+    switch (code) {
+
+      case "NOT_FOUND":
+        return errorJson(code, 404);
+
+      case "INVALID_STATUS":
+      case "UPDATE_FAILED":
+      case "INVALID_RETURN_ID":
+        return errorJson(code, 400);
+
+      default:
+        return errorJson(
+          "INTERNAL_SERVER_ERROR",
+          500
+        );
+    }
   }
 }
