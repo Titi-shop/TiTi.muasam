@@ -739,11 +739,12 @@ const {
   rows: returnItems,
 } =
   await client.query<{
-    product_id: string | null;
-    variant_id: string | null;
-    return_quantity: number;
-    restock: boolean;
-  }>(
+  product_id: string | null;
+  variant_id: string | null;
+  return_quantity: number;
+  restock: boolean;
+  restocked_at: string | null;
+}>(
     `
     SELECT
       product_id,
@@ -983,7 +984,7 @@ return {
         });
 
       } catch (err) {
-
+      }
         console.error(
           "[NOTIFICATION][REFUND_COMPLETED]",
           err
@@ -996,7 +997,7 @@ return {
     return result.success;
 
   } catch (error) {
-
+  
     console.error(
       "[RETURN][RECEIVED]",
       {
