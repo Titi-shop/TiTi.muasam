@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { formatPi } from "@/lib/pi";
-
+import { useState } from "react";
 import type { ReturnRecord } from "../types";
 import { getImage, getStatusConfig } from "../utils";
 
@@ -37,7 +37,11 @@ export default function ReturnCard({ item }: Props) {
     router.push(`/customer/returns/${item.id}/shipping`);
   };
 const cancelReturn = async () => {
+
   try {
+
+    setCancelling(true);
+
     const res = await apiAuthFetch(
       `/api/returns/${item.id}/cancel`,
       {
@@ -62,7 +66,13 @@ const cancelReturn = async () => {
       t.cancel_failed ??
       "Cancel failed."
     );
+
+  } finally {
+
+    setCancelling(false);
+
   }
+
 };
   const steps = [
     "pending",
