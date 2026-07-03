@@ -6,7 +6,9 @@ import {
   createWalletAddress,
   getWalletAddressesByUser,
 } from "@/lib/db/wallet-addresses";
-
+import {
+  getWalletRecordByUserId,
+} from "@/lib/db/wallet";
 /* =====================================================
    TYPES
 ===================================================== */
@@ -173,7 +175,46 @@ export async function createWalletAddressFlow(
     log(
       "RPC_VALIDATE_PENDING"
     );
+/* ===============================================
+   LOAD USER WALLET
+=============================================== */
 
+log(
+  "LOAD_WALLET_START",
+  {
+    userId:
+      input.userId,
+  }
+);
+
+const walletRecord =
+  await getWalletRecordByUserId(
+    input.userId
+  );
+
+if (!walletRecord) {
+
+  err(
+    "WALLET_NOT_FOUND",
+    {
+      userId:
+        input.userId,
+    }
+  );
+
+  throw new Error(
+    "WALLET_NOT_FOUND"
+  );
+
+}
+
+log(
+  "LOAD_WALLET_DONE",
+  {
+    walletId:
+      walletRecord.id,
+  }
+);
     /* ===============================================
        DB
     =============================================== */
@@ -190,7 +231,7 @@ export async function createWalletAddressFlow(
       await createWalletAddress({
 
         wallet_id:
-          body.wallet_id,
+      walletRecord.id,
 
         user_id:
           input.userId,
