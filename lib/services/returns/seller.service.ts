@@ -1,9 +1,9 @@
 import {
-  getReturnsBySeller,
-  getReturnByIdForSeller,
-  approveReturnBySeller,
-  rejectReturnBySeller,
-  markReturnReceivedBySeller,
+  getReturnsBySeller as dbGetReturnsBySeller,
+  getReturnByIdForSeller as dbGetReturnByIdForSeller,
+  approveReturnBySeller as dbApproveReturnBySeller,
+  rejectReturnBySeller as dbRejectReturnBySeller,
+  markReturnReceivedBySeller as dbMarkReturnReceivedBySeller,
 } from "@/lib/db/returns";
 
 import type { ReturnStatus } from "@/lib/db/returns/seller.types";
@@ -16,7 +16,7 @@ export async function listSellerReturns(
   sellerId: string,
   status?: ReturnStatus | null
 ) {
-  return getReturnsBySeller(
+  return dbGetReturnsBySeller(
     sellerId,
     status ?? null
   );
@@ -26,21 +26,17 @@ export async function getSellerReturn(
   sellerId: string,
   returnId: string
 ) {
-  return getReturnByIdForSeller(
+  return dbGetReturnByIdForSeller(
     returnId,
     sellerId
   );
 }
 
-/* =====================================================
-   COMMANDS
-===================================================== */
-
 export async function approveSellerReturn(
   sellerId: string,
   returnId: string
 ) {
-  return approveReturnBySeller(
+  return dbApproveReturnBySeller(
     returnId,
     sellerId
   );
@@ -50,7 +46,7 @@ export async function rejectSellerReturn(
   sellerId: string,
   returnId: string
 ) {
-  return rejectReturnBySeller(
+  return dbRejectReturnBySeller(
     returnId,
     sellerId
   );
@@ -60,7 +56,7 @@ export async function receiveSellerReturn(
   sellerId: string,
   returnId: string
 ) {
-  return markReturnReceivedBySeller(
+  return dbMarkReturnReceivedBySeller(
     returnId,
     sellerId
   );
