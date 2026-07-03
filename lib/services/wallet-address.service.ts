@@ -1,6 +1,7 @@
 // =====================================================
 // lib/services/wallet-address.service.ts
 // =====================================================
+
 import {
   verifyPiWallet,
 } from "@/lib/rpc/wallet.rpc";
@@ -10,17 +11,19 @@ import {
   getWalletAddressesByUser,
   markWalletAddressValid,
   markWalletAddressInvalid,
+  markWalletAddressVerified,
 } from "@/lib/db/wallet-addresses";
+
 import {
   getWalletRecordByUserId,
 } from "@/lib/db/wallet";
+
 /* =====================================================
    TYPES
 ===================================================== */
 
 type CreateWalletAddressFlowInput = {
   userId: string;
-
   body: unknown;
 };
 
@@ -55,6 +58,42 @@ function err(
 }
 
 /* =====================================================
+   HELPERS
+===================================================== */
+
+function parseCreateBody(
+  body: unknown
+) {
+
+  const data =
+    body as CreateBody;
+
+  const address =
+    typeof data.address ===
+    "string"
+      ? data.address.trim()
+      : "";
+
+  const label =
+    typeof data.label ===
+    "string"
+      ? data.label.trim()
+      : null;
+
+  return {
+
+    walletId:
+      data.wallet_id,
+
+    address,
+
+    label,
+
+  };
+
+}
+
+/* =====================================================
    LIST
 ===================================================== */
 
@@ -68,31 +107,12 @@ export async function listWalletAddressesFlow(
       userId,
     }
   );
-log(
-  "DB_LIST_START",
-  {
-    userId,
-  }
-);
+
   const rows =
     await getWalletAddressesByUser(
       userId
     );
-log(
-  "DB_LIST_DONE",
-  {
-    userId,
-    total: rows.length,
-  }
-);
 
-log(
-  "LIST_SUCCESS",
-  {
-    userId,
-    total: rows.length,
-  }
-);
   log(
     "LIST_DONE",
     {
@@ -103,6 +123,7 @@ log(
   );
 
   return rows;
+
 }
 
 /* =====================================================
@@ -118,39 +139,44 @@ export async function createWalletAddressFlow(
     log(
       "CREATE_START",
       {
-        userId: input.userId,
+        userId:
+          input.userId,
       }
     );
 
-    log("BODY_PARSE_START");
+    /* ===============================================
+       BODY
+    =============================================== */
 
-    const body =
-      input.body as CreateBody;
+    log(
+      "BODY_PARSE_START"
+    );
 
-    const address =
-      typeof body.address === "string"
-        ? body.address.trim()
-        : "";
-
-    const label =
-      typeof body.label === "string"
-        ? body.label.trim()
-        : null;
+    const parsed =
+      parseCreateBody(
+        input.body
+      );
 
     log(
       "BODY_PARSE_DONE",
       {
-        hasAddress: !!address,
-        hasLabel: !!label,
+        hasAddress:
+          !!parsed.address,
+
+        hasLabel:
+          !!parsed.label,
       }
     );
 
-    if (!address) {
+    if (
+      !parsed.address
+    ) {
 
       err(
         "INVALID_ADDRESS",
         {
-          userId: input.userId,
+          userId:
+            input.userId,
         }
       );
 
@@ -164,98 +190,108 @@ export async function createWalletAddressFlow(
       "INPUT_OK",
       {
         addressPrefix:
-          address.substring(0, 8),
+          parsed.address.substring(
+            0,
+            8
+          ),
 
         addressLength:
-          address.length,
+          parsed.address.length,
       }
     );
 
     /* ===============================================
-       RPC (NEXT STEP)
+       RPC VERIFY
     =============================================== */
 
     log(
-  "RPC_VALIDATE_START",
-  {
-    addressPrefix:
-      address.substring(0, 8),
-  }
-);
+      "RPC_VERIFY_START",
+      {
+        addressPrefix:
+          parsed.address.substring(
+            0,
+            8
+          ),
+      }
+    );
 
-const rpc =
-  await verifyPiWallet(
-    address
-  );
+    const rpc =
+      await verifyPiWallet(
+        parsed.address
+      );
 
-log(
-  "RPC_VALIDATE_DONE",
-  {
-    exists:
-      rpc.exists,
+    log(
+      "RPC_VERIFY_DONE",
+      {
+        exists:
+          rpc.exists,
 
-    rpcReachable:
-      rpc.rpcReachable,
+        rpcReachable:
+          rpc.rpcReachable,
 
-    balance:
-      rpc.balance,
+        balance:
+          rpc.balance,
 
-    sequence:
-      rpc.sequence,
-  }
-);
+        sequence:
+          rpc.sequence,
+      }
+    );
 
-if (
-  !rpc.rpcReachable
-) {
+    if (
+      !rpc.rpcReachable
+    ) {
 
-  throw new Error(
-    "RPC_UNREACHABLE"
-  );
+      throw new Error(
+        "RPC_UNREACHABLE"
+      );
 
-}
-/* ===============================================
-   LOAD USER WALLET
-=============================================== */
-
-log(
-  "LOAD_WALLET_START",
-  {
-    userId:
-      input.userId,
-  }
-);
-
-const walletRecord =
-  await getWalletRecordByUserId(
-    input.userId
-  );
-
-if (!walletRecord) {
-
-  err(
-    "WALLET_NOT_FOUND",
-    {
-      userId:
-        input.userId,
     }
-  );
 
-  throw new Error(
-    "WALLET_NOT_FOUND"
-  );
-
-}
-
-log(
-  "LOAD_WALLET_DONE",
-  {
-    walletId:
-      walletRecord.id,
-  }
-);
     /* ===============================================
-       DB
+       LOAD USER WALLET
+    =============================================== */
+
+    log(
+      "LOAD_WALLET_START",
+      {
+        userId:
+          input.userId,
+      }
+    );
+
+    const walletRecord =
+      await getWalletRecordByUserId(
+        input.userId
+      );
+
+    if (
+      !walletRecord
+    ) {
+
+      err(
+        "WALLET_NOT_FOUND",
+        {
+          userId:
+            input.userId,
+        }
+      );
+
+      throw new Error(
+        "WALLET_NOT_FOUND"
+      );
+
+    }
+
+    log(
+      "LOAD_WALLET_DONE",
+      {
+        walletId:
+          walletRecord.id,
+      }
+    );
+
+    /* ===============================================
+       CREATE ADDRESS
     =============================================== */
 
     log(
@@ -270,7 +306,7 @@ log(
       await createWalletAddress({
 
         wallet_id:
-      walletRecord.id,
+          walletRecord.id,
 
         user_id:
           input.userId,
@@ -278,9 +314,11 @@ log(
         network:
           "PI",
 
-        address,
+        address:
+          parsed.address,
 
-        label,
+        label:
+          parsed.label,
 
         is_default:
           true,
@@ -289,38 +327,7 @@ log(
           input.userId,
 
       });
-log(
-  "VALIDATION_START",
-  {
-    walletAddressId:
-      wallet.id,
-  }
-);
 
-if (
-  rpc.exists
-) {
-
-  await markWalletAddressValid(
-    wallet.id
-  );
-
-  log(
-    "VALIDATION_VALID"
-  );
-
-} else {
-
-  await markWalletAddressInvalid(
-    wallet.id,
-    "ACCOUNT_NOT_FOUND"
-  );
-
-  log(
-    "VALIDATION_INVALID"
-  );
-
-}
     log(
       "DB_CREATE_DONE",
       {
@@ -329,26 +336,91 @@ if (
       }
     );
 
+    let result =
+      wallet;
+    /* ===============================================
+       UPDATE VALIDATION
+    =============================================== */
+
+    log(
+      "VALIDATION_START",
+      {
+        walletAddressId:
+          wallet.id,
+      }
+    );
+
+    if (
+      rpc.exists
+    ) {
+
+      const valid =
+        await markWalletAddressValid(
+          wallet.id
+        );
+
+      log(
+        "VALIDATION_VALID"
+      );
+
+      const verified =
+        await markWalletAddressVerified(
+          wallet.id
+        );
+
+      log(
+        "VERIFICATION_DONE"
+      );
+
+      result =
+        verified ??
+        valid ??
+        wallet;
+
+    } else {
+
+      const invalid =
+        await markWalletAddressInvalid(
+          wallet.id,
+          "ACCOUNT_NOT_FOUND"
+        );
+
+      log(
+        "VALIDATION_INVALID"
+      );
+
+      result =
+        invalid ??
+        wallet;
+
+    }
+
+    /* ===============================================
+       SUCCESS
+    =============================================== */
+
     log(
       "CREATE_SUCCESS",
       {
         walletAddressId:
-          wallet.id,
+          result.id,
 
         userId:
           input.userId,
 
         validationStatus:
-          wallet.validation_status,
+          result.validation_status,
 
         verified:
-          wallet.is_verified,
+          result.is_verified,
       }
     );
 
-    return wallet;
+    return result;
 
-  } catch (error) {
+  } catch (
+    error
+  ) {
 
     err(
       "CREATE_FAILED",
@@ -365,3 +437,4 @@ if (
   }
 
 }
+  
