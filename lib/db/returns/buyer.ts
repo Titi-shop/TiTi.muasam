@@ -6,6 +6,9 @@ import {
   isValidUuid,
   error,
 } from "./buyer.validator";
+import {
+  toNumberSafe,
+} from "./buyer.helper";
 /* =====================================================
    TYPES
 ===================================================== */
@@ -35,29 +38,6 @@ type DbReturn = {
   currency: string;
   created_at: string;
 };
-
-/* =====================================================
-   HELPERS
-===================================================== */
-function toNumberSafe(
-  value: unknown,
-  field: string
-): number {
-  const num = Number(value);
-
-  if (Number.isNaN(num)) {
-    console.error("❌ [RETURN][PARSE_ERROR]", {
-      field,
-      value,
-    });
-
-    throw new Error("INVALID_NUMBER");
-  }
-
-  return num;
-}
-
-
 
 /* =====================================================
    GET RETURNS
