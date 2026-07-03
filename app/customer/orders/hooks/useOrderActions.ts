@@ -146,15 +146,11 @@ export function useOrderActions({
 
     try {
       const res = await apiAuthFetch(
-        `/api/orders/${orderId}/complete`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-          },
-        }
-      );
+  `/api/orders/${orderId}/complete`,
+  {
+    method: "PATCH",
+  }
+);
 
       if (!res.ok) {
         throw new Error();
