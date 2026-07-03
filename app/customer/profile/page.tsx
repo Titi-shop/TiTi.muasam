@@ -338,7 +338,13 @@ export default function ProfilePage() {
     if (!file) return;
 
     try {
-      const res = await apiAuthFetch(
+      
+
+const formData = new FormData();
+
+formData.append("file", file);
+
+const res = await apiAuthFetch(
   "/api/uploadShopBanner",
   {
     method: "POST",
