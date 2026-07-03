@@ -18,7 +18,10 @@ import {
 import {
   getVerifiedRpcByWithdrawalId,
 } from "@/lib/db/payments.rpc.a2u";
-
+import {
+  finalizeReservedBalance,
+  releaseReservedBalance,
+} from "./wallet.balance";
 import {
   createWithdrawalSettlementEventOnce,
   WithdrawalSettlementEvents,
