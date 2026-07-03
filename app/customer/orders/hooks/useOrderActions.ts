@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-import { getPiAccessToken } from "@/lib/piAuth";
-
+import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import {
   ORDER_STATUS,
   type OrderStatus,
@@ -31,9 +29,7 @@ type Props = {
   ) => void;
 
   t: TranslateObject;
-
   onCloseReview: () => void;
-
   onCloseCancel: () => void;
 };
 
@@ -103,28 +99,14 @@ export function useOrderActions({
     setProcessingId(orderId);
 
     try {
-      const token =
-        await getPiAccessToken();
-
-      if (!token) {
-        showToast(
-          t.login_required ??
-            "Login required"
-        );
-
-        return;
-      }
-
-      const res = await fetch(
-        `/api/orders/${orderId}/cancel`,
+      const res = await apiAuthFetch(
+  `/api/orders/${orderId}/cancel`,
         {
           method: "PATCH",
           headers: {
-            Authorization:
-              `Bearer ${token}`,
-            "Content-Type":
-              "application/json",
-          },
+  "Content-Type":
+    "application/json",
+},
           body: JSON.stringify({
             cancel_reason: reason,
           }),
@@ -163,19 +145,7 @@ export function useOrderActions({
     setProcessingId(orderId);
 
     try {
-      const token =
-        await getPiAccessToken();
-
-      if (!token) {
-        showToast(
-          t.login_required ??
-            "Login required"
-        );
-
-        return;
-      }
-
-      const res = await fetch(
+      const res = await apiAuthFetch(
         `/api/orders/${orderId}/complete`,
         {
           method: "PATCH",
@@ -234,18 +204,7 @@ export function useOrderActions({
     setProcessingId(order.id);
 
     try {
-      const token =
-        await getPiAccessToken();
-
-      if (!token) {
-        showToast(
-          t.login_required ??
-            "Login required"
-        );
-
-        return;
-      }
-
+      
       const productId =
         order.order_items?.[0]
           ?.product_id;
@@ -259,16 +218,14 @@ export function useOrderActions({
         return;
       }
 
-      const res = await fetch(
+      const res = await apiAuthFetch(
         "/api/reviews",
         {
           method: "POST",
           headers: {
-            Authorization:
-              `Bearer ${token}`,
-            "Content-Type":
-              "application/json",
-          },
+  "Content-Type":
+    "application/json",
+},
           body: JSON.stringify({
             order_id: order.id,
             product_id: productId,
