@@ -115,15 +115,15 @@ try {
   const token =
     await getPiAccessToken();
 
-  const res = await fetch(
-  `/api/returns/${returnId}/ship`,
+  const res = await apiAuthFetch(
+  `/api/returns/${returnId}`,
   {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
+      action: "ship",
       tracking_code: trackingCode,
       shipping_provider: carrier,
     }),
