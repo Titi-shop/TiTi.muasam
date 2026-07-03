@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { useAuth } from "@/context/AuthContext";
-import { getPiAccessToken } from "@/lib/piAuth";
+import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
 /* =========================
    TYPES
@@ -102,19 +102,15 @@ export default function CustomerMenu() {
         return;
       }
 
-      const res = await fetch(
-        "/api/seller/register",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await apiAuthFetch(
+  "/api/seller/register",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }
+);
 
       const data: unknown =
         await res
