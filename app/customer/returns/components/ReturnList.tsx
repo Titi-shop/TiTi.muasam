@@ -1,5 +1,4 @@
 "use client";
-
 import { RefreshCcw } from "lucide-react";
 
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
@@ -9,10 +8,11 @@ import ReturnCard from "./ReturnCard";
 
 type Props = {
   returns: ReturnRecord[];
+  onReload?: () => void;
 };
-
 export default function ReturnList({
   returns,
+  onReload,
 }: Props) {
   const { t } = useTranslation();
 
@@ -64,10 +64,11 @@ export default function ReturnList({
   return (
     <div className="space-y-4">
       {returns.map((item) => (
-        <ReturnCard
-          key={item.id}
-          item={item}
-        />
+       <ReturnCard
+  key={item.id}
+  item={item}
+  onReload={onReload}
+/>
       ))}
     </div>
   );
