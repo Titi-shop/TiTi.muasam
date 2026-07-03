@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { countries } from "@/data/countries";
 
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
-
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useAuth } from "@/context/AuthContext";
 
@@ -131,26 +130,25 @@ export default function CustomerAddressPage() {
 
     try {
       await apiAuthFetch("/api/address", {
-        method: editingId
-          ? "PATCH"
-          : "POST",
+  method: editingId
+    ? "PATCH"
+    : "POST",
 
-        headers: {
-          "Content-Type":
-            "application/json",
-          
-        body: JSON.stringify({
-          ...form,
-          id: editingId,
-        }),
-      });
+  headers: {
+    "Content-Type":
+      "application/json",
+  },
+
+  body: JSON.stringify({
+    ...form,
+    id: editingId,
+  }),
+});
 
       await mutate();
 
       setShowForm(false);
-
       setEditingId(null);
-
       setForm({
         full_name: "",
         phone: "",
@@ -171,47 +169,44 @@ export default function CustomerAddressPage() {
   /* ================= DEFAULT ================= */
 
   const setDefault = async (id: string) => {
-    await apiAuthFetch("/api/address", {
-      method: "PUT",
+  await apiAuthFetch("/api/address", {
+    method: "PUT",
 
-      headers: {
-        "Content-Type":
-          "application/json",
+    headers: {
+      "Content-Type":
+        "application/json",
+    },
 
-        Authorization: `Bearer ${token}`,
-      },
+    body: JSON.stringify({
+      id,
+    }),
+  });
 
-      body: JSON.stringify({ id }),
-    });
-
-    mutate();
-  };
+  await mutate();
+};
 
   /* ================= DELETE ================= */
 
   const deleteAddress = async (
-    id: string
-  ) => {
-    if (
-      !confirm(
-        t.confirm_delete || "Delete?"
-      )
-    ) {
-      return;
-    }
+  id: string
+) => {
+  if (
+    !confirm(
+      t.confirm_delete || "Delete?"
+    )
+  ) {
+    return;
+  }
 
-    const token = await getPiAccessToken();
-
-    await fetch(`/api/address?id=${id}`, {
+  await apiAuthFetch(
+    `/api/address?id=${id}`,
+    {
       method: "DELETE",
+    }
+  );
 
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    mutate();
-  };
+  await mutate();
+};
 
   /* ================= UI ================= */
 
