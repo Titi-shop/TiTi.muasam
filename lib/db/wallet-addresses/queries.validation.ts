@@ -1,7 +1,9 @@
 import { query } from "@/lib/db";
 
 import { mapWalletAddress } from "./mapper";
-
+import {
+  verifyPiWallet,
+} from "@/lib/rpc/wallet.rpc";
 /* =========================
    MARK VALID
 ========================= */
@@ -106,4 +108,34 @@ export async function resetWalletAddressValidation(
   return res.rows[0]
     ? mapWalletAddress(res.rows[0])
     : null;
+}
+export async function validateWalletAddressByRpc(
+  walletAddressId: string,
+  address: string
+) {
+
+  const rpc =
+    await verifyPiWallet(address);
+
+  if (!rpc.rpcReachable) {
+
+    throw new Error(
+      "RPC_UNREACHABLE"
+    );
+
+  }
+
+  if (!rpc.exists) {
+
+    return markWalletAddressInvalid(
+      walletAddressId,
+      "ACCOUNT_NOT_FOUND"
+    );
+
+  }
+
+  return markWalletAddressValid(
+    walletAddressId
+  );
+
 }
