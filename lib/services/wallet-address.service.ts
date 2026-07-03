@@ -1,10 +1,15 @@
 // =====================================================
 // lib/services/wallet-address.service.ts
 // =====================================================
+import {
+  verifyPiWallet,
+} from "@/lib/rpc/wallet.rpc";
 
 import {
   createWalletAddress,
   getWalletAddressesByUser,
+  markWalletAddressValid,
+  markWalletAddressInvalid,
 } from "@/lib/db/wallet-addresses";
 import {
   getWalletRecordByUserId,
@@ -21,9 +26,7 @@ type CreateWalletAddressFlowInput = {
 
 type CreateBody = {
   wallet_id?: string;
-
   address?: string;
-
   label?: string;
 };
 
@@ -173,8 +176,44 @@ export async function createWalletAddressFlow(
     =============================================== */
 
     log(
-      "RPC_VALIDATE_PENDING"
-    );
+  "RPC_VALIDATE_START",
+  {
+    addressPrefix:
+      address.substring(0, 8),
+  }
+);
+
+const rpc =
+  await verifyPiWallet(
+    address
+  );
+
+log(
+  "RPC_VALIDATE_DONE",
+  {
+    exists:
+      rpc.exists,
+
+    rpcReachable:
+      rpc.rpcReachable,
+
+    balance:
+      rpc.balance,
+
+    sequence:
+      rpc.sequence,
+  }
+);
+
+if (
+  !rpc.rpcReachable
+) {
+
+  throw new Error(
+    "RPC_UNREACHABLE"
+  );
+
+}
 /* ===============================================
    LOAD USER WALLET
 =============================================== */
@@ -250,7 +289,38 @@ log(
           input.userId,
 
       });
+log(
+  "VALIDATION_START",
+  {
+    walletAddressId:
+      wallet.id,
+  }
+);
 
+if (
+  rpc.exists
+) {
+
+  await markWalletAddressValid(
+    wallet.id
+  );
+
+  log(
+    "VALIDATION_VALID"
+  );
+
+} else {
+
+  await markWalletAddressInvalid(
+    wallet.id,
+    "ACCOUNT_NOT_FOUND"
+  );
+
+  log(
+    "VALIDATION_INVALID"
+  );
+
+}
     log(
       "DB_CREATE_DONE",
       {
