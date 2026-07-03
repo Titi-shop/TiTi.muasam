@@ -18,7 +18,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import { getPiAccessToken } from "@/lib/piAuth";
+import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
 import {
@@ -41,15 +41,7 @@ async function fetcher(
   url: string
 ): Promise<OrderCountResponse | null> {
   try {
-    const token =
-      await getPiAccessToken();
-
-    if (!token) return null;
-
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const res = await apiAuthFetch(url, {
       cache: "no-store",
     });
 
