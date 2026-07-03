@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-import { getPiAccessToken } from "@/lib/piAuth";
-
+import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 export type ReviewedMap =
   Record<string, boolean>;
 
@@ -21,44 +19,30 @@ export function useOrderReviews() {
 
   useEffect(() => {
     async function loadReviews() {
-      try {
-        const token =
-          await getPiAccessToken();
+  try {
+    const res = await apiAuthFetch(
+      "/api/reviews"
+    );
 
-        if (!token) {
-          return;
-        }
-
-        const res = await fetch(
-          "/api/reviews",
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!res.ok) {
-          return;
-        }
-
-        const data =
-          (await res.json()) as ReviewResponse;
-
-        const map: ReviewedMap = {};
-
-        for (const review of (
-          data.reviews ?? []
-        )) {
-          map[review.order_id] = true;
-        }
-
-        setReviewedMap(map);
-      } catch (error) {
-        console.error(error);
-      }
+    if (!res.ok) {
+      return;
     }
+
+    const data =
+      (await res.json()) as ReviewResponse;
+
+    const map: ReviewedMap = {};
+
+    for (const review of data.reviews ?? []) {
+      map[review.order_id] = true;
+    }
+
+    setReviewedMap(map);
+
+  } catch (error) {
+    console.error(error);
+  }
+}
 
     void loadReviews();
   }, []);
