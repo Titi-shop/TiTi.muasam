@@ -8,7 +8,7 @@ import { countries } from "@/data/countries";
 
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 
-import { getPiAccessToken } from "@/lib/piAuth";
+import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import { useAuth } from "@/context/AuthContext";
 
 import AddressForm, {
@@ -47,13 +47,7 @@ interface ApiResponse {
 /* ================= FETCHER ================= */
 
 const fetcher = async (): Promise<ApiResponse> => {
-  const token = await getPiAccessToken();
-
-  const res = await fetch("/api/address", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const res = await apiAuthFetch("/api/address");
 
   if (!res.ok) {
     throw new Error("FETCH_FAILED");
@@ -136,9 +130,7 @@ export default function CustomerAddressPage() {
     setSaving(true);
 
     try {
-      const token = await getPiAccessToken();
-
-      await fetch("/api/address", {
+      await apiAuthFetch("/api/address", {
         method: editingId
           ? "PATCH"
           : "POST",
@@ -146,10 +138,7 @@ export default function CustomerAddressPage() {
         headers: {
           "Content-Type":
             "application/json",
-
-          Authorization: `Bearer ${token}`,
-        },
-
+          
         body: JSON.stringify({
           ...form,
           id: editingId,
@@ -182,9 +171,7 @@ export default function CustomerAddressPage() {
   /* ================= DEFAULT ================= */
 
   const setDefault = async (id: string) => {
-    const token = await getPiAccessToken();
-
-    await fetch("/api/address", {
+    await apiAuthFetch("/api/address", {
       method: "PUT",
 
       headers: {
