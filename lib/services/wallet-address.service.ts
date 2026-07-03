@@ -63,12 +63,31 @@ export async function listWalletAddressesFlow(
       userId,
     }
   );
-
+log(
+  "DB_LIST_START",
+  {
+    userId,
+  }
+);
   const rows =
     await getWalletAddressesByUser(
       userId
     );
+log(
+  "DB_LIST_DONE",
+  {
+    userId,
+    total: rows.length,
+  }
+);
 
+log(
+  "LIST_SUCCESS",
+  {
+    userId,
+    total: rows.length,
+  }
+);
   log(
     "LIST_DONE",
     {
@@ -88,7 +107,19 @@ export async function listWalletAddressesFlow(
 export async function createWalletAddressFlow(
   input: CreateWalletAddressFlowInput
 ) {
-
+try {
+  } catch (error) {
+      err(
+        "CREATE_FAILED",
+        {
+          userId:
+            input.userId,
+          error,
+        }
+      );
+      throw error;
+  }
+}
   log(
     "CREATE_START",
     {
@@ -96,7 +127,9 @@ export async function createWalletAddressFlow(
         input.userId,
     }
   );
-
+log(
+  "BODY_PARSE_START"
+);
   /* ===================================================
      BODY
   =================================================== */
@@ -118,21 +151,32 @@ export async function createWalletAddressFlow(
 
   if (!address) {
 
-    log(
-      "INVALID_ADDRESS"
-    );
-
-    throw new Error(
-      "INVALID_ADDRESS"
-    );
-  }
-
-  log(
-    "INPUT_OK",
+  err(
+    "INVALID_ADDRESS",
     {
-      address,
+      userId:
+        input.userId,
     }
   );
+
+  throw new Error(
+    "INVALID_ADDRESS"
+  );
+}
+
+  log(
+  "INPUT_OK",
+  {
+    addressPrefix:
+      address.substring(
+        0,
+        8
+      ),
+
+    addressLength:
+      address.length,
+  }
+);
 
   /* ===================================================
      RPC VALIDATE
@@ -140,14 +184,12 @@ export async function createWalletAddressFlow(
   =================================================== */
 
   log(
-    "RPC_VALIDATE_SKIP"
-  );
+  "RPC_VALIDATE_PENDING"
+);
 
   /*
   Sau sẽ thay bằng
-
   log("RPC_VALIDATE_START");
-
   await validatePiWalletAddress(
       address
   );
@@ -162,7 +204,13 @@ export async function createWalletAddressFlow(
   log(
     "DB_CREATE_START"
   );
-
+log(
+  "DB_CREATE_START",
+  {
+    userId:
+      input.userId,
+  }
+);
   const wallet =
     await createWalletAddress({
 
@@ -186,7 +234,13 @@ export async function createWalletAddressFlow(
         input.userId,
 
     });
-
+log(
+  "DB_CREATE_DONE",
+  {
+    walletAddressId:
+      wallet.id,
+  }
+);
   log(
     "DB_CREATE_DONE",
     {
@@ -196,12 +250,21 @@ export async function createWalletAddressFlow(
   );
 
   log(
-    "CREATE_SUCCESS",
-    {
-      id:
-        wallet.id,
-    }
-  );
+  "CREATE_SUCCESS",
+  {
+    walletAddressId:
+      wallet.id,
+
+    userId:
+      input.userId,
+
+    validationStatus:
+      wallet.validation_status,
+
+    verified:
+      wallet.is_verified,
+  }
+);
 
   return wallet;
 
