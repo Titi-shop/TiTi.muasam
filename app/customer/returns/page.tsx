@@ -16,7 +16,20 @@ export default function ReturnsPage() {
 
   const [loading, setLoading] =
     useState(true);
+const tabs = [
+  "all",
+  "pending",
+  "approved",
+  "shipping_back",
+  "received",
+  "refund_pending",
+  "refunded",
+  "rejected",
+  "cancelled",
+] as const;
 
+const [tab, setTab] =
+  useState<(typeof tabs)[number]>("all");
   useEffect(() => {
     if (authLoading || !user) return;
 
@@ -60,27 +73,66 @@ export default function ReturnsPage() {
   }
   }
 
-  const sortedReturns = useMemo(() => {
-    return [...returns].sort((a, b) => {
-      const da = a.created_at
-        ? new Date(a.created_at).getTime()
-        : 0;
+  const filteredReturns = useMemo(() => {
+  const list =
+    tab === "all"
+      ? returns
+      : returns.filter(
+          (item) =>
+            item.status === tab
+        );
 
-      const db = b.created_at
-        ? new Date(b.created_at).getTime()
-        : 0;
+  return [...list].sort((a, b) => {
+    const da = a.created_at
+      ? new Date(a.created_at).getTime()
+      : 0;
 
-      return db - da;
-    });
-  }, [returns]);
+    const db = b.created_at
+      ? new Date(b.created_at).getTime()
+      : 0;
+
+    return db - da;
+  });
+}, [returns, tab]);
 
   if (loading || authLoading) {
     return <ReturnsSkeleton />;
   }
 
   return (
-    <ReturnList
-      returns={sortedReturns}
-    />
-  );
+  <main className="min-h-screen bg-[var(--background)]">
+
+    <div className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--background)] overflow-x-auto">
+      <div className="flex min-w-max gap-2 p-4">
+
+        {tabs.map((value) => (
+          <button
+            key={value}
+            onClick={() =>
+              setTab(value)
+            }
+            className={`rounded-full px-4 py-2 text-sm transition ${
+              tab === value
+                ? "bg-orange-500 text-white"
+                : "bg-[var(--card-secondary)]"
+            }`}
+          >
+            {value === "all"
+              ? "All"
+              : value}
+          </button>
+        ))}
+
+      </div>
+    </div>
+
+    <div className="p-4">
+      <ReturnList
+        returns={filteredReturns}
+        onReload={loadReturns}
+      />
+    </div>
+
+  </main>
+);
 }
