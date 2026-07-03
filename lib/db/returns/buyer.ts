@@ -1,18 +1,24 @@
-import { query, withTransaction } from "@/lib/db";
+import {
+  withTransaction,
+} from "@/lib/db";
+
 import {
   sendNotification,
 } from "@/lib/services/notifications.service";
+
 import {
   isValidUuid,
   error,
 } from "./buyer.validator";
-import {
-  toNumberSafe,
-} from "./buyer.helper";
+
 export {
   getReturnsByBuyer,
   getReturnByIdForBuyer,
 } from "./buyer.query";
+
+export {
+  createReturn,
+} from "./buyer.create";
 
 /* =====================================================
    TYPES
