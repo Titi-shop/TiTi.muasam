@@ -11,9 +11,13 @@ import { getImage, getStatusConfig } from "../utils";
 
 type Props = {
   item: ReturnRecord;
+  onReload?: () => void;
 };
 
-export default function ReturnCard({ item }: Props) {
+export default function ReturnCard({
+  item,
+  onReload,
+}: Props) {
   const router = useRouter();
   const { t } = useTranslation();
   const [cancelling, setCancelling] = useState(false);
@@ -37,23 +41,31 @@ export default function ReturnCard({ item }: Props) {
     router.push(`/customer/returns/${item.id}/shipping`);
   };
 const cancelReturn = async () => {
-
   try {
-
     setCancelling(true);
 
-    const res = await apiAuthFetch(
-      `/api/returns/${item.id}/cancel`,
-      {
-        method: "PATCH",
-      }
-    );
+    const res =
+      await apiAuthFetch(
+        `/api/returns/${item.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            action: "cancel",
+          }),
+        }
+      );
 
     if (!res.ok) {
-      throw new Error("CANCEL_FAILED");
+      throw new Error(
+        "CANCEL_FAILED"
+      );
     }
 
-    router.refresh();
+    await onReload?.();
 
   } catch (err) {
 
@@ -64,7 +76,7 @@ const cancelReturn = async () => {
 
     alert(
       t.cancel_failed ??
-      "Cancel failed."
+        "Cancel failed."
     );
 
   } finally {
@@ -72,7 +84,6 @@ const cancelReturn = async () => {
     setCancelling(false);
 
   }
-
 };
   const steps = [
     "pending",
