@@ -56,7 +56,7 @@ export default function ReturnDetailPage() {
   const [data, setData] = useState<ReturnDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<string | null>(null);
-  const [acting, setActing] = useState(false);
+  
 
   /* =====================================================
      LOAD DATA
@@ -272,21 +272,6 @@ export default function ReturnDetailPage() {
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* ACTION */}
-      {data.status === "shipping_back" && (
-        <div className="p-4">
-          <button
-            disabled={acting}
-            onClick={() => setActing(true)}
-            className="w-full bg-blue-500 text-white py-4 rounded-xl text-sm font-semibold active:scale-95 transition"
-          >
-            {acting
-              ? t.processing
-              : t.mark_as_received}
-          </button>
         </div>
       )}
 
