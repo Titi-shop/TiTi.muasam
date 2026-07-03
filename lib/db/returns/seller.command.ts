@@ -1,20 +1,6 @@
-import { query, withTransaction } from "@/lib/db";
-import {
-  sendNotification,
-} from "@/lib/services/notifications.service";
-import type {
-  ReturnStatus,
-  TimelineItem,
-  ReturnItem,
-  SellerReturnDetail,
-} from "./seller.types";
-export {
-  getReturnsBySeller,
-  getReturnByIdForSeller,
-} from "./seller.query";
-import {
-  buildTimeline,
-} from "./seller.timeline";
+import { withTransaction } from "@/lib/db";
+import { sendNotification } from "@/lib/services/notifications.service";
+import { isValidUuid } from "./seller.validator";
 
 /* =====================================================
    APPROVE RETURN
