@@ -1,7 +1,3 @@
-// =====================================================
-// app/api/wallet-addresses/route.ts
-// =====================================================
-
 export const runtime = "nodejs";
 
 import {
@@ -14,13 +10,9 @@ import {
 } from "@/lib/auth/guard";
 
 import {
-  getWalletAddressesByUser,
-  createWalletAddress,
-} from "@/lib/db/wallet-addresses";
-
-/* =====================================================
-   GET
-===================================================== */
+  createWalletAddressFlow,
+  listWalletAddressesFlow,
+} from "@/lib/services/wallet-address.service";
 
 export async function GET(
   request: NextRequest
@@ -30,30 +22,27 @@ export async function GET(
     const auth =
       await requireAuth(request);
 
-    const wallets =
-      await getWalletAddressesByUser(
+    const data =
+      await listWalletAddressesFlow(
         auth.userId
       );
 
-    return NextResponse.json(wallets);
+    return NextResponse.json(data);
 
   } catch {
 
     return NextResponse.json(
       {
-        error: "UNAUTHORIZED",
+        error:
+          "UNAUTHORIZED",
       },
       {
-        status: 401,
+        status:401,
       }
     );
 
   }
 }
-
-/* =====================================================
-   POST
-===================================================== */
 
 export async function POST(
   request: NextRequest
@@ -67,63 +56,34 @@ export async function POST(
     const body =
       await request.json();
 
-    const address =
-      typeof body.address === "string"
-        ? body.address.trim()
-        : "";
+    const data =
+      await createWalletAddressFlow({
 
-    const label =
-      typeof body.label === "string"
-        ? body.label.trim()
-        : null;
-
-    if (!address) {
-
-      return NextResponse.json(
-        {
-          error: "INVALID_ADDRESS",
-        },
-        {
-          status: 400,
-        }
-      );
-
-    }
-
-    const wallet =
-      await createWalletAddress({
-
-        wallet_id:
-          body.wallet_id,
-
-        user_id:
+        userId:
           auth.userId,
 
-        network:
-          "pi",
-
-        address,
-
-        label,
-
-        is_default:
-          true,
-
-        created_by:
-          auth.userId,
+        body,
 
       });
 
-    return NextResponse.json(wallet);
+    return NextResponse.json(data);
 
-  } catch {
+  } catch (
+    error
+  ) {
+
+    console.error(
+      "[WALLET_ADDRESS][API]",
+      error
+    );
 
     return NextResponse.json(
       {
-        error: "CREATE_FAILED",
+        error:
+          "CREATE_FAILED",
       },
       {
-        status: 500,
+        status:500,
       }
     );
 
