@@ -147,24 +147,22 @@ export function useCheckoutPay(params: UseCheckoutPayParams) {
     setProcessing(true);
 showMessage(
      t.creating_order ??   "Creating order...",  "info");
-    try {
-      const token = await getPiAccessToken();
-
-      const intentRes = await apiAuthFetch(
-  "/api/payments/pi/create-intent",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      product_id: item.id,
-      variant_id: product?.selectedVariant?.id ?? null,
-      quantity,
-      address_id: shipping?.id,
-    }),
-  }
-);
+      try {
+  const intentRes = await apiAuthFetch(
+    "/api/payments/pi/create-intent",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        product_id: item.id,
+        variant_id: product?.selectedVariant?.id ?? null,
+        quantity,
+        address_id: shipping?.id,
+      }),
+    }
+  );
 
       const intentData = await intentRes.json().catch(() => null);
 
