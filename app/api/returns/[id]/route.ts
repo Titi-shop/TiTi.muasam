@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/guard";
 
 import {
-  getReturnByIdForBuyer,
-  cancelReturnByBuyer,
-} from "@/lib/db/returns";
+  getReturnDetail,
+  updateReturnStatus,
+} from "@/lib/services/returns/buyer.service";
 
 export const runtime = "nodejs";
 
@@ -13,9 +13,7 @@ export const runtime = "nodejs";
    HELPERS
 ===================================================== */
 
-function isValidUuid(
-  value: string
-): boolean {
+function isValidUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value
   );
@@ -31,9 +29,7 @@ function errorJson(
   );
 }
 
-function mapError(
-  error: unknown
-) {
+function mapError(error: unknown) {
   const message =
     error instanceof Error
       ? error.message
@@ -47,11 +43,9 @@ function mapError(
       );
 
     case "RETURN_NOT_CANCELABLE":
-      return errorJson(
-        message,
-        400
-      );
-
+    case "INVALID_STATE":
+    case "TRACKING_REQUIRED":
+    case "INVALID_ACTION":
     case "INVALID_INPUT":
       return errorJson(
         message,
@@ -67,12 +61,14 @@ function mapError(
 }
 
 /* =====================================================
-   GET /api/returns/[id]
+   GET
 ===================================================== */
 
 export async function GET(
   _req: NextRequest,
-  context: {
+  {
+    params,
+  }: {
     params: {
       id: string;
     };
@@ -86,24 +82,20 @@ export async function GET(
       return auth.response;
     }
 
-    const userId =
-      auth.userId;
-
-    const id =
-      context.params.id?.trim() ??
-      "";
-
-    if (!isValidUuid(id)) {
+    if (
+      !isValidUuid(
+        params.id
+      )
+    ) {
       return errorJson(
-        "INVALID_UUID",
-        400
+        "INVALID_UUID"
       );
     }
 
     const item =
-      await getReturnByIdForBuyer(
-        id,
-        userId
+      await getReturnDetail(
+        auth.userId,
+        params.id
       );
 
     if (!item) {
@@ -116,19 +108,21 @@ export async function GET(
     return NextResponse.json(
       item
     );
+
   } catch (error) {
     return mapError(error);
   }
 }
 
 /* =====================================================
-   PATCH /api/returns/[id]
-   buyer cancel request
+   PATCH
 ===================================================== */
 
 export async function PATCH(
   req: NextRequest,
-  context: {
+  {
+    params,
+  }: {
     params: {
       id: string;
     };
@@ -142,45 +136,29 @@ export async function PATCH(
       return auth.response;
     }
 
-    const userId =
-      auth.userId;
-
-    const id =
-      context.params.id?.trim() ??
-      "";
-
-    if (!isValidUuid(id)) {
+    if (
+      !isValidUuid(
+        params.id
+      )
+    ) {
       return errorJson(
-        "INVALID_UUID",
-        400
+        "INVALID_UUID"
       );
     }
 
     const body =
-      (await req.json()) as {
-        action?: string;
-      };
+      await req.json();
 
-    const action =
-      body.action?.trim() ?? "";
-
-    if (
-      action !== "cancel"
-    ) {
-      return errorJson(
-        "INVALID_ACTION",
-        400
-      );
-    }
-
-    await cancelReturnByBuyer(
-      id,
-      userId
+    await updateReturnStatus(
+      auth.userId,
+      params.id,
+      body
     );
 
     return NextResponse.json({
       success: true,
     });
+
   } catch (error) {
     return mapError(error);
   }
