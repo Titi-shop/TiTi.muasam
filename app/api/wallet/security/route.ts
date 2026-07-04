@@ -91,29 +91,27 @@ export async function GET() {
 
   success: true,
 
-  pin_enabled:
-    security?.pin_enabled ??
-    false,
+  security: {
 
-  totp_enabled:
-    security?.totp_enabled ??
-    false,
+    pin_enabled:
+      security?.pin_enabled ?? false,
 
-  biometric_enabled:
-    security?.biometric_enabled ??
-    false,
+    totp_enabled:
+      security?.totp_enabled ?? false,
 
-  passkey_enabled:
-    security?.passkey_enabled ??
-    false,
+    biometric_enabled:
+      security?.biometric_enabled ?? false,
 
-  locked:
-    !!(
-      security?.locked_until &&
-      new Date(
-        security.locked_until
-      ) > new Date()
-    ),
+    passkey_enabled:
+      security?.passkey_enabled ?? false,
+
+    locked:
+      !!(
+        security?.locked_until &&
+        new Date(security.locked_until) > new Date()
+      ),
+
+  },
 
 });
 
