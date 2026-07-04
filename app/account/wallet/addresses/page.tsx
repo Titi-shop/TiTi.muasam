@@ -59,76 +59,108 @@ const {
   loading: authLoading,
 } = useAuth();
   /* ===================================================
-     SAVE
-  =================================================== */
+   SAVE
+=================================================== */
 
-  async function handleSave() {
-    const wallet =
-      address.trim();
+async function handleSave() {
 
-    if (!wallet) {
+  if (!user) {
+
+    setError(
+      "Please login first."
+    );
+
+    return;
+
+  }
+
+  const wallet =
+    address.trim();
+
+  if (!wallet) {
+
+    setError(
+      t.wallet_invalid_address ??
+      "Wallet address is required."
+    );
+
+    return;
+
+  }
+
+  if (!wallet.startsWith("G")) {
+
+    setError(
+      t.wallet_invalid_address ??
+      "Invalid Pi Wallet address."
+    );
+
+    return;
+
+  }
+
+  try {
+
+    setLoading(true);
+
+    setError("");
+
+    const response =
+      await apiAuthFetch(
+        "/api/wallet/addresses",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            address: wallet,
+          }),
+
+        }
+      );
+
+    const json =
+      await response.json();
+
+    if (!response.ok) {
 
       setError(
-        t.wallet_invalid_address ??
-        "Wallet address is required."
+        json.error ??
+        t.wallet_save_failed ??
+        "Save failed."
       );
 
       return;
+
     }
 
-    try {
+    router.replace(
+      "/account/wallet"
+    );
 
-      setLoading(true);
-      setError("");
-      const response =
-        await apiAuthFetch(
-          "/api/wallet/addresses",
-          {
-            method: "POST",
+  } catch (error) {
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify({
-              address:
-                wallet,
-            }),
-          }
-        );
-
-      const json =
-        await response.json();
-
-      if (!response.ok) {
-
-        setError(
-          json.error ??
-       t.wallet_save_failed ??
-       "Save failed."
-        );
-
-        return;
-      }
-
-      router.replace(
-"/account/wallet"
-);
-
-   catch (error) {
     console.error(
-        error
+      error
     );
+
     setError(
-        t.wallet_network_error ??
-        "Network error."
+      t.wallet_network_error ??
+      "Network error."
     );
-} finally {
 
-      setLoading(false);
+  } finally {
 
-    }
+    setLoading(
+      false
+    );
+  }
+
+}
   
   if (authLoading) {
 
