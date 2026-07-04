@@ -61,15 +61,7 @@ const {
   /* ===================================================
      SAVE
   =================================================== */
-if (!user) {
 
-  setError(
-    "Please login first."
-  );
-
-  return;
-
-}
   async function handleSave() {
     const wallet =
       address.trim();
