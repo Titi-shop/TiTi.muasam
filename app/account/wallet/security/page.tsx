@@ -23,7 +23,9 @@ import {
 import {
   useTranslationClient as useTranslation,
 } from "@/app/lib/i18n/client";
-
+import {
+  useAuth,
+} from "@/context/AuthContext";
 import {
   apiAuthFetch,
 } from "@/lib/api/apiAuthFetch";
@@ -33,13 +35,9 @@ import {
 ===================================================== */
 
 type WalletSecurity = {
-
   pin_enabled: boolean;
-
   totp_enabled: boolean;
-
   biometric_enabled: boolean;
-
   passkey_enabled: boolean;
 
 };
@@ -55,7 +53,10 @@ export default function WalletSecurityPage() {
 
   const { t } =
     useTranslation();
-
+const {
+  user,
+  loading: authLoading,
+} = useAuth();
   const [
     loading,
     setLoading,
@@ -131,15 +132,36 @@ export default function WalletSecurityPage() {
 
   useEffect(() => {
 
-    void loadSecurity();
+  if (
+    authLoading ||
+    !user
+  ) {
 
-  }, []);
+    return;
+
+  }
+
+  void loadSecurity();
+
+}, [
+  authLoading,
+  user,
+]);
+  if (authLoading) {
+  return null;
+
+}
+
+if (!user) {
+  router.replace("/");
+  return null;
+
+}
     /* ===================================================
      LOADING
   =================================================== */
 
   if (loading) {
-
     return (
 
       <main
