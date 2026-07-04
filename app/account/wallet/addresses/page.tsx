@@ -130,6 +130,7 @@ const {
 
     }
   }
+}
   if (authLoading) {
 
   return null;
