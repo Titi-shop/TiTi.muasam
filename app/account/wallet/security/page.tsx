@@ -147,13 +147,34 @@ const {
   authLoading,
   user,
 ]);
+  useEffect(() => {
+
   if (authLoading) {
+
+    return;
+
+  }
+
+  if (!user) {
+
+    router.replace("/");
+
+  }
+
+}, [
+  authLoading,
+  user,
+  router,
+]);
+
+if (authLoading) {
+
   return null;
 
 }
 
 if (!user) {
-  router.replace("/");
+
   return null;
 
 }
