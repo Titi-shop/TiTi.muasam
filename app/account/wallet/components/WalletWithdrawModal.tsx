@@ -99,11 +99,6 @@ const [
 ] = useState(false);
 
 const [
-  pendingWithdraw,
-  setPendingWithdraw,
-] = useState(false);
-
-const [
   pinEnabled,
   setPinEnabled,
 ] = useState(false);
@@ -273,7 +268,84 @@ const [
     }
 
   }
+async function submitWithdraw() {
 
+    if (!selectedWallet) {
+
+        return;
+
+    }
+
+    const parsedAmount =
+        Number(amount);
+
+    try {
+
+        setLoading(true);
+
+        const result =
+            await createWithdraw({
+
+                amount:
+                    parsedAmount,
+
+                walletAddressId:
+                    selectedWallet.id,
+
+            });
+
+        if (!result.success) {
+
+            setError(
+                getErrorMessage(
+                    result.error
+                )
+            );
+
+            return;
+
+        }
+
+        await onSuccess();
+
+        onClose();
+
+    } finally {
+
+        setLoading(false);
+
+    }
+
+}
+  async function loadSecurity() {
+
+    try {
+
+        const response =
+            await apiAuthFetch(
+                "/api/wallet/security"
+            );
+
+        if (!response.ok) {
+
+            return;
+
+        }
+
+        const json =
+            await response.json();
+
+        setPinEnabled(
+            !!json.pin_enabled
+        );
+
+    } catch {
+
+        setPinEnabled(false);
+
+    }
+
+}
   /* ===================================================
      UI
   =================================================== */
@@ -308,7 +380,23 @@ const [
           setWalletSheetOpen(false);
         }}
       />
+<WalletPinVerifyModal
 
+    open={
+        pinModalOpen
+    }
+    onClose={() => {
+        setPinModalOpen(
+            false
+        );
+    }}
+    onSuccess={() => {
+        setPinModalOpen(
+            false
+        );
+        void submitWithdraw();
+    }}
+/>
       {/* SHEET */}
 
       <div
