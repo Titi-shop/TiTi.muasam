@@ -115,12 +115,16 @@ const router =
     void refresh();
   }}
   onWalletClick={() => {
-    router.push(
-      "/account/wallet/addresses"
-    );
+    router.push("/account/wallet/addresses");
   }}
   onWithdraw={() => {
     setWithdrawOpen(true);
+  }}
+  onSecurity={() => {
+    router.push("/account/wallet/security");
+  }}
+  onHistory={() => {
+    router.push("/account/wallet/history");
   }}
 />
 
