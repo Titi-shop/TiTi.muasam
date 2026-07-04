@@ -42,6 +42,8 @@ type Props = {
   refreshing: boolean;
   defaultWallet?:
     WalletAddress | null;
+  onSecurity?: () => void;
+onHistory?: () => void;
   onRefresh: () => void;
   onWithdraw: () => void;
   onWalletClick?: () => void;
@@ -54,11 +56,20 @@ type Props = {
 export default function WalletHero({
 
   balance,
+
   refreshing,
+
   defaultWallet,
+
   onRefresh,
+
   onWithdraw,
+
   onWalletClick,
+
+  onSecurity,
+
+  onHistory,
 
 }: Props) {
 
@@ -397,24 +408,11 @@ export default function WalletHero({
 
         <div className="mt-6">
 
-       <WalletActions
+     <WalletActions
   onWithdraw={onWithdraw}
-
-  onAddresses={() => {
-    onWalletClick?.();
-  }}
-
-  onSecurity={() => {
-    router.push(
-      "/account/wallet/security"
-    );
-  }}
-
-  onHistory={() => {
-    router.push(
-      "/account/wallet/history"
-    );
-  }}
+  onAddresses={onWalletClick}
+  onSecurity={onSecurity}
+  onHistory={onHistory}
 />
 
         </div>
