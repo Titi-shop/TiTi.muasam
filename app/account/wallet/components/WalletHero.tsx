@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import {
+  useEffect,
   useState,
 } from "react";
 
@@ -73,7 +74,31 @@ export default function WalletHero({
     hideBalance,
     setHideBalance,
   ] = useState(false);
+useEffect(() => {
 
+  const saved =
+    window.localStorage.getItem(
+      "wallet_hide_balance"
+    );
+
+  if (saved !== null) {
+
+    setHideBalance(
+      saved === "true"
+    );
+
+  }
+
+}, []);
+  useEffect(() => {
+
+  window.localStorage.setItem(
+    "wallet_hide_balance",
+    String(hideBalance)
+  );
+
+}, [hideBalance]);
+  
   return (
 
     <section
@@ -176,35 +201,37 @@ export default function WalletHero({
                   : `π ${formatPi(balance)}`}
               </h1>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setHideBalance(
-                    !hideBalance
-                  );
-                }}
-                className="
-                  text-white/80
-                  transition
-                  hover:text-white
-                "
-              >
+             <button
+  type="button"
+  onClick={() => {
 
-                {hideBalance ? (
+    setHideBalance(
+      (prev) => !prev
+    );
 
-                  <EyeOff
-                    size={18}
-                  />
+  }}
+  className="
+    text-white/80
+    transition
+    hover:text-white
+  "
+>
 
-                ) : (
+  {hideBalance ? (
 
-                  <Eye
-                    size={18}
-                  />
+    <EyeOff
+      size={18}
+    />
 
-                )}
+  ) : (
 
-              </button>
+    <Eye
+      size={18}
+    />
+
+  )}
+
+</button>
             </div>
           </div>
         </div>
