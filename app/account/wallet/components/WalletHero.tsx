@@ -7,8 +7,6 @@
 import {
   Eye,
   EyeOff,
-  RefreshCcw,
-  ChevronRight,
 } from "lucide-react";
 
 import {
@@ -207,43 +205,8 @@ export default function WalletHero({
                 )}
 
               </button>
-
             </div>
-
           </div>
-
-          {/* REFRESH */}
-
-          <button
-            type="button"
-            onClick={onRefresh}
-            className="
-              flex
-              h-11
-              w-11
-              items-center
-              justify-center
-              rounded-xl
-              border
-              border-white/20
-              bg-white/10
-              backdrop-blur-md
-              transition-all
-              active:scale-95
-            "
-          >
-
-            <RefreshCcw
-              size={18}
-              className={
-                refreshing
-                  ? "animate-spin"
-                  : ""
-              }
-            />
-
-          </button>
-
         </div>
       {/* ======================================
     DEFAULT WALLET
