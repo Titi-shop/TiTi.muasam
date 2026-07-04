@@ -415,13 +415,18 @@ export async function setupWalletPin(
   );
 
   const updated =
-    await setWalletPin(
+  await setWalletPin({
 
+    user_id:
       input.userId,
 
-      encoded
+    pin_hash:
+      encoded,
 
-    );
+    updated_by:
+      input.userId,
+
+  });
 
   if (!updated) {
 
