@@ -25,6 +25,7 @@ import {
 import {
   apiAuthFetch,
 } from "@/lib/api/apiAuthFetch";
+import { useAuth } from "@/context/AuthContext";
 
 /* =====================================================
    CONSTANTS
@@ -44,7 +45,11 @@ export default function WalletPinSetupPage() {
 
   const { t } =
     useTranslation();
-
+const {
+  user,
+  loading: authLoading,
+} = useAuth();
+  
   /* ===================================================
      STATE
   =================================================== */
