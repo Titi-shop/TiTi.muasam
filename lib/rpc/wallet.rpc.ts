@@ -27,19 +27,12 @@ if (!PI_HORIZON) {
 ===================================================== */
 
 export type PiWalletVerification = {
-
   exists: boolean;
-
   address: string;
-
   sequence: string | null;
-
   balance: number | null;
-
   network: string;
-
   rpcReachable: boolean;
-
   raw: Record<string, unknown>;
 
 };
@@ -283,19 +276,35 @@ export async function verifyPiWallet(
 
   } catch (error) {
 
-    const e =
-      error as {
-        response?:
-          {
-            status:
-              number;
-          };
-      };
+    function getStatusCode(
+  error: unknown
+): number | null {
 
+  if (
+    typeof error !== "object" ||
+    error === null
+  ) {
+    return null;
+  }
+
+  const response =
+    (
+      error as {
+        response?: {
+          status?: number;
+        };
+      }
+    ).response;
+
+  return typeof response?.status === "number"
+    ? response.status
+    : null;
+
+}
     if (
-      e.response?.status ===
-      404
-    ) {
+  status === 400 ||
+  status === 404
+) {
 
       log(
         "ACCOUNT_NOT_FOUND",
@@ -325,7 +334,16 @@ export async function verifyPiWallet(
         rpcReachable:
           true,
 
-        raw: {},
+        raw:
+  typeof error === "object" &&
+  error !== null
+    ? (
+        error as Record<
+          string,
+          unknown
+        >
+      )
+    : {},
 
       };
 
@@ -356,7 +374,16 @@ export async function verifyPiWallet(
       rpcReachable:
         false,
 
-      raw: {},
+      raw:
+  typeof error === "object" &&
+  error !== null
+    ? (
+        error as Record<
+          string,
+          unknown
+        >
+      )
+    : {},
 
     };
 
