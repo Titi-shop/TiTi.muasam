@@ -44,30 +44,26 @@ export function useWallet() {
   =================================================== */
 
   const {
-    data,
-    error,
-    isLoading,
-    mutate,
-  } = useSWR(
-    !user || authLoading
+  data,
+  error,
+  isLoading,
+  mutate,
+} = useSWR(
+
+  !user || authLoading
     ? null
-    : "wallet"
+    : "wallet",
 
-    fetchWallet,
+  fetchWallet,
 
-    {
-      ...WALLET_SWR_CONFIG,
+  {
+    ...WALLET_SWR_CONFIG,
+    shouldRetryOnError: true,
+    errorRetryCount: 3,
+    errorRetryInterval: 2000,
+  }
 
-      shouldRetryOnError:
-        true,
-
-      errorRetryCount:
-        3,
-
-      errorRetryInterval:
-        2000,
-    }
-  );
+);
 
   /* ===================================================
      BALANCE
