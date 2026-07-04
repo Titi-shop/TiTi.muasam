@@ -291,39 +291,39 @@ export default function WalletSecurityPage() {
           WALLET PIN
       ========================================== */}
 
-     <button
-  type="button"
-  onClick={() => {
+      <button
+        type="button"
+        onClick={() => {
 
-    if (security?.pin_enabled) {
+          if (security?.pin_enabled) {
 
-      router.push(
-        "/account/wallet/security/change"
-      );
+            router.push(
+              "/account/wallet/security/change"
+            );
 
-      return;
+            return;
 
-    }
+          }
 
-    router.push(
-      "/account/wallet/security/setup"
-    );
+          router.push(
+            "/account/wallet/security/setup"
+          );
 
-  }}
-  className="
-    mt-8
-    w-full
-    rounded-3xl
-    border
-    border-[var(--nav-border)]
-    bg-[var(--card-bg)]
-    p-5
-    text-left
-    transition
-    hover:border-primary/30
-    active:scale-[0.99]
-  "
->
+        }}
+        className="
+          mt-8
+          w-full
+          rounded-3xl
+          border
+          border-[var(--nav-border)]
+          bg-[var(--card-bg)]
+          p-5
+          text-left
+          transition
+          hover:border-primary/30
+          active:scale-[0.99]
+        "
+      >
 
         <div
           className="
@@ -332,6 +332,8 @@ export default function WalletSecurityPage() {
             justify-between
           "
         >
+
+          {/* LEFT */}
 
           <div
             className="
@@ -378,32 +380,18 @@ export default function WalletSecurityPage() {
                   text-[var(--text-muted)]
                 "
               >
-
                 {security?.pin_enabled
                   ? "PIN protection is enabled."
                   : "Create a PIN to secure withdrawals."}
-
               </p>
 
             </div>
 
           </div>
 
-       <button
-  type="button"
-  tabIndex={-1}
-  className="
-    flex
-    h-10
-    w-10
-    items-center
-    justify-center
-    rounded-xl
-    border
-    border-[var(--nav-border)]
-    pointer-events-none
-  "
->
+          {/* RIGHT */}
+
+          <div
             className="
               flex
               h-10
@@ -420,7 +408,7 @@ export default function WalletSecurityPage() {
               size={18}
             />
 
-          </button>
+          </div>
 
         </div>
 
