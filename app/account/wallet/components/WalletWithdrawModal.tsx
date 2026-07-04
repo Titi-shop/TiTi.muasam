@@ -19,6 +19,10 @@ import {
 } from "@/app/lib/i18n/client";
 
 import {
+  apiAuthFetch,
+} from "@/lib/api/apiAuthFetch";
+
+import {
   createWithdraw,
 } from "../wallet.withdraw";
 
@@ -110,21 +114,21 @@ const [
   useEffect(() => {
 
     if (!open) {
-      return;
+
+        return;
+
     }
 
     setAmount("");
-
     setError("");
-
     setSelectedWallet(
-      defaultWallet
+        defaultWallet
     );
-
-  }, [
+    void loadSecurity();
+}, [
     open,
     defaultWallet,
-  ]);
+]);
 
   /* ===================================================
      HIDE
@@ -192,82 +196,58 @@ const [
      SUBMIT
   =================================================== */
 
-  async function handleSubmit() {
+  
+async function handleSubmit() {
 
-    setError("");
+  setError("");
 
-    const parsedAmount =
-      Number(amount);
+  const parsedAmount =
+    Number(amount);
 
-    if (
-      Number.isNaN(
-        parsedAmount
-      ) ||
-      parsedAmount <= 0
-    ) {
+  if (
+    Number.isNaN(parsedAmount) ||
+    parsedAmount <= 0
+  ) {
 
-      setError(
-        getErrorMessage(
-          "INVALID_AMOUNT"
-        )
-      );
+    setError(
+      getErrorMessage(
+        "INVALID_AMOUNT"
+      )
+    );
 
-      return;
-    }
-
-    if (
-      !selectedWallet
-    ) {
-
-      setError(
-        getErrorMessage(
-          "INVALID_WALLET"
-        )
-      );
-
-      return;
-    }
-
-    try {
-
-      setLoading(true);
-
-      const result =
-        await createWithdraw({
-
-          amount:
-            parsedAmount,
-
-          walletAddressId:
-            selectedWallet.id,
-
-        });
-
-      if (
-        !result.success
-      ) {
-
-        setError(
-          getErrorMessage(
-            result.error
-          )
-        );
-
-        return;
-      }
-
-      await onSuccess();
-
-      onClose();
-
-    } finally {
-
-      setLoading(
-        false
-      );
-    }
+    return;
 
   }
+
+  if (
+    !selectedWallet
+  ) {
+
+    setError(
+      getErrorMessage(
+        "INVALID_WALLET"
+      )
+    );
+
+    return;
+
+  }
+
+  if (!pinEnabled) {
+
+    router.push(
+      "/account/wallet/security/setup"
+    );
+
+    return;
+
+  }
+
+  setPinModalOpen(
+    true
+  );
+
+}
 async function submitWithdraw() {
 
     if (!selectedWallet) {
