@@ -154,9 +154,11 @@ export async function getVariantById(
   }
 
   vlog(
-    "GET_VARIANT_RESULT",
-    row
-  );
+  "GET_VARIANT_DONE",
+  {
+    found: true,
+  }
+);
 
   return row;
 }
