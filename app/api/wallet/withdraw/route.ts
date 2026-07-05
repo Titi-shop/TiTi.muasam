@@ -44,7 +44,6 @@ async function authenticate() {
   return getUserFromBearer();
 
 }
-
 /* =====================================================
    GET
 ===================================================== */
@@ -55,10 +54,22 @@ export async function GET(
 
   try {
 
+    console.log(
+      "[WALLET][WITHDRAW][GET][START]"
+    );
+
+    /* ===============================================
+       AUTH
+    =============================================== */
+
     const auth =
-      await authenticate();
+      await getUserFromBearer();
 
     if (!auth) {
+
+      console.warn(
+        "[WALLET][WITHDRAW][GET][UNAUTHORIZED]"
+      );
 
       return NextResponse.json(
         {
@@ -72,23 +83,55 @@ export async function GET(
 
     }
 
+    console.log(
+      "[WALLET][WITHDRAW][GET][AUTH_OK]",
+      {
+        userId:
+          auth.userId,
+      }
+    );
+
+    /* ===============================================
+       QUERY
+    =============================================== */
+
     const id =
       request.nextUrl.searchParams.get(
         "id"
       );
 
-    if (id) {
+    /* ===============================================
+       DETAIL
+    =============================================== */
+
+    if (
+      typeof id === "string" &&
+      id.trim() !== ""
+    ) {
+
+      console.log(
+        "[WALLET][WITHDRAW][GET][DETAIL]",
+        {
+          withdrawalId:
+            id,
+        }
+      );
 
       const item =
         await getUserWithdrawHistoryDetail(
-
           id,
-
           auth.userId
-
         );
 
       if (!item) {
+
+        console.warn(
+          "[WALLET][WITHDRAW][GET][NOT_FOUND]",
+          {
+            withdrawalId:
+              id,
+          }
+        );
 
         return NextResponse.json(
           {
@@ -102,6 +145,10 @@ export async function GET(
 
       }
 
+      console.log(
+        "[WALLET][WITHDRAW][GET][DETAIL_OK]"
+      );
+
       return NextResponse.json({
 
         success: true,
@@ -112,10 +159,26 @@ export async function GET(
 
     }
 
+    /* ===============================================
+       LIST
+    =============================================== */
+
+    console.log(
+      "[WALLET][WITHDRAW][GET][LIST]"
+    );
+
     const items =
       await getUserWithdrawHistory(
         auth.userId
       );
+
+    console.log(
+      "[WALLET][WITHDRAW][GET][LIST_OK]",
+      {
+        total:
+          items.length,
+      }
+    );
 
     return NextResponse.json({
 
@@ -130,8 +193,10 @@ export async function GET(
   ) {
 
     console.error(
-      "[WALLET][WITHDRAW][GET]",
-      error
+      "[WALLET][WITHDRAW][GET][ERROR]",
+      error instanceof Error
+        ? error.message
+        : "UNKNOWN_ERROR"
     );
 
     return NextResponse.json(
