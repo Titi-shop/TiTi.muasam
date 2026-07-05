@@ -59,7 +59,23 @@ export type PricingResult = {
 function log(step: string, data?: unknown) {
   console.log(`[PRICING][${step}]`, data ?? "");
 }
+function maskId(
+  value: string
+): string {
 
+  if (value.length <= 8) {
+
+    return value;
+
+  }
+
+  return (
+    value.slice(0, 4) +
+    "..." +
+    value.slice(-4)
+  );
+
+}
 /* =========================================================
    HELPERS
 ========================================================= */
@@ -94,12 +110,29 @@ function isSaleActive(start: string | null, end: string | null): boolean {
 ========================================================= */
 
 async function loadAddress(userId: string, addressId: string) {
-  log("ADDRESS_LOAD", { userId, addressId });
+  log(
+  "ADDRESS_LOAD",
+  {
+
+    userId:
+      maskId(
+        userId
+      ),
+
+    addressId:
+      maskId(
+        addressId
+      ),
+
+  }
+);
 
   const address = await getAddressById(userId, addressId);
 
   if (!address) {
-    log("ADDRESS_NOT_FOUND", addressId);
+    log(
+  "ADDRESS_NOT_FOUND"
+);
     throw new Error("ADDRESS_NOT_FOUND");
   }
 
@@ -115,7 +148,7 @@ async function loadAddress(userId: string, addressId: string) {
 ========================================================= */
 
 async function loadProduct(productId: string) {
-  log("PRODUCT_LOAD", productId);
+  log("PRODUCT_LOAD");
 
   const p = await getProductById(productId);
 
@@ -166,7 +199,7 @@ if (
   );
 }
 
-  log("PRODUCT_OK", product);
+  log("PRODUCT_OK");
 
   return product;
 }
@@ -176,7 +209,7 @@ if (
 ========================================================= */
 
 async function loadVariant(variantId: string, productId: string) {
-  log("VARIANT_LOAD", { variantId, productId });
+  log("VARIANT_LOAD");
 
   const v = await getVariantById(variantId);
 
@@ -185,9 +218,7 @@ async function loadVariant(variantId: string, productId: string) {
 
   const variant = {
   id: String(v.id),
-
   price: safeNumber(v.price),
-
   sale_price:
     v.sale_price !== null
       ? safeNumber(v.sale_price)
@@ -214,7 +245,7 @@ if (
   );
 }
 
-  log("VARIANT_OK", variant);
+  log("VARIANT_OK");
 
   return variant;
 }
@@ -293,7 +324,25 @@ async function getShipping(
 export async function calculatePricing(
   input: PricingInput
 ): Promise<PricingResult> {
-  log("START", input);
+  log(
+  "START",
+  {
+
+    userId:
+      maskId(
+        input.user_id
+      ),
+
+    addressId:
+      maskId(
+        input.address_id
+      ),
+
+    itemCount:
+      input.items.length,
+
+  }
+);
 
   if (!input.items?.length) throw new Error("INVALID_ITEMS");
 
@@ -311,10 +360,24 @@ export async function calculatePricing(
   const items: PricingResult["items"] = [];
 
   for (const item of input.items) {
-    log("ITEM_START", item);
+    log(
+  "ITEM_START",
+  {
+
+    quantity:
+      item.quantity,
+
+    hasVariant:
+      item.variant_id !==
+      null,
+
+  }
+);
 
     if (!isUUID(item.product_id)) {
-      log("INVALID_PRODUCT_ID", item.product_id);
+      log(
+  "INVALID_PRODUCT_ID"
+);
       throw new Error("INVALID_PRODUCT_ID");
     }
 
@@ -404,7 +467,15 @@ const line = price * qty;
 
     items.push(resultItem);
 
-    log("ITEM_DONE", resultItem);
+    log(
+  "ITEM_DONE",
+  {
+    quantity:
+      qty,
+    subtotal:
+      line,
+  }
+);
   }
 const result: PricingResult = {
   items,
@@ -416,7 +487,16 @@ const result: PricingResult = {
   shipping_zone: shippingZone,
 };
 
-  log("DONE", result);
+  log(
+  "DONE",
+  {
+    subtotal,
+    shipping,
+    total:
+      subtotal +
+      shipping,
+  }
+);
   return result;
 }
 
