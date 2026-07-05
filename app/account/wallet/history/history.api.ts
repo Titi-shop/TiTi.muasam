@@ -2,6 +2,10 @@
 // app/account/wallet/history/history.api.ts
 // =====================================================
 
+import {
+  apiAuthFetch,
+} from "@/lib/api/apiAuthFetch";
+
 import type {
   WithdrawHistoryResponse,
 } from "./history.types";
@@ -10,16 +14,18 @@ import type {
    GET WITHDRAW HISTORY
 ===================================================== */
 
-export async function getWithdrawHistory(): Promise<WithdrawHistoryResponse> {
+export async function getWithdrawHistory(): Promise<
+  WithdrawHistoryResponse
+> {
 
-  const res = await fetch(
-    "/api/wallet/withdraw",
-    {
-      method: "GET",
-      credentials: "include",
-      cache: "no-store",
-    }
-  );
+  const res =
+    await apiAuthFetch(
+      "/api/wallet/withdraw",
+      {
+        method: "GET",
+        cache: "no-store",
+      }
+    );
 
   if (!res.ok) {
 
