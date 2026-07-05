@@ -1,151 +1,381 @@
-import { previewOrder } from "@/lib/db/orders.preview";
+import {
+  previewOrder,
+} from "@/lib/db/orders.preview";
 
 /* =========================================================
    TYPES
 ========================================================= */
 
 type RawInput = {
+
   userId: string;
+
   raw: unknown;
+
 };
 
 type PreviewItem = {
+
   product_id: string;
+
   quantity: number;
+
   variant_id: string | null;
+
 };
 
 type PreviewNormalizedInput = {
+
   userId: string;
+
   address_id: string;
+
   items: PreviewItem[];
+
 };
 
 /* =========================================================
-   HELPERS
+   LOG
 ========================================================= */
 
-function isUUID(v: unknown): v is string {
-  return (
-    typeof v === "string" &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v)
-  );
-}
+function maskId(
+  value: string
+): string {
 
-function safeQty(v: unknown): number {
-  const n = Number(v);
+  if (
+    value.length <= 8
+  ) {
 
-  if (!Number.isInteger(n) || n <= 0) {
-    return 1;
+    return value;
+
   }
 
-  return Math.min(n, 100);
+  return (
+    value.slice(0, 4) +
+    "..." +
+    value.slice(-4)
+  );
+
 }
 
+function vlog(
+  step: string,
+  data?: unknown
+): void {
 
+  console.log(
+    `[ORDER][PREVIEW][${step}]`,
+    data ?? ""
+  );
 
-  function normalizePreviewInput({
+}
+
+/* =========================================================
+   VALIDATION
+========================================================= */
+
+function isUUID(
+  value: unknown
+): value is string {
+
+  return (
+
+    typeof value ===
+      "string"
+
+    &&
+
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value
+    )
+
+  );
+
+}
+
+function normalizeString(
+  value: unknown
+): string {
+
+  return typeof value ===
+    "string"
+      ? value.trim()
+      : "";
+
+}
+
+function normalizeUUID(
+  value: unknown
+): string {
+
+  const uuid =
+    normalizeString(
+      value
+    );
+
+  if (
+    !isUUID(
+      uuid
+    )
+  ) {
+
+    return "";
+
+  }
+
+  return uuid;
+
+}
+
+function normalizeQuantity(
+  value: unknown
+): number {
+
+  const number =
+    Number(
+      value
+    );
+
+  if (
+
+    !Number.isInteger(
+      number
+    )
+
+    ||
+
+    number <= 0
+
+  ) {
+
+    return 1;
+
+  }
+
+  return Math.min(
+    number,
+    100
+  );
+
+}
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+function ensure(
+  condition: boolean,
+  code: string
+): void {
+
+  if (
+    !condition
+  ) {
+
+    throw new Error(
+      code
+    );
+
+  }
+
+}
+/* =========================================================
+   NORMALIZE REQUEST
+========================================================= */
+
+function normalizePreviewInput({
   userId,
   raw,
 }: RawInput): PreviewNormalizedInput {
-  if (!raw || typeof raw !== "object") {
-    throw new Error("INVALID_BODY");
-  }
 
-  const body = raw as Record<string, unknown>;
-     
-if ("zone" in body) {
-  console.warn(
-    "[ORDER_PREVIEW] zone from client ignored",
-    body.zone
+  ensure(
+    raw !== null &&
+      typeof raw === "object",
+    "INVALID_BODY"
   );
-}
-     
+
+  const body =
+    raw as Record<
+      string,
+      unknown
+    >;
+
+  if (
+    "zone" in body
+  ) {
+
+    vlog(
+      "CLIENT_ZONE_IGNORED"
+    );
+
+  }
+
   const address_id =
-    typeof body.address_id === "string"
-      ? body.address_id.trim()
-      : "";
+    normalizeUUID(
+      body.address_id
+    );
 
-  if (!isUUID(address_id)) {
-    throw new Error("INVALID_ADDRESS_ID");
-  }
+  ensure(
+    address_id !== "",
+    "INVALID_ADDRESS_ID"
+  );
 
-  /* =========================
-     FIX: EXTRACT ITEMS HERE
-  ========================= */
-  const rawItems = Array.isArray(body.items) ? body.items : [];
+  const rawItems =
+    Array.isArray(
+      body.items
+    )
+      ? body.items
+      : [];
 
-  if (!rawItems.length) {
-    throw new Error("INVALID_ITEMS");
-  }
+  ensure(
+    rawItems.length > 0,
+    "INVALID_ITEMS"
+  );
 
-  const items: PreviewItem[] = [];
+  const items:
+    PreviewItem[] =
+      [];
 
-  for (const rawItem of rawItems) {
-    if (!rawItem || typeof rawItem !== "object") {
+  for (
+    const rawItem of rawItems
+  ) {
+
+    if (
+      !rawItem ||
+      typeof rawItem !==
+        "object"
+    ) {
+
       continue;
+
     }
 
-    const item = rawItem as Record<string, unknown>;
+    const item =
+      rawItem as Record<
+        string,
+        unknown
+      >;
 
     const product_id =
-      typeof item.product_id === "string"
-        ? item.product_id.trim()
-        : "";
+      normalizeUUID(
+        item.product_id
+      );
 
-    const variant_id =
-      typeof item.variant_id === "string" && item.variant_id.trim()
-        ? item.variant_id.trim()
-        : null;
+    if (
+      !product_id
+    ) {
 
-    const quantity = safeQty(item.quantity);
-
-    if (!isUUID(product_id)) {
       continue;
+
     }
 
-    if (variant_id && !isUUID(variant_id)) {
+    const variant_id =
+      item.variant_id ===
+        null ||
+      item.variant_id ===
+        undefined
+        ? null
+        : normalizeUUID(
+            item.variant_id
+          );
+
+    if (
+
+      item.variant_id &&
+      !variant_id
+
+    ) {
+
       continue;
+
     }
 
     items.push({
+
       product_id,
+
       variant_id,
-      quantity,
+
+      quantity:
+        normalizeQuantity(
+          item.quantity
+        ),
+
     });
+
   }
 
-  if (!items.length) {
-    throw new Error("INVALID_ITEMS");
-  }
+  ensure(
+    items.length > 0,
+    "INVALID_ITEMS"
+  );
 
   return {
+
     userId,
+
     address_id,
+
     items,
+
   };
-  }
+
+}
 
 /* =========================================================
    MAIN SERVICE
 ========================================================= */
 
-export async function previewOrderFromRequest(input: RawInput) {
-  const normalized = normalizePreviewInput(input);
+export async function previewOrderFromRequest(
+  input: RawInput
+) {
 
-  console.log("[ORDER][PREVIEW][START]", {
-  userId: normalized.userId,
-  address_id: normalized.address_id,
-  items: normalized.items,
-});
+  const normalized =
+    normalizePreviewInput(
+      input
+    );
 
-  const result = await previewOrder(normalized);
+  vlog(
+    "START",
+    {
 
-  console.log("[ORDER][PREVIEW][SUCCESS]", {
-  buyer_zone: result.buyer_zone,
-  subtotal: result.subtotal,
-  shipping: result.shipping_fee,
-  total: result.total,
-});
+      userId:
+        maskId(
+          normalized.userId
+        ),
+
+      addressId:
+        maskId(
+          normalized.address_id
+        ),
+
+      itemCount:
+        normalized.items.length,
+
+    }
+  );
+
+  const result =
+    await previewOrder(
+      normalized
+    );
+
+  vlog(
+    "SUCCESS",
+    {
+
+      subtotal:
+        result.subtotal,
+
+      shipping:
+        result.shipping_fee,
+
+      total:
+        result.total,
+
+    }
+  );
+
   return result;
+
 }
