@@ -1,3 +1,7 @@
+// =====================================================
+// app/api/wallet/route.ts
+// =====================================================
+
 import {
   NextResponse,
 } from "next/server";
@@ -7,11 +11,15 @@ import {
 } from "@/lib/auth/guard";
 
 import {
-  getWalletByUserId,
-} from "@/lib/db/wallet";
+  getWallet,
+} from "@/lib/services/wallet.service";
 
 export const runtime =
   "nodejs";
+
+/* =====================================================
+   GET
+===================================================== */
 
 export async function GET() {
 
@@ -21,38 +29,27 @@ export async function GET() {
       await requireAuth();
 
     if (!auth.ok) {
+
       return auth.response;
+
     }
 
     const wallet =
-      await getWalletByUserId(
+      await getWallet(
         auth.userId
       );
 
-    return NextResponse.json({
-      balance:
-        wallet.balance,
+    return NextResponse.json(
+      wallet
+    );
 
-      availableBalance:
-        wallet.availableBalance,
-
-      pendingBalance:
-        wallet.pendingBalance,
-
-      frozenBalance:
-        wallet.frozenBalance,
-    });
-
-  } catch (error) {
+  } catch (
+    error
+  ) {
 
     console.error(
-      "[WALLET][GET_FAILED]",
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "UNKNOWN_ERROR",
-      }
+      "[WALLET][GET]",
+      error
     );
 
     return NextResponse.json(
@@ -64,5 +61,7 @@ export async function GET() {
         status: 500,
       }
     );
+
   }
+
 }
