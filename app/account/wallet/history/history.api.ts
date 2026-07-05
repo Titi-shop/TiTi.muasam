@@ -13,7 +13,7 @@ import type {
 export async function getWithdrawHistory(): Promise<WithdrawHistoryResponse> {
 
   const res = await fetch(
-    "/api/wallet/withdrawals",
+    "/api/wallet/withdraw",
     {
       method: "GET",
       credentials: "include",
