@@ -5,6 +5,7 @@
 import {
   getWalletWithdrawHistoryByUser,
   getWalletWithdrawHistoryDetail,
+  type WalletWithdrawalHistoryRow,
 } from "@/lib/db/wallet/wallet.withdraw.history";
 
 /* =====================================================
@@ -16,13 +17,9 @@ export type WalletWithdrawHistoryItem = {
   id: string;
 
   amount: number;
-
   currency: string;
-
   wallet_address: string;
-
   wallet_address_id: string | null;
-
   status:
     | "pending"
     | "processing"
@@ -94,15 +91,7 @@ function normalizeStatus(
 ===================================================== */
 
 function mapWithdrawal(
-  row: Awaited<
-    ReturnType<
-      typeof getWalletWithdrawHistoryDetail
-    >
-  > extends infer T
-    ? T extends null
-      ? never
-      : NonNullable<T>
-    : never
+  row: WalletWithdrawalHistoryRow
 ): WalletWithdrawHistoryItem {
 
   return {
