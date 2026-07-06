@@ -9,19 +9,46 @@ import type {
 import type {
   ProductRequestBody,
 } from "./types";
-
 /* =====================================================
    LOGGER
 ===================================================== */
 
 export function log(
-  scope: string,
-  message: string,
+  step: string,
   data?: unknown
-) {
+): void {
   console.log(
-    `[${scope}] ${message}`,
+    `[PRODUCTS][${step}]`,
     data ?? ""
+  );
+}
+
+export function logError(
+  step: string,
+  error: unknown
+): void {
+  console.error(
+    `[PRODUCTS][${step}]`,
+    {
+      error:
+        error instanceof Error
+          ? error.message
+          : "UNKNOWN_ERROR",
+    }
+  );
+}
+
+export function maskId(
+  value: string
+): string {
+  if (value.length <= 8) {
+    return value;
+  }
+
+  return (
+    value.slice(0, 4) +
+    "..." +
+    value.slice(-4)
   );
 }
 
