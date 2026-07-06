@@ -124,7 +124,7 @@ export async function createReturn(
     const returnNumber =
       `RET-${Date.now()}`;
 
-    const { rows: returnRows } =
+    const result  =
       await client.query<{
         id: string;
       }>(
@@ -158,9 +158,15 @@ export async function createReturn(
           refundAmount,
         ]
       );
-
-    const returnId =
-      returnRows[0].id;
+    if (
+  result.rowCount !== 1
+) {
+  error(
+    "FAILED_TO_CREATE_RETURN"
+  );
+}
+const returnId =
+  result.rows[0].id;
     const itemResult =
   await client.query(
       `
