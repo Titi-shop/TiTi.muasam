@@ -15,6 +15,7 @@ import {
   slugify,
   log,
   logError,
+  maskId,
 } from "./helpers";
 
 import { mapRow } from "./mapper";
@@ -27,14 +28,12 @@ export async function updateProductBySeller(
   input: UpdateProductInput
 ): Promise<ProductRecord | null> {
   log(
-    "UPDATE_START",
-    {
-      seller_id,
-      product_id,
-      input,
-    }
-  );
-
+  "UPDATE_START",
+  {
+    sellerId: maskId(seller_id),
+    productId: maskId(product_id),
+  }
+);
   try {
     if (
       !isUUID(seller_id) ||
@@ -315,7 +314,13 @@ const nextSaleEnd =
           seller_id,
         ]
       );
-
+if (
+  result.rowCount !== 1
+) {
+  throw new Error(
+    "FAILED_TO_UPDATE_PRODUCT"
+  );
+}
     const row =
       result.rows[0] ??
       null;
@@ -325,9 +330,12 @@ const nextSaleEnd =
     }
 
     log(
-      "UPDATE_SUCCESS",
-      row.id
-    );
+  "UPDATE_SUCCESS",
+  {
+    productId:
+      maskId(row.id),
+  }
+);
 
     return mapRow(row);
   } catch (error) {
