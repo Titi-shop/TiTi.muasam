@@ -2,31 +2,11 @@ import { withTransaction } from "@/lib/db";
 
 import {
   safeNumber,
+  log,
+  logError,
+  maskId,
 } from "./helpers";
 
-/* =========================================================
-   LOGGER
-========================================================= */
-
-function log(
-  step: string,
-  data?: unknown
-): void {
-  console.log(
-    `🧪 [DB][PRODUCTS] ${step}`,
-    data ?? ""
-  );
-}
-
-function logError(
-  step: string,
-  error: unknown
-): void {
-  console.error(
-    `💥 [DB][PRODUCTS] ${step}`,
-    error
-  );
-}
 
 /* =========================================================
    SYNC PRODUCT FROM VARIANTS
@@ -39,10 +19,12 @@ export async function syncProductFromVariants(
     await withTransaction(
       async (client) => {
         log(
-          "SYNC_FROM_VARIANTS_START",
-          product_id
-        );
-
+  "SYNC_FROM_VARIANTS_START",
+  {
+    productId:
+      maskId(product_id),
+  }
+);
         const result =
           await client.query<{
             variant_count: string;
@@ -106,28 +88,41 @@ export async function syncProductFromVariants(
           }
         );
 
-        await client.query(
-          `
-          UPDATE products
-          SET
-            final_price = $2,
-            stock = $3,
-            has_variants = $4,
-            updated_at = NOW()
-          WHERE id = $1
-          `,
-          [
-            product_id,
-            min_price,
-            total_stock,
-            has_variants,
-          ]
-        );
+        const updateResult =
+  await client.query(
+    `
+    UPDATE products
+    SET
+      final_price = $2,
+      stock = $3,
+      has_variants = $4,
+      updated_at = NOW()
+    WHERE id = $1
+    `,
+    [
+      product_id,
+      min_price,
+      total_stock,
+      has_variants,
+    ]
+  );
+        if (
+  updateResult.rowCount !== 1
+) {
+
+  throw new Error(
+    "FAILED_TO_SYNC_PRODUCT"
+  );
+
+}
 
         log(
-          "SYNC_FROM_VARIANTS_SUCCESS",
-          product_id
-        );
+  "SYNC_FROM_VARIANTS_SUCCESS",
+  {
+    productId:
+      maskId(product_id),
+  }
+);
       }
     );
   } catch (error) {
