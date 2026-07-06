@@ -196,6 +196,7 @@ export async function createPiIntentFromRequest({
   userId,
   raw,
 }: RawInput): Promise<CreateIntentServiceResult> {
+  try {
   logger.info(
   "PAYMENT_INTENT.START",
   {
@@ -390,5 +391,31 @@ const shipping: ShippingInput = {
       result.amount,
   }
 );
-  return result;
+ return result;
+
+  } catch (error) {
+
+    logger.error(
+
+      "PAYMENT_INTENT.ERROR",
+
+      {
+
+        message:
+
+          error instanceof Error
+
+            ? error.message
+
+            : "UNKNOWN_ERROR",
+
+      }
+
+    );
+
+    throw error;
+
+  }
+
+}
 }
