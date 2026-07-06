@@ -6,21 +6,14 @@ export function isSaleActive(
   saleEnd?: string | Date | null
 ): boolean {
   console.log(
-    "🧪 [SALE_CHECK]",
+    "[SALE][CHECK]",
     {
-      saleEnabled,
-      salePrice,
-      price,
-      saleStart,
-      saleEnd,
+      enabled: Boolean(saleEnabled),
     }
   );
 
   if (!saleEnabled) {
-    console.log(
-      "🧪 [SALE_CHECK] DISABLED"
-    );
-
+    console.log("[SALE][DISABLED]");
     return false;
   }
 
@@ -30,85 +23,44 @@ export function isSaleActive(
     salePrice <= 0 ||
     salePrice >= price
   ) {
-    console.log(
-      "🧪 [SALE_CHECK] INVALID_PRICE"
-    );
-
+    console.log("[SALE][INVALID_PRICE]");
     return false;
   }
-
-  /* =========================
-     MUST HAVE SALE WINDOW
-  ========================= */
 
   if (!saleStart || !saleEnd) {
-    console.log(
-      "🧪 [SALE_CHECK] MISSING_WINDOW"
-    );
-
+    console.log("[SALE][MISSING_WINDOW]");
     return false;
   }
 
-  const start =
-  new Date(saleStart).getTime();
+  const start = new Date(saleStart).getTime();
+  const end = new Date(saleEnd).getTime();
 
-const end =
-  new Date(saleEnd).getTime();
+  if (
+    Number.isNaN(start) ||
+    Number.isNaN(end)
+  ) {
+    console.log("[SALE][INVALID_WINDOW]");
+    return false;
+  }
 
-if (
-  Number.isNaN(start) ||
-  Number.isNaN(end)
-) {
-  console.log(
-    "🧪 [SALE_CHECK] INVALID_WINDOW"
-  );
+  if (start >= end) {
+    console.log("[SALE][INVALID_RANGE]");
+    return false;
+  }
 
-  return false;
-}
-
-if (start >= end) {
-  console.log(
-    "🧪 [SALE_CHECK] INVALID_RANGE"
-  );
-
-  return false;
-}
-
-const now =
-  Date.now();
-
-  console.log(
-    "🧪 [SALE_WINDOW]",
-    {
-      start,
-      end,
-      now,
-      started:
-        now >= start,
-      expired:
-        now > end,
-    }
-  );
+  const now = Date.now();
 
   if (now < start) {
-    console.log(
-      "🧪 [SALE_CHECK] NOT_STARTED"
-    );
-
+    console.log("[SALE][NOT_STARTED]");
     return false;
   }
 
   if (now > end) {
-    console.log(
-      "🧪 [SALE_CHECK] EXPIRED"
-    );
-
+    console.log("[SALE][EXPIRED]");
     return false;
   }
 
-  console.log(
-    "🧪 [SALE_CHECK] ACTIVE"
-  );
+  console.log("[SALE][ACTIVE]");
 
   return true;
 }
