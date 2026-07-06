@@ -25,9 +25,21 @@ export async function createProduct(
   input: CreateProductInput
 ): Promise<ProductRecord> {
   log(
-    "CREATE_START",
-    input
-  );
+  "CREATE_START",
+  {
+    sellerId:
+      maskId(seller_id),
+
+    hasVariants:
+      input.has_variants === true,
+
+    category:
+      input.category_id,
+
+    imageCount:
+      input.images?.length ?? 0,
+  }
+);
 
   try {
     if (
@@ -248,6 +260,15 @@ const saleEnd =
   hasVariants,
 ]
       );
+    if (
+  result.rowCount !== 1
+) {
+
+  throw new Error(
+    "FAILED_TO_CREATE_PRODUCT"
+  );
+
+}
 
     const row =
       result.rows[0];
@@ -259,9 +280,14 @@ const saleEnd =
     }
 
     log(
-      "CREATE_SUCCESS",
-      row.id
-    );
+  "CREATE_SUCCESS",
+  {
+    productId:
+      maskId(
+        row.id
+      ),
+  }
+);
 
     return mapRow(row);
   } catch (error) {
