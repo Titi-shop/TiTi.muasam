@@ -119,3 +119,4 @@ export function mapRow(
   has_variants:
     row.has_variants === true,
 };
+}
