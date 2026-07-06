@@ -23,7 +23,21 @@ function vlog(
     payload ?? ""
   );
 }
+function maskId(
+  value: string
+): string {
 
+  if (value.length <= 8) {
+    return value;
+  }
+
+  return (
+    value.slice(0, 4) +
+    "..." +
+    value.slice(-4)
+  );
+
+}
 /* =========================================================
    REPLACE VARIANTS
 ========================================================= */
@@ -35,14 +49,16 @@ export async function replaceVariantsByProductId(
   await withTransaction(
     async (client) => {
       vlog(
-        "REPLACE_START",
-        {
-          productId,
-          count:
-            variants.length,
-        }
-      );
-
+  "REPLACE_START",
+  {
+    productId:
+      maskId(
+        productId
+      ),
+    count:
+      variants.length,
+  }
+);
       await client.query(
         `
         DELETE FROM product_variants
@@ -132,7 +148,8 @@ export async function replaceVariantsByProductId(
         }
       );
 
-      await client.query(
+      const rs =
+  await client.query(
         `
         INSERT INTO product_variants (
           product_id,
@@ -163,10 +180,21 @@ export async function replaceVariantsByProductId(
         `,
         values
       );
-
+if (
+  rs.rowCount !==
+  mapped.length
+) {
+  throw new Error(
+    "VARIANT_INSERT_FAILED"
+  );
+}
       vlog(
-        "REPLACE_SUCCESS"
-      );
+  "REPLACE_SUCCESS",
+  {
+    count:
+      variants.length,
+  }
+);
     }
   );
 }
