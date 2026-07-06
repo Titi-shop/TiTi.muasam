@@ -7,35 +7,15 @@ import type {
 
 import {
   isUUID,
+  log,
+  logError,
+  maskId,
 } from "./helpers";
 
 import {
   mapRow,
 } from "./mapper";
 
-/* =========================================================
-   LOGGER
-========================================================= */
-
-function log(
-  step: string,
-  data?: unknown
-): void {
-  console.log(
-    `🧪 [DB][PRODUCTS] ${step}`,
-    data ?? ""
-  );
-}
-
-function logError(
-  step: string,
-  error: unknown
-): void {
-  console.error(
-    `💥 [DB][PRODUCTS] ${step}`,
-    error
-  );
-}
 
 /* =========================================================
    GET ALL PRODUCTS
@@ -50,24 +30,7 @@ export async function getAllProducts(
   );
 
   try {
-    const t0 = performance.now();
-    const result =
-      await query<ProductRow>(
-        `
-        SELECT *
-        FROM products
-        WHERE deleted_at IS NULL
-        ORDER BY created_at DESC
-        LIMIT $1
-        `,
-        [limit]
-      );
-console.log(
-    "⏱️ SQL getAllProducts:",
-    performance.now() - t0
-  );
-
-
+    
     log(
       "GET_ALL_SUCCESS",
       {
@@ -97,9 +60,12 @@ export async function getProductById(
   product_id: string
 ): Promise<ProductRecord | null> {
   log(
-    "GET_BY_ID_START",
-    { product_id }
-  );
+  "GET_BY_ID_START",
+  {
+    productId:
+      maskId(product_id),
+  }
+);
 
   try {
     if (
@@ -130,71 +96,13 @@ export async function getProductById(
       result.rows[0] ??
       null;
 
-    console.log(
-      "🧪 GET_BY_ID_DB_ROW",
-      {
-        id: row?.id,
-        category_id:
-          row?.category_id,
-        price:
-          row?.price,
-        sale_price:
-          row?.sale_price,
-        final_price:
-          row?.final_price,
-        stock:
-          row?.stock,
-        sale_stock:
-          row?.sale_stock,
-        sale_enabled:
-          row?.sale_enabled,
-        sale_start:
-          row?.sale_start,
-        sale_end:
-          row?.sale_end,
-        has_variants:
-          row?.has_variants,
-      }
-    );
-
     if (!row) {
-      log(
-        "GET_BY_ID_NOT_FOUND",
-        product_id
-      );
-
+      
       return null;
     }
 
     const mapped =
       mapRow(row);
-
-    console.log(
-      "🧪 GET_BY_ID_MAPPED",
-      {
-        id: mapped.id,
-        category_id:
-          mapped.category_id,
-        price:
-          mapped.price,
-        sale_price:
-          mapped.sale_price,
-        final_price:
-          mapped.final_price,
-        stock:
-          mapped.stock,
-        sale_stock:
-          mapped.sale_stock,
-        sale_enabled:
-          mapped.sale_enabled,
-        sale_start:
-          mapped.sale_start,
-        sale_end:
-          mapped.sale_end,
-        has_variants:
-          mapped.has_variants,
-      }
-    );
 
     log(
       "GET_BY_ID_SUCCESS",
