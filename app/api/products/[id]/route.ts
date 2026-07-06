@@ -6,7 +6,9 @@ import {
   updateProductService,
   deleteProductService,
 } from "@/lib/services/products/by-id";
-
+import {
+  maskId,
+} from "@/lib/db/products/helpers";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -15,90 +17,19 @@ export async function GET(
   req: NextRequest,
   ctx: { params: { id: string } }
 ) {
-  console.log(
-    "🚀 PRODUCT_ROUTE_GET",
-    {
-      id: ctx.params.id,
-    }
-  );
-
+  
   const result =
     await getProductService(
       ctx.params.id
     );
-
-  console.log(
-  "📦 PRODUCT_ROUTE_RESPONSE",
+console.log(
+  "[API][PRODUCTS][GET_DONE]",
   {
-    error:
-      "error" in result
-        ? result.error
-        : null,
+    productId:
+      maskId(ctx.params.id),
 
-    id:
-      "id" in result
-        ? result.id
-        : null,
-
-    category_id:
-      "category_id" in result
-        ? result.category_id
-        : null,
-
-    has_variants:
-      "has_variants" in result
-        ? result.has_variants
-        : null,
-
-    price:
-      "price" in result
-        ? result.price
-        : null,
-
-    sale_price:
-      "sale_price" in result
-        ? result.sale_price
-        : null,
-
-    final_price:
-      "final_price" in result
-        ? result.final_price
-        : null,
-
-    stock:
-      "stock" in result
-        ? result.stock
-        : null,
-
-    sale_stock:
-      "sale_stock" in result
-        ? result.sale_stock
-        : null,
-
-    sale_enabled:
-      "sale_enabled" in result
-        ? result.sale_enabled
-        : null,
-
-    sale_start:
-      "sale_start" in result
-        ? result.sale_start
-        : null,
-
-    sale_end:
-      "sale_end" in result
-        ? result.sale_end
-        : null,
-
-    variantCount:
-      "variants" in result
-        ? result.variants?.length ?? 0
-        : 0,
-
-    shippingCount:
-      "shipping_rates" in result
-        ? result.shipping_rates?.length ?? 0
-        : 0,
+    ok:
+      !("error" in result),
   }
 );
   return NextResponse.json(result);
@@ -116,7 +47,13 @@ export async function PATCH(
     auth.userId,
     await req.json()
   );
-
+console.log(
+  "[API][PRODUCTS][PATCH_DONE]",
+  {
+    productId:
+      maskId(ctx.params.id),
+  }
+);
   return NextResponse.json(result);
 }
 
@@ -132,6 +69,12 @@ export async function DELETE(
     ctx.params.id,
     auth.userId
   );
-
+console.log(
+  "[API][PRODUCTS][DELETE_DONE]",
+  {
+    productId:
+      maskId(ctx.params.id),
+  }
+);
   return NextResponse.json(result);
 }
