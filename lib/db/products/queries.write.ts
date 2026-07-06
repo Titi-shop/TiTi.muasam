@@ -5,31 +5,10 @@ import {
 
 import {
   isUUID,
+  log,
+  logError,
+  maskId,
 } from "./helpers";
-
-/* =========================================================
-   LOGGER
-========================================================= */
-
-function log(
-  step: string,
-  data?: unknown
-): void {
-  console.log(
-    `🧪 [DB][PRODUCTS] ${step}`,
-    data ?? ""
-  );
-}
-
-function logError(
-  step: string,
-  error: unknown
-): void {
-  console.error(
-    `💥 [DB][PRODUCTS] ${step}`,
-    error
-  );
-}
 
 /* =========================================================
    DELETE PRODUCT
@@ -40,12 +19,15 @@ export async function deleteProductBySeller(
   product_id: string
 ): Promise<boolean> {
   log(
-    "DELETE_START",
-    {
-      seller_id,
-      product_id,
-    }
-  );
+  "DELETE_START",
+  {
+    sellerId:
+      maskId(seller_id),
+
+    productId:
+      maskId(product_id),
+  }
+);
 
   try {
     if (
@@ -72,12 +54,18 @@ export async function deleteProductBySeller(
       );
 
     const success =
-      result.rows.length > 0;
+  result.rowCount === 1;
 
     log(
-      "DELETE_SUCCESS",
-      success
-    );
+  "DELETE_SUCCESS",
+  {
+    productId:
+      maskId(product_id),
+
+    deleted:
+      success,
+  }
+);
 
     return success;
   } catch (error) {
@@ -101,12 +89,15 @@ export async function deleteProductById(
   ok: boolean;
 }> {
   log(
-    "DELETE_FULL_START",
-    {
-      product_id,
-      seller_id,
-    }
-  );
+  "DELETE_FULL_START",
+  {
+    productId:
+      maskId(product_id),
+
+    sellerId:
+      maskId(seller_id),
+  }
+);
 
   return withTransaction(
     async (client) => {
@@ -167,12 +158,18 @@ export async function deleteProductById(
         );
 
       const ok =
-        result.rows.length > 0;
+  result.rowCount === 1;
 
       log(
-        "DELETE_FULL_SUCCESS",
-        ok
-      );
+  "DELETE_FULL_SUCCESS",
+  {
+    productId:
+      maskId(product_id),
+
+    deleted:
+      ok,
+  }
+);
 
       return { ok };
     }
