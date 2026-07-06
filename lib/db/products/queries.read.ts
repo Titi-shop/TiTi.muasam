@@ -30,16 +30,27 @@ export async function getAllProducts(
   );
 
   try {
-    
+    const { rows } =
+      await query<ProductRow>(
+        `
+        SELECT *
+        FROM products
+        WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT $1
+        `,
+        [limit]
+      );
+
     log(
       "GET_ALL_SUCCESS",
       {
         count:
-          result.rows.length,
+          rows.length,
       }
     );
 
-    return result.rows.map(
+    return rows.map(
       mapRow
     );
   } catch (error) {
