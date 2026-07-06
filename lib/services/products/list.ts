@@ -29,273 +29,295 @@ import { isSaleActive } from "@/lib/utils/sale";
 export async function listProductsService(
   req: Request
 ) {
-  const { searchParams } =
-    new URL(req.url);
+  try {
+    const { searchParams } =
+      new URL(req.url);
 
-  const ids =
-    searchParams.get("ids");
+    const ids =
+      searchParams.get("ids");
 
-  log(
-  "LIST_REQUEST",
-  {
-    idsCount: ids
-      ? ids.split(",").filter(Boolean).length
-      : null,
-  }
-);
-
-  /* =========================
-     LOAD PRODUCTS
-  ========================= */
-
-  const products = ids
-    ? await getProductsByIds(
-        ids
-          .split(",")
-          .filter(Boolean)
-      )
-    : await getAllProducts();
-
-  log(
-  "LIST_SUCCESS",
-  {
-    count: products.length,
-  }
-);
-
-  const productIds =
-    products.map(
-      (product) =>
-        product.id
+    log(
+      "LIST_REQUEST",
+      {
+        idsCount: ids
+          ? ids
+              .split(",")
+              .filter(Boolean)
+              .length
+          : null,
+      }
     );
 
-  /* =========================
-     SHIPPING
-  ========================= */
+    /* =========================
+       LOAD PRODUCTS
+    ========================= */
 
-  const shippingRows =
-    productIds.length > 0
-      ? await getShippingRatesByProducts(
-          productIds
+    const products = ids
+      ? await getProductsByIds(
+          ids
+            .split(",")
+            .filter(Boolean)
         )
-      : [];
+      : await getAllProducts();
 
-  log(
-  "SHIPPING_LOADED",
-  {
-    count:
-      shippingRows.length,
-  }
-);
+    log(
+      "LIST_SUCCESS",
+      {
+        count:
+          products.length,
+      }
+    );
 
-  const shippingMap =
-    new Map<
-      string,
-      ShippingRateInput[]
-    >();
-
-  for (const row of shippingRows) {
-    if (
-      !shippingMap.has(
-        row.product_id
-      )
-    ) {
-      shippingMap.set(
-        row.product_id,
-        []
+    const productIds =
+      products.map(
+        (product) =>
+          product.id
       );
-    }
 
-    shippingMap
-      .get(row.product_id)!
-      .push({
-        zone: row.zone,
+    /* =========================
+       SHIPPING
+    ========================= */
 
-        price:
-          Number(
+    const shippingRows =
+      productIds.length > 0
+        ? await getShippingRatesByProducts(
+            productIds
+          )
+        : [];
+
+    log(
+      "SHIPPING_LOADED",
+      {
+        count:
+          shippingRows.length,
+      }
+    );
+
+    const shippingMap =
+      new Map<
+        string,
+        ShippingRateInput[]
+      >();
+
+    for (const row of shippingRows) {
+      if (
+        !shippingMap.has(
+          row.product_id
+        )
+      ) {
+        shippingMap.set(
+          row.product_id,
+          []
+        );
+      }
+
+      shippingMap
+        .get(row.product_id)!
+        .push({
+          zone: row.zone,
+          price: Number(
             row.price
           ),
+          domestic_country_code:
+            row.domestic_country_code,
+        });
+    }
 
-        domestic_country_code:
-          row.domestic_country_code,
-      });
-  }
+    /* =========================
+       ENRICH PRODUCTS
+    ========================= */
 
-  /* =========================
-     ENRICH PRODUCTS
-  ========================= */
+    return await Promise.all(
+      products.map(
+        async (product) => {
+          const hasVariants =
+            product.has_variants ===
+            true;
 
-  return Promise.all(
-    products.map(
-      async (product) => {
-        const hasVariants =
-          product.has_variants ===
-          true;
+          /* =====================
+             NO VARIANTS
+          ===================== */
 
-        /* =====================
-           NO VARIANTS
-        ===================== */
-if (!hasVariants) {
-  const saleActive =
-    isSaleActive(
-      product.sale_enabled,
-      product.sale_price,
-      product.price,
-      product.sale_start,
-      product.sale_end
-    );
+          if (!hasVariants) {
+            const saleActive =
+              isSaleActive(
+                product.sale_enabled,
+                product.sale_price,
+                product.price,
+                product.sale_start,
+                product.sale_end
+              );
 
-  return {
-    ...product,
+            return {
+              ...product,
 
-    variants: [],
-    min_price: null,
-    max_price: null,
-    sale_price:
-      saleActive
-        ? product.sale_price
-        : null,
+              variants: [],
+              min_price: null,
+              max_price: null,
 
-    final_price:
-      saleActive
-        ? Number(product.sale_price)
-        : Number(product.price),
+              sale_price:
+                saleActive
+                  ? product.sale_price
+                  : null,
 
-    shipping_rates:
-      shippingMap.get(
-        product.id
-      ) ?? [],
-  };
-}
-        
-        
-        /* =====================
-   LOAD VARIANTS
-===================== */
+              final_price:
+                saleActive
+                  ? Number(
+                      product.sale_price
+                    )
+                  : Number(
+                      product.price
+                    ),
 
-const variants =
-  await getVariantsByProductId(
-    product.id
-  );
+              shipping_rates:
+                shippingMap.get(
+                  product.id
+                ) ?? [],
+            };
+          }
 
-log(
-  "VARIANTS_LOADED",
-  {
-    productId:
-      maskId(product.id),
+          /* =====================
+             LOAD VARIANTS
+          ===================== */
 
-    variantCount:
-      variants.length,
-  }
-);
+          const variants =
+            await getVariantsByProductId(
+              product.id
+            );
 
-const enrichedVariants =
-  variants.map((variant) => {
-    const saleActive =
-      isSaleActive(
-        variant.sale_enabled,
-        variant.sale_price,
-        variant.price,
-        product.sale_start,
-        product.sale_end
-      );
-    return {
-      ...variant,
+          log(
+            "VARIANTS_LOADED",
+            {
+              productId:
+                maskId(
+                  product.id
+                ),
+              variantCount:
+                variants.length,
+            }
+          );
 
-      sale_enabled:
-        saleActive,
+          const enrichedVariants =
+            variants.map(
+              (variant) => {
+                const saleActive =
+                  isSaleActive(
+                    variant.sale_enabled,
+                    variant.sale_price,
+                    variant.price,
+                    product.sale_start,
+                    product.sale_end
+                  );
 
-      sale_price:
-        saleActive
-          ? variant.sale_price
-          : null,
+                return {
+                  ...variant,
 
-      final_price:
-        saleActive
-          ? Number(
-              variant.sale_price
-            )
-          : Number(
-              variant.price
-            ),
-    };
-  });
+                  sale_enabled:
+                    saleActive,
 
-const prices =
-  enrichedVariants.map(
-    (v) =>
-      Number(
-        v.final_price
-      )
-  );
+                  sale_price:
+                    saleActive
+                      ? variant.sale_price
+                      : null,
 
-const saleVariants =
-  enrichedVariants.filter(
-    (v) => v.sale_enabled
-  );
+                  final_price:
+                    saleActive
+                      ? Number(
+                          variant.sale_price
+                        )
+                      : Number(
+                          variant.price
+                        ),
+                };
+              }
+            );
 
-log(
-  "VARIANT_SUMMARY",
-  {
-    productId:
-      maskId(product.id),
-
-    variantCount:
-      enrichedVariants.length,
-  }
-);
-        return {
-          ...product,
-
-          price: Math.min(
-            ...enrichedVariants.map(
+          const prices =
+            enrichedVariants.map(
               (v) =>
                 Number(
-                  v.price
+                  v.final_price
                 )
-            )
-          ),
+            );
 
-          sale_price:
-            saleVariants.length >
-            0
-              ? Math.min(
-                  ...saleVariants.map(
-                    (v) =>
-                      Number(
-                        v.sale_price
-                      )
+          const saleVariants =
+            enrichedVariants.filter(
+              (v) =>
+                v.sale_enabled
+            );
+
+          log(
+            "VARIANT_SUMMARY",
+            {
+              productId:
+                maskId(
+                  product.id
+                ),
+              variantCount:
+                enrichedVariants.length,
+            }
+          );
+
+          return {
+            ...product,
+
+            price: Math.min(
+              ...enrichedVariants.map(
+                (v) =>
+                  Number(
+                    v.price
                   )
-                )
-              : null,
-
-          final_price:
-            Math.min(
-              ...prices
+              )
             ),
 
-          has_variants:
-            true,
+            sale_price:
+              saleVariants.length >
+              0
+                ? Math.min(
+                    ...saleVariants.map(
+                      (v) =>
+                        Number(
+                          v.sale_price
+                        )
+                    )
+                  )
+                : null,
 
-          min_price:
-            Math.min(
-              ...prices
-            ),
+            final_price:
+              Math.min(
+                ...prices
+              ),
 
-          max_price:
-            Math.max(
-              ...prices
-            ),
+            has_variants:
+              true,
 
-          variants:
-            enrichedVariants,
+            min_price:
+              Math.min(
+                ...prices
+              ),
 
-          shipping_rates:
-            shippingMap.get(
-              product.id
-            ) ?? [],
-        };
-      }
-    )
-  );
+            max_price:
+              Math.max(
+                ...prices
+              ),
+
+            variants:
+              enrichedVariants,
+
+            shipping_rates:
+              shippingMap.get(
+                product.id
+              ) ?? [],
+          };
+        }
+      )
+    );
+  } catch (error) {
+    logError(
+      "LIST_ERROR",
+      error
+    );
+
+    throw error;
+  }
 }
