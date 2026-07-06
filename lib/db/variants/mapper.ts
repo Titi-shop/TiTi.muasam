@@ -27,22 +27,20 @@ export function mapVariantToApp(
     );
 
   const saleEnabled =
-    Boolean(
-      row.sale_enabled
-    ) &&
+    Boolean(row.sale_enabled) &&
     salePrice !== null &&
     salePrice > 0 &&
     salePrice < price;
 
   const finalPrice =
-    safeNumber(
-      row.final_price
+    calcFinalPrice(
+      price,
+      salePrice,
+      saleEnabled
     );
 
   if (
-    !Number.isFinite(
-      finalPrice
-    ) ||
+    !Number.isFinite(finalPrice) ||
     finalPrice <= 0
   ) {
     throw new Error(
@@ -52,6 +50,9 @@ export function mapVariantToApp(
 
   return {
     id: row.id,
+
+    product_id:
+      row.product_id,
 
     option1:
       row.option_1 ?? "",
@@ -72,7 +73,7 @@ export function mapVariantToApp(
       row.option_label_3,
 
     name:
-      row.name ||
+      row.name ??
       buildVariantName({
         option1:
           row.option_1 ?? "",
@@ -82,7 +83,8 @@ export function mapVariantToApp(
           row.option_3,
       }),
 
-    sku: row.sku,
+    sku:
+      row.sku,
 
     price,
 
@@ -92,13 +94,10 @@ export function mapVariantToApp(
         : null,
 
     final_price:
-  calcFinalPrice(
-    price,
-    salePrice,
-    saleEnabled
-  ),
+      finalPrice,
 
-    currency: "PI",
+    currency:
+      row.currency ?? "PI",
 
     sale_enabled:
       saleEnabled,
@@ -118,12 +117,18 @@ export function mapVariantToApp(
         row.stock
       ),
 
+    sold:
+      safeNumber(
+        row.sold
+      ),
+
     is_unlimited:
       Boolean(
         row.is_unlimited
       ),
 
-    image: row.image,
+    image:
+      row.image,
 
     is_active:
       Boolean(
@@ -134,14 +139,8 @@ export function mapVariantToApp(
       safeNumber(
         row.sort_order
       ),
-
-    sold:
-      safeNumber(
-        row.sold
-      ),
   };
 }
-
 /* =========================================================
    MAP APP -> DB
 ========================================================= */
