@@ -12,60 +12,88 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /* ================= GET ================= */
+
 export async function GET(req: Request) {
   const t0 = performance.now();
 
-  const result = await listProductsService(req);
+  const result =
+    await listProductsService(req);
+
   console.log(
-    "⏱️ API /products GET TOTAL:",
-    (performance.now() - t0).toFixed(2),
-    "ms"
+    "[API][PRODUCTS][GET_DONE]",
+    {
+      duration_ms:
+        Math.round(
+          performance.now() - t0
+        ),
+    }
   );
+
   return NextResponse.json(result);
 }
-/* ================= POST ================= */
-export async function POST(req: Request) {
-  console.log("🚀 API /products POST HIT");
 
+/* ================= POST ================= */
+
+export async function POST(req: Request) {
   const auth = await requireSeller();
 
-  console.log("🔐 AUTH RESULT", {
-    ok: auth.ok,
-    userId: auth.ok ? auth.userId : null,
-  });
-
   if (!auth.ok) {
-    console.log("❌ AUTH FAILED");
     return auth.response;
   }
 
-  const result = await createProductService(
-    req,
-    auth.userId
-  );
+  const result =
+    await createProductService(
+      req,
+      auth.userId
+    );
 
   console.log(
-    "📦 CREATE PRODUCT RESULT",
-    JSON.stringify(result, null, 2)
+    "[API][PRODUCTS][CREATE_DONE]"
   );
 
   return NextResponse.json(result);
 }
 
 /* ================= PUT ================= */
+
 export async function PUT(req: Request) {
   const auth = await requireSeller();
-  if (!auth.ok) return auth.response;
 
-  const result = await updateProductService(req, auth.userId);
+  if (!auth.ok) {
+    return auth.response;
+  }
+
+  const result =
+    await updateProductService(
+      req,
+      auth.userId
+    );
+
+  console.log(
+    "[API][PRODUCTS][UPDATE_DONE]"
+  );
+
   return NextResponse.json(result);
 }
 
 /* ================= DELETE ================= */
+
 export async function DELETE(req: Request) {
   const auth = await requireSeller();
-  if (!auth.ok) return auth.response;
 
-  const result = await deleteProductService(req, auth.userId);
+  if (!auth.ok) {
+    return auth.response;
+  }
+
+  const result =
+    await deleteProductService(
+      req,
+      auth.userId
+    );
+
+  console.log(
+    "[API][PRODUCTS][DELETE_DONE]"
+  );
+
   return NextResponse.json(result);
 }
