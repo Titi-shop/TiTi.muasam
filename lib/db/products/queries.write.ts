@@ -172,7 +172,22 @@ export async function deleteProductById(
   }
 );
 
-      return { ok };
+            return {
+        ok,
+      };
+
     }
   );
+
+  } catch (error) {
+
+    logError(
+      "DELETE_FULL_ERROR",
+      error
+    );
+
+    throw error;
+
+  }
+
 }
