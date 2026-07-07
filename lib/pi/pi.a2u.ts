@@ -539,12 +539,13 @@ return {
 export async function cancelA2UPayment(
   paymentId: string
 ): Promise<void> {
-  vlog(
-    "CANCEL_START",
-    {
+  logger.info(
+  "PI_A2U.CANCEL_START",
+  {
+    paymentId:
       maskId(paymentId),
-    }
-  );
+  }
+);
 
   await piRequest(
     `/v2/payments/${paymentId}/cancel`,
@@ -558,12 +559,13 @@ export async function cancelA2UPayment(
     }
   );
 
-  vlog(
-    "CANCEL_SUCCESS",
-    {
+  logger.info(
+  "PI_A2U.CANCEL_SUCCESS",
+  {
+    paymentId:
       maskId(paymentId),
-    }
-  );
+  }
+);
 }
 /* =====================================================
    DEBUG PAYMENT
@@ -573,10 +575,13 @@ export async function debugA2UPayment(
   paymentId: string
 ): Promise<A2UPayment> {
 
-  vlog(
-    "DEBUG_PAYMENT_START",
-    paymentId
-  );
+  logger.debug(
+  "PI_A2U.DEBUG_PAYMENT_START",
+  {
+    paymentId:
+      maskId(paymentId),
+  }
+);
 
   const payment =
     await getA2UPayment(
