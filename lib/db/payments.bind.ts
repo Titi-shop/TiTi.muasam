@@ -1,5 +1,9 @@
 
 import { withTransaction } from "@/lib/db";
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
 
 /* =========================================================
    TYPES
@@ -26,16 +30,6 @@ type IntentRow = {
 /* =========================================================
    HELPERS
 ========================================================= */
-
-function vlog(
-  step: string,
-  data?: unknown
-) {
-  console.log(
-    `[PAYMENTS_BIND_V7][${step}]`,
-    data ?? ""
-  );
-}
 
 function isUUID(
   value: unknown
@@ -83,11 +77,14 @@ export async function bindPiPaymentToIntent(
         piPayload,
       } = params;
 
-      vlog("START", {
-        paymentIntentId,
-        piPaymentId,
-        userId,
-      });
+      logger.info(
+  "PAYMENTS.BIND.START",
+  {
+    paymentIntentId: maskId(paymentIntentId),
+    piPaymentId: maskId(piPaymentId),
+    userId: maskId(userId),
+  }
+);
 
       /* ===============================================
          VALIDATION
@@ -168,7 +165,15 @@ FOR UPDATE
   pi_payment_id:
     intent.pi_payment_id,
       });
-      vlog("LOCK_OK", intent);
+      logger.info(
+  "PAYMENTS.BIND.LOCK_OK",
+  {
+    paymentIntentId: maskId(intent.id),
+    status: intent.status,
+    paymentState: intent.payment_state,
+    providerStatus: intent.provider_status,
+  }
+);
 
       /* ===============================================
          OWNER CHECK
@@ -216,22 +221,31 @@ FOR UPDATE
          UPDATE
       =============================================== */
 
-      vlog("UPDATE_START", {
-  paymentIntentId,
-  piPaymentId,
-  piUid,
-  amount,
-});
+      logger.info(
+  "PAYMENTS.BIND.UPDATE_START",
+  {
+    paymentIntentId: maskId(paymentIntentId),
+    piPaymentId: maskId(piPaymentId),
+    piUid: maskId(piUid),
+    amount,
+  }
+);
 let payloadJson = "{}";
 
 try {
   payloadJson = JSON.stringify(
     piPayload ?? {}
   );
-} catch (error) {
-  vlog(
-    "PAYLOAD_SERIALIZE_FAILED",
-    error
+} 
+  catch (error) {
+  logger.error(
+    "PAYMENTS.BIND.PAYLOAD_SERIALIZE_FAILED",
+    {
+      message:
+        error instanceof Error
+          ? error.message
+          : "UNKNOWN_ERROR",
+    }
   );
 }
       await client.query(
@@ -259,12 +273,17 @@ updated_at = now()
   ]
 );
 
-      vlog("UPDATE_OK", {
-        paymentIntentId,
-        piPaymentId,
-      });
+ logger.info(
+  "PAYMENTS.BIND.UPDATE_OK",
+  {
+    paymentIntentId: maskId(paymentIntentId),
+    piPaymentId: maskId(piPaymentId),
+  }
+);
 
-      vlog("SUCCESS");
+      logger.info(
+  "PAYMENTS.BIND.SUCCESS"
+);
     }
   );
 }
