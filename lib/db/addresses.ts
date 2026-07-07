@@ -1,11 +1,20 @@
 import { query } from "@/lib/db";
-
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
 /* =========================
    GET ADDRESSES
 ========================= */
 export async function getAddressesByUser(
   userId: string
 ) {
+   logger.info(
+  "ADDRESS.GET_ALL.START",
+  {
+    userId: maskId(userId),
+  }
+);
   const res = await query(
     `
     SELECT *
@@ -15,7 +24,12 @@ export async function getAddressesByUser(
     `,
     [userId]
   );
-
+logger.info(
+  "ADDRESS.GET_ALL.SUCCESS",
+  {
+    count: res.rows.length,
+  }
+);
   return res.rows;
 }
 
@@ -36,6 +50,13 @@ export async function createAddress(
     label: string;
   }
 ) {
+   try {
+   logger.info(
+  "ADDRESS.CREATE.START",
+  {
+    userId: maskId(userId),
+  }
+);
   await query(
     `UPDATE addresses SET is_default = false WHERE user_id = $1`,
     [userId]
@@ -72,7 +93,39 @@ export async function createAddress(
       data.label,
     ]
   );
+const address = res.rows[0];
 
+logger.info(
+  "ADDRESS.CREATE.SUCCESS",
+  {
+    addressId: maskId(address.id),
+  }
+);
+
+return address;
+      } catch (error) {
+
+    logger.error(
+
+      "ADDRESS.CREATE.ERROR",
+
+      {
+
+        message:
+
+          error instanceof Error
+
+            ? error.message
+
+            : "UNKNOWN_ERROR",
+
+      }
+
+    );
+
+    throw error;
+
+  }
   return res.rows[0];
 }
 
@@ -83,6 +136,13 @@ export async function setDefaultAddress(
   userId: string,
   addressId: string
 ) {
+   logger.info(
+  "ADDRESS.SET_DEFAULT.START",
+  {
+    userId: maskId(userId),
+    addressId: maskId(addressId),
+  }
+);
   await query(
     `UPDATE addresses SET is_default = false WHERE user_id = $1`,
     [userId]
@@ -97,7 +157,12 @@ export async function setDefaultAddress(
     [addressId, userId]
   );
 }
-
+logger.info(
+  "ADDRESS.SET_DEFAULT.SUCCESS",
+  {
+    addressId: maskId(addressId),
+  }
+);
 /* =========================
    DELETE
 ========================= */
@@ -105,6 +170,13 @@ export async function deleteAddress(
   userId: string,
   addressId: string
 ) {
+   logger.info(
+  "ADDRESS.DELETE.START",
+  {
+    userId: maskId(userId),
+    addressId: maskId(addressId),
+  }
+);
   await query(
     `
     DELETE FROM addresses
@@ -113,7 +185,12 @@ export async function deleteAddress(
     [addressId, userId]
   );
 }
-
+logger.info(
+  "ADDRESS.DELETE.SUCCESS",
+  {
+    addressId: maskId(addressId),
+  }
+);
 
 /* =========================
    UPDATE ADDRESS
@@ -138,6 +215,13 @@ export async function updateAddress(
   id: string,
   data: UpdateAddressPayload
 ) {
+   logger.info(
+  "ADDRESS.UPDATE.START",
+  {
+    userId: maskId(userId),
+    addressId: maskId(id),
+  }
+);
   const res = await query(
     `
     UPDATE addresses
@@ -170,13 +254,30 @@ export async function updateAddress(
       userId,
     ]
   );
+const address = res.rows[0] ?? null;
 
+logger.info(
+  "ADDRESS.UPDATE.SUCCESS",
+  {
+    found: address !== null,
+    addressId: maskId(id),
+  }
+);
+
+return address;
   return res.rows[0] ?? null;
 }
 export async function getAddressById(
   userId: string,
   addressId: string
 ) {
+   logger.info(
+  "ADDRESS.GET.START",
+  {
+    userId: maskId(userId),
+    addressId: maskId(addressId),
+  }
+);
   const res = await query(
     `
     SELECT *
@@ -187,6 +288,16 @@ export async function getAddressById(
     `,
     [addressId, userId]
   );
+const address = res.rows[0] ?? null;
 
+logger.info(
+  "ADDRESS.GET.SUCCESS",
+  {
+    found: address !== null,
+    addressId: maskId(addressId),
+  }
+);
+
+return address;
   return res.rows[0] ?? null;
 }
