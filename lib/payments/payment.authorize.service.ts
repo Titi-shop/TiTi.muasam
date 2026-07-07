@@ -19,19 +19,14 @@ import type {
 import {
   getUserById,
 } from "@/lib/db/users";
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
+
 /* =========================================================
    HELPERS
 ========================================================= */
-
-function vlog(
-  step: string,
-  data?: unknown
-) {
-  console.log(
-    `[PAYMENT][AUTHORIZE_V6][${step}]`,
-    data ?? ""
-  );
-}
 
 function normalizeString(
   value: unknown
@@ -77,11 +72,13 @@ export async function piAuthorizePayment({
 }: Input): Promise<{
   success: true;
 }> {
-  vlog("START", {
-    userId,
-    body,
-  });
-
+  logger.info(
+  "PAYMENT.AUTHORIZE.START",
+  {
+    userId: maskId(userId),
+  }
+);
+try {
   /* =====================================================
      1. NORMALIZE INPUT
   ===================================================== */
@@ -107,10 +104,16 @@ export async function piAuthorizePayment({
     );
   }
 
-  vlog("INPUT_OK", {
-    paymentIntentId,
-    piPaymentId,
-  });
+  logger.info(
+  "PAYMENT.AUTHORIZE.INPUT_OK",
+  {
+    paymentIntentId:
+      maskId(paymentIntentId),
+
+    piPaymentId:
+      maskId(piPaymentId),
+  }
+);
 
   /* =====================================================
      2. LOAD PAYMENT INTENT
@@ -127,14 +130,22 @@ export async function piAuthorizePayment({
     );
   }
 
-  vlog("INTENT_OK", {
-    id: intent.id,
-    status: intent.status,
-    buyer_id:
-      intent.buyer_id,
-    total_amount:
+  logger.info(
+  "PAYMENT.AUTHORIZE.INTENT_OK",
+  {
+    paymentIntentId:
+      maskId(intent.id),
+
+    status:
+      intent.status,
+
+    buyerId:
+      maskId(intent.buyer_id),
+
+    total:
       intent.total_amount,
-  });
+  }
+);
 
   /* =====================================================
      3. VERIFY OWNER
@@ -180,7 +191,9 @@ export async function piAuthorizePayment({
    6. PI VERIFY USER
 ===================================================== */
 
-vlog("PI_VERIFY_START");
+logger.debug(
+  "PAYMENT.AUTHORIZE.PI_VERIFY_START"
+);
 
 const user =
   await getUserById(
@@ -203,12 +216,14 @@ const me = {
   uid: user.pi_uid,
 };
 
-vlog(
-  "PI_USER_BYPASS",
+logger.info(
+  "PAYMENT.AUTHORIZE.PI_USER_READY",
   {
-    userId,
+    userId:
+      maskId(userId),
+
     piUid:
-      user.pi_uid,
+      maskId(user.pi_uid),
   }
 );
 
@@ -224,14 +239,25 @@ vlog(
   "PI_IDENTIFIER",
   payment.identifier
 );
-  vlog("PI_PAYMENT_OK", {
-    id: piPaymentId,
-    amount: payment.amount,
-    user_uid:
-      payment.user_uid,
-    status:
-      payment.status,
-  });
+  logger.info(
+  "PAYMENT.AUTHORIZE.PI_PAYMENT_OK",
+  {
+    piPaymentId:
+      maskId(piPaymentId),
+
+    amount:
+      payment.amount,
+
+    userUid:
+      maskId(payment.user_uid),
+
+    developerApproved:
+      payment.status?.developer_approved,
+
+    developerCompleted:
+      payment.status?.developer_completed,
+  }
+);
 vlog(
   "PI_STATUS",
   {
@@ -318,13 +344,13 @@ vlog(
     paymentAmount
   )
 ) {
-  vlog(
-    "AMOUNT_MISMATCH",
-    {
-      intentAmount,
-      paymentAmount,
-    }
-  );
+  logger.warn(
+  "PAYMENT.AUTHORIZE.AMOUNT_MISMATCH",
+  {
+    intentAmount,
+    paymentAmount,
+  }
+);
 
   throw new Error(
     "PAYMENT_AMOUNT_MISMATCH"
@@ -355,13 +381,14 @@ const actualWallet =
     .trim()
     .toLowerCase();
 
-vlog(
-  "RECEIVER_CHECK",
+logger.info(
+  "PAYMENT.AUTHORIZE.WALLET_CHECK",
   {
     expected:
-      expectedWallet,
+      maskId(expectedWallet),
+
     actual:
-      actualWallet,
+      maskId(actualWallet),
   }
 );
 
@@ -378,13 +405,21 @@ if (
      12. BIND PAYMENT
   ===================================================== */
 
-  vlog("BIND_START");
-vlog(
-  "BIND_DATA",
+  logger.debug(
+  "PAYMENT.AUTHORIZE.BIND_START"
+);
+logger.info(
+  "PAYMENT.AUTHORIZE.BIND_DATA",
   {
-    paymentIntentId,
-    piPaymentId,
-    piUid: me.uid,
+    paymentIntentId:
+      maskId(paymentIntentId),
+
+    piPaymentId:
+      maskId(piPaymentId),
+
+    piUid:
+      maskId(me.uid),
+
     verifiedAmount:
       paymentAmount,
   }
@@ -399,12 +434,19 @@ vlog(
     piPayload: payment,
   });
 
-  vlog("BIND_DONE");
+  logger.info(
+  "PAYMENT.AUTHORIZE.BIND_DONE"
+);
 } catch (error) {
-  console.error(
-    "[AUTHORIZE][BIND_FAILED]",
-    error
-  );
+  logger.error(
+  "PAYMENT.AUTHORIZE.BIND_ERROR",
+  {
+    message:
+      error instanceof Error
+        ? error.message
+        : "UNKNOWN_ERROR",
+  }
+);
 
   throw error;
 }
@@ -417,42 +459,65 @@ vlog(
     !payment.status
       ?.developer_approved
   ) {
-    vlog(
-      "PI_APPROVE_START"
-    );
+    logger.info(
+  "PAYMENT.AUTHORIZE.PI_APPROVE_START"
+);
 
     try {
   await piApprovePayment(
     piPaymentId
   );
 
-  vlog(
-    "PI_APPROVE_DONE"
-  );
+  logger.info(
+  "PAYMENT.AUTHORIZE.PI_APPROVE_DONE"
+);
 } catch (error) {
-  console.error(
-    "[AUTHORIZE][APPROVE_FAILED]",
-    error
-  );
+  logger.error(
+  "PAYMENT.AUTHORIZE.BIND_ERROR",
+  {
+    message:
+      error instanceof Error
+        ? error.message
+        : "UNKNOWN_ERROR",
+  }
+);
 
   throw error;
 }
   } else {
-    vlog(
-      "PI_ALREADY_APPROVED"
-    );
+    logger.debug(
+  "PAYMENT.AUTHORIZE.PI_ALREADY_APPROVED"
+);
   }
 
   /* =====================================================
      14. SUCCESS
   ===================================================== */
 
-  vlog("SUCCESS", {
-    paymentIntentId,
-    piPaymentId,
-  });
+  logger.info(
+  "PAYMENT.AUTHORIZE.SUCCESS",
+  {
+    paymentIntentId:
+      maskId(paymentIntentId),
+
+    piPaymentId:
+      maskId(piPaymentId),
+  }
+);
 
   return {
     success: true,
   };
+  } catch (error) {
+   logger.error(
+     "PAYMENT.AUTHORIZE.ERROR",
+     {
+       message:
+         error instanceof Error
+           ? error.message
+           : "UNKNOWN_ERROR",
+     }
+   );
+   throw error;
+}
 }
