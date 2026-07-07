@@ -6,7 +6,10 @@ import type {
   FinalizeIntentInput,
   FindExistingOrderInput,
 } from "./orders.payment.types";
-
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
 /* =========================================================
    FIND EXISTING ORDER
 ========================================================= */
@@ -63,17 +66,11 @@ export async function finalizePaymentIntent(
   client: PoolClient,
   input: FinalizeIntentInput
 ): Promise<void> {
-  console.log(
-    "[PAYMENT][FINALIZE_INTENT] START",
-    {
-      paymentIntentId:
-        input?.paymentIntentId,
-      piPaymentId:
-        input?.piPaymentId,
-      txid:
-        input?.txid,
-    }
-  );
+  logger.info("PAYMENT.FINALIZE_INTENT.START", {
+  paymentIntentId: maskId(input.paymentIntentId),
+  piPaymentId: maskId(input.piPaymentId),
+  txid: maskId(input.txid),
+});
   const {
     paymentIntentId,
     piPaymentId,
@@ -112,20 +109,14 @@ export async function finalizePaymentIntent(
     );
 
   if (result.rowCount) {
-  console.log(
-    "[PAYMENT][FINALIZE] UPDATED",
-    {
-      paymentIntentId,
-      piPaymentId,
-      txid,
-    }
-  );
+  logger.info("PAYMENT.FINALIZE_INTENT.UPDATED", {
+  paymentIntentId: maskId(paymentIntentId),
+  piPaymentId: maskId(piPaymentId),
+  txid: maskId(txid),
+});
 } else {
-  console.log(
-    "[PAYMENT][FINALIZE] ALREADY_PAID",
-    {
-      paymentIntentId,
-    }
-  );
+  logger.info("PAYMENT.FINALIZE_INTENT.ALREADY_PAID", {
+  paymentIntentId: maskId(paymentIntentId),
+});
 }
 }
