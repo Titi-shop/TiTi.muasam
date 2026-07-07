@@ -5,7 +5,10 @@ import {
   getZoneByCountry,
 } from "@/lib/db/shipping";
 import { getAddressById } from "@/lib/db/addresses";
-
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
 /* =========================================================
    TYPES
 ========================================================= */
@@ -52,30 +55,7 @@ export type PricingResult = {
   buyer_zone: string;
   shipping_zone: string;
 };
-/* =========================================================
-   LOGGER
-========================================================= */
 
-function log(step: string, data?: unknown) {
-  console.log(`[PRICING][${step}]`, data ?? "");
-}
-function maskId(
-  value: string
-): string {
-
-  if (value.length <= 8) {
-
-    return value;
-
-  }
-
-  return (
-    value.slice(0, 4) +
-    "..." +
-    value.slice(-4)
-  );
-
-}
 /* =========================================================
    HELPERS
 ========================================================= */
@@ -110,35 +90,31 @@ function isSaleActive(start: string | null, end: string | null): boolean {
 ========================================================= */
 
 async function loadAddress(userId: string, addressId: string) {
-  log(
-  "ADDRESS_LOAD",
+  logger.info(
+  "PRICING.ADDRESS_LOAD",
   {
-
-    userId:
-      maskId(
-        userId
-      ),
-
-    addressId:
-      maskId(
-        addressId
-      ),
-
+    userId: maskId(userId),
+    addressId: maskId(addressId),
   }
 );
 
   const address = await getAddressById(userId, addressId);
 
   if (!address) {
-    log(
-  "ADDRESS_NOT_FOUND"
+    logger.warn(
+  "PRICING.ADDRESS_NOT_FOUND"
 );
     throw new Error("ADDRESS_NOT_FOUND");
   }
 
   const country = String(address.country).trim().toUpperCase();
 
-  log("ADDRESS_OK", { country });
+  logger.info(
+  "PRICING.ADDRESS_OK",
+  {
+    country,
+  }
+);
 
   return { country };
 }
@@ -148,7 +124,12 @@ async function loadAddress(userId: string, addressId: string) {
 ========================================================= */
 
 async function loadProduct(productId: string) {
-  log("PRODUCT_LOAD");
+  logger.debug(
+  "PRICING.PRODUCT_LOAD",
+  {
+    productId: maskId(productId),
+  }
+);
 
   const p = await getProductById(productId);
 
@@ -199,7 +180,12 @@ if (
   );
 }
 
-  log("PRODUCT_OK");
+  logger.debug(
+  "PRICING.PRODUCT_OK",
+  {
+    productId: maskId(product.id),
+  }
+);
 
   return product;
 }
@@ -209,7 +195,12 @@ if (
 ========================================================= */
 
 async function loadVariant(variantId: string, productId: string) {
-  log("VARIANT_LOAD");
+  logger.debug(
+  "PRICING.VARIANT_LOAD",
+  {
+    variantId: maskId(variantId),
+  }
+);
 
   const v = await getVariantById(variantId);
 
@@ -245,7 +236,12 @@ if (
   );
 }
 
-  log("VARIANT_OK");
+  logger.debug(
+  "PRICING.VARIANT_OK",
+  {
+    variantId: maskId(variant.id),
+  }
+);
 
   return variant;
 }
@@ -324,23 +320,13 @@ async function getShipping(
 export async function calculatePricing(
   input: PricingInput
 ): Promise<PricingResult> {
-  log(
-  "START",
+  try {
+  logger.info(
+  "PRICING.START",
   {
-
-    userId:
-      maskId(
-        input.user_id
-      ),
-
-    addressId:
-      maskId(
-        input.address_id
-      ),
-
-    itemCount:
-      input.items.length,
-
+    userId: maskId(input.user_id),
+    addressId: maskId(input.address_id),
+    itemCount: input.items.length,
   }
 );
 
@@ -352,7 +338,13 @@ export async function calculatePricing(
   const buyerZone =
     (await getZoneByCountry(buyerCountry)) ?? "rest_of_world";
 
-  log("BUYER_CONTEXT", { buyerCountry, buyerZone });
+  logger.info(
+  "PRICING.BUYER_CONTEXT",
+  {
+    buyerCountry,
+    buyerZone,
+  }
+);
 
   let subtotal = 0;
   let shipping = 0;
@@ -360,23 +352,18 @@ export async function calculatePricing(
   const items: PricingResult["items"] = [];
 
   for (const item of input.items) {
-    log(
-  "ITEM_START",
+    logger.debug(
+  "PRICING.ITEM_START",
   {
-
-    quantity:
-      item.quantity,
-
+    quantity: item.quantity,
     hasVariant:
-      item.variant_id !==
-      null,
-
+      item.variant_id !== null,
   }
 );
 
     if (!isUUID(item.product_id)) {
-      log(
-  "INVALID_PRODUCT_ID"
+      logger.warn(
+  "PRICING.INVALID_PRODUCT_ID"
 );
       throw new Error("INVALID_PRODUCT_ID");
     }
@@ -467,13 +454,11 @@ const line = price * qty;
 
     items.push(resultItem);
 
-    log(
-  "ITEM_DONE",
+    logger.debug(
+  "PRICING.ITEM_DONE",
   {
-    quantity:
-      qty,
-    subtotal:
-      line,
+    quantity: qty,
+    subtotal: line,
   }
 );
   }
@@ -487,19 +472,27 @@ const result: PricingResult = {
   shipping_zone: shippingZone,
 };
 
-  log(
-  "DONE",
+  logger.info(
+  "PRICING.DONE",
   {
     subtotal,
     shipping,
-    total:
-      subtotal +
-      shipping,
+    total: subtotal + shipping,
   }
 );
-  return result;
-}
-
+     return result;
+  } catch (error) {
+     logger.error(
+       "PRICING.ERROR",
+       {
+         message:
+           error instanceof Error
+             ? error.message
+             : "UNKNOWN_ERROR",
+       }
+     );
+     throw error;
+  }
 /* =========================================================
    EXPORT
 ========================================================= */
