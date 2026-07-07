@@ -543,7 +543,7 @@ export async function cancelA2UPayment(
   vlog(
     "CANCEL_START",
     {
-      paymentId,
+      maskId(paymentId),
     }
   );
 
@@ -562,7 +562,7 @@ export async function cancelA2UPayment(
   vlog(
     "CANCEL_SUCCESS",
     {
-      paymentId,
+      maskId(paymentId),
     }
   );
 }
@@ -584,14 +584,23 @@ export async function debugA2UPayment(
       paymentId
     );
 
-  vlog(
-    "DEBUG_PAYMENT_RESULT",
-    JSON.stringify(
-      payment,
-      null,
-      2
-    )
-  );
+  logger.debug(
+  "PI_A2U.DEBUG_PAYMENT",
+  {
+    paymentId:
+      maskId(
+        payment.identifier
+      ),
+
+    developerApproved:
+      payment.status
+        ?.developer_approved,
+
+    developerCompleted:
+      payment.status
+        ?.developer_completed,
+  }
+);
 
   return payment;
 }
