@@ -87,3 +87,80 @@ export const logger = {
     );
   },
 };
+/* =========================================================
+   MASK HELPERS
+========================================================= */
+
+export function maskId(
+  value: string | null | undefined
+): string {
+  if (!value) {
+    return "";
+  }
+
+  if (value.length <= 8) {
+    return value;
+  }
+
+  return (
+    value.slice(0, 4) +
+    "..." +
+    value.slice(-4)
+  );
+}
+
+export function maskWallet(
+  value: string | null | undefined
+): string {
+  if (!value) {
+    return "";
+  }
+
+  if (value.length <= 12) {
+    return value;
+  }
+
+  return (
+    value.slice(0, 6) +
+    "..." +
+    value.slice(-6)
+  );
+}
+
+export function maskToken(
+  value: string | null | undefined
+): string {
+  if (!value) {
+    return "";
+  }
+
+  if (value.length <= 12) {
+    return "***";
+  }
+
+  return (
+    value.slice(0, 6) +
+    "..." +
+    value.slice(-6)
+  );
+}
+
+export function maskEmail(
+  value: string | null | undefined
+): string {
+  if (!value) {
+    return "";
+  }
+
+  const at = value.indexOf("@");
+
+  if (at <= 1) {
+    return "***";
+  }
+
+  return (
+    value.slice(0, 2) +
+    "***" +
+    value.slice(at)
+  );
+}
