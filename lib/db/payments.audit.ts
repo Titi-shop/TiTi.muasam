@@ -11,7 +11,10 @@ import type {
   AuditRpcVerifiedParams,
   AuditPiCompletedParams,
 } from "@/lib/payments/types";
-
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
 /* =========================================================
    HELPERS
 ========================================================= */
@@ -145,8 +148,8 @@ export async function writePaymentAudit(
     prevHash,
   });
 
-  console.log("[AUDIT] BEFORE_INSERT", {
-  paymentIntentId: normalized.paymentIntentId,
+  logger.info("AUDIT.BEFORE_INSERT", {
+  paymentIntentId: maskId(normalized.paymentIntentId),
   eventCode: normalized.eventCode,
 });
 
@@ -227,9 +230,19 @@ try {
     db
   );
 
-  console.log("[AUDIT] AFTER_INSERT");
+  logger.info("AUDIT.INSERT_DONE", {
+  paymentIntentId: maskId(normalized.paymentIntentId),
+  eventCode: normalized.eventCode,
+});
 } catch (err) {
-  console.error("[AUDIT][INSERT_ERROR]", err);
+  logger.error("AUDIT.INSERT_ERROR", {
+  paymentIntentId: maskId(normalized.paymentIntentId),
+  eventCode: normalized.eventCode,
+  message:
+    err instanceof Error
+      ? err.message
+      : String(err),
+});
   throw err;
 }
 }
@@ -347,7 +360,12 @@ export const auditFinalizeDone = async (
     db
   );
 
-  console.log("[AUDIT] ORDER_FINALIZED DONE");
+  logger.info("AUDIT.ORDER_FINALIZED", {
+  paymentIntentId: maskId(paymentIntentId),
+  orderId: params.orderId
+    ? maskId(params.orderId)
+    : null,
+});
 };
 
 export const auditManualReview = (
@@ -404,7 +422,11 @@ export const auditPaymentReceiptCreated = async (
     db
   );
 
-  console.log("[AUDIT] PAYMENT_RECEIPT_CREATED DONE");
+  logger.info("AUDIT.PAYMENT_RECEIPT_CREATED", {
+  paymentIntentId: maskId(paymentIntentId),
+  orderId: maskId(params.orderId),
+  piPaymentId: maskId(params.piPaymentId),
+});
 };
 export const auditPiPaymentCreated = async (
   paymentIntentId: string,
@@ -434,7 +456,10 @@ export const auditPiPaymentCreated = async (
     db
   );
 
-  console.log("[AUDIT] PI_PAYMENT_CREATED DONE");
+  logger.info("AUDIT.PI_PAYMENT_CREATED", {
+  paymentIntentId: maskId(paymentIntentId),
+  piPaymentId: maskId(params.piPaymentId),
+});
 };
 export const auditPaymentIntentFinalized = async (
   paymentIntentId: string,
@@ -464,5 +489,8 @@ export const auditPaymentIntentFinalized = async (
   );
 
 
-  console.log("[AUDIT] PAYMENT_INTENT_FINALIZED DONE");
+  logger.info("AUDIT.PAYMENT_INTENT_FINALIZED", {
+  paymentIntentId: maskId(paymentIntentId),
+  orderId: maskId(params.orderId),
+});
 };
