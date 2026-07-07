@@ -233,7 +233,9 @@ logger.info(
 logger.debug(
   "PAYMENT.AUTHORIZE.PI_IDENTIFIER",
   {
-    identifier: payment.identifier,
+    identifier: maskId(
+      payment.identifier
+    ),
   }
 );
   logger.info(
