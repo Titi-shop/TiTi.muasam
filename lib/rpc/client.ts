@@ -162,10 +162,12 @@ async function rpcCall(
   method: string,
   params: Record<string, unknown>
 ): Promise<JsonObj> {
-  log("RPC_CALL_START", {
+  logger.debug(
+  "RPC_CLIENT.CALL_START",
+  {
     method,
-    params,
-  });
+  }
+);
 
   let response: Response;
 
@@ -187,7 +189,15 @@ async function rpcCall(
       }),
     });
   } catch (e) {
-    err("RPC_NETWORK_FAIL", e);
+    logger.error(
+  "RPC_CLIENT.NETWORK_FAIL",
+  {
+    message:
+      e instanceof Error
+        ? e.message
+        : String(e),
+  }
+);
 
     throw new Error("RPC_UNREACHABLE");
   }
@@ -199,7 +209,12 @@ async function rpcCall(
   try {
     parsed = JSON.parse(rawText) as RpcEnvelope;
   } catch {
-    err("RPC_INVALID_JSON", rawText);
+    logger.error(
+  "RPC_CLIENT.INVALID_JSON",
+  {
+    length: rawText.length,
+  }
+);
 
     throw new Error("RPC_INVALID_JSON");
   }
@@ -213,7 +228,13 @@ async function rpcCall(
   }
 
   if (parsed.error) {
-    err("RPC_METHOD_FAIL", parsed.error);
+    logger.error(
+  "RPC_CLIENT.METHOD_FAIL",
+  {
+    code: parsed.error?.code,
+    message: parsed.error?.message,
+  }
+);
 
     throw new Error("RPC_ERROR");
   }
@@ -338,9 +359,12 @@ export async function getRpcTransaction(
 ): Promise<ParsedRpcTransaction> {
   const clean = txid.trim();
 
-  log("GET_TX_START", {
-    txid: clean,
-  });
+  logger.info(
+  "RPC_CLIENT.GET_TX_START",
+  {
+    txid: maskId(clean),
+  }
+);
 
   if (!clean) {
     throw new Error("RPC_TXID_REQUIRED");
@@ -555,20 +579,23 @@ if (str(memoObj.text)) {
         parseLayer = "EVENTS";
       }
     }
-    log("PARSE_RESULT", {
-  txid: clean,
-  amount,
-  sender,
-  receiver,
-  ledger,
-  confirmed,
-  memo,
-  parseLayer,
-});
-log("NORMALIZED_AMOUNT", {
-  txid: clean,
-  amount,
-});
+    logger.info(
+  "RPC_CLIENT.PARSE_RESULT",
+  {
+    txid: maskId(clean),
+    amount,
+    ledger,
+    confirmed,
+    parseLayer,
+  }
+);
+logger.debug(
+  "RPC_CLIENT.NORMALIZED_AMOUNT",
+  {
+    txid: maskId(clean),
+    amount,
+  }
+);
 
 return {
   hash:
@@ -623,7 +650,16 @@ receiverBalanceDelta,
   },
 };
   } catch (e) {
-    err("GET_TX_FAIL", e);
+    logger.error(
+  "RPC_CLIENT.GET_TX_FAIL",
+  {
+    txid: maskId(clean),
+    message:
+      e instanceof Error
+        ? e.message
+        : String(e),
+  }
+);
 
     return {
   hash: clean,
