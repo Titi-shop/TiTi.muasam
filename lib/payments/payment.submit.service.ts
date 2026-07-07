@@ -1,7 +1,10 @@
 import { markPaymentVerifying } from "@/lib/db/payments.submit";
 
 import type { SubmitPaymentBody } from "@/lib/payments/payment.types";
-
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
 /* =========================================================
    TYPES
 ========================================================= */
@@ -82,15 +85,32 @@ export async function submitPiPaymentFromRequest({
   requestId,
 }: SubmitRequestInput) {
   const body = normalizeSubmitBody(raw);
-console.log(
-  "[PAYMENT][SUBMIT] NORMALIZED",
-  body
+logger.info(
+  "PAYMENT.SUBMIT.NORMALIZED",
+  {
+    paymentIntentId: maskId(
+      body.payment_intent_id
+    ),
+    piPaymentId: maskId(
+      body.pi_payment_id
+    ),
+    txid: maskId(
+      body.txid
+    ),
+  }
 );
-  console.log("[PAYMENT][SUBMIT_START]", {
+  logger.info(
+  "PAYMENT.SUBMIT.START",
+  {
     requestId,
-    paymentIntentId: body.payment_intent_id,
-    piPaymentId: body.pi_payment_id,
-  });
+    paymentIntentId: maskId(
+      body.payment_intent_id
+    ),
+    piPaymentId: maskId(
+      body.pi_payment_id
+    ),
+  }
+);
 
   try {
   await markPaymentVerifying({
@@ -102,18 +122,29 @@ console.log(
     txid: body.txid,
   });
 } catch (error) {
-  console.error(
-    "[PAYMENT][SUBMIT_FAIL]",
-    error
-  );
+  logger.error(
+  "PAYMENT.SUBMIT.FAIL",
+  {
+    requestId,
+    message:
+      error instanceof Error
+        ? error.message
+        : "UNKNOWN_ERROR",
+  }
+);
 
   throw error;
 }
 
-  console.log("[PAYMENT][SUBMIT_VERIFYING_LOCKED]", {
+  logger.info(
+  "PAYMENT.SUBMIT.VERIFYING_LOCKED",
+  {
     requestId,
-    paymentIntentId: body.payment_intent_id,
-  });
+    paymentIntentId: maskId(
+      body.payment_intent_id
+    ),
+  }
+);
 
   return {
     success: true,
