@@ -88,9 +88,9 @@ function buildVerificationHash(input: {
 async function getPaymentIntent(
   paymentIntentId: string
 ): Promise<PaymentIntentRow | null> {
-  log("DB_FETCH_INTENT_START", {
-    paymentIntentId,
-  });
+  logger.debug("RPC.DB_FETCH_INTENT_START", {
+  paymentIntentId: maskId(paymentIntentId),
+});
 
   const rs = await query<PaymentIntentRow>(
     `
@@ -120,12 +120,12 @@ async function getPaymentIntent(
 async function insertRpcLog(
   input: InsertRpcLogInput
 ): Promise<void> {
-  log("DB_LOG_INSERT", {
-    txid: input.txid,
-    verified: input.verified,
-    stage: input.stage,
-    reason: input.reason,
-  });
+  logger.info("RPC.DB_LOG_INSERT", {
+  txid: maskId(input.txid),
+  verified: input.verified,
+  stage: input.stage,
+  reason: input.reason,
+});
 
   const values = [
   input.paymentIntentId,
@@ -425,10 +425,10 @@ const expectedAmount =
     intent.merchant_wallet
   );
 
-  log("INTENT_EXPECTED", {
-    expectedAmount,
-    expectedReceiver,
-  });
+  logger.debug("RPC.INTENT_EXPECTED", {
+  expectedAmount,
+  expectedReceiver: maskWallet(expectedReceiver),
+});
 
   /* =====================================================
      FETCH RPC TX
@@ -442,18 +442,18 @@ const expectedAmount =
     rpcTx.chainPaymentAmount,
     rpcTx.chainEventAmount
   );
-  log("RPC_RAW_RESULT", {
+  logger.debug("RPC.RAW_RESULT", {
   confirmed: rpcTx.confirmed,
   amount: rpcTx.amount,
-  sender: rpcTx.sender,
-  receiver: rpcTx.receiver,
+  sender: maskWallet(rpcTx.sender),
+  receiver: maskWallet(rpcTx.receiver),
   ledger: rpcTx.ledger,
   txStatus: rpcTx.txStatus,
-  chainReference: rpcTx.hash,
+  chainReference: maskId(rpcTx.hash),
   createdAt: rpcTx.createdAt,
-  memo: rpcTx.memo,
+  memo: maskId(rpcTx.memo),
 });
-log("CHAIN_PAYMENT_AMOUNT", {
+logger.debug("RPC.CHAIN_PAYMENT_AMOUNT", {
   chainPaymentAmount: rpcTx.chainPaymentAmount,
 });
   logger.debug("RPC.TRACE", {
@@ -573,7 +573,7 @@ if (!rpcTx.rpcReachable) {
     ledger: rpcTx.ledger,
   });
 
-  log("FINAL_RESULT", {
+  logger.info("RPC.FINAL_RESULT", {
   verified,
   stage,
   reason,
@@ -712,9 +712,9 @@ const rpcLog =
 export async function getRpcVerificationLog(
   paymentIntentId: string
 ) {
-  log("DB_FETCH_RPC_LOG_START", {
-    paymentIntentId,
-  });
+  logger.debug("RPC.DB_FETCH_RPC_LOG_START", {
+    paymentIntentId: maskId(paymentIntentId),
+});
 
   if (!isUUID(paymentIntentId)) {
     throw new Error("INVALID_PAYMENT_INTENT_ID");
@@ -780,12 +780,12 @@ export async function getRpcVerificationLog(
     throw new Error("RPC_VERIFICATION_LOG_NOT_FOUND");
   }
 
-  log("DB_FETCH_RPC_LOG_DONE", {
-    paymentIntentId,
+  logger.info("RPC.DB_FETCH_RPC_LOG_DONE", {
+    paymentIntentId: maskId(paymentIntentId),
     verified: row.verified,
     stage: row.stage,
     reason: row.reason,
-  });
+});
 
   return {
   ...row,
