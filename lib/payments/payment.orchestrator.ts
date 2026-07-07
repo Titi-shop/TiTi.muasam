@@ -136,26 +136,39 @@ export async function runPaymentSettlement({
      1. GUARD
   ===================================================== */
 
-  console.log("[PAYMENT][SETTLEMENT] GUARD_START", {
-    paymentIntentId,
-  });
+  logger.debug(
+  "PAYMENT.SETTLEMENT.GUARD_START",
+  {
+    paymentIntentId: maskId(paymentIntentId),
+  }
+);
 
   const guard = await guardPaymentV7(paymentIntentId, userId);
 
-  console.log("[PAYMENT][SETTLEMENT] GUARD_RESULT", {
-    paymentIntentId,
+  logger.info(
+  "PAYMENT.SETTLEMENT.GUARD_RESULT",
+  {
+    paymentIntentId: maskId(paymentIntentId),
     ok: guard.ok,
     code: guard.code,
-    orderId: guard.orderId,
+    orderId: maskId(
+      guard.orderId ?? ""
+    ),
     amount: guard.amount,
-  });
+  }
+);
 
   if (!guard.ok || guard.amount === 0) {
     if (guard.code === "PAYMENT_ALREADY_PAID") {
-      console.log("[PAYMENT][SETTLEMENT] ALREADY_PAID", {
-        paymentIntentId,
-        orderId: guard.orderId,
-      });
+      logger.info(
+  "PAYMENT.SETTLEMENT.ALREADY_PAID",
+  {
+    paymentIntentId: maskId(paymentIntentId),
+    orderId: maskId(
+      guard.orderId ?? ""
+    ),
+  }
+);
       return successResult(
         guard.orderId ?? null,
         guard.amount ?? 0,
@@ -163,10 +176,13 @@ export async function runPaymentSettlement({
       );
     }
 
-    console.error("[PAYMENT][SETTLEMENT] GUARD_FAILED", {
-      paymentIntentId,
-      code: guard.code,
-    });
+    logger.error(
+  "PAYMENT.SETTLEMENT.GUARD_FAILED",
+  {
+    paymentIntentId: maskId(paymentIntentId),
+    code: guard.code,
+  }
+);
 
     return failResult(0, false);
   }
@@ -175,20 +191,29 @@ export async function runPaymentSettlement({
      2. LOCK
   ===================================================== */
 
-  console.log("[PAYMENT][SETTLEMENT] LOCK_START", {
-    paymentIntentId,
-  });
+  logger.debug(
+  "PAYMENT.SETTLEMENT.LOCK_START",
+  {
+    paymentIntentId: maskId(paymentIntentId),
+  }
+);
 
   const lock = await acquirePaymentLockV7(paymentIntentId);
-  console.log("[PAYMENT][SETTLEMENT] LOCK_RESULT", {
-    paymentIntentId,
+  logger.info(
+  "PAYMENT.SETTLEMENT.LOCK_RESULT",
+  {
+    paymentIntentId: maskId(paymentIntentId),
     ok: lock.ok,
-  });
+  }
+);
 
   if (!lock.ok) {
-    console.warn("[PAYMENT][SETTLEMENT] LOCK_DENIED", {
-      paymentIntentId,
-    });
+    logger.warn(
+  "PAYMENT.SETTLEMENT.LOCK_DENIED",
+  {
+    paymentIntentId: maskId(paymentIntentId),
+  }
+);
 
     return failResult(guard.amount ?? 0, false);
   }
@@ -203,18 +228,18 @@ const rpcVerified =
     txid,
   });
     if (!rpcVerified.ok) {
-  console.error(
-    "[PAYMENT][SETTLEMENT] RPC_VERIFY_FAILED",
-    {
-      paymentIntentId,
-      reason: rpcVerified.reason,
-    }
-  );
+  logger.error(
+  "PAYMENT.SETTLEMENT.RPC_VERIFY_FAILED",
+  {
+    paymentIntentId: maskId(paymentIntentId),
+    reason: rpcVerified.reason,
+  }
+);
 
 
-  console.warn(
-    "[PAYMENT][SETTLEMENT] RPC_SOFT_FAIL"
-  );
+  logger.warn(
+  "PAYMENT.SETTLEMENT.RPC_SOFT_FAIL"
+);
 }
 
   /* =====================================================
@@ -227,15 +252,21 @@ const rpcVerified =
     txid
   );
 
-  console.log("[PAYMENT][SETTLEMENT] PI_COMPLETE_RESULT", {
-    paymentIntentId,
+  logger.info(
+  "PAYMENT.SETTLEMENT.PI_COMPLETE_RESULT",
+  {
+    paymentIntentId: maskId(paymentIntentId),
     piCompleted,
-  });
+  }
+);
 
   if (!piCompleted) {
-    console.error("[PAYMENT][SETTLEMENT] STOP_AFTER_PI_COMPLETE_FAIL", {
-      paymentIntentId,
-    });
+    logger.error(
+  "PAYMENT.SETTLEMENT.PI_COMPLETE_FAILED",
+  {
+    paymentIntentId: maskId(paymentIntentId),
+  }
+);
     
   return failResult(
     rpcVerified.amount ?? 0,
@@ -263,10 +294,23 @@ return successResult(
 );
   } catch (e) {
 
-  console.error("[PAYMENT][SETTLEMENT][FATAL]", {
-    paymentIntentId,
-    error: e,
-  });
+  logger.error(
+  "PAYMENT.SETTLEMENT.FATAL",
+  {
+    paymentIntentId: maskId(paymentIntentId),
+    message:
+      e instanceof Error
+        ? e.message
+        : "UNKNOWN_ERROR",
+  }
+);
+
+if (
+  process.env.NODE_ENV !==
+  "production"
+) {
+  console.error(e);
+}
 
   return failResult(0, false);
 }
@@ -303,9 +347,9 @@ function parseReconcileRequestBody(raw: ReconcileRequestBody): {
       : "";
 
   if (!paymentIntentId || !piPaymentId || !txid) {
-    console.error("[PAYMENT][SETTLEMENT] INVALID_REQUEST_BODY", {
-      raw,
-    });
+    logger.error(
+  "PAYMENT.SETTLEMENT.INVALID_REQUEST_BODY"
+);
 
     return null;
   }
@@ -321,31 +365,41 @@ export async function runPaymentSettlementFromRequest(input: {
   rawBody: unknown;
   userId: string;
 }): Promise<PaymentSettlementResult | null> {
-  console.log("[PAYMENT][SETTLEMENT] REQUEST_START", {
-    userId: input.userId,
-  });
+  logger.info(
+  "PAYMENT.SETTLEMENT.REQUEST_START",
+  {
+    userId: maskId(input.userId),
+  }
+);
 
   if (!input.rawBody || typeof input.rawBody !== "object") {
-    console.error("[PAYMENT][SETTLEMENT] INVALID_RAW_BODY");
-
-    return null;
-  }
-
-  const parsed = parseReconcileRequestBody(
-    input.rawBody as ReconcileRequestBody
+  logger.error(
+    "PAYMENT.SETTLEMENT.INVALID_RAW_BODY"
   );
 
-  if (!parsed) {
-    console.error("[PAYMENT][SETTLEMENT] PARSE_FAILED");
+  return null;
+}
 
-    return null;
+const parsed = parseReconcileRequestBody(
+  input.rawBody as ReconcileRequestBody
+);
+
+if (!parsed) {
+  logger.error(
+    "PAYMENT.SETTLEMENT.PARSE_FAILED"
+  );
+
+  return null;
+}
+
+  logger.info(
+  "PAYMENT.SETTLEMENT.REQUEST_PARSED",
+  {
+    paymentIntentId: maskId(parsed.paymentIntentId),
+    piPaymentId: maskId(parsed.piPaymentId),
+    txid: maskId(parsed.txid),
   }
-
-  console.log("[PAYMENT][SETTLEMENT] REQUEST_PARSED", {
-    paymentIntentId: parsed.paymentIntentId,
-    piPaymentId: parsed.piPaymentId,
-    txid: parsed.txid,
-  });
+);
 
   return runPaymentSettlement({
     paymentIntentId: parsed.paymentIntentId,
