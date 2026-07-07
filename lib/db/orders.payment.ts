@@ -332,9 +332,10 @@ await auditFinalizeDone(
     piPaymentId,
   }
 );
-logger.debug("PAYMENT.MARK_PI_VERIFIED");
-await markPiVerified(
+logger.debug("PAYMENT.MARK_RPC_VERIFIED");
+await markRpcVerified(
   client,
+  paymentIntentId,
   escrowId
 );
 logger.debug("PAYMENT.MARK_PI_VERIFIED");
