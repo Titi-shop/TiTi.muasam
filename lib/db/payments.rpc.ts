@@ -11,6 +11,11 @@ import type {
 import type {
   InsertRpcLogInput,
 } from "@/lib/payments/types/rpc.db.types";
+import {
+  logger,
+  maskId,
+  maskWallet,
+} from "@/lib/logger";
 
 /* =========================================================
    INPUT TYPE (local only)
