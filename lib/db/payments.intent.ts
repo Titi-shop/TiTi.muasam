@@ -437,6 +437,7 @@ logger.info(
       },
     };
   });
+ 
    } catch (error) {
   logger.error(
     "PAYMENT_INTENT.ERROR",
@@ -448,6 +449,7 @@ logger.info(
     }
   );
   throw error;
+}
 }
 /* =========================================================
    GET PAYMENT INTENT
@@ -498,7 +500,14 @@ logger.info(
 
 return res.rows[0] ?? null;
 }
-logger.info(
+
+export async function releaseReservedStock(
+    client: PoolClient,
+    productId: string,
+    variantId: string | null,
+    quantity: number
+) {
+  logger.info(
   "PAYMENT_INTENT.RELEASE_RESERVED.START",
   {
     productId:
@@ -512,12 +521,6 @@ logger.info(
     quantity,
   }
 );
-export async function releaseReservedStock(
-    client: PoolClient,
-    productId: string,
-    variantId: string | null,
-    quantity: number
-) {
   if (variantId) {
     await client.query(
       `
@@ -545,12 +548,13 @@ export async function releaseReservedStock(
 logger.info(
   "PAYMENT_INTENT.RELEASE_RESERVED.SUCCESS"
 );
-logger.info(
-  "PAYMENT_INTENT.FIND_EXPIRED.START"
-);
+
 export async function findExpiredPaymentIntents(
     client: PoolClient
 ): Promise<ExpiredPaymentIntentRow[]> {
+ logger.info(
+  "PAYMENT_INTENT.FIND_EXPIRED.START"
+);
   const res =
     await client.query<ExpiredPaymentIntentRow>(
       `
@@ -580,13 +584,7 @@ logger.info(
       res.rows.length,
   }
 );
-logger.info(
-  "PAYMENT_INTENT.EXPIRE.START",
-  {
-    paymentIntentId:
-      maskId(intent.id),
-  }
-);
+
 export async function expirePaymentIntentFlow({
     client,
     intent,
@@ -594,6 +592,13 @@ export async function expirePaymentIntentFlow({
     client: PoolClient;
     intent: ExpiredPaymentIntentRow;
 }) {
+  logger.info(
+  "PAYMENT_INTENT.EXPIRE.START",
+  {
+    paymentIntentId:
+      maskId(intent.id),
+  }
+);
   await releaseReservedStock(
     client,
     intent.product_id,
