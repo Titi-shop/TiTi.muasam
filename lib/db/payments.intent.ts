@@ -9,6 +9,10 @@ import type {
   PaymentIntentRow,
   ExpiredPaymentIntentRow,
 } from "@/lib/payments/types/intent.type";
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
 /* =========================================================
    GLOBAL WALLET
 ========================================================= */
@@ -26,10 +30,6 @@ logger.info(
 /* =========================================================
    HELPERS
 ========================================================= */
-
-function vlog(step: string, data?: unknown) {
-  console.log(`[PAYMENT_INTENT_DB_V7][${step}]`, data ?? "");
-}
 
 function safeUUID(): string {
   return crypto.randomUUID();
@@ -56,11 +56,11 @@ function makeExpiresAt(): Date {
   );
 }
 async function lockAndValidateInventory(
-  client: any,
-  productId: string,
-  variantId: string | null,
-  quantity: number
-) {
+    client: PoolClient,
+    productId: string,
+    variantId: string | null,
+    quantity: number
+){
   // ==============================
   // PRODUCT VARIANT
   // ==============================
@@ -437,10 +437,10 @@ vlog("GET_RESULT", {
 return res.rows[0] ?? null;
 }
 export async function releaseReservedStock(
-  client: any,
-  productId: string,
-  variantId: string | null,
-  quantity: number
+    client: PoolClient,
+    productId: string,
+    variantId: string | null,
+    quantity: number
 ) {
   if (variantId) {
     await client.query(
@@ -467,7 +467,7 @@ export async function releaseReservedStock(
   );
 }
 export async function findExpiredPaymentIntents(
-  client: any
+    client: PoolClient
 ): Promise<ExpiredPaymentIntentRow[]> {
   const res =
     await client.query<ExpiredPaymentIntentRow>(
@@ -492,11 +492,11 @@ export async function findExpiredPaymentIntents(
   return res.rows;
 }
 export async function expirePaymentIntentFlow({
-  client,
-  intent,
-}: {
-  client: any;
-  intent: ExpiredPaymentIntentRow;
+    client,
+    intent,
+}:{
+    client: PoolClient;
+    intent: ExpiredPaymentIntentRow;
 }) {
   await releaseReservedStock(
     client,
