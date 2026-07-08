@@ -35,45 +35,28 @@ import {
 } from "@/lib/logger";
 
 /* =====================================================
-   TYPES
-===================================================== */
-
-type PayWithdrawalResult = {
-
-  withdrawalId: string;
-
-  piPaymentId: string;
-
-  txid: string;
-
-};
-
-/* =====================================================
    PAY WITHDRAWAL
 ===================================================== */
 
 export async function payWithdrawal(
   withdrawalId: string
-): Promise<PayWithdrawalResult> {
+) {
 
-  let canRollback =
-    false;
+  let canRollback = false;
+
+  logger.info(
+    "A2U.START",
+    {
+      withdrawalId:
+        maskId(withdrawalId),
+    }
+  );
 
   try {
 
-    logger.info(
-      "A2U.START",
-      {
-        withdrawalId:
-          maskId(
-            withdrawalId
-          ),
-      }
-    );
-
-    /* ===============================================
+    /* ==========================================
        LOAD WITHDRAWAL
-    =============================================== */
+    ========================================== */
 
     const withdrawal =
       await getWalletWithdrawalById(
@@ -81,11 +64,9 @@ export async function payWithdrawal(
       );
 
     if (!withdrawal) {
-
       throw new Error(
         "WITHDRAWAL_NOT_FOUND"
       );
-
     }
 
     switch (
@@ -93,176 +74,155 @@ export async function payWithdrawal(
     ) {
 
       case "PROCESSING":
-
         throw new Error(
           "WITHDRAWAL_ALREADY_PROCESSING"
         );
 
       case "COMPLETED":
-
         throw new Error(
           "WITHDRAWAL_ALREADY_COMPLETED"
         );
 
-      case "APPROVED":
-
-      case "FAILED":
-
-        break;
-
-      default:
-
-        throw new Error(
-          "INVALID_STATUS"
-        );
-
     }
 
-    /* ===============================================
+    if (
+      ![
+        "APPROVED",
+        "FAILED",
+      ].includes(
+        withdrawal.status
+      )
+    ) {
+      throw new Error(
+        "INVALID_STATUS"
+      );
+    }
+
+    /* ==========================================
        LOAD USER
-    =============================================== */
+    ========================================== */
 
     const user =
       await getUserById(
         withdrawal.user_id
       );
 
-    if (
-      !user?.pi_uid
-    ) {
-
+    if (!user?.pi_uid) {
       throw new Error(
         "USER_PI_UID_MISSING"
       );
-
     }
-
-    /* ===============================================
+        /* ==========================================
        CREATE PI PAYMENT
-    =============================================== */
+    ========================================== */
 
     const piPaymentId =
       await createA2UPayment({
+        uid: user.pi_uid,
 
-        uid:
-          user.pi_uid,
-
-        amount:
-          Number(
-            withdrawal.amount
-          ),
+        amount: Number(
+          withdrawal.amount
+        ),
 
         memo:
           `Withdraw ${withdrawal.id}`,
 
         metadata: {
-
           withdrawal_id:
             withdrawal.id,
-
         },
-
       });
-        /* ===============================================
+
+    /* ==========================================
        MARK PROCESSING
-    =============================================== */
+    ========================================== */
 
     await markWithdrawalProcessing(
-
       withdrawal.id,
-
       piPaymentId,
-
       `Withdraw ${withdrawal.id}`,
-
-      user.pi_uid,
-
+      user.pi_uid
     );
 
-    canRollback =
-      true;
+    canRollback = true;
 
     logger.info(
       "A2U.PROCESSING",
       {
         withdrawalId:
-          maskId(
-            withdrawal.id
-          ),
+          maskId(withdrawal.id),
       }
     );
 
-    /* ===============================================
-       SUBMIT
-    =============================================== */
+    /* ==========================================
+       SUBMIT BLOCKCHAIN
+    ========================================== */
 
     const tx =
       await submitA2UPayment(
         piPaymentId
       );
 
-    /* ===============================================
-       COMPLETE
-    =============================================== */
-
-    await completeA2UPayment(
-
-      piPaymentId,
-
-      tx.txid,
-
+    logger.info(
+      "A2U.SUBMITTED",
+      {
+        withdrawalId:
+          maskId(withdrawal.id),
+      }
     );
 
-    /* ===============================================
+    /* ==========================================
+       COMPLETE PI PAYMENT
+    ========================================== */
+
+    await completeA2UPayment(
+      piPaymentId,
+      tx.txid
+    );
+
+    /* ==========================================
        VERIFY RPC
-    =============================================== */
+    ========================================== */
 
     await verifyWithdrawalRpc(
-
       withdrawal.id,
-
-      tx.txid,
-
+      tx.txid
     );
 
     logger.info(
       "A2U.RPC_OK",
       {
         withdrawalId:
-          maskId(
-            withdrawal.id
-          ),
+          maskId(withdrawal.id),
       }
     );
 
-    /* ===============================================
+    /* ==========================================
        COMPLETE WITHDRAWAL
-    =============================================== */
+    ========================================== */
 
     await markWithdrawalCompleted(
       withdrawal.id
     );
 
-    canRollback =
-      false;
+    canRollback = false;
 
     logger.info(
       "A2U.COMPLETED",
       {
         withdrawalId:
-          maskId(
-            withdrawal.id
-          ),
+          maskId(withdrawal.id),
+      }
+    );
+        logger.info(
+      "A2U.SUCCESS",
+      {
+        withdrawalId:
+          maskId(withdrawal.id),
       }
     );
 
-    /* ===============================================
-       SUCCESS
-    =============================================== */
-
-    const result:
-      PayWithdrawalResult = {
-
+    return {
       withdrawalId:
         withdrawal.id,
 
@@ -270,95 +230,50 @@ export async function payWithdrawal(
 
       txid:
         tx.txid,
-
     };
 
-    logger.info(
-      "A2U.SUCCESS",
-      {
-        withdrawalId:
-          maskId(
-            withdrawal.id
-          ),
-      }
-    );
+  } catch (error) {
 
-    return result;
-
-  } catch (
-    error
-  ) {
-        const message =
+    const message =
       error instanceof Error
         ? error.message
         : "UNKNOWN_ERROR";
 
-    /* ===============================================
-       ROLLBACK
-    =============================================== */
+    logger.warn(
+      "A2U.FAIL",
+      {
+        withdrawalId:
+          maskId(withdrawalId),
 
-    if (
-      canRollback
-    ) {
+        message,
+      }
+    );
+
+    if (canRollback) {
 
       try {
 
-        const latest =
-          await getWalletWithdrawalById(
-            withdrawalId
-          );
+        logger.warn(
+          "A2U.ROLLBACK",
+          {
+            withdrawalId:
+              maskId(withdrawalId),
+          }
+        );
 
-        if (
-          latest?.status ===
-          "PROCESSING"
-        ) {
+        await markWithdrawalFailed(
+          withdrawalId,
+          message
+        );
 
-          await markWithdrawalFailed(
-
-            withdrawalId,
-
-            message,
-
-          );
-
-          logger.warn(
-            "A2U.ROLLBACK",
-            {
-              withdrawalId:
-                maskId(
-                  withdrawalId
-                ),
-            }
-          );
-
-        } else {
-
-          logger.warn(
-            "A2U.SKIP_ROLLBACK",
-            {
-              withdrawalId:
-                maskId(
-                  withdrawalId
-                ),
-              status:
-                latest?.status ??
-                "UNKNOWN",
-            }
-          );
-
-        }
-
-      } catch (
-        rollbackError
-      ) {
+      } catch (rollbackError) {
 
         logger.error(
           "A2U.ROLLBACK_FAILED",
           {
             withdrawalId:
-              maskId(
-                withdrawalId
-              ),
+              maskId(withdrawalId),
+
             message:
               rollbackError instanceof Error
                 ? rollbackError.message
@@ -370,27 +285,14 @@ export async function payWithdrawal(
           process.env.NODE_ENV !==
           "production"
         ) {
-
           console.error(
             rollbackError
           );
-
         }
 
       }
 
     }
-
-    logger.error(
-      "A2U.FAILED",
-      {
-        withdrawalId:
-          maskId(
-            withdrawalId
-          ),
-        message,
-      }
-    );
 
     throw error;
 
