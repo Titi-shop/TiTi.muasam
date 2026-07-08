@@ -10,9 +10,7 @@ import type {
   FinalizeValidationResult,
 } from "./orders.payment.types";
 import {
-  logger,
   maskId,
-  maskWallet,
 } from "@/lib/logger";
 /* =========================================================
    HELPERS
@@ -482,11 +480,9 @@ export async function validateFinalizePayment(
   logValidation(
     "FINALIZE_START",
     {
-      paymentIntentId,
-      txid,
-      verifiedAmount,
+        paymentIntentId: maskId(paymentIntentId),
     }
-  );
+);
 const rpcPayload =
     await getRpcVerificationLog(paymentIntentId);
 
