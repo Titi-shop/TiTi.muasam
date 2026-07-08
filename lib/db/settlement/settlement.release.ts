@@ -414,7 +414,7 @@ WHERE id = $1
       ]
     );
 
-  logger.info("SETTLEMENT.RELEASE.ORDER_ITEMS_DONE", {
+  logger.info("SETTLEMENT.RELEASE.ORDER_COMPLETED", {
   orderId: maskId(escrow.order_id),
 });
 
