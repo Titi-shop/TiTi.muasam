@@ -20,7 +20,6 @@ import {
 import {
   logger,
   maskId,
-  maskWallet,
 } from "@/lib/logger";
 
 /* =====================================================
@@ -274,15 +273,23 @@ export async function createWalletAddressFlow(
         valid ??
         wallet;
 
-    } else {
+} else {
 
-      const invalid =
-        await markWalletAddressInvalid(
-          wallet.id,
-          "ACCOUNT_NOT_FOUND"
-        );
+  const invalid =
+    await markWalletAddressInvalid(
+      wallet.id,
+      "ACCOUNT_NOT_FOUND"
+    );
 
-      logger.warn("WALLET_ADDRESS.VALIDATION_INVALID");
+  logger.warn(
+    "WALLET_ADDRESS.VALIDATION_INVALID"
+  );
+
+  result =
+    invalid ??
+    wallet;
+
+}
 
     /* ===============================================
        SUCCESS
