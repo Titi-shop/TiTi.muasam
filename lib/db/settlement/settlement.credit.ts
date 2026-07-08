@@ -26,6 +26,10 @@ import {
 import {
   createSettlementJournalOnce,
 } from "./settlement.journal";
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
 
 /* =====================================================
    CREDIT SELLER
@@ -53,19 +57,11 @@ if (!rpc.confirmed) {
 if (rpc.txStatus !== "SUCCESS") {
   throw new Error("RPC_TX_FAILED");
 }
-  console.log(
-    "[SETTLEMENT][CREDIT] START",
-    {
-      escrowId:
-        input.escrowId,
-
-      sellerId:
-        input.sellerId,
-
-      amount:
-        rpc.amount!,
-    }
-  );
+  logger.info("SETTLEMENT.CREDIT.START", {
+  escrowId: maskId(input.escrowId),
+  sellerId: maskId(input.sellerId),
+  amount: rpc.amount,
+});
 
   try {
 
@@ -88,16 +84,10 @@ if (rpc.txStatus !== "SUCCESS") {
 
     if (existed.rows.length) {
 
-      console.log(
-        "[SETTLEMENT][CREDIT] EXISTS",
-        {
-          escrowId:
-            input.escrowId,
-
-          creditId:
-            existed.rows[0].id,
-        }
-      );
+      logger.info("SETTLEMENT.CREDIT.EXISTS", {
+  escrowId: maskId(input.escrowId),
+  creditId: maskId(existed.rows[0].id),
+});
 
       return existed.rows[0].id;
     }
@@ -130,14 +120,10 @@ if (rpc.txStatus !== "SUCCESS") {
           input.piPaymentId,
       });
 
-    console.log(
-      "[SETTLEMENT][CREDIT] INSERT_START",
-      {
-        creditId,
-        escrowId:
-          input.escrowId,
-      }
-    );
+    logger.debug("SETTLEMENT.CREDIT.INSERT_START", {
+  creditId: maskId(creditId),
+  escrowId: maskId(input.escrowId),
+});
 
     await client.query(
       `
@@ -261,14 +247,10 @@ withdrawn_amount,
       ]
     );
 
-    console.log(
-      "[SETTLEMENT][CREDIT] INSERT_DONE",
-      {
-        creditId,
-        escrowId:
-          input.escrowId,
-      }
-    );
+    logger.info("SETTLEMENT.CREDIT.INSERT_DONE", {
+  creditId: maskId(creditId),
+  escrowId: maskId(input.escrowId),
+});
 
     /* ===================================================
        EVENT
@@ -293,13 +275,9 @@ withdrawn_amount,
       client                             
      );
 
-    console.log(
-      "[SETTLEMENT][CREDIT] EVENT_DONE",
-      {
-        escrowId:
-          input.escrowId,
-      }
-    );
+    logger.debug("SETTLEMENT.CREDIT.EVENT_DONE", {
+  escrowId: maskId(input.escrowId),
+});
 
     /* ===================================================
        JOURNAL
@@ -331,36 +309,26 @@ await createSettlementJournalOnce({
 },
      client                         
   );
-    console.log(
-      "[SETTLEMENT][CREDIT] JOURNAL_DONE",
-      {
-        creditId,
-      }
-    );
+    logger.debug("SETTLEMENT.CREDIT.JOURNAL_DONE", {
+  creditId: maskId(creditId),
+});
 
-    console.log(
-      "[SETTLEMENT][CREDIT] SUCCESS",
-      {
-        creditId,
-      }
-    );
+    logger.info("SETTLEMENT.CREDIT.SUCCESS", {
+  creditId: maskId(creditId),
+});
 
     return creditId;
 
   } catch (error) {
 
-    console.error(
-      "[SETTLEMENT][CREDIT][FATAL]",
-      {
-        escrowId:
-          input.escrowId,
-
-        sellerId:
-          input.sellerId,
-
-        error,
-      }
-    );
+    logger.error("SETTLEMENT.CREDIT.FATAL", {
+  escrowId: maskId(input.escrowId),
+  sellerId: maskId(input.sellerId),
+  message:
+    error instanceof Error
+      ? error.message
+      : String(error),
+});
 
     throw error;
   }
