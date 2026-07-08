@@ -79,28 +79,22 @@ export async function markPaymentVerifying({
     }
 
     const intent = rs.rows[0];
-console.log(
-  "[PAYMENT][SUBMIT] CURRENT_STATE",
-  {
-    status: intent.status,
-    payment_state:
-      intent.payment_state,
-    provider_status:
-      intent.provider_status,
-    pi_payment_id:
-      intent.pi_payment_id,
-    txid: intent.txid,
-  }
-);
+logger.debug("PAYMENT.SUBMIT.CURRENT_STATE", {
+  status: intent.status,
+  paymentState: intent.payment_state,
+  providerStatus: intent.provider_status,
+  piPaymentId: maskId(intent.pi_payment_id),
+  txid: maskId(intent.txid),
+});
     if (intent.buyer_id !== userId) {
       throw new Error("FORBIDDEN");
     }
 
-    console.log("[PAYMENT][SUBMIT] INTENT_OK", {
-      status: intent.status,
-      existingPiPaymentId: intent.pi_payment_id,
-      existingTxid: intent.txid,
-    });
+    logger.info("PAYMENT.SUBMIT.INTENT_OK", {
+  status: intent.status,
+  existingPiPaymentId: maskId(intent.pi_payment_id),
+  existingTxid: maskId(intent.txid),
+});
 
     /* =====================================================
        2. TERMINAL STATES
@@ -167,16 +161,10 @@ if (
   intent.pi_payment_id &&
   intent.pi_payment_id !== piPaymentId
 ) {
-  console.error(
-    "[PAYMENT][SUBMIT] PI_PAYMENT_MISMATCH",
-    {
-      expected:
-        intent.pi_payment_id,
-      received:
-        piPaymentId,
-    }
-  );
-
+  logger.warn("PAYMENT.SUBMIT.PI_PAYMENT_MISMATCH", {
+  expected: maskId(intent.pi_payment_id),
+  received: maskId(piPaymentId),
+});
   throw new Error(
     "PI_PAYMENT_MISMATCH"
   );
@@ -186,15 +174,10 @@ if (
   intent.txid &&
   intent.txid !== txid
 ) {
-  console.error(
-    "[PAYMENT][SUBMIT] TXID_MISMATCH",
-    {
-      expected:
-        intent.txid,
-      received:
-        txid,
-    }
-  );
+  logger.warn("PAYMENT.SUBMIT.TXID_MISMATCH", {
+  expected: maskId(intent.txid),
+  received: maskId(txid),
+});
 
   throw new Error(
     "TXID_MISMATCH"
@@ -216,14 +199,11 @@ if (
     );
 
     if (dup.rows.length) {
-  console.error(
-    "[PAYMENT][SUBMIT] GLOBAL_REPLAY",
-    {
-      paymentIntentId,
-      piPaymentId,
-      txid,
-    }
-  );
+  logger.error("PAYMENT.SUBMIT.GLOBAL_REPLAY", {
+  paymentIntentId: maskId(paymentIntentId),
+  piPaymentId: maskId(piPaymentId),
+  txid: maskId(txid),
+});
 
   throw new Error(
     "REPLAY_DETECTED"
@@ -279,35 +259,27 @@ if (
   );
 
 if (!update.rowCount) {
-  console.error(
-    "[PAYMENT][SUBMIT] STATUS_CHANGED",
-    {
-      paymentIntentId,
-    }
-  );
+  logger.warn("PAYMENT.SUBMIT.STATUS_CHANGED", {
+  paymentIntentId: maskId(paymentIntentId),
+});
 
   throw new Error(
     "STATUS_CHANGED"
   );
 }
 
-console.log(
-  "[PAYMENT][SUBMIT] UPDATE_OK",
-  {
-    paymentIntentId,
-    status: "verifying",
-    payment_state:
-      "SUBMITTED",
-    provider_status:
-      "TX_BROADCASTED",
-  }
-);
+logger.info("PAYMENT.SUBMIT.UPDATE_OK", {
+  paymentIntentId: maskId(paymentIntentId),
+  status: "verifying",
+  paymentState: "SUBMITTED",
+  providerStatus: "TX_BROADCASTED",
+});
 
-    console.log("[PAYMENT][SUBMIT] VERIFYING_SET", {
-      paymentIntentId,
-      piPaymentId,
-      txid,
-    });
+    logger.info("PAYMENT.SUBMIT.VERIFYING_SET", {
+  paymentIntentId: maskId(paymentIntentId),
+  piPaymentId: maskId(piPaymentId),
+  txid: maskId(txid),
+});
 
     return {
       ok: true,
