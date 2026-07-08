@@ -25,7 +25,10 @@ import {
   unlockWalletSecurity,
 
 } from "@/lib/db/wallet-security";
-
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
 /* =====================================================
    TYPES
 ===================================================== */
@@ -72,34 +75,6 @@ const LOCK_MINUTES =
 
 const PIN_LENGTH =
   6;
-
-/* =====================================================
-   LOG
-===================================================== */
-
-function log(
-  tag: string,
-  data?: unknown
-) {
-
-  console.log(
-    `[WALLET_SECURITY] ${tag}`,
-    data ?? ""
-  );
-
-}
-
-function err(
-  tag: string,
-  data?: unknown
-) {
-
-  console.error(
-    `[WALLET_SECURITY] ${tag}`,
-    data ?? ""
-  );
-
-}
 
 /* =====================================================
    HELPERS
@@ -212,12 +187,12 @@ export async function getWalletSecurity(
   userId: string
 ) {
 
-  log(
-    "GET_SECURITY_START",
-    {
-      userId,
-    }
-  );
+  logger.info(
+  "WALLET_SECURITY.GET_START",
+  {
+    userId: maskId(userId),
+  }
+);
 
   const security =
     await getWalletSecurityByUserId(
@@ -291,13 +266,12 @@ async function ensureWalletSecurity(
     security
   ) {
 
-    log(
-      "SECURITY_EXISTS",
-      {
-        id:
-          security.id,
-      }
-    );
+    logger.debug(
+  "WALLET_SECURITY.EXISTS",
+  {
+    securityId: maskId(security.id),
+  }
+);
 
     return security;
 
@@ -387,9 +361,9 @@ export async function setupWalletPin(
 
   }
 
-  log(
-    "PIN_HASH_START"
-  );
+  logger.debug(
+    "WALLET_SECURITY.HASH_PIN"
+);
 
   const salt =
     createSalt();
@@ -406,13 +380,7 @@ export async function setupWalletPin(
       hash
     );
 
-  log(
-    "PIN_HASH_DONE"
-  );
-
-  log(
-    "DB_SAVE_PIN_START"
-  );
+  
 
   const updated =
   await setWalletPin({
@@ -660,13 +628,12 @@ export async function verifyWalletPin(
 
     );
 
-    log(
-      "PIN_LOCKED",
-      {
-        attempts,
-        lockedUntil,
-      }
-    );
+    logger.warn(
+    "WALLET_SECURITY.PIN_LOCKED",
+    {
+        userId: maskId(input.userId),
+    }
+);
 
     return {
 
@@ -683,13 +650,12 @@ export async function verifyWalletPin(
 
   }
 
-  log(
-    "VERIFY_PIN_FAILED",
+  logger.warn(
+    "WALLET_SECURITY.PIN_INVALID",
     {
-      attempts,
-      remaining,
+        userId: maskId(input.userId),
     }
-  );
+);
 
   return {
 
