@@ -61,14 +61,9 @@ async function safeCompletePi(
   piPaymentId: string,
   txid: string
 ): Promise<boolean> {
-  logger.info(
-  "PAYMENT.PI_COMPLETE.START",
-  {
-    paymentIntentId: maskId(paymentIntentId),
-    piPaymentId: maskId(piPaymentId),
-    txid: maskId(txid),
-  }
-);
+  logger.info("PAYMENT.PI_COMPLETE.START", {
+  paymentIntentId: maskId(paymentIntentId),
+});
 
   try {
     await piCompletePayment(piPaymentId, txid);
@@ -122,15 +117,9 @@ export async function runPaymentSettlement({
   userId,
 }: RunPaymentSettlementInput): Promise<PaymentSettlementResult> {
   try {
-  logger.info(
-  "PAYMENT.SETTLEMENT.START",
-  {
-    paymentIntentId: maskId(paymentIntentId),
-    piPaymentId: maskId(piPaymentId),
-    txid: maskId(txid),
-    userId: maskId(userId),
-  }
-);
+  logger.info("PAYMENT.SETTLEMENT.START", {
+  paymentIntentId: maskId(paymentIntentId),
+});
 
   /* =====================================================
      1. GUARD
@@ -145,18 +134,11 @@ export async function runPaymentSettlement({
 
   const guard = await guardPaymentV7(paymentIntentId, userId);
 
-  logger.info(
-  "PAYMENT.SETTLEMENT.GUARD_RESULT",
-  {
+  logger.info("PAYMENT.SETTLEMENT.GUARD_RESULT", {
     paymentIntentId: maskId(paymentIntentId),
     ok: guard.ok,
     code: guard.code,
-    orderId: maskId(
-      guard.orderId ?? ""
-    ),
-    amount: guard.amount,
-  }
-);
+});
 
   if (!guard.ok || guard.amount === 0) {
     if (guard.code === "PAYMENT_ALREADY_PAID") {
@@ -392,14 +374,9 @@ if (!parsed) {
   return null;
 }
 
-  logger.info(
-  "PAYMENT.SETTLEMENT.REQUEST_PARSED",
-  {
+  logger.info("PAYMENT.SETTLEMENT.REQUEST_PARSED", {
     paymentIntentId: maskId(parsed.paymentIntentId),
-    piPaymentId: maskId(parsed.piPaymentId),
-    txid: maskId(parsed.txid),
-  }
-);
+});
 
   return runPaymentSettlement({
     paymentIntentId: parsed.paymentIntentId,
