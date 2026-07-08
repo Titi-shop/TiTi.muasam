@@ -447,13 +447,7 @@ await sendNotification({
       : String(err),
 });
 
-  logger.debug("PAYMENT.NOTIFICATION_BUYER", {
-  buyerId: maskId(result.buyerId),
-});
-
-  logger.debug("PAYMENT.NOTIFICATION_SELLER", {
-  sellerId: maskId(result.sellerId),
-});
+  logger.debug("PAYMENT.NOTIFICATION_BUYER");
 
 }
 
@@ -468,9 +462,7 @@ export async function linkReceiptSettlementByIds(input: {
 }): Promise<void> {
   return withTransaction(async (client) => {
     logger.info("PAYMENT.RECEIPT_LINK.START", {
-  paymentIntentId: maskId(input.paymentIntentId),
-  escrowId: maskId(input.escrowId),
-  sellerCreditId: maskId(input.sellerCreditId),
+    paymentIntentId: maskId(input.paymentIntentId),
 });
     await linkReceiptSettlement(
       client,
@@ -478,8 +470,7 @@ export async function linkReceiptSettlementByIds(input: {
     );
 
     logger.info("PAYMENT.RECEIPT_LINK.DONE", {
-  paymentIntentId: maskId(input.paymentIntentId),
-  escrowId: maskId(input.escrowId),
+    paymentIntentId: maskId(input.paymentIntentId),
 });
   });
 }
