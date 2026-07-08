@@ -5,9 +5,11 @@
 import {
   getUserById,
 } from "@/lib/db/users";
+
 import {
   verifyWithdrawalRpc,
 } from "@/lib/db/payments.rpc.a2u";
+
 import {
   getWalletWithdrawalById,
   markWithdrawalCompleted,
@@ -20,6 +22,7 @@ import {
 import {
   markWithdrawalProcessing,
 } from "@/lib/db/wallet/wallet.withdraw.processing";
+
 import {
   createA2UPayment,
   submitA2UPayment,
@@ -31,19 +34,46 @@ import {
   maskId,
 } from "@/lib/logger";
 
+/* =====================================================
+   TYPES
+===================================================== */
+
+type PayWithdrawalResult = {
+
+  withdrawalId: string;
+
+  piPaymentId: string;
+
+  txid: string;
+
+};
+
+/* =====================================================
+   PAY WITHDRAWAL
+===================================================== */
+
 export async function payWithdrawal(
   withdrawalId: string
-) {
-  let canRollback = false;
+): Promise<PayWithdrawalResult> {
+
+  let canRollback =
+    false;
 
   try {
 
     logger.info(
-  "A2U_ORCHESTRATOR.START",
-  {
-    withdrawalId: maskId(withdrawalId),
-  }
-);
+      "A2U.START",
+      {
+        withdrawalId:
+          maskId(
+            withdrawalId
+          ),
+      }
+    );
+
+    /* ===============================================
+       LOAD WITHDRAWAL
+    =============================================== */
 
     const withdrawal =
       await getWalletWithdrawalById(
@@ -51,146 +81,319 @@ export async function payWithdrawal(
       );
 
     if (!withdrawal) {
+
       throw new Error(
         "WITHDRAWAL_NOT_FOUND"
       );
+
     }
 
-    if (
-      withdrawal.status ===
-      "PROCESSING"
+    switch (
+      withdrawal.status
     ) {
-      throw new Error(
-        "WITHDRAWAL_ALREADY_PROCESSING"
-      );
+
+      case "PROCESSING":
+
+        throw new Error(
+          "WITHDRAWAL_ALREADY_PROCESSING"
+        );
+
+      case "COMPLETED":
+
+        throw new Error(
+          "WITHDRAWAL_ALREADY_COMPLETED"
+        );
+
+      case "APPROVED":
+
+      case "FAILED":
+
+        break;
+
+      default:
+
+        throw new Error(
+          "INVALID_STATUS"
+        );
+
     }
 
-    if (
-      withdrawal.status ===
-      "COMPLETED"
-    ) {
-      throw new Error(
-        "WITHDRAWAL_ALREADY_COMPLETED"
-      );
-    }
-
-    if (
-      ![
-        "APPROVED",
-        "FAILED",
-      ].includes(
-        withdrawal.status
-      )
-    ) {
-      throw new Error(
-        "INVALID_STATUS"
-      );
-    }
+    /* ===============================================
+       LOAD USER
+    =============================================== */
 
     const user =
       await getUserById(
         withdrawal.user_id
       );
 
-    if (!user?.pi_uid) {
+    if (
+      !user?.pi_uid
+    ) {
+
       throw new Error(
         "USER_PI_UID_MISSING"
       );
+
     }
+
+    /* ===============================================
+       CREATE PI PAYMENT
+    =============================================== */
 
     const piPaymentId =
       await createA2UPayment({
-        uid: user.pi_uid,
-        amount: Number(
-          withdrawal.amount
-        ),
+
+        uid:
+          user.pi_uid,
+
+        amount:
+          Number(
+            withdrawal.amount
+          ),
+
         memo:
           `Withdraw ${withdrawal.id}`,
+
         metadata: {
+
           withdrawal_id:
             withdrawal.id,
+
         },
+
       });
+        /* ===============================================
+       MARK PROCESSING
+    =============================================== */
 
     await markWithdrawalProcessing(
+
       withdrawal.id,
+
       piPaymentId,
+
       `Withdraw ${withdrawal.id}`,
-      user.pi_uid
+
+      user.pi_uid,
+
     );
-canRollback = true;
+
+    canRollback =
+      true;
+
+    logger.info(
+      "A2U.PROCESSING",
+      {
+        withdrawalId:
+          maskId(
+            withdrawal.id
+          ),
+      }
+    );
+
+    /* ===============================================
+       SUBMIT
+    =============================================== */
+
     const tx =
-  await submitA2UPayment(
-    piPaymentId
-  );
+      await submitA2UPayment(
+        piPaymentId
+      );
 
-await completeA2UPayment(
-  piPaymentId,
-  tx.txid
-);
+    /* ===============================================
+       COMPLETE
+    =============================================== */
 
-await verifyWithdrawalRpc(
-  withdrawal.id,
-  tx.txid
-);
+    await completeA2UPayment(
 
-await markWithdrawalCompleted(withdrawal.id);
-canRollback = false;
+      piPaymentId,
+
+      tx.txid,
+
+    );
+
+    /* ===============================================
+       VERIFY RPC
+    =============================================== */
+
+    await verifyWithdrawalRpc(
+
+      withdrawal.id,
+
+      tx.txid,
+
+    );
+
     logger.info(
-  "A2U_ORCHESTRATOR.AFTER_MARK_COMPLETED"
-);
+      "A2U.RPC_OK",
+      {
+        withdrawalId:
+          maskId(
+            withdrawal.id
+          ),
+      }
+    );
+
+    /* ===============================================
+       COMPLETE WITHDRAWAL
+    =============================================== */
+
+    await markWithdrawalCompleted(
+      withdrawal.id
+    );
+
+    canRollback =
+      false;
 
     logger.info(
-  "A2U_ORCHESTRATOR.RETURN",
-  {
-    withdrawalId: maskId(withdrawal.id),
-    piPaymentId: maskId(piPaymentId),
-    txid: maskId(tx.txid),
-  }
-);
+      "A2U.COMPLETED",
+      {
+        withdrawalId:
+          maskId(
+            withdrawal.id
+          ),
+      }
+    );
 
-return {
-    withdrawalId: withdrawal.id,
-    piPaymentId,
-    txid: tx.txid,
-};
-  }
-  catch (error) {
+    /* ===============================================
+       SUCCESS
+    =============================================== */
+
+    const result:
+      PayWithdrawalResult = {
+
+      withdrawalId:
+        withdrawal.id,
+
+      piPaymentId,
+
+      txid:
+        tx.txid,
+
+    };
+
+    logger.info(
+      "A2U.SUCCESS",
+      {
+        withdrawalId:
+          maskId(
+            withdrawal.id
+          ),
+      }
+    );
+
+    return result;
+
+  } catch (
+    error
+  ) {
+        const message =
+      error instanceof Error
+        ? error.message
+        : "UNKNOWN_ERROR";
+
+    /* ===============================================
+       ROLLBACK
+    =============================================== */
 
     if (
-      processingStarted
+      canRollback
     ) {
+
       try {
-        await markWithdrawalFailed(
-          withdrawalId,
-          error instanceof Error
-            ? error.message
-            : String(error)
-        );
-      }
-      catch (
+
+        const latest =
+          await getWalletWithdrawalById(
+            withdrawalId
+          );
+
+        if (
+          latest?.status ===
+          "PROCESSING"
+        ) {
+
+          await markWithdrawalFailed(
+
+            withdrawalId,
+
+            message,
+
+          );
+
+          logger.warn(
+            "A2U.ROLLBACK",
+            {
+              withdrawalId:
+                maskId(
+                  withdrawalId
+                ),
+            }
+          );
+
+        } else {
+
+          logger.warn(
+            "A2U.SKIP_ROLLBACK",
+            {
+              withdrawalId:
+                maskId(
+                  withdrawalId
+                ),
+              status:
+                latest?.status ??
+                "UNKNOWN",
+            }
+          );
+
+        }
+
+      } catch (
         rollbackError
       ) {
-        logger.error(
-  "A2U_ORCHESTRATOR.ROLLBACK",
-  {
-    withdrawalId: maskId(withdrawalId),
-    message:
-      rollbackError instanceof Error
-        ? rollbackError.message
-        : "UNKNOWN_ERROR",
-  }
-);
 
-if (
-  process.env.NODE_ENV !==
-  "production"
-) {
-  console.error(rollbackError);
-}
+        logger.error(
+          "A2U.ROLLBACK_FAILED",
+          {
+            withdrawalId:
+              maskId(
+                withdrawalId
+              ),
+            message:
+              rollbackError instanceof Error
+                ? rollbackError.message
+                : "UNKNOWN_ERROR",
+          }
+        );
+
+        if (
+          process.env.NODE_ENV !==
+          "production"
+        ) {
+
+          console.error(
+            rollbackError
+          );
+
+        }
+
       }
+
     }
 
+    logger.error(
+      "A2U.FAILED",
+      {
+        withdrawalId:
+          maskId(
+            withdrawalId
+          ),
+        message,
+      }
+    );
+
     throw error;
+
   }
+
 }
