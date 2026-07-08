@@ -85,30 +85,16 @@ export async function submitPiPaymentFromRequest({
   requestId,
 }: SubmitRequestInput) {
   const body = normalizeSubmitBody(raw);
-logger.info(
+logger.debug(
   "PAYMENT.SUBMIT.NORMALIZED",
   {
-    paymentIntentId: maskId(
-      body.payment_intent_id
-    ),
-    piPaymentId: maskId(
-      body.pi_payment_id
-    ),
-    txid: maskId(
-      body.txid
-    ),
+    paymentIntentId: maskId(body.payment_intent_id),
   }
 );
   logger.info(
   "PAYMENT.SUBMIT.START",
   {
-    requestId,
-    paymentIntentId: maskId(
-      body.payment_intent_id
-    ),
-    piPaymentId: maskId(
-      body.pi_payment_id
-    ),
+    paymentIntentId: maskId(body.payment_intent_id),
   }
 );
 
@@ -136,13 +122,10 @@ logger.info(
   throw error;
 }
 
-  logger.info(
+  logger.debug(
   "PAYMENT.SUBMIT.VERIFYING_LOCKED",
   {
-    requestId,
-    paymentIntentId: maskId(
-      body.payment_intent_id
-    ),
+    paymentIntentId: maskId(body.payment_intent_id),
   }
 );
 
