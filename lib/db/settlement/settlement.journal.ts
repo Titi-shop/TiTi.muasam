@@ -9,7 +9,10 @@ import {
 import {
   randomUUID,
 } from "crypto";
-
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
 /* =====================================================
    TYPES
 ===================================================== */
@@ -55,22 +58,11 @@ params: {
   const db =
     client ?? { query };
 
-  console.log(
-    "[SETTLEMENT][JOURNAL] START",
-    {
-      ownerId:
-        params.ownerId,
-
-      refId:
-        params.refId,
-
-      entryType:
-        params.entryType,
-
-      amount:
-        params.amount,
-    }
-  );
+  logger.info("SETTLEMENT.JOURNAL.START", {
+  ownerId: maskId(params.ownerId),
+  refId: maskId(params.refId),
+  entryType: params.entryType,
+});
 
   /* ===================================================
      INSERT JOURNAL
@@ -136,47 +128,30 @@ DO NOTHING
     ]
   );
 if ((result.rowCount ?? 0) === 0) {
-  console.log(
-    "[SETTLEMENT][JOURNAL] DUPLICATE_SKIP",
-    {
-      ownerId: params.ownerId,
-      refId: params.refId,
-      entryType: params.entryType,
-    }
-  );
+  logger.info("SETTLEMENT.JOURNAL.DUPLICATE_SKIP", {
+  ownerId: maskId(params.ownerId),
+  refId: maskId(params.refId),
+  entryType: params.entryType,
+});
 
   return;
 }
-  console.log(
-    "[SETTLEMENT][JOURNAL] DONE",
-    {
-      ownerId: params.ownerId,
-      refId: params.refId,
-      entryType: params.entryType,
-    }
-  );
+  logger.info("SETTLEMENT.JOURNAL.DONE", {
+  ownerId: maskId(params.ownerId),
+  refId: maskId(params.refId),
+  entryType: params.entryType,
+});
 
 } catch (error) {
-  console.error(
-    "[SETTLEMENT][JOURNAL][INSERT_FAILED]",
-    {
-      ownerId: params.ownerId,
-      refId: params.refId,
-      entryType: params.entryType,
-      eventHash: params.eventHash,
-      metadata:
-        params.metadata,
-      error:
-        error instanceof Error
-          ? {
-              message:
-                error.message,
-              stack:
-                error.stack,
-            }
-          : error,
-    }
-  );
+  logger.error("SETTLEMENT.JOURNAL.INSERT_FAILED", {
+  ownerId: maskId(params.ownerId),
+  refId: maskId(params.refId),
+  entryType: params.entryType,
+  message:
+    error instanceof Error
+      ? error.message
+      : String(error),
+});
   throw error;
 }
 }
