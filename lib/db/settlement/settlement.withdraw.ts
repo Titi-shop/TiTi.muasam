@@ -24,6 +24,11 @@ import {
 import {
   makeEventHash,
 } from "./settlement.utils";
+import {
+  logger,
+  maskId,
+  maskWallet,
+} from "@/lib/logger";
 
 /* =====================================================
    SELLER WITHDRAW
@@ -32,6 +37,10 @@ import {
 export async function withdrawSeller(
   input: WithdrawSellerInput
 ): Promise<void> {
+  logger.info("SETTLEMENT.WITHDRAW.START", {
+  sellerId: maskId(input.sellerId),
+  sellerCreditId: maskId(input.sellerCreditId),
+});
 if (!input.sellerCreditId) {
   throw new Error("SELLER_CREDIT_ID_REQUIRED");
 }
@@ -76,7 +85,9 @@ if (input.amount <= 0) {
       "SELLER_CREDIT_NOT_FOUND"
     );
   }
-
+logger.debug("SETTLEMENT.WITHDRAW.CREDIT_FOUND", {
+  sellerCreditId: maskId(input.sellerCreditId),
+});
   const available =
     Number(
       rs.rows[0]
@@ -84,12 +95,21 @@ if (input.amount <= 0) {
     );
 
   if (
-    available < input.amount
-  ) {
-    throw new Error(
-      "INSUFFICIENT_SELLER_BALANCE"
-    );
-  }
+  available < input.amount
+) {
+
+  logger.warn(
+    "SETTLEMENT.WITHDRAW.INSUFFICIENT_BALANCE",
+    {
+      sellerId: maskId(input.sellerId),
+      sellerCreditId: maskId(input.sellerCreditId),
+    }
+  );
+
+  throw new Error(
+    "INSUFFICIENT_SELLER_BALANCE"
+  );
+}
 
   /* ===================================================
      2. CREATE WITHDRAWAL
@@ -154,6 +174,10 @@ if (input.amount <= 0) {
 if (insertResult.rowCount !== 1) {
   throw new Error("WITHDRAW_CREATE_FAILED");
 }
+  logger.info("SETTLEMENT.WITHDRAW.CREATED", {
+  sellerId: maskId(input.sellerId),
+  sellerCreditId: maskId(input.sellerCreditId),
+});
   /* ===================================================
      3. UPDATE CREDIT
   =================================================== */
@@ -211,6 +235,9 @@ if (insertResult.rowCount !== 1) {
 if (updateResult.rowCount !== 1) {
   throw new Error("SELLER_CREDIT_UPDATE_FAILED");
 }
+  logger.info("SETTLEMENT.WITHDRAW.CREDIT_UPDATED", {
+  sellerCreditId: maskId(input.sellerCreditId),
+});
   const walletUpdate = await query(
   `
   UPDATE wallets
@@ -231,6 +258,9 @@ if (updateResult.rowCount !== 1) {
 if (walletUpdate.rowCount !== 1) {
   throw new Error("WALLET_DEBIT_FAILED");
 }
+  logger.info("SETTLEMENT.WITHDRAW.WALLET_UPDATED", {
+  sellerId: maskId(input.sellerId),
+});
   /* ===================================================
      4. JOURNAL
   =================================================== */
@@ -276,18 +306,34 @@ metadata: {
 
 createdBy: input.sellerId,
   });
-  
+  logger.debug("SETTLEMENT.WITHDRAW.JOURNAL_CREATED", {
+  sellerId: maskId(input.sellerId),
+});
   await createSettlementEventOnce({
   type: "SELLER_WITHDRAWN",
   source: "wallet",
   reason: "SELLER_WITHDRAW",
 
   metadata: {
-    sellerId: input.sellerId,
-    sellerCreditId: input.sellerCreditId,
-    amount: input.amount,
-    withdrawWallet: input.withdrawWallet,
-    txid: input.txid,
-  },
+  sellerId: input.sellerId,
+  sellerCreditId: input.sellerCreditId,
+  amount: input.amount,
+
+  withdrawWallet: maskWallet(
+    input.withdrawWallet
+  ),
+
+  txid: input.txid
+    ? maskId(input.txid)
+    : null,
+}
 });
+  logger.info("SETTLEMENT.WITHDRAW.SUCCESS", {
+  sellerId: maskId(input.sellerId),
+  sellerCreditId: maskId(input.sellerCreditId),
+});
+  logger.debug("SETTLEMENT.WITHDRAW.EVENT_CREATED", {
+  sellerId: maskId(input.sellerId),
+});
+  
 }
