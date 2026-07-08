@@ -113,12 +113,8 @@ memo_type: string | null;
 export async function insertA2URpcLog(
   input: InsertA2URpcLogInput
 ): Promise<void> {
-  logger.info(
-  "A2U_RPC_DB.INSERT_START",
-  {
-    withdrawalId: maskId(input.withdrawalId),
-    txid: maskId(input.txid),
-  }
+  logger.debug(
+  "A2U_RPC_DB.INSERT_START"
 );
   const values = [
   input.withdrawalId,           // $1
@@ -203,13 +199,6 @@ export async function insertA2URpcLog(
   ),                            // $49
 ];
 
-logger.debug(
-  "A2U_RPC_DB.VALUES_LENGTH",
-  {
-    length: values.length,
-  }
-);
-
   await query(
   `
   INSERT INTO rpc_verification_logs (
@@ -292,11 +281,8 @@ verification_snapshot,
   `,
   values
 );
-  logger.info(
-  "A2U_RPC_DB.INSERT_DONE",
-  {
-    txid: maskId(input.txid),
-  }
+  logger.debug(
+  "A2U_RPC_DB.INSERT_DONE"
 );
 }
 export async function verifyWithdrawalRpc(
@@ -305,11 +291,7 @@ export async function verifyWithdrawalRpc(
 ): Promise<RpcVerificationRow> {
 
   logger.info(
-  "A2U_RPC_DB.VERIFY_START",
-  {
-    withdrawalId: maskId(withdrawalId),
-    txid: maskId(txid),
-  }
+  "A2U_RPC_DB.VERIFY_START"
 );
 
   const withdrawal =
@@ -329,13 +311,10 @@ export async function verifyWithdrawalRpc(
     );
 
   logger.info(
-  "A2U_RPC_DB.RPC_RESULT",
+  "A2U_RPC_DB.RPC_VERIFIED",
   {
     confirmed: rpc.confirmed,
-    amount: rpc.amount,
-    network: rpc.network,
     successful: rpc.successful,
-    txStatus: rpc.txStatus,
   }
 );
 
@@ -491,22 +470,16 @@ payload: rpc.raw,
     withdrawalId
   );
 
-logger.info(
-  "A2U_RPC_DB.RECEIPT_START",
-  {
-    withdrawalId: maskId(withdrawalId),
-  }
+logger.debug(
+  "A2U_RPC_DB.RECEIPT_START"
 );
 
 await upsertWithdrawalReceipt(
   withdrawalId
 );
 
-logger.info(
-  "A2U_RPC_DB.RECEIPT_DONE",
-  {
-    withdrawalId: maskId(withdrawalId),
-  }
+logger.debug(
+  "A2U_RPC_DB.RECEIPT_DONE"
 );
 
 if (!verified) {
@@ -516,6 +489,9 @@ if (!verified) {
 }
 
 return verified;
+  logger.info(
+  "A2U_RPC_DB.VERIFY_DONE"
+);
 }
 export async function
 getRpcVerificationByTxid(
