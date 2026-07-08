@@ -17,6 +17,11 @@ import {
 import {
   getWalletRecordByUserId,
 } from "@/lib/db/wallet";
+import {
+  logger,
+  maskId,
+  maskWallet,
+} from "@/lib/logger";
 
 /* =====================================================
    TYPES
@@ -32,30 +37,6 @@ type CreateBody = {
   address?: string;
   label?: string;
 };
-
-/* =====================================================
-   LOG
-===================================================== */
-
-function log(
-  tag: string,
-  data?: unknown
-) {
-  console.log(
-    `[WALLET_ADDRESS] ${tag}`,
-    data ?? ""
-  );
-}
-
-function err(
-  tag: string,
-  data?: unknown
-) {
-  console.error(
-    `[WALLET_ADDRESS] ${tag}`,
-    data ?? ""
-  );
-}
 
 /* =====================================================
    HELPERS
@@ -101,26 +82,19 @@ export async function listWalletAddressesFlow(
   userId: string
 ) {
 
-  log(
-    "LIST_START",
-    {
-      userId,
-    }
-  );
+  logger.info("WALLET_ADDRESS.LIST_START", {
+  userId: maskId(userId),
+});
 
   const rows =
     await getWalletAddressesByUser(
       userId
     );
 
-  log(
-    "LIST_DONE",
-    {
-      userId,
-      total:
-        rows.length,
-    }
-  );
+  logger.info("WALLET_ADDRESS.LIST_DONE", {
+  userId: maskId(userId),
+  total: rows.length,
+});
 
   return rows;
 
@@ -136,49 +110,33 @@ export async function createWalletAddressFlow(
 
   try {
 
-    log(
-      "CREATE_START",
-      {
-        userId:
-          input.userId,
-      }
-    );
+    logger.info("WALLET_ADDRESS.CREATE_START", {
+  userId: maskId(input.userId),
+});
 
     /* ===============================================
        BODY
     =============================================== */
 
-    log(
-      "BODY_PARSE_START"
-    );
+    logger.debug("WALLET_ADDRESS.BODY_PARSE_START");
 
     const parsed =
       parseCreateBody(
         input.body
       );
 
-    log(
-      "BODY_PARSE_DONE",
-      {
-        hasAddress:
-          !!parsed.address,
-
-        hasLabel:
-          !!parsed.label,
-      }
-    );
+    logger.debug("WALLET_ADDRESS.BODY_PARSE_DONE", {
+  hasAddress: !!parsed.address,
+  hasLabel: !!parsed.label,
+});
 
     if (
       !parsed.address
     ) {
 
-      err(
-        "INVALID_ADDRESS",
-        {
-          userId:
-            input.userId,
-        }
-      );
+      logger.warn("WALLET_ADDRESS.INVALID_ADDRESS", {
+  userId: maskId(input.userId),
+});
 
       throw new Error(
         "INVALID_ADDRESS"
@@ -186,56 +144,23 @@ export async function createWalletAddressFlow(
 
     }
 
-    log(
-      "INPUT_OK",
-      {
-        addressPrefix:
-          parsed.address.substring(
-            0,
-            8
-          ),
-
-        addressLength:
-          parsed.address.length,
-      }
-    );
+    logger.debug("WALLET_ADDRESS.INPUT_OK");
 
     /* ===============================================
        RPC VERIFY
     =============================================== */
 
-    log(
-      "RPC_VERIFY_START",
-      {
-        addressPrefix:
-          parsed.address.substring(
-            0,
-            8
-          ),
-      }
-    );
+    logger.info("WALLET_ADDRESS.RPC_VERIFY_START");
 
     const rpc =
       await verifyPiWallet(
         parsed.address
       );
 
-    log(
-      "RPC_VERIFY_DONE",
-      {
-        exists:
-          rpc.exists,
-
-        rpcReachable:
-          rpc.rpcReachable,
-
-        balance:
-          rpc.balance,
-
-        sequence:
-          rpc.sequence,
-      }
-    );
+    logger.info("WALLET_ADDRESS.RPC_VERIFY_DONE", {
+  exists: rpc.exists,
+  rpcReachable: rpc.rpcReachable,
+});
 
     if (
       !rpc.rpcReachable
@@ -251,13 +176,9 @@ export async function createWalletAddressFlow(
        LOAD USER WALLET
     =============================================== */
 
-    log(
-      "LOAD_WALLET_START",
-      {
-        userId:
-          input.userId,
-      }
-    );
+    logger.debug("WALLET_ADDRESS.LOAD_WALLET_START", {
+  userId: maskId(input.userId),
+});
 
     const walletRecord =
       await getWalletRecordByUserId(
@@ -268,13 +189,9 @@ export async function createWalletAddressFlow(
       !walletRecord
     ) {
 
-      err(
-        "WALLET_NOT_FOUND",
-        {
-          userId:
-            input.userId,
-        }
-      );
+      logger.error("WALLET_ADDRESS.WALLET_NOT_FOUND", {
+  userId: maskId(input.userId),
+});
 
       throw new Error(
         "WALLET_NOT_FOUND"
@@ -282,25 +199,17 @@ export async function createWalletAddressFlow(
 
     }
 
-    log(
-      "LOAD_WALLET_DONE",
-      {
-        walletId:
-          walletRecord.id,
-      }
-    );
+    logger.debug("WALLET_ADDRESS.LOAD_WALLET_DONE", {
+  walletId: maskId(walletRecord.id),
+});
 
     /* ===============================================
        CREATE ADDRESS
     =============================================== */
 
-    log(
-      "DB_CREATE_START",
-      {
-        userId:
-          input.userId,
-      }
-    );
+    logger.debug("WALLET_ADDRESS.DB_CREATE_START", {
+  userId: maskId(input.userId),
+});
 
     const wallet =
       await createWalletAddress({
@@ -328,13 +237,9 @@ export async function createWalletAddressFlow(
 
       });
 
-    log(
-      "DB_CREATE_DONE",
-      {
-        walletAddressId:
-          wallet.id,
-      }
-    );
+    logger.info("WALLET_ADDRESS.DB_CREATE_DONE", {
+  walletAddressId: maskId(wallet.id),
+});
 
     let result =
       wallet;
@@ -342,13 +247,9 @@ export async function createWalletAddressFlow(
        UPDATE VALIDATION
     =============================================== */
 
-    log(
-      "VALIDATION_START",
-      {
-        walletAddressId:
-          wallet.id,
-      }
-    );
+    logger.debug("WALLET_ADDRESS.VALIDATION_START", {
+  walletAddressId: maskId(wallet.id),
+});
 
     if (
       rpc.exists
@@ -359,18 +260,14 @@ export async function createWalletAddressFlow(
           wallet.id
         );
 
-      log(
-        "VALIDATION_VALID"
-      );
+      logger.info("WALLET_ADDRESS.VALIDATION_VALID");
 
       const verified =
         await markWalletAddressVerified(
           wallet.id
         );
 
-      log(
-        "VERIFICATION_DONE"
-      );
+      logger.info("WALLET_ADDRESS.VERIFICATION_DONE");
 
       result =
         verified ??
@@ -385,36 +282,17 @@ export async function createWalletAddressFlow(
           "ACCOUNT_NOT_FOUND"
         );
 
-      log(
-        "VALIDATION_INVALID"
-      );
-
-      result =
-        invalid ??
-        wallet;
-
-    }
+      logger.warn("WALLET_ADDRESS.VALIDATION_INVALID");
 
     /* ===============================================
        SUCCESS
     =============================================== */
 
-    log(
-      "CREATE_SUCCESS",
-      {
-        walletAddressId:
-          result.id,
-
-        userId:
-          input.userId,
-
-        validationStatus:
-          result.validation_status,
-
-        verified:
-          result.is_verified,
-      }
-    );
+    logger.info("WALLET_ADDRESS.CREATE_SUCCESS", {
+  walletAddressId: maskId(result.id),
+  userId: maskId(input.userId),
+  verified: result.is_verified,
+});
 
     return result;
 
@@ -422,15 +300,13 @@ export async function createWalletAddressFlow(
     error
   ) {
 
-    err(
-      "CREATE_FAILED",
-      {
-        userId:
-          input.userId,
-
-        error,
-      }
-    );
+    logger.error("WALLET_ADDRESS.CREATE_FAILED", {
+  userId: maskId(input.userId),
+  message:
+    error instanceof Error
+      ? error.message
+      : "UNKNOWN_ERROR",
+});
 
     throw error;
 
