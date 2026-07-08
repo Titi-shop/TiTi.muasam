@@ -336,15 +336,6 @@ export async function submitA2UPayment(
       PI_SEED
     );
 
-  logger.debug(
-  "PI_A2U.WALLET_PUBLIC",
-  {
-      maskWallet(
-        keypair.publicKey()
-      ),
-  }
-);
-
   const server =
   new StellarSdk.Horizon.Server(
     PI_HORIZON
@@ -439,11 +430,7 @@ export async function cancelA2UPayment(
   paymentId: string
 ): Promise<void> {
   logger.info(
-  "PI_A2U.CANCEL_START",
-  {
-    paymentId:
-      maskId(paymentId),
-  }
+  "PI_A2U.CANCEL_START"
 );
 
   await piRequest(
@@ -459,11 +446,7 @@ export async function cancelA2UPayment(
   );
 
   logger.info(
-  "PI_A2U.CANCEL_SUCCESS",
-  {
-    paymentId:
-      maskId(paymentId),
-  }
+  "PI_A2U.CANCEL_SUCCESS"
 );
 }
 /* =====================================================
