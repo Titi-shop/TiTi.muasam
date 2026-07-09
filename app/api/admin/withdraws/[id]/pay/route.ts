@@ -3,7 +3,9 @@ import { requireAdmin } from "@/lib/auth/guard";
 import {
   payWithdrawal,
 } from "@/lib/payments/a2u.orchestrator";
-
+import {
+  logger,
+} from "@/lib/logger";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -43,19 +45,23 @@ export async function POST(
 
     const result =
       await payWithdrawal(id);
-console.log(
-  "[ADMIN_PAY_WITHDRAW][RESULT]",
-  result
+logger.info(
+  "ADMIN_PAY_WITHDRAW.SUCCESS"
 );
     return NextResponse.json({
       success: true,
       ...result,
     });
   } catch (error) {
-    console.error(
-      "[ADMIN_PAY_WITHDRAW][ERROR]",
-      error
-    );
+    logger.error(
+  "ADMIN_PAY_WITHDRAW.ERROR",
+  {
+    message:
+      error instanceof Error
+        ? error.message
+        : "UNKNOWN_ERROR",
+  }
+);
 
     return NextResponse.json(
       {
