@@ -84,9 +84,12 @@ export function normalizeShippingRates(
   return rates.map((rate) => ({
     zone: rate.zone,
 
-    price: Number(
-      rate.price ?? 0
-    ),
+    price:
+  rate.price === "" ||
+  rate.price === null ||
+  rate.price === undefined
+    ? null
+    : Number(rate.price),
 
     domestic_country_code:
       rate.zone === "domestic"
