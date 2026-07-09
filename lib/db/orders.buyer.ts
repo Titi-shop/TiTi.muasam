@@ -5,6 +5,10 @@ import type {
 import {
   sendNotification,
 } from "@/lib/services/notifications.service";
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
 /* =========================================================
    BUYER — ORDERS LIST
 ========================================================= */
@@ -408,25 +412,22 @@ export async function completeOrderByBuyer(
     [orderId]
   );
 
-console.log(
-  "[ESCROW][AUTO_TIMER_SET]",
+logger.debug(
+  "ESCROW.AUTO_TIMER_SET",
   {
-    rowCount:
-      escrowUpdate.rowCount,
-
-    rows:
-      escrowUpdate.rows,
+    orderId: maskId(orderId),
+    rowCount: escrowUpdate.rowCount,
   }
 );
 
   
-      console.log(
-        "[ORDER][BUYER][DELIVERED]",
-        {
-          orderId,
-          userId,
-        }
-      );
+      logger.info(
+  "ORDER.BUYER.DELIVERED",
+  {
+    orderId: maskId(orderId),
+    buyerId: maskId(userId),
+  }
+);
 
       return {
   status: "SUCCESS",
@@ -461,10 +462,15 @@ console.log(
 
   } catch (err) {
 
-    console.error(
-      "[NOTIFICATION][ORDER_COMPLETED]",
-      err
-    );
+    logger.error(
+  "NOTIFICATION.ORDER_COMPLETED.ERROR",
+  {
+    message:
+      err instanceof Error
+        ? err.message
+        : "UNKNOWN",
+  }
+);
 
   }
 
@@ -585,10 +591,15 @@ WHERE id = $1
 
   } catch (err) {
 
-    console.error(
-      "[NOTIFICATION][ORDER_CANCELLED]",
-      err
-    );
+    logger.error(
+  "NOTIFICATION.ORDER_CANCELLED.ERROR",
+  {
+    message:
+      err instanceof Error
+        ? err.message
+        : "UNKNOWN",
+  }
+);
 
   }
 
