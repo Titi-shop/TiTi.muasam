@@ -226,10 +226,11 @@ export async function createPiPaymentIntent({
   seller_id: string;
 }>(
   `
-  SELECT seller_id
-  FROM products
-  WHERE id = $1
-  LIMIT 1
+  SELECT
+  seller_id
+FROM products
+WHERE id = $1
+FOR SHARE
   `,
   [productId]
 );
@@ -238,8 +239,22 @@ export async function createPiPaymentIntent({
       throw new Error("PRODUCT_NOT_FOUND");
     }
 
-    const seller_id = ownerRes.rows[0].seller_id;
+    const owner =
+  ownerRes.rows[0];
 
+  const seller_id =
+  owner.seller_id;
+if (!owner.is_active) {
+  throw new Error(
+    "PRODUCT_INACTIVE"
+  );
+}
+
+if (owner.deleted_at) {
+  throw new Error(
+    "PRODUCT_DELETED"
+  );
+}
     if (seller_id === userId) {
       throw new Error("SELF_PAYMENT_FORBIDDEN");
     }
@@ -272,17 +287,25 @@ logger.info(
 
     const memo = `ORDER-${paymentIntentId.slice(0, 8)}`;
      const expiresAt = makeExpiresAt();
+    const initialStatus = makeInitialStatus();
+
+const settlementState =
+  makeInitialSettlement();
+
+const paymentState =
+  "PENDING";
+
+const providerStatus =
+  "CREATED";
+    
     logger.debug(
   "PAYMENT_INTENT.INITIAL_STATE",
   {
     status:
-      makeInitialStatus(),
-    settlementState:
-      makeInitialSettlement(),
-    paymentState:
-      "PENDING",
-    providerStatus:
-      "CREATED",
+      initialStatus,
+    settlementState,
+    paymentState,
+    providerStatus,
     expiresAt,
   }
 );
@@ -405,11 +428,10 @@ logger.info(
 
         APP_MERCHANT_WALLET,
 
-      makeInitialStatus(),
-      
-      makeInitialSettlement(),
-      "PENDING",
-      "CREATED",
+      initialStatus,
+       settlementState,
+        paymentState,
+       providerStatus,
       expiresAt,
       ]
     );
