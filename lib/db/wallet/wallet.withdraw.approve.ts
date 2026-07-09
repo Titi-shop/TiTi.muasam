@@ -23,28 +23,18 @@ import {
   WithdrawalSettlementEvents,
 } from "@/lib/db/settlement/settlement.event.a2u";
 
-function vlog(
-  step: string,
-  data?: unknown
-) {
-  console.log(
-    `[WALLET_WITHDRAW][${step}]`,
-    data ?? ""
-  );
-}
+import {
+  logger,
+} from "@/lib/logger";
 
 export async function approveWalletWithdrawal(
   withdrawalId: string,
   adminId: string
 ): Promise<void> {
 
-  vlog(
-    "APPROVE_START",
-    {
-      withdrawalId,
-      adminId,
-    }
-  );
+  logger.info(
+  "WALLET_WITHDRAW.APPROVE_START"
+);
 
   await withTransaction(
     async (client) => {
@@ -89,9 +79,9 @@ export async function approveWalletWithdrawal(
         );
       }
 
-      vlog(
-        "RESERVE_BALANCE"
-      );
+      logger.debug(
+  "WALLET_WITHDRAW.RESERVE_BALANCE"
+);
 
       await reserveWalletBalance(
         withdrawal.user_id,
@@ -101,9 +91,9 @@ export async function approveWalletWithdrawal(
         client
       );
 
-      vlog(
-        "CREATE_JOURNAL"
-      );
+      logger.debug(
+  "WALLET_WITHDRAW.CREATE_JOURNAL"
+);
 
       await createWalletJournal({
 
@@ -148,9 +138,9 @@ export async function approveWalletWithdrawal(
             .digest("hex"),
       });
 
-      vlog(
-        "CREATE_SETTLEMENT_EVENT"
-      );
+      logger.debug(
+  "WALLET_WITHDRAW.CREATE_SETTLEMENT"
+);
 
       await createWithdrawalSettlementEventOnce(
         {
@@ -200,12 +190,9 @@ export async function approveWalletWithdrawal(
         );
       }
 
-      vlog(
-        "APPROVE_DONE",
-        {
-          withdrawalId,
-        }
-      );
+      logger.info(
+  "WALLET_WITHDRAW.APPROVE_DONE"
+);
     }
   );
 }
