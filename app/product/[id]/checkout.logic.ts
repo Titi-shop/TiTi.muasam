@@ -98,7 +98,13 @@ if (!user) {
     return false;
   }
 
-  if (quantity < 1 || quantity > maxStock) {
+  if (
+    quantity < 1 ||
+    (
+        !item.is_unlimited &&
+        quantity > maxStock
+    )
+) {
     showMessage(t.invalid_quantity ?? "invalid_quantity");
     return false;
   }
@@ -248,7 +254,7 @@ showMessage(
       paymentId,
     });
 
-    callback();
+    callback?.();
   } catch (err) {
     console.error("🔥 [CHECKOUT] APPROVAL_FAIL", err);
     processingRef.current = false;
@@ -319,10 +325,10 @@ window.dispatchEvent(
     const key = getErrorKey((err as Error).message);
     showMessage(t[key] ?? key);
   } finally {
-    completionLockedRef.current = false;
-    setProcessing(false);
-  }
-},
+  completionLockedRef.current = false;
+  processingRef.current = false;
+  setProcessing(false);
+}
 
           onCancel: () => {
             console.warn("🟡 [CHECKOUT] USER_CANCELLED");
@@ -370,7 +376,7 @@ window.dispatchEvent(
     user,
     router,
     onClose,
-    product?.variant_id,
+    product?.selectedVariant?.id,
     validate,
     showMessage,
   ]);
