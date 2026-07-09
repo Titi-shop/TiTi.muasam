@@ -11,26 +11,17 @@ import {
   WithdrawalSettlementEvents,
 } from "@/lib/db/settlement/settlement.event.a2u";
 
-function vlog(
-  step: string,
-  data?: unknown
-) {
-  console.log(
-    `[WALLET_WITHDRAW][${step}]`,
-    data ?? ""
-  );
-}
+import {
+  logger,
+} from "@/lib/logger";
 
 export async function retryWithdrawal(
   withdrawalId: string
 ): Promise<void> {
 
-  vlog(
-    "RETRY_START",
-    {
-      withdrawalId,
-    }
-  );
+  logger.info(
+  "WALLET_WITHDRAW.RETRY_START"
+);
 
   const result =
     await query(
@@ -68,13 +59,9 @@ export async function retryWithdrawal(
       ]
     );
 
-  vlog(
-    "RETRY_RESULT",
-    {
-      rowCount:
-        result.rowCount,
-    }
-  );
+  logger.debug(
+  "WALLET_WITHDRAW.RETRY_UPDATED"
+);
 
   if (
     result.rowCount !== 1
@@ -101,10 +88,7 @@ export async function retryWithdrawal(
 
   });
 
-  vlog(
-    "RETRY_DONE",
-    {
-      withdrawalId,
-    }
-  );
+  logger.info(
+  "WALLET_WITHDRAW.RETRY_DONE"
+);
 }
