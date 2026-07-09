@@ -329,7 +329,7 @@ window.dispatchEvent(
   processingRef.current = false;
   setProcessing(false);
 }
-
+      },
           onCancel: () => {
             console.warn("🟡 [CHECKOUT] USER_CANCELLED");
             processingRef.current = false;
