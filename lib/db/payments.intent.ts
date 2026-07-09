@@ -164,8 +164,6 @@ export async function createPiPaymentIntent({
   productId,
   variantId,
   quantity,
-  country,
-  zone,
   shipping,
   pricing,
 }: CreatePiPaymentIntentInput): Promise<CreateIntentResult> {
@@ -223,16 +221,20 @@ export async function createPiPaymentIntent({
     ===================================================== */
 
     const ownerRes = await client.query<{
-  seller_id: string;
+    seller_id: string;
+    is_active: boolean;
+    deleted_at: Date | null;
 }>(
-  `
-  SELECT
-  seller_id
+`
+SELECT
+    seller_id,
+    is_active,
+    deleted_at
 FROM products
 WHERE id = $1
 FOR SHARE
-  `,
-  [productId]
+`,
+[productId]
 );
 
     if (!ownerRes.rows.length) {
