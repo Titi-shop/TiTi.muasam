@@ -147,7 +147,9 @@ export async function bindPiPaymentToIntent(
       }
 
       const intent = res.rows[0];
-
+if (intent.status !== "created") {
+  throw new Error("INVALID_INTENT_STATE");
+}
       logger.info(
         "PAYMENTS.BIND.LOCK_OK",
         {
@@ -171,15 +173,15 @@ export async function bindPiPaymentToIntent(
       =============================================== */
 
       if (
-        intent.pi_payment_id ===
-        piPaymentId
-      ) {
-        logger.info(
-          "PAYMENTS.BIND.SAME_PAYMENT_REPLAY"
-        );
+  intent.pi_payment_id === piPaymentId &&
+  intent.status === "submitted"
+) {
+    logger.info(
+      "PAYMENTS.BIND.SAME_PAYMENT_REPLAY"
+    );
 
-        return;
-      }
+    return;
+}
 
       /* ===============================================
          CONFLICT
@@ -233,7 +235,7 @@ export async function bindPiPaymentToIntent(
           amount,
         }
       );
-
+  const updateRes =
       await client.query(
         `
         UPDATE payment_intents
@@ -247,6 +249,7 @@ export async function bindPiPaymentToIntent(
           provider_status = 'APPROVED',
           updated_at = NOW()
         WHERE id = $1
+        AND status = 'created'
         `,
         [
           paymentIntentId,
@@ -256,7 +259,11 @@ export async function bindPiPaymentToIntent(
           payloadJson,
         ]
       );
-
+if (updateRes.rowCount !== 1) {
+  throw new Error(
+    "PAYMENT_INTENT_UPDATE_FAILED"
+  );
+}
       logger.info(
         "PAYMENTS.BIND.UPDATE_OK",
         {
