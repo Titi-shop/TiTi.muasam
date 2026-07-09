@@ -1,5 +1,8 @@
 import { query } from "@/lib/db";
-
+import {
+  logger,
+  maskId,
+} from "@/lib/logger";
 /* ================= MAP PI → UUID ================= */
 export async function getUserIdByPiUid(
   pi_uid: string
@@ -59,16 +62,16 @@ export async function getUserAdminFlag(
   userId: string
 ): Promise<boolean> {
 
-  console.log(
-    "[GET_ADMIN_FLAG]",
-    userId
+  logger.debug(
+    "AUTH.ADMIN_CHECK",
+    {
+      userId: maskId(userId),
+    }
   );
 
   const res = await query(
     `
     SELECT
-      id,
-      role,
       is_admin
     FROM users
     WHERE id = $1
@@ -77,9 +80,11 @@ export async function getUserAdminFlag(
     [userId]
   );
 
-  console.log(
-    "[GET_ADMIN_RESULT]",
-    res.rows[0]
+  logger.debug(
+    "AUTH.ADMIN_RESULT",
+    {
+      ok: res.rows[0]?.is_admin === true,
+    }
   );
 
   return res.rows[0]?.is_admin === true;
