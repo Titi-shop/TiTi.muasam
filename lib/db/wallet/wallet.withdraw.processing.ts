@@ -10,15 +10,9 @@ import {
   createWithdrawalSettlementEventOnce,
   WithdrawalSettlementEvents,
 } from "@/lib/db/settlement/settlement.event.a2u";
-function vlog(
-  step: string,
-  data?: unknown
-) {
-  console.log(
-    `[WALLET_WITHDRAW][${step}]`,
-    data ?? ""
-  );
-}
+import {
+  logger,
+} from "@/lib/logger";
 
 export async function markWithdrawalProcessing(
   withdrawalId: string,
@@ -27,13 +21,9 @@ export async function markWithdrawalProcessing(
   piUid?: string
 ): Promise<void> {
 
-  vlog(
-    "MARK_PROCESSING_START",
-    {
-      withdrawalId,
-      piPaymentId,
-    }
-  );
+  logger.info(
+  "WALLET_WITHDRAW.PROCESSING_START"
+);
 
   const rs =
     await query(
@@ -55,13 +45,9 @@ export async function markWithdrawalProcessing(
       ]
     );
 
-  vlog(
-    "MARK_PROCESSING_RESULT",
-    {
-      rowCount:
-        rs.rowCount,
-    }
-  );
+  logger.debug(
+  "WALLET_WITHDRAW.PROCESSING_UPDATED"
+);
 
   if (
     rs.rowCount !== 1
