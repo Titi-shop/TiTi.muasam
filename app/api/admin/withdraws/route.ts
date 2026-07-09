@@ -5,23 +5,17 @@ import { requireAdmin } from "@/lib/auth/guard";
 import {
   getWalletWithdrawals,
 } from "@/lib/db/wallet/wallet.withdraw";
-
+import {
+  logger,
+} from "@/lib/logger";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function vlog(
-  step: string,
-  data?: unknown
-) {
-  console.log(
-    `[ADMIN_WITHDRAWS_API][${step}]`,
-    data ?? ""
-  );
-}
-
 export async function GET() {
   try {
-    vlog("START");
+    logger.info(
+  "ADMIN_WITHDRAWS_API.START"
+);
 
     /* =========================
        ADMIN GUARD
@@ -29,10 +23,6 @@ export async function GET() {
 
     const auth =
       await requireAdmin();
-
-    vlog("GUARD_RESULT", {
-      ok: auth.ok,
-    });
 
     if (!auth.ok) {
       return auth.response;
@@ -42,20 +32,16 @@ export async function GET() {
        LOAD WITHDRAWALS
     ========================= */
 
-    vlog(
-      "LOAD_WITHDRAWS_START"
-    );
+    logger.debug(
+  "ADMIN_WITHDRAWS_API.LOAD_START"
+);
 
     const rows =
       await getWalletWithdrawals();
 
-    vlog(
-      "LOAD_WITHDRAWS_DONE",
-      {
-        count:
-          rows.length,
-      }
-    );
+    logger.info(
+  "ADMIN_WITHDRAWS_API.LOAD_DONE"
+);
 
     /* =========================
        RESPONSE
@@ -67,10 +53,15 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error(
-      "[ADMIN_WITHDRAWS_API][ERROR]",
-      error
-    );
+    logger.error(
+  "ADMIN_WITHDRAWS_API.ERROR",
+  {
+    message:
+      error instanceof Error
+        ? error.message
+        : "UNKNOWN_ERROR",
+  }
+);
 
     return NextResponse.json(
       {
