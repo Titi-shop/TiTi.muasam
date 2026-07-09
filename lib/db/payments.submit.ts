@@ -41,12 +41,13 @@ export async function markPaymentVerifying({
   paymentIntentId: string;
 }> {
   return withTransaction(async (client) => {
-    logger.info("PAYMENT.SUBMIT.START", {
-  paymentIntentId: maskId(paymentIntentId),
-  userId: maskId(userId),
-  piPaymentId: maskId(piPaymentId),
-  txid: maskId(txid),
-});
+    logger.info(
+  "PAYMENT.SUBMIT.START",
+  {
+    paymentIntentId:
+      maskId(paymentIntentId),
+  }
+);
 
     /* =====================================================
        1. LOCK INTENT
