@@ -8,23 +8,17 @@ import {
   getRpcVerificationByWithdrawalId,
 } from "@/lib/db/payments.rpc.a2u";
 
-function log(
-  step: string,
-  data?: unknown
-) {
-  console.log(
-    `[A2U_RECEIPT] ${step}`,
-    data ?? ""
-  );
-}
+import {
+  logger,
+} from "@/lib/logger";
 
 export async function upsertWithdrawalReceipt(
   withdrawalId: string
 ): Promise<void> {
   try {
-    log("START", {
-      withdrawalId,
-    });
+    logger.debug(
+  "A2U_RECEIPT.START"
+);
     const withdrawal =
       await getWalletWithdrawalById(
         withdrawalId
@@ -38,10 +32,9 @@ export async function upsertWithdrawalReceipt(
       await getRpcVerificationByWithdrawalId(
         withdrawalId
       );
-    console.log(
-      "[A2U_RECEIPT] RPC",
-      rpc
-    );
+    logger.debug(
+  "A2U_RECEIPT.RPC_READY"
+);
     if (!rpc) {
       throw new Error(
         "RPC_LOG_NOT_FOUND"
@@ -170,19 +163,22 @@ export async function upsertWithdrawalReceipt(
       rpc.memo,
     ]
   );
-  console.log(
-      "[A2U_RECEIPT] ROWCOUNT",
-      rs.rowCount
-    );
-    log("DONE", {
-      withdrawalId,
-      txid: rpc.txid,
-    });
+  logger.debug(
+  "A2U_RECEIPT.SAVED"
+);
+logger.info(
+  "A2U_RECEIPT.DONE"
+);
   } catch (e) {
-    console.error(
-      "[A2U_RECEIPT] ERROR",
-      e
-    );
+    logger.error(
+  "A2U_RECEIPT.ERROR",
+  {
+    message:
+      e instanceof Error
+        ? e.message
+        : "UNKNOWN_ERROR",
+  }
+);
     throw e;
   }
 }
