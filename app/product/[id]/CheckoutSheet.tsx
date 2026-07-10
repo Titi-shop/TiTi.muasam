@@ -48,7 +48,22 @@ export default function CheckoutSheet({
   const [qty, setQty] = useState("1");
   const [message, setMessage] = useState<Message | null>(null);
   const [processing, setProcessing] = useState(false);
+/* ================= WORKFLOW ================= */
 
+const [pendingCheckout, setPendingCheckout] =
+  useState(false);
+
+const [loadingAddress, setLoadingAddress] =
+  useState(false);
+
+const [addressLoaded, setAddressLoaded] =
+  useState(false);
+
+const [needAddress, setNeedAddress] =
+  useState(false);
+
+const [autoPayAfterLogin, setAutoPayAfterLogin] =
+  useState(false);
   /* ================= ITEM ================= */
 
   const item = useMemo(() => {
