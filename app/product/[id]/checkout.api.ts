@@ -2,148 +2,179 @@
 
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
+import type {
+  ShippingInfo,
+} from "@/types/checkout";
+
 /* =========================================================
-TYPES
+   TYPES
 ========================================================= */
 
 export type PreviewKey = [
   url: string,
-  address_id: string,
+  addressId: string,
   quantity: number,
-  product_id: string,
-  variant_id: string | null
+  productId: string,
+  variantId: string | null,
 ];
 
-export interface PreviewResponse {
-  buyer_zone: string;
+export type OrderPreview = {
+  buyer_zone?: string;
+  shipping_zone?: string;
+
   subtotal: number;
-  shipping: number;
+  shipping_fee: number;
   total: number;
-}
+};
 
-export interface AddressItem {
+type AddressRow = {
   id: string;
+
   full_name: string;
+
   phone: string;
+
   address_line: string;
+
   region: string;
+
   district?: string | null;
+
   ward?: string | null;
+
   country?: string | null;
+
   postal_code?: string | null;
+
   is_default: boolean;
-}
+};
 
-export interface AddressResponse {
-  items: AddressItem[];
-}
-
-export interface ShippingAddress {
-  id: string;
-  name: string;
-  phone: string;
-  address_line: string;
-  region: string;
-  district: string;
-  ward: string;
-  country: string;
-  postal_code: string | null;
-}
+type AddressResponse = {
+  items?: AddressRow[];
+};
 
 /* =========================================================
-PREVIEW FETCHER
+   ORDER PREVIEW
 ========================================================= */
 
 export async function previewFetcher(
   key: PreviewKey
-): Promise<PreviewResponse> {
+): Promise<OrderPreview> {
   const [
     url,
-    address_id,
+    addressId,
     quantity,
-    product_id,
-    variant_id,
+    productId,
+    variantId,
   ] = key;
 
-  console.log("[API PREVIEW CALL]", {
-    address_id,
-    quantity,
-    product_id,
-    variant_id,
-  });
+  const res =
+    await apiAuthFetch(url, {
+      method: "POST",
 
-  const res = await apiAuthFetch(url, {
-    method: "POST",
-    body: JSON.stringify({
-      address_id,
-      items: [
-        {
-          product_id,
-          variant_id,
-          quantity,
-        },
-      ],
-    }),
-  });
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
 
-  const data: PreviewResponse = await res.json();
+      body: JSON.stringify({
+        address_id: addressId,
 
-  if (!res.ok) {
-    throw new Error("PREVIEW_FAILED");
+        items: [
+          {
+            product_id:
+              productId,
+
+            variant_id:
+              variantId,
+
+            quantity,
+          },
+        ],
+      }),
+    });
+
+  const data =
+    await res
+      .json()
+      .catch(() => null);
+
+  if (!res.ok || !data) {
+    throw new Error(
+      "PREVIEW_FAILED"
+    );
   }
-
-  console.log("[PREVIEW RESPONSE]", data);
 
   return data;
 }
 
 /* =========================================================
-DEFAULT ADDRESS
+   DEFAULT ADDRESS
 ========================================================= */
 
-export async function fetchDefaultAddress(): Promise<ShippingAddress | null> {
-  try {
-    const res = await apiAuthFetch("/api/address");
+export async function fetchDefaultAddress(): Promise<ShippingInfo | null> {
+  const res =
+    await apiAuthFetch(
+      "/api/address"
+    );
 
-    if (!res.ok) {
-      return null;
-    }
-
-    const data: AddressResponse = await res.json();
-
-    const items = Array.isArray(data.items)
-      ? data.items
-      : [];
-
-    const def = items.find((a) => a.is_default);
-
-    if (!def) {
-      return null;
-    }
-
-    return {
-      id: def.id,
-      name: def.full_name,
-      phone: def.phone,
-      address_line: def.address_line,
-      region: def.region,
-      district: def.district ?? "",
-      ward: def.ward ?? "",
-      country: def.country ?? "",
-      postal_code: def.postal_code ?? null,
-    };
-  } catch (error) {
-    console.error("[ADDRESS LOAD ERROR]", error);
+  if (!res.ok) {
     return null;
   }
+
+  const data: AddressResponse =
+    await res.json();
+
+  const address =
+    (data.items ?? []).find(
+      (x) => x.is_default
+    );
+
+  if (!address) {
+    return null;
+  }
+
+  return {
+    id: address.id,
+
+    name:
+      address.full_name,
+
+    phone:
+      address.phone,
+
+    address_line:
+      address.address_line,
+
+    region:
+      address.region,
+
+    district:
+      address.district ??
+      "",
+
+    ward:
+      address.ward ??
+      "",
+
+    country:
+      address.country ??
+      "",
+
+    postal_code:
+      address.postal_code ??
+      null,
+  };
 }
 
 /* =========================================================
-COUNTRY DISPLAY
+   COUNTRY
 ========================================================= */
 
 export function getCountryDisplay(
   country?: string | null
 ): string {
-  return country?.toUpperCase() ?? "";
-           }
+  return String(
+    country ?? ""
+  ).toUpperCase();
+}
