@@ -103,18 +103,61 @@ const [autoPayAfterLogin, setAutoPayAfterLogin] =
       : [];
   }, [product?.shipping_rates]);
 
-  /* ================= LOAD ADDRESS ================= */
+ /* ================= LOAD ADDRESS ================= */
 
-  useEffect(() => {
+useEffect(() => {
   if (!open || !user) return;
 
-  (async () => {
-    const def = await fetchDefaultAddress();
-    if (!def) return;
+  let cancelled = false;
 
-    setShipping(def);
-  })();
-}, [open, user]);
+  const loadAddress = async () => {
+    setLoadingAddress(true);
+
+    setAddressLoaded(false);
+
+    try {
+      const def = await fetchDefaultAddress();
+
+      if (cancelled) return;
+
+      if (def) {
+        setShipping(def);
+
+        setNeedAddress(false);
+
+        setMessage({
+          text:
+            t.address_loaded ??
+            "Shipping address loaded.",
+          type: "success",
+        });
+      } else {
+        setShipping(null);
+
+        setNeedAddress(true);
+
+        setMessage({
+          text:
+            t.please_add_shipping_address ??
+            "Please add a shipping address.",
+          type: "info",
+        });
+      }
+    } finally {
+      if (!cancelled) {
+        setLoadingAddress(false);
+
+        setAddressLoaded(true);
+      }
+    }
+  };
+
+  void loadAddress();
+
+  return () => {
+    cancelled = true;
+  };
+}, [open, user, t]);
 
   /* ================= PREVIEW ================= */
 
