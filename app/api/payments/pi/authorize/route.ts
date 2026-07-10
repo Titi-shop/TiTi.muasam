@@ -34,15 +34,19 @@ export async function POST(req: Request) {
       result
     );
  } catch (e) {
-  logger.error(
-    "AUTHORIZE_ROUTE_ERROR",
-    {
-      message:
-        e instanceof Error
-          ? e.message
-          : "AUTHORIZE_FAILED",
-    }
-  );
+  logger.error("AUTHORIZE_ROUTE_ERROR", {
+    error:
+      e instanceof Error
+        ? {
+            name: e.name,
+            message: e.message,
+            stack:
+              process.env.NODE_ENV === "development"
+                ? e.stack
+                : undefined,
+          }
+        : e,
+  });
 
   return NextResponse.json(
     {
