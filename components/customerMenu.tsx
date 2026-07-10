@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -83,26 +84,9 @@ export default function CustomerMenu() {
 
     try {
       setSellerLoading(true);
+setSellerMessage(null);
 
-      setSellerMessage(null);
-
-      const token =
-        await getPiAccessToken();
-
-      if (!token) {
-        setSellerMessage(
-          `⚠️ ${
-            t.session_expired ??
-            "Session expired"
-          }`
-        );
-
-        await pilogin();
-
-        return;
-      }
-
-      const res = await apiAuthFetch(
+const res = await apiAuthFetch(
   "/api/seller/register",
   {
     method: "POST",
@@ -111,11 +95,19 @@ export default function CustomerMenu() {
     },
   }
 );
+console.log("STEP 5", res.status);
+console.log(
+  "SELLER_REGISTER: STATUS",
+  res.status
+);
 
-      const data: unknown =
-        await res
-          .json()
-          .catch(() => null);
+const data: unknown =
+  await res.json().catch(() => null);
+
+console.log(
+  "SELLER_REGISTER: RESPONSE",
+  data
+);
 
       if (!res.ok) {
         const err =
