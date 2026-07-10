@@ -499,7 +499,7 @@ style={{
   )}
 
   <button
-    onClick={handlePay}
+  onClick={startCheckout}
     disabled={processing}
    className="w-full py-3 rounded-xl text-white font-bold transition-all"
 style={{
