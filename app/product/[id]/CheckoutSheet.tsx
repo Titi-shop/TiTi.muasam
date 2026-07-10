@@ -40,17 +40,31 @@ export default function CheckoutSheet({
   const { user, piReady, pilogin } = useAuth();
 
   const processingRef = useRef(false);
-
+  const checkoutStartedRef =
+  useRef(false);
+  const paymentIntentIdRef =
+  useRef<string | null>(null);
+  const piPaymentIdRef =
+  useRef<string | null>(null);
+  const txidRef =
+  useRef<string | null>(null);
+  const shippingRef =
+  useRef<ShippingInfo | null>(null);
+  const userRef =
+  useRef(user);
+  const checkoutStateRef =
+  useRef(checkoutState);
+  
   /* ================= STATE ================= */
 
   const [shipping, setShipping] = useState<ShippingInfo | null>(null);
   const [zone, setZone] = useState<Region | null>(null);
   const [qty, setQty] = useState("1");
-  const [message, setMessage] = useState<Message | null>(null);
   const [processing, setProcessing] = useState(false);
 
   /* ================= ITEM ================= */
-
+const [checkoutState, setCheckoutState] =
+  useState("IDLE");
   const item = useMemo(() => {
     if (!product) return null;
 
@@ -100,6 +114,18 @@ export default function CheckoutSheet({
     setShipping(def);
   })();
 }, [open, user]);
+  useEffect(() => {
+    shippingRef.current =
+        shipping;
+}, [shipping]);
+  useEffect(() => {
+    userRef.current =
+        user;
+}, [user]);
+  useEffect(() => {
+    checkoutStateRef.current =
+        checkoutState;
+}, [checkoutState]);
 
   /* ================= PREVIEW ================= */
 
@@ -147,11 +173,7 @@ export default function CheckoutSheet({
 ]);
 
   /* ================= PAY ================= */
-console.log("🧪 CHECKOUT_ZONE", {
-  resolvedRegion,
-  shippingCountry: shipping?.country,
-  previewZone: preview?.shipping_zone,
-});
+
   const handlePay = useCheckoutPay({
     item,
     quantity,
@@ -383,24 +405,24 @@ style={{
   }}
 >
 
-  {message && (
+  {notification && (
     <div
       style={{
   background:
-    message.type === "success"
+    notification.type === "success"
       ? "rgba(34,197,94,.15)"
-      : message.type === "info"
+      : notification.type === "info"
       ? "rgba(59,130,246,.15)"
       : "rgba(239,68,68,.15)",
   color:
-    message.type === "success"
+    notification.type === "success"
       ? "var(--success)"
-      : message.type === "info"
+      : notification.type === "info"
       ? "var(--info)"
       : "var(--danger)",
 }}
     >
-      {message.text}
+      {notification.text(
     </div>
   )}
 
