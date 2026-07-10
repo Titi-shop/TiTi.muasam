@@ -46,6 +46,15 @@ export default function CheckoutSheet({
   const [shipping, setShipping] = useState<ShippingInfo | null>(null);
   const [qty, setQty] = useState("1");
   const [message, setMessage] = useState<Message | null>(null);
+  const showMessage = (
+  text: string,
+  type: Message["type"] = "info"
+) => {
+  setMessage({ text, type });
+  setTimeout(() => {
+    setMessage(null);
+  }, 3000);
+};
   const [processing, setProcessing] = useState(false);
 /* ================= WORKFLOW ================= */
 
@@ -121,24 +130,19 @@ useEffect(() => {
         setShipping(def);
 
         setNeedAddress(false);
-
-        setMessage({
-          text:
-            t.address_loaded ??
-            "Shipping address loaded.",
-          type: "success",
-        });
+        showMessage(
+    t.address_loaded ??
+  "Shipping address loaded.",
+  "success"
+    );
       } else {
         setShipping(null);
-
         setNeedAddress(true);
-
-        setMessage({
-          text:
-            t.please_add_shipping_address ??
-            "Please add a shipping address.",
-          type: "info",
-        });
+        showMessage(
+    t.please_add_shipping_address ??
+  "Please add a shipping address.",
+  "info"
+    );
       }
     } finally {
       if (!cancelled) {
@@ -222,10 +226,7 @@ useEffect(() => {
   router,
   onClose,
   product,
-  showMessage: (text, type = "error") => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage(null), 3000);
-  },
+  showMessage,
   validate: () =>
     validateBeforePay({
       user,
@@ -236,13 +237,12 @@ useEffect(() => {
       maxStock,
       pilogin,
       showMessage: (text, type) => {
-        setMessage({ text, type });
+     if (!user) {
+    setAutoPayAfterLogin(true);
+    }
 
-        if (!user) {
-          setPendingCheckout(true);
-          setAutoPayAfterLogin(true);
-        }
-      },
+  showMessage(text, type);
+},
       t,
     }),
 });
