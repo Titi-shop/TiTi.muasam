@@ -815,7 +815,8 @@
   "creating_order": "Đang tạo đơn hàng...",
   "opening_pi_wallet": "Đang mở Ví Pi...",
   "verifying_payment": "Đang xác minh thanh toán...",
-  "finalizing_order": "Đang hoàn tất đơn hàng..."
+  "finalizing_order": "Đang hoàn tất đơn hàng...",
+  "continue_payment": "Đang tiếp tục quy trình thanh toán..."
 
 
 
