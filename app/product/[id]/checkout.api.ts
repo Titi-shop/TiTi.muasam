@@ -16,8 +16,10 @@ export type PreviewKey = [
 
 export interface PreviewResponse {
   buyer_zone: string;
+  shipping_zone?: string;
   subtotal: number;
   shipping: number;
+  shipping_fee?: number;
   total: number;
 }
 
@@ -65,12 +67,14 @@ export async function previewFetcher(
     variant_id,
   ] = key;
 
+  if (process.env.NODE_ENV === "development") {
   console.log("[API PREVIEW CALL]", {
     address_id,
     quantity,
     product_id,
     variant_id,
   });
+}
 
   const res = await apiAuthFetch(url, {
     method: "POST",
@@ -115,11 +119,16 @@ export async function fetchDefaultAddress(): Promise<ShippingAddress | null> {
       ? data.items
       : [];
 
-    const def = items.find((a) => a.is_default);
+    const def = items.find(
+    (a) =>
+    a.is_default &&
+    a.id &&
+    a.country
+    );
 
     if (!def) {
-      return null;
-    }
+     return null;
+     }
 
     return {
       id: def.id,
