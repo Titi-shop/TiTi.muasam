@@ -69,14 +69,26 @@ if (
    "INVALID_PI_RESPONSE"
  );
   }
-    const data = (await piRes.json()) as PiMeResponse;
+    const data = await piRes.json();
+    console.log("[PI RESPONSE]", data);
 
-    if (typeof data.uid !== "string" || typeof data.username !== "string") {
-      return NextResponse.json(
-        { success: false, error: "INVALID_PI_USER" },
-        { status: 401 }
-      );
+if (
+  !data ||
+  typeof data !== "object" ||
+  typeof data.uid !== "string" ||
+  typeof data.username !== "string"
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "INVALID_PI_USER",
+      data,
+    },
+    {
+      status: 401,
     }
+  );
+}
 
 const pi_uid = data.uid.trim();
 
