@@ -80,10 +80,9 @@ export async function getPiAccessToken(
   }
 
   const scopes = [
-    "username",
-    "payments",
-    "wallet_address",
-  ];
+  "username",
+  "payments",
+];
 
   console.log("[AUTH] SCOPES", scopes);
 
