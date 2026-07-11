@@ -87,25 +87,30 @@ export async function getPiAccessToken(
       const auth = await window.Pi.authenticate(
   scopes,
   async (payment: PiIncompletePayment) => {
-    logger.info(
+    const paymentId =
+  typeof payment.identifier === "string"
+    ? payment.identifier
+    : "";
+
+const txid =
+  typeof (payment as {
+    transaction?: {
+      txid?: string;
+    };
+  }).transaction?.txid === "string"
+    ? (payment as {
+        transaction?: {
+          txid?: string;
+        };
+      }).transaction!.txid!
+    : "";
+     logger.info(
   "PI.AUTH.INCOMPLETE_FOUND",
   {
     paymentId: maskId(paymentId),
     hasTxid: !!txid,
   }
 );
-
-    const paymentId =
-      typeof payment.identifier === "string"
-        ? payment.identifier
-        : "";
-
-    const txid =
-      typeof (payment as { transaction?: { txid?: string } })
-        .transaction?.txid === "string"
-        ? (payment as { transaction?: { txid?: string } })
-            .transaction!.txid!
-        : "";
 
     if (paymentId) {
       localStorage.setItem("pi:lastPaymentId", paymentId);
