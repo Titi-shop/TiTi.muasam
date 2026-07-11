@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { upsertUserFromPi } from "@/lib/db/users";
-
+import { piGetMe } from "@/lib/pi/client";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -39,38 +39,29 @@ export async function POST(req: Request) {
     }
 
     /* ================= 2️⃣ VERIFY PI ================= */
-    const controller = new AbortController();
-const timeout = setTimeout(() => controller.abort(), 5000);
 
-const piRes = await fetch("https://api.minepi.com/v2/me", {
-  headers: {
-    Authorization: `Bearer ${accessToken}`,
-    Accept: "application/json",
-  },
-  cache: "no-store",
-  signal: controller.signal,
-}).finally(() => clearTimeout(timeout));
+const data = await piGetMe(accessToken);
 
-    if (!piRes.ok) {
-      return NextResponse.json(
-        { success: false, error: "INVALID_ACCESS_TOKEN" },
-        { status: 401 }
-      );
+const pi_uid = data.uid.trim();
+
+const username =
+  typeof data.username === "string"
+    ? data.username.trim()
+    : "";
+
+if (!pi_uid || !username) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "INVALID_PI_USER",
+    },
+    {
+      status: 401,
     }
+  );
+}
 
-    const data = (await piRes.json()) as PiMeResponse;
-
-    if (typeof data.uid !== "string" || typeof data.username !== "string") {
-      return NextResponse.json(
-        { success: false, error: "INVALID_PI_USER" },
-        { status: 401 }
-      );
-    }
-
-    const pi_uid = data.uid;
-    const username = data.username.trim();
-    const wallet_address = data.wallet_address ?? null;
-
+const wallet_address = null;
     /* ================= 3️⃣ UPSERT USER (DB LAYER) ================= */
     const dbUser = await upsertUserFromPi(pi_uid, username);
 
@@ -93,13 +84,13 @@ const piRes = await fetch("https://api.minepi.com/v2/me", {
    return NextResponse.json({
   success: true,
   user: {
-    id: dbUser.id,
-    username,
-    wallet_address,
-    role,
-    is_admin: !!dbUser.is_admin,
-  },
-});
+  id: dbUser.id,
+  pi_uid,
+  username,
+  wallet_address,
+  role,
+  is_admin: !!dbUser.is_admin,
+}
 
   } catch (err) {
     console.error("❌ PI VERIFY ERROR:", err);
