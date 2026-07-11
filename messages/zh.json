@@ -762,7 +762,14 @@
   "wallet_unverified": "未验证",
 
   "wallet_default": "默认钱包",
-  "wallet_not_linked": "尚未绑定钱包"
+  "wallet_not_linked": "尚未绑定钱包",
+  
+  "logging_in_pi": "正在连接 Pi 账户...",
+  "creating_order": "正在创建订单...",
+  "opening_pi_wallet": "正在打开 Pi 钱包...",
+  "verifying_payment": "正在验证付款...",
+  "finalizing_order": "正在完成订单..."
+
 
 
 
