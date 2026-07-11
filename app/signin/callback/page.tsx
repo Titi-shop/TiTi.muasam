@@ -21,7 +21,13 @@ export default function PiSigninCallbackPage() {
 
     const accessToken =
       params.get("access_token") ?? "";
+const expectedState =
+  sessionStorage.getItem("pi_oauth_state") ?? "";
 
+console.log(
+  "[PI CALLBACK] EXPECTED STATE",
+  expectedState
+);
     const oauthState =
       params.get("state") ?? "";
 
@@ -37,7 +43,12 @@ export default function PiSigninCallbackPage() {
 
     setToken(accessToken);
     setState(oauthState);
+if (oauthState !== expectedState) {
+  setStatus("Invalid state.");
+  return;
+}
 
+sessionStorage.removeItem("pi_oauth_state");
     if (accessToken) {
       setStatus("Access token received.");
     } else {
