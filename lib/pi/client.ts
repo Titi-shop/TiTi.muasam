@@ -172,13 +172,15 @@ export async function piGetMe(
     }
   );
 
-logger.info(
-  "PI_CLIENT.ME",
-  {
-    uid: maskId(data.uid),
-    username: data.username,
-  }
-);
+if (process.env.NODE_ENV !== "production") {
+  logger.info(
+    "PI_CLIENT.ME",
+    {
+      uid: maskId(data.uid),
+      username: data.username,
+    }
+  );
+}
 
   if (!data?.uid) {
     throw new Error(
