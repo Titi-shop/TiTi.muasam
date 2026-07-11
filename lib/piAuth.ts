@@ -85,10 +85,6 @@ export async function getPiAccessToken(
     try {
 
       const auth = await window.Pi.authenticate(
-         console.log("[PI AUTH]", {
-  accessToken: !!auth.accessToken,
-  user: auth.user,
-});
   scopes,
   async (payment: PiIncompletePayment) => {
     const paymentId =
@@ -115,6 +111,10 @@ const txid =
     hasTxid: !!txid,
   }
 );
+     console.log("[PI AUTH]", {
+  accessToken: !!auth.accessToken,
+  user: auth.user,
+});
 
     if (paymentId) {
       localStorage.setItem("pi:lastPaymentId", paymentId);
