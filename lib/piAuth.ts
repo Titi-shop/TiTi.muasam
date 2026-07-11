@@ -111,6 +111,11 @@ const txid =
     hasTxid: !!txid,
   }
 );
+     console.log("===== PI AUTH RESULT =====");
+
+console.log(auth);
+
+console.log("==========================");
      console.log("[PI AUTH]", {
   accessToken: !!auth.accessToken,
   user: auth.user,
