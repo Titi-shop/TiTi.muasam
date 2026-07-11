@@ -85,6 +85,10 @@ export async function getPiAccessToken(
     try {
 
       const auth = await window.Pi.authenticate(
+         console.log("[PI AUTH]", {
+  accessToken: !!auth.accessToken,
+  user: auth.user,
+});
   scopes,
   async (payment: PiIncompletePayment) => {
     const paymentId =
