@@ -45,7 +45,15 @@ export async function POST(req: Request) {
 const timeout = setTimeout(() => controller.abort(), 5000);
 
 const piRes = await fetch(`${PI_API_URL}/me`, {
-  console.log("[VERIFY] STATUS", piRes.status);
+  headers: {
+    Authorization: `Bearer ${accessToken}`,
+    Accept: "application/json",
+  },
+  cache: "no-store",
+  signal: controller.signal,
+}).finally(() => clearTimeout(timeout));
+
+console.log("[VERIFY] STATUS", piRes.status);
 
 console.log(
   "[VERIFY] CONTENT-TYPE",
@@ -56,13 +64,6 @@ console.log(
   "[VERIFY] TOKEN",
   accessToken.slice(0, 20) + "..."
 );
-  headers: {
-    Authorization: `Bearer ${accessToken}`,
-    Accept: "application/json",
-  },
-  cache: "no-store",
-  signal: controller.signal,
-}).finally(() => clearTimeout(timeout));
 
     if (!piRes.ok) {
       return NextResponse.json(
