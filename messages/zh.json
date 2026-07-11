@@ -768,7 +768,8 @@
   "creating_order": "正在创建订单...",
   "opening_pi_wallet": "正在打开 Pi 钱包...",
   "verifying_payment": "正在验证付款...",
-  "finalizing_order": "正在完成订单..."
+  "finalizing_order": "正在完成订单...",
+  "continue_payment": "正在继续付款..."
 
 
 
