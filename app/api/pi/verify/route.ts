@@ -45,6 +45,17 @@ export async function POST(req: Request) {
 const timeout = setTimeout(() => controller.abort(), 5000);
 
 const piRes = await fetch(`${PI_API_URL}/me`, {
+  console.log("[VERIFY] STATUS", piRes.status);
+
+console.log(
+  "[VERIFY] CONTENT-TYPE",
+  piRes.headers.get("content-type")
+);
+
+console.log(
+  "[VERIFY] TOKEN",
+  accessToken.slice(0, 20) + "..."
+);
   headers: {
     Authorization: `Bearer ${accessToken}`,
     Accept: "application/json",
@@ -69,8 +80,10 @@ if (
    "INVALID_PI_RESPONSE"
  );
   }
-    const data = await piRes.json();
-    console.log("[PI RESPONSE]", data);
+    const raw = await piRes.text();
+console.log("[VERIFY] RAW", raw);
+const data = raw ? JSON.parse(raw) : null;
+console.log("[PI RESPONSE]", data);
 
 if (
   !data ||
