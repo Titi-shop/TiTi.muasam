@@ -9,7 +9,7 @@ import {
   logger,
   maskId,
 } from "@/lib/logger";
-const PI_API_URL = process.env.PI_API_URL ?? "https://api.minepi.com/v2";
+import { piGetMe } from "@/lib/pi/client";
 
 let cachedToken: string | null = null;
 let authPromise: Promise<string> | null = null;
@@ -191,20 +191,6 @@ export async function getPiAccessToken(
 
       cachedToken = auth.accessToken;
 
-console.log(
-  "[AUTH] TOKEN PREFIX",
-  cachedToken.substring(0, 20)
-);
-
-console.log(
-  "[AUTH] TOKEN LENGTH",
-  cachedToken.length
-);
-
-console.log(
-  "[AUTH] USER",
-  auth.user
-);
 
       logger.info(
         "PI.AUTH.SUCCESS",
@@ -242,30 +228,15 @@ export async function verifyPiToken(
     throw new Error("UNAUTHORIZED");
   }
 
-  const res = await fetch(`${PI_API_URL}/me`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    cache: "no-store",
-  });
+  const me = await piGetMe(token);
 
-  if (!res.ok) {
-    throw new Error("PI_TOKEN_INVALID");
-  }
-
-  const data = (await res.json()) as {
-    uid?: string;
-    username?: string;
-  };
-
-  if (!data.uid || !data.username) {
+  if (!me.username) {
     throw new Error("PI_USER_INVALID");
   }
 
   return {
-    pi_uid: data.uid,
-    username: data.username,
+    pi_uid: me.uid,
+    username: me.username,
   };
 }
 
@@ -287,9 +258,10 @@ export async function getPiUserFromToken(
 
   try {
     return await verifyPiToken(token);
-  } catch {
-    return null;
-  }
+ } catch (err) {
+  logger.error("PI.AUTH.VERIFY_FAILED");
+  return null;
+}
 }
 /* =========================================================
    CLEAR TOKEN (LOGOUT)
