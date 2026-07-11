@@ -78,7 +78,7 @@ export async function getPiAccessToken(
   const scopes = [
   "username",
   "payments",
-  "wallet_address",
+  
 ];
 
   authPromise = (async () => {
