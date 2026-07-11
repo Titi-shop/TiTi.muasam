@@ -84,14 +84,14 @@ const wallet_address = null;
    return NextResponse.json({
   success: true,
   user: {
-  id: dbUser.id,
-  pi_uid,
-  username,
-  wallet_address,
-  role,
-  is_admin: !!dbUser.is_admin,
-}
-
+    id: dbUser.id,
+    pi_uid,
+    username,
+    wallet_address,
+    role,
+    is_admin: !!dbUser.is_admin,
+  },
+});
   } catch (err) {
     console.error("❌ PI VERIFY ERROR:", err);
 
