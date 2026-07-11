@@ -55,7 +55,7 @@ const piRes = await fetch(`${PI_API_URL}/me`, {
   cache: "no-store",
   signal: controller.signal,
 }).finally(() => clearTimeout(timeout));
-
+console.log("[VERIFY] URL =", `${PI_API_URL}/me`);
 console.log("[VERIFY] STATUS", piRes.status);
 
 console.log(
