@@ -8,7 +8,8 @@ import {
   useRef,
   ReactNode,
 } from "react";
-import { getPiAccessToken, clearPiToken } from "@/lib/piAuth";
+import { clearPiToken } from "@/lib/piAuth";
+import { piSignIn } from "@/lib/piSignIn";
 
 /* ========================= TYPES ========================= */
 
@@ -126,16 +127,13 @@ const loginRef = useRef(false);
   try {
       setLoading(true);
 
-      const token = await getPiAccessToken();
+piSignIn({
+  clientId: process.env.NEXT_PUBLIC_PI_CLIENT_ID!,
+  redirectUri: `${window.location.origin}/signin/callback`,
+  scopes: ["username"],
+});
 
-      if (!token) return;
-
-      const res = await fetch("/api/pi/verify", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+return;
 
       const data = await res.json();
 
