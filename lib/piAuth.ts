@@ -9,7 +9,7 @@ import {
   logger,
   maskId,
 } from "@/lib/logger";
-import { piGetMe } from "@/lib/pi/client";
+const PI_API_URL = process.env.PI_API_URL ?? "https://api.minepi.com/v2";
 
 let cachedToken: string | null = null;
 let authPromise: Promise<string> | null = null;
@@ -59,15 +59,11 @@ export async function getPiAccessToken(
   forceRefresh = false
 ): Promise<string> {
 
-  console.log("========== PI AUTH START ==========");
-
   if (!forceRefresh && cachedToken) {
-    console.log("[AUTH] USING CACHE");
     return cachedToken;
   }
 
   if (authPromise) {
-    console.log("[AUTH] USING EXISTING PROMISE");
     return authPromise;
   }
 
@@ -82,133 +78,130 @@ export async function getPiAccessToken(
   const scopes = [
   "username",
   "payments",
+  "wallet_address",
 ];
-
-  console.log("[AUTH] SCOPES", scopes);
 
   authPromise = (async () => {
     try {
 
-      console.log("[AUTH] CALLING Pi.authenticate()");
-
       const auth = await window.Pi.authenticate(
-        scopes,
-        async (payment: PiIncompletePayment) => {
+  scopes,
+  async (payment: PiIncompletePayment) => {
+    const paymentId =
+  typeof payment.identifier === "string"
+    ? payment.identifier
+    : "";
 
-          console.log("[AUTH] INCOMPLETE PAYMENT FOUND");
-          console.log(payment);
+const txid =
+  typeof (payment as {
+    transaction?: {
+      txid?: string;
+    };
+  }).transaction?.txid === "string"
+    ? (payment as {
+        transaction?: {
+          txid?: string;
+        };
+      }).transaction!.txid!
+    : "";
 
-          const paymentId =
-            typeof payment.identifier === "string"
-              ? payment.identifier
-              : "";
+logger.info(
+  "PI.AUTH.INCOMPLETE_FOUND",
+  {
+    paymentId: maskId(paymentId),
+    hasTxid: !!txid,
+  }
+);
 
-          const txid =
-            typeof (payment as {
-              transaction?: {
-                txid?: string;
-              };
-            }).transaction?.txid === "string"
-              ? (payment as {
-                  transaction?: {
-                    txid?: string;
-                  };
-                }).transaction!.txid!
-              : "";
+    if (paymentId) {
+      localStorage.setItem("pi:lastPaymentId", paymentId);
+      logger.debug(
+     "PI.AUTH.PAYMENT_ID_SAVED"
+  );
+    }
 
-          logger.info(
-            "PI.AUTH.INCOMPLETE_FOUND",
-            {
-              paymentId: maskId(paymentId),
-              hasTxid: !!txid,
-            }
-          );
+    if (txid) {
+      localStorage.setItem("pi:lastTxid", txid);
+      logger.debug(
+  "PI.AUTH.TXID_SAVED"
+);
+    }
 
-          if (paymentId) {
-            localStorage.setItem(
-              "pi:lastPaymentId",
-              paymentId
-            );
-          }
+    // 🔥 AUTO FIX KẸT ĐƠN
+    if (paymentId && txid) {
+      try {
+        logger.info(
+  "PI.AUTH.AUTO_COMPLETE_START",
+  {
+    paymentId: maskId(paymentId),
+  }
+);
+        const token = await getPiAccessToken(true);
 
-          if (txid) {
-            localStorage.setItem(
-              "pi:lastTxid",
-              txid
-            );
-          }
+        const res = await fetch("/api/pi/complete-incomplete", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            paymentId,
+            txid,
+          }),
+        });
 
-          if (paymentId && txid) {
-            try {
+        logger.info(
+  "PI.AUTH.AUTO_COMPLETE_RESULT",
+  {
+    paymentId: maskId(paymentId),
+    status: res.status,
+    ok: res.ok,
+  }
+);
 
-              console.log("[AUTH] AUTO COMPLETE START");
+      } catch (err) {
+        logger.error(
+  "PI.AUTH.AUTO_COMPLETE_ERROR",
+  {
+    paymentId: maskId(paymentId),
+    message:
+      err instanceof Error
+        ? err.message
+        : "UNKNOWN_ERROR",
+  }
+);
 
-              const token =
-                await getPiAccessToken(true);
+if (
+  process.env.NODE_ENV !==
+  "production"
+) {
+  console.error(err);
+}
+      }
+    }
+  }
+);
 
-              const res = await fetch(
-                "/api/pi/complete-incomplete",
-                {
-                  method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type":
-                      "application/json",
-                  },
-                  body: JSON.stringify({
-                    paymentId,
-                    txid,
-                  }),
-                }
-              );
 
-              console.log(
-                "[AUTH] AUTO COMPLETE STATUS",
-                res.status
-              );
+logger.info(
+  "PI.AUTH.SUCCESS",
+  {
+    hasUser: !!auth.user,
+  }
+);
 
-            } catch (err) {
-              console.error(
-                "[AUTH] AUTO COMPLETE ERROR",
-                err
-              );
-            }
-          }
-        }
-      );
-
-      console.log("========== AUTH RESULT ==========");
-      console.log(auth);
-      console.log("typeof auth =", typeof auth);
-      console.log("accessToken =", auth?.accessToken);
-      console.log("token length =", auth?.accessToken?.length);
-      console.log("user =", auth?.user);
-      console.log("===============================");
-
+logger.debug(
+  "PI.AUTH.TOKEN_RECEIVED"
+);
       if (!auth || !auth.accessToken) {
         throw new Error("PI_AUTH_FAILED");
       }
 
       cachedToken = auth.accessToken;
 
-
-      logger.info(
-        "PI.AUTH.SUCCESS",
-        {
-          hasUser: !!auth.user,
-        }
-      );
-
-      logger.debug(
-        "PI.AUTH.TOKEN_RECEIVED"
-      );
-
       return cachedToken;
 
     } finally {
-
-      console.log("[AUTH] FINISH");
-
       authPromise = null;
     }
   })();
@@ -228,15 +221,30 @@ export async function verifyPiToken(
     throw new Error("UNAUTHORIZED");
   }
 
-  const me = await piGetMe(token);
+  const res = await fetch(`${PI_API_URL}/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
 
-  if (!me.username) {
+  if (!res.ok) {
+    throw new Error("PI_TOKEN_INVALID");
+  }
+
+  const data = (await res.json()) as {
+    uid?: string;
+    username?: string;
+  };
+
+  if (!data.uid || !data.username) {
     throw new Error("PI_USER_INVALID");
   }
 
   return {
-    pi_uid: me.uid,
-    username: me.username,
+    pi_uid: data.uid,
+    username: data.username,
   };
 }
 
@@ -258,10 +266,9 @@ export async function getPiUserFromToken(
 
   try {
     return await verifyPiToken(token);
- } catch (err) {
-  logger.error("PI.AUTH.VERIFY_FAILED");
-  return null;
-}
+  } catch {
+    return null;
+  }
 }
 /* =========================================================
    CLEAR TOKEN (LOGOUT)
@@ -269,4 +276,5 @@ export async function getPiUserFromToken(
 
 export function clearPiToken(): void {
   cachedToken = null;
+  authPromise = null;
 }
