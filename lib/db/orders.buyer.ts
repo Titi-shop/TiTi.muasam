@@ -72,11 +72,24 @@ export async function getOrdersByBuyer(
   'id', oi.id,
   'product_id', oi.product_id,
   'product_name', oi.product_name,
+  'product_slug', oi.product_slug,
   'thumbnail', oi.thumbnail,
+  'images', oi.images,
+  'variant_name', oi.variant_name,
+  'variant_value', oi.variant_value,
   'quantity', oi.quantity,
   'unit_price', oi.unit_price,
   'total_price', oi.total_price,
-  'fulfillment_status', oi.fulfillment_status
+  'currency', oi.currency,
+  'fulfillment_status', oi.fulfillment_status,
+  'return_status', oi.return_status,
+  'seller_message', oi.seller_message,
+  'seller_cancel_reason', oi.seller_cancel_reason,
+  'tracking_code', oi.tracking_code,
+  'shipping_provider', oi.shipping_provider,
+  'shipped_at', oi.shipped_at,
+  'delivered_at', oi.delivered_at,
+  'snapshot', oi.snapshot
 )
         ) FILTER (WHERE oi.id IS NOT NULL),
         '[]'::json
@@ -228,11 +241,24 @@ export async function getOrderByBuyerId(
   'id', oi.id,
   'product_id', oi.product_id,
   'product_name', oi.product_name,
+  'product_slug', oi.product_slug,
   'thumbnail', oi.thumbnail,
+  'images', oi.images,
+  'variant_name', oi.variant_name,
+  'variant_value', oi.variant_value,
   'quantity', oi.quantity,
   'unit_price', oi.unit_price,
   'total_price', oi.total_price,
-  'fulfillment_status', oi.fulfillment_status
+  'currency', oi.currency,
+  'fulfillment_status', oi.fulfillment_status,
+  'return_status', oi.return_status,
+  'seller_message', oi.seller_message,
+  'seller_cancel_reason', oi.seller_cancel_reason,
+  'tracking_code', oi.tracking_code,
+  'shipping_provider', oi.shipping_provider,
+  'shipped_at', oi.shipped_at,
+  'delivered_at', oi.delivered_at,
+  'snapshot', oi.snapshot
 )
         ) FILTER (WHERE oi.id IS NOT NULL),
         '[]'::json
