@@ -1,5 +1,6 @@
 import type {
   Order,
+  OrderFilter,
   OrderItem,
   OrderStats,
   OrderStatus,
@@ -334,28 +335,80 @@ export function normalizeOrder(
 
 export function filterOrders(
   orders: Order[],
-  keyword = ""
+  filter: OrderFilter
 ): Order[] {
-  const q = keyword.trim().toLowerCase();
-
-  if (!q) {
-    return orders;
-  }
-
   return orders.filter((order) => {
-    return (
-      order.order_number
-        .toLowerCase()
-        .includes(q) ||
+    /* ---------- STATUS ---------- */
 
-      order.shipping_name
-        .toLowerCase()
-        .includes(q) ||
+    if (
+      filter.status !== "all" &&
+      order.fulfillment_status !== filter.status
+    ) {
+      return false;
+    }
 
-      order.shipping_phone
-        .toLowerCase()
-        .includes(q)
-    );
+    /* ---------- KEYWORD ---------- */
+
+    const keyword =
+      filter.keyword
+        .trim()
+        .toLowerCase();
+
+    if (keyword) {
+      const matched =
+        order.order_number
+          .toLowerCase()
+          .includes(keyword) ||
+
+        order.shipping_name
+          .toLowerCase()
+          .includes(keyword) ||
+
+        order.shipping_phone
+          .toLowerCase()
+          .includes(keyword);
+
+      if (!matched) {
+        return false;
+      }
+    }
+
+    /* ---------- FROM ---------- */
+
+    if (filter.from) {
+      const from =
+        new Date(filter.from);
+
+      if (
+        new Date(order.created_at) <
+        from
+      ) {
+        return false;
+      }
+    }
+
+    /* ---------- TO ---------- */
+
+    if (filter.to) {
+      const to =
+        new Date(filter.to);
+
+      to.setHours(
+        23,
+        59,
+        59,
+        999
+      );
+
+      if (
+        new Date(order.created_at) >
+        to
+      ) {
+        return false;
+      }
+    }
+
+    return true;
   });
 }
 
