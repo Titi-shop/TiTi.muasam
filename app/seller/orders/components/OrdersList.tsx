@@ -11,14 +11,17 @@ import type {
 type Props = {
   orders: Order[];
 
+  filter: OrderFilter;
+
+  onFilterChange: (
+    filter: OrderFilter
+  ) => void;
+
   loadingId?: string | null;
 
   onDetail: (id: string) => void;
-
   onConfirm: (id: string) => void;
-
   onCancel: (id: string) => void;
-
   onShipping: (id: string) => void;
 };
 
