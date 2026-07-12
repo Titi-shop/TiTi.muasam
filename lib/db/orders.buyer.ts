@@ -82,45 +82,32 @@ export async function getOrdersByBuyer(
       COALESCE(
         json_agg(
           json_build_object(
-            'id', oi.id,
-
-            'product_id', oi.product_id,
-            'variant_id', oi.variant_id,
-
-            'product_name', oi.product_name,
-            'product_slug', oi.product_slug,
-
-            'thumbnail', oi.thumbnail,
-            'images', oi.images,
-
-            'variant_name', oi.variant_name,
-            'variant_value', oi.variant_value,
-
-            'is_digital', oi.is_digital,
-
-            'quantity', oi.quantity,
-
-            'unit_price', oi.unit_price,
-            'total_price', oi.total_price,
-
-            'currency', oi.currency,
-
-            'fulfillment_status', oi.fulfillment_status,
-
-            'confirmed_at', oi.confirmed_at,
-            'processing_at', oi.processing_at,
-            'shipped_at', oi.shipped_at,
-            'delivered_at', oi.delivered_at,
-            'completed_at', oi.completed_at,
-
-            'tracking_code', oi.tracking_code,
-            'shipping_provider', oi.shipping_provider,
-
-            'seller_message', oi.seller_message,
-            'seller_cancel_reason', oi.seller_cancel_reason,
-
-            'snapshot', oi.snapshot
-          )
+  'id', oi.id,
+  'product_id', oi.product_id,
+  'variant_id', oi.variant_id,
+  'product_name', oi.product_name,
+  'product_slug', oi.product_slug,
+  'thumbnail', oi.thumbnail,
+  'images', oi.images,
+  'variant_name', oi.variant_name,
+  'variant_value', oi.variant_value,
+  'is_digital', oi.is_digital,
+  'quantity', oi.quantity,
+  'unit_price', oi.unit_price,
+  'total_price', oi.total_price,
+  'currency', oi.currency,
+  'fulfillment_status', oi.fulfillment_status,
+  'confirmed_at', oi.confirmed_at,
+  'processing_at', oi.processing_at,
+  'shipped_at', oi.shipped_at,
+  'delivered_at', oi.delivered_at,
+  'completed_at', oi.completed_at,
+  'tracking_code', oi.tracking_code,
+  'shipping_provider', oi.shipping_provider,
+  'seller_message', oi.seller_message,
+  'seller_cancel_reason', oi.seller_cancel_reason,
+  'snapshot', oi.snapshot
+)
         ) FILTER (WHERE oi.id IS NOT NULL),
         '[]'::json
       ) AS order_items
