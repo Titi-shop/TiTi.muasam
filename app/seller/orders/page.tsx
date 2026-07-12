@@ -356,16 +356,15 @@ function SellerOrdersContent() {
 
       <section className="px-4 pb-24">
 
-    <OrdersList
+ <OrdersList
   orders={filtered}
   filter={filter}
   onFilterChange={setFilter}
   loadingId={loadingId}
-  onDetail={(id) =>
-    router.push(`/seller/orders/${id}`)
-
-  }
-
+  onDetail={(id) => {
+    router.push(`/seller/orders/${id}`);
+  }}
+  
           onConfirm={(id) => {
             setConfirmId(id);
             setCancelId(null);
