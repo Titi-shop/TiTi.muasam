@@ -128,14 +128,7 @@ export default function OrdersList({
       ).length,
   };
 
-  const visibleOrders =
-    filter.status === "all"
-      ? orders
-      : orders.filter(
-          (o) =>
-            o.fulfillment_status ===
-            filter.status
-        );
+  
     /* =========================================================
      STATUS TABS
   ========================================================= */
