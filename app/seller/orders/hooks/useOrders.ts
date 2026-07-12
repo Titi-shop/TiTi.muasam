@@ -2,48 +2,16 @@
 
 import useSWR from "swr";
 
-import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
-
-import type {
-  Order,
-  RawOrder,
-} from "../types";
-
-import {
-  normalizeOrder,
-} from "../lib/helpers";
-
-async function fetchOrders(): Promise<Order[]> {
-  const res = await apiAuthFetch(
-    "/api/seller/orders",
-    {
-      cache: "no-store",
-    }
-  );
-
-  if (!res.ok) {
-    return [];
-  }
-
-  const data = (await res.json()) as unknown;
-
-  if (!Array.isArray(data)) {
-    return [];
-  }
-
-  return (data as RawOrder[]).map(
-    normalizeOrder
-  );
-}
+import { getOrders } from "../lib/api";
 
 export function useOrders(
   enabled: boolean
 ) {
   const swr = useSWR(
     enabled
-      ? "/api/seller/orders"
+      ? "seller-orders"
       : null,
-    fetchOrders,
+    getOrders,
     {
       revalidateOnFocus: false,
       keepPreviousData: true,
