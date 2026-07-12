@@ -450,7 +450,20 @@ function SellerOrdersContent() {
         ""
       );
 
-      await mutate(undefined, { revalidate: true });
+      await mutate(
+  (current) =>
+    current?.map((o) =>
+      o.id === id
+        ? {
+            ...o,
+            status: "processing",
+          }
+        : o
+    ),
+  {
+    revalidate: false,
+  }
+);
 
       showToast(
         t.confirm_success ??
