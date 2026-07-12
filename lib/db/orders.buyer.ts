@@ -69,13 +69,15 @@ export async function getOrdersByBuyer(
       COALESCE(
         json_agg(
           json_build_object(
-            'id', oi.id,
-            'product_id', oi.product_id,
-            'product_name', oi.product_name,
-            'thumbnail', oi.thumbnail,
-            'quantity', oi.quantity,
-            'unit_price', oi.unit_price
-          )
+  'id', oi.id,
+  'product_id', oi.product_id,
+  'product_name', oi.product_name,
+  'thumbnail', oi.thumbnail,
+  'quantity', oi.quantity,
+  'unit_price', oi.unit_price,
+  'total_price', oi.total_price,
+  'fulfillment_status', oi.fulfillment_status
+)
         ) FILTER (WHERE oi.id IS NOT NULL),
         '[]'::json
       ) AS order_items
@@ -223,13 +225,15 @@ export async function getOrderByBuyerId(
       COALESCE(
         json_agg(
           json_build_object(
-            'id', oi.id,
-            'product_id', oi.product_id,
-            'product_name', oi.product_name,
-            'thumbnail', oi.thumbnail,
-            'quantity', oi.quantity,
-            'unit_price', oi.unit_price
-          )
+  'id', oi.id,
+  'product_id', oi.product_id,
+  'product_name', oi.product_name,
+  'thumbnail', oi.thumbnail,
+  'quantity', oi.quantity,
+  'unit_price', oi.unit_price,
+  'total_price', oi.total_price,
+  'fulfillment_status', oi.fulfillment_status
+)
         ) FILTER (WHERE oi.id IS NOT NULL),
         '[]'::json
       ) AS order_items
@@ -366,11 +370,8 @@ export async function completeOrderByBuyer(
 
         SET
           fulfillment_status = 'delivered',
-
           delivered_at = NOW(),
-
           updated_at = NOW()
-
         WHERE id = $1
         `,
         [orderId]
