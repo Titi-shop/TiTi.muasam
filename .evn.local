@@ -1,0 +1,16 @@
+NEXT_PUBLIC_PI_ENV=testnet
+NEXT_PUBLIC_SUPABASE_URL=https://zoiifulckrqisuublwdp.supabase.co
+
+DATABASE_URL=postgresql://postgres.zoiifulckrqisuublwdp:xxxxxxxxxxxxx@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true"
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_xxxxxxxxxxxxxxx
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxxxxxxxxxxxxxxxx
+NEXT_PUBLIC_PI_API_URL=https://api.minepi.com
+PI_API_URL=https://api.minepi.com
+PI_HORIZON_URL =
+PI_NETWORK_PASSPHRASE=
+PI_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxx
+PI_WALLET_PRIVATE_SEED=
+PI_MERCHANT_WALLET=
+NEXT_PUBLIC_APP_URL=https://app/titi.onl
+NEXT_PUBLIC_PI_CLIENT_ID=
+
