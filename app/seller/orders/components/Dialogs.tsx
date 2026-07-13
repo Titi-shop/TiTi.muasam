@@ -6,14 +6,10 @@ type BaseProps = {
   open: boolean;
   title: string;
   loading?: boolean;
-
   children: React.ReactNode;
-
   confirmText?: string;
   cancelText?: string;
-
   confirmColor?: string;
-
   onConfirm: () => void;
   onClose: () => void;
 };
@@ -49,22 +45,24 @@ function DialogBase({
 
     {/* Bottom Sheet */}
 
-    <div
-      className="
-        absolute
-        bottom-0
-        left-0
-        right-0
-        rounded-t-3xl
-        bg-white
-        dark:bg-zinc-900
-        p-5
-        shadow-2xl
-        animate-in
-        slide-in-from-bottom
-        duration-200
-      "
-    >
+   <div
+  className="
+    absolute
+    bottom-0
+    left-0
+    right-0
+    max-h-[80vh]
+    overflow-y-auto
+    rounded-t-3xl
+    bg-white
+    dark:bg-zinc-900
+    p-5
+    shadow-2xl
+    animate-in
+    slide-in-from-bottom
+    duration-200
+  "
+>
       {/* Handle */}
 
       <div className="mb-4 flex justify-center">
