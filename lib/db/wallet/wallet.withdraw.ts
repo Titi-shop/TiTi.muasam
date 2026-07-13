@@ -9,6 +9,7 @@ import {
 
 import {
   finalizeReservedBalance,
+  markWithdrawalFailed,
 } from "./wallet.balance";
 
 import {
