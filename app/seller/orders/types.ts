@@ -9,12 +9,12 @@
 
 export type OrderStatus =
   | "pending"
-  | "pending_fulfillment"
   | "processing"
   | "shipped"
   | "delivered"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "refunded";
 
 export type PaymentStatus =
   | "pending"
