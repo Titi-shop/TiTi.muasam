@@ -31,7 +31,7 @@ import { getOrder } from "./lib/api";
 
 import Header from "./components/Header";
 import Timeline from "./components/Timeline";
-import PrintableInvoice from "./components/PrintableInvoice";
+
 
 /* =========================================================
    HELPERS
@@ -224,153 +224,22 @@ export default function SellerOrderDetailPage() {
   ========================================================= */
 
   return (
-    <main className="min-h-screen bg-[var(--background)] p-4">
+  <main className="min-h-screen bg-[var(--background)] p-4">
 
-   <Header
-  orderNumber={order.order_number}
-  generating={generating}
-  onBack={() => router.back()}
-  onPrint={handlePrint}
-/>
+    <Header
+      orderNumber={order.order_number}
+      generating={generating}
+      onBack={() => router.back()}
+      onPrint={handlePrint}
+    />
 
-      <div
-        ref={printRef}
-        className="
-          mx-auto
-          mt-4
-          max-w-4xl
-          rounded-3xl
-          border
-          border-[var(--border-color)]
-          bg-[var(--card-bg)]
-          p-6
-          shadow-sm
-        "
-      >
-        {/* ================= TITLE ================= */}
-
-        <h1 className="mb-5 text-center text-2xl font-bold">
-          DELIVERY NOTE
-        </h1>
-
-        {/* ================= QR ================= */}
-
-        {qrCode && (
-          <div className="mb-6 flex justify-center">
-            <img
-              src={qrCode}
-              alt="QR Code"
-              className="h-32 w-32"
-            />
-          </div>
-        )}
-
-        {/* ================= TIMELINE ================= */}
-
-        <Timeline order={order} />
-
-        {/* ================= ITEMS ================= */}
-
-        <div className="mt-6 overflow-x-auto">
-
-          <table className="w-full border-collapse text-sm">
-
-            <thead>
-
-              <tr className="bg-[var(--surface-2)]">
-
-                <th className="border border-[var(--border-color)] p-2">
-                  #
-                </th>
-
-                <th className="border border-[var(--border-color)] p-2 text-left">
-                  Product
-                </th>
-
-                <th className="border border-[var(--border-color)] p-2">
-                  Qty
-                </th>
-
-                <th className="border border-[var(--border-color)] p-2 text-right">
-                  π
-                </th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {order.order_items.map(
-                (item, index) => (
-                  <tr key={item.id}>
-
-                    <td className="border border-[var(--border-color)] p-2 text-center">
-                      {index + 1}
-                    </td>
-
-                    <td className="border border-[var(--border-color)] p-2">
-
-                      <div className="flex items-center gap-3">
-
-                        {item.thumbnail && (
-                          <img
-                            src={item.thumbnail}
-                            alt={item.product_name}
-                            className="h-12 w-12 rounded-lg object-cover"
-                          />
-                        )}
-
-                        <div>
-
-                          <div className="font-medium">
-                            {item.product_name}
-                          </div>
-
-                          {(item.variant_name ||
-                            item.variant_value) && (
-                            <div className="text-xs text-[var(--text-muted)]">
-                              {item.variant_name}
-                              {item.variant_name &&
-                              item.variant_value
-                                ? ": "
-                                : ""}
-                              {item.variant_value}
-                            </div>
-                          )}
-
-                        </div>
-
-                      </div>
-
-                    </td>
-
-                    <td className="border border-[var(--border-color)] p-2 text-center">
-                      {item.quantity}
-                    </td>
-
-                    <td className="border border-[var(--border-color)] p-2 text-right">
-                      π
-                      {formatPi(
-                        item.total_price
-                      )}
-                    </td>
-
-                  </tr>
-                )
-              )}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-        <div className="mt-6 text-right text-xl font-bold">
-          Total: π{formatPi(total)}
-        </div>
-
-      </div>
+    <div ref={printRef}>
+      <PrintableInvoice
+        order={order}
+        qr={qrCode}
+        total={total}
+      />
+    </div>
 
     </main>
   );
