@@ -169,18 +169,19 @@ const res = await fetch(
 );
 
   if (!res.ok) {
-    logger.error(
-  "PI_A2U.HTTP_FAIL",
-  {
-    path: safePath,
-    status: res.status,
-  }
-);
+  logger.error(
+    "PI_A2U.HTTP_FAIL",
+    {
+      path: safePath,
+      status: res.status,
+      body: text,
+    }
+  );
 
-    throw new Error(
-      `PI_HTTP_${res.status}`
-    );
-  }
+  throw new Error(
+    `PI_HTTP_${res.status}: ${text}`
+  );
+}
 
   return json as T;
 }
