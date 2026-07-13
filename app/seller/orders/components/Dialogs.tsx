@@ -38,39 +38,88 @@ function DialogBase({
   if (!open) return null;
 
   return (
-    <div className="mt-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+  <div className="fixed inset-0 z-50">
 
-      <p className="mb-4 text-sm font-semibold">
+    {/* Overlay */}
+
+    <div
+      className="absolute inset-0 bg-black/40"
+      onClick={onClose}
+    />
+
+    {/* Bottom Sheet */}
+
+    <div
+      className="
+        absolute
+        bottom-0
+        left-0
+        right-0
+        rounded-t-3xl
+        bg-white
+        dark:bg-zinc-900
+        p-5
+        shadow-2xl
+        animate-in
+        slide-in-from-bottom
+        duration-200
+      "
+    >
+      {/* Handle */}
+
+      <div className="mb-4 flex justify-center">
+        <div className="h-1.5 w-12 rounded-full bg-gray-300 dark:bg-zinc-700" />
+      </div>
+
+      <p className="mb-4 text-center text-base font-semibold">
         {title}
       </p>
 
       {children}
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-6 grid grid-cols-2 gap-3">
 
         <button
           type="button"
           onClick={onClose}
-          className="rounded-xl border py-2"
+          className="
+            rounded-xl
+            border
+            py-3
+            font-medium
+          "
         >
-          {cancelText ?? t.close ?? "Close"}
+          {cancelText ??
+            t.close ??
+            "Close"}
         </button>
 
         <button
           type="button"
           disabled={loading}
           onClick={onConfirm}
-          className={`rounded-xl py-2 text-white disabled:opacity-50 ${confirmColor}`}
+          className={`
+            rounded-xl
+            py-3
+            font-medium
+            text-white
+            disabled:opacity-50
+            ${confirmColor}
+          `}
         >
           {loading
             ? "..."
-            : confirmText ?? t.ok ?? "OK"}
+            : confirmText ??
+              t.ok ??
+              "OK"}
         </button>
 
       </div>
 
     </div>
-  );
+
+  </div>
+);
 }
 
 /* =========================================================
