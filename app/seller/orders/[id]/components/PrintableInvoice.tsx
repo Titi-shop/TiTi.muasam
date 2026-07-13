@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { formatPi } from "@/lib/pi";
-
+import Timeline from "./Timeline";
 import type { Order } from "../types";
 
 type Props = {
@@ -52,7 +52,7 @@ export default function PrintableInvoice({
           />
         </div>
       )}
-
+<Timeline order={order} />
       <div className="mb-5 space-y-1 text-sm">
 
         <p>
@@ -130,22 +130,40 @@ export default function PrintableInvoice({
                   {index + 1}
                 </td>
 
-                <td className="border px-2 py-2">
+             <td className="border px-2 py-2">
 
-                  <div className="font-medium">
-                    {item.product_name}
-                  </div>
+  <div className="flex items-center gap-3">
 
-                  {(item.variant_name ||
-                    item.variant_value) && (
-                    <div className="text-xs text-gray-500">
-                      {item.variant_name}
-                      {" "}
-                      {item.variant_value}
-                    </div>
-                  )}
+    {item.thumbnail && (
+      <Image
+        src={item.thumbnail}
+        alt={item.product_name}
+        width={48}
+        height={48}
+        className="rounded-lg object-cover"
+        unoptimized
+      />
+    )}
 
-                </td>
+    <div>
+
+      <div className="font-medium">
+        {item.product_name}
+      </div>
+
+      {(item.variant_name || item.variant_value) && (
+        <div className="text-xs text-gray-500">
+          {item.variant_name}
+          {item.variant_name && item.variant_value ? ": " : ""}
+          {item.variant_value}
+        </div>
+      )}
+
+    </div>
+
+  </div>
+
+</td>
 
                 <td className="border px-2 py-2 text-center">
                   {item.quantity}
