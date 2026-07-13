@@ -153,10 +153,12 @@ export default function OrdersList({
 };
 
       for (const order of orders) {
-        map[
-          order.fulfillment_status
-        ]++;
-      }
+  if (order.fulfillment_status in map) {
+    map[
+      order.fulfillment_status as keyof typeof map
+    ]++;
+  }
+}
 
       return map;
     }, [orders]);
@@ -202,10 +204,20 @@ export default function OrdersList({
   return (
     <section className="w-full">
 
-      {/* ================= TABS ================= */}
-className="sticky top-0 z-20 overflow-x-auto border-b border-[color:color-mix(in_srgb,var(--color-primary)_20%,transparent)] bg-[var(--surface-1)]"
+     {/* ================= TABS ================= */}
 
-        <div className="flex min-w-max gap-2 px-3 py-2">
+<div
+  className="
+    sticky
+    top-0
+    z-20
+    overflow-x-auto
+    border-b
+    border-[color:color-mix(in_srgb,var(--color-primary)_20%,transparent)]
+    bg-[var(--surface-1)]
+  "
+>
+  <div className="flex min-w-max gap-2 px-3 py-2">
 
           {tabs.map(([key, label]) => {
             const active =
