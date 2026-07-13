@@ -23,7 +23,12 @@ import type {
 
 type OrderTab =
   | "all"
-  | OrderStatus;
+  | "pending"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "completed"
+  | "cancelled";
 
 type Props = {
   orders: Order[];
@@ -102,11 +107,7 @@ export default function OrdersList({
       t.pending_orders ??
         "Pending",
     ],
-    [
-      "pending_fulfillment",
-      t.pending_fulfillment ??
-        "Pending Fulfillment",
-    ],
+  
     [
       "processing",
       t.processing_orders ??
@@ -140,26 +141,16 @@ export default function OrdersList({
 
   const counts =
     useMemo(() => {
-      const map: Record<
-        OrderTab,
-        number
-      > = {
-        all: orders.length,
+      const map: Record<OrderTab, number> = {
+  all: orders.length,
 
-        pending: 0,
-
-        pending_fulfillment: 0,
-
-        processing: 0,
-
-        shipped: 0,
-
-        delivered: 0,
-
-        completed: 0,
-
-        cancelled: 0,
-      };
+  pending: 0,
+  processing: 0,
+  shipped: 0,
+  delivered: 0,
+  completed: 0,
+  cancelled: 0,
+};
 
       for (const order of orders) {
         map[
