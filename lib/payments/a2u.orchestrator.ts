@@ -239,15 +239,17 @@ export async function payWithdrawal(
         ? error.message
         : "UNKNOWN_ERROR";
 
-    logger.warn(
-      "A2U.FAIL",
-      {
-        withdrawalId:
-          maskId(withdrawalId),
-
-        message,
-      }
-    );
+    logger.error(
+  "A2U.FAIL",
+  {
+    withdrawalId: maskId(withdrawalId),
+    message,
+    stack:
+      error instanceof Error
+        ? error.stack
+        : undefined,
+  }
+);
 
     if (canRollback) {
 
