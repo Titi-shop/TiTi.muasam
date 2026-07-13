@@ -40,7 +40,7 @@ export default function FilterBar({
 
         <Search
           size={18}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
         />
 
         <input
@@ -57,23 +57,20 @@ export default function FilterBar({
             )
           }
           className="
-            h-11
-            w-full
-            rounded-xl
-            border
-            border-gray-200
-            bg-white
-            pl-10
-            pr-10
-            text-sm
-            outline-none
-
-            focus:border-orange-400
-
-            dark:border-zinc-700
-            dark:bg-zinc-900
-            dark:text-white
-          "
+  h-11
+  w-full
+  rounded-xl
+  border
+  border-[var(--border-color)]
+  bg-[var(--card-bg)]
+  pl-10
+  pr-10
+  text-sm
+  text-[var(--text-primary)]
+  outline-none
+  transition-colors
+  focus:border-[var(--color-primary)]
+"
         />
 
         {value.keyword && (
@@ -86,7 +83,7 @@ export default function FilterBar({
                 ""
               )
             }
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
           >
             <X size={16} />
           </button>
@@ -109,17 +106,17 @@ export default function FilterBar({
             )
           }
           className="
-            h-11
-            rounded-xl
-            border
-            border-gray-200
-            bg-white
-            px-3
-            text-sm
-
-            dark:border-zinc-700
-            dark:bg-zinc-900
-          "
+  h-11
+  rounded-xl
+  border
+  border-[var(--border-color)]
+  bg-[var(--card-bg)]
+  px-3
+  text-sm
+  text-[var(--text-primary)]
+  transition-colors
+  focus:border-[var(--color-primary)]
+"
         />
 
         <input
@@ -132,17 +129,17 @@ export default function FilterBar({
             )
           }
           className="
-            h-11
-            rounded-xl
-            border
-            border-gray-200
-            bg-white
-            px-3
-            text-sm
-
-            dark:border-zinc-700
-            dark:bg-zinc-900
-          "
+  h-11
+  rounded-xl
+  border
+  border-[var(--border-color)]
+  bg-[var(--card-bg)]
+  px-3
+  text-sm
+  text-[var(--text-primary)]
+  transition-colors
+  focus:border-[var(--color-primary)]
+"
         />
 
       </div>
@@ -164,17 +161,17 @@ export default function FilterBar({
               })
             }
             className="
-              rounded-xl
-              border
-              border-gray-200
-              bg-white
-              px-4
-              py-2
-              text-sm
-
-              dark:border-zinc-700
-              dark:bg-zinc-900
-            "
+  rounded-xl
+  border
+  border-[var(--border-color)]
+  bg-[var(--card-bg)]
+  px-4
+  py-2
+  text-sm
+  text-[var(--text-primary)]
+  transition-colors
+  hover:bg-[var(--surface-2)]
+"
           >
             {t.reset ?? "Reset"}
           </button>
