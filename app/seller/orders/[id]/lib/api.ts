@@ -34,54 +34,50 @@ export async function getOrder(
       await res.json();
 
     const items: OrderItem[] =
-      (data.order_items ?? []).map(
-        (item: RawItem) => ({
-          id: safeString(item.id),
+  (data.order_items ?? []).map(
+    (item: RawItem) => ({
+      id: safeString(item.id),
 
-          product_id:
-            item.product_id ?? null,
+      product_id:
+        item.product_id ?? null,
 
-          product_name:
-            safeString(
-              item.product_name
-            ),
+      product_name:
+        safeString(item.product_name),
 
-          thumbnail:
-            safeString(
-              item.thumbnail
-            ),
+      product_slug:
+        safeString(item.product_slug),
 
-          variant_name:
-            safeString(
-              item.variant_name
-            ),
+      thumbnail:
+        safeString(item.thumbnail),
 
-          variant_value:
-            safeString(
-              item.variant_value
-            ),
+      variant_name:
+        safeString(item.variant_name),
 
-          quantity:
-            safeNumber(
-              item.quantity
-            ),
+      variant_value:
+        safeString(item.variant_value),
 
-          unit_price:
-            safeNumber(
-              item.unit_price
-            ),
+      quantity:
+        safeNumber(item.quantity),
 
-          total_price:
-            safeNumber(
-              item.total_price
-            ),
+      unit_price:
+        safeNumber(item.unit_price),
 
-          status:
-            safeString(
-              item.status
-            ),
-        })
-      );
+      total_price:
+        safeNumber(item.total_price),
+
+      fulfillment_status:
+        safeString(item.fulfillment_status),
+
+      tracking_code:
+        item.tracking_code ?? null,
+
+      shipping_provider:
+        item.shipping_provider ?? null,
+
+      created_at:
+        safeString(item.created_at),
+    })
+  );
 
     return {
       id: safeString(data.id),
