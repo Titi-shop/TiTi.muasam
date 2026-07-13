@@ -25,7 +25,7 @@ function DialogBase({
   children,
   confirmText,
   cancelText,
-  confirmColor = "bg-orange-500",
+  confirmColor = "bg-[var(--color-primary)]"
   onConfirm,
   onClose,
 }: BaseProps) {
@@ -223,7 +223,7 @@ export function CancelDialog({
         t.cancel_order ??
         "Cancel Order"
       }
-      confirmColor="bg-red-500"
+      confirmColor="bg-[var(--color-danger)]"
       onConfirm={onConfirm}
       onClose={onClose}
     >
@@ -297,7 +297,7 @@ export function ShippingDialog({
         t.start_shipping ??
         "Start shipping?"
       }
-      confirmColor="bg-blue-600"
+      confirmColor="bg-[var(--color-info)]"
       onConfirm={onConfirm}
       onClose={onClose}
     />
