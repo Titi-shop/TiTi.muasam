@@ -9,23 +9,28 @@ import {
   maskId,
 } from "@/lib/logger";
 
-const PI_API = process.env.PI_API_URL;
-const PI_KEY = process.env.PI_API_KEY;
+type PiClientConfig = {
+  api: string;
+  key: string;
+};
 
-if (!PI_API) {
-  throw new Error("MISSING_PI_API_URL");
-}
+function getPiConfig(): PiClientConfig {
+  const api = process.env.PI_API_URL;
+  const key = process.env.PI_API_KEY;
 
-if (!PI_KEY) {
-  throw new Error("MISSING_PI_API_KEY");
-}
-
-logger.info(
-  "PI_CLIENT.CONFIG",
-  {
-    hasApiKey: true,
+  if (!api) {
+    throw new Error("MISSING_PI_API_URL");
   }
-);
+
+  if (!key) {
+    throw new Error("MISSING_PI_API_KEY");
+  }
+
+  return {
+    api,
+    key,
+  };
+}
 
 /* =========================================================
    TYPES
@@ -100,7 +105,9 @@ logger.debug(
         : undefined,
   }
 );
-  const res = await fetch(`${PI_API}${path}`, {
+  const { api } = getPiConfig();
+
+const res = await fetch(`${api}${path}`, {
     ...init,
     cache: "no-store",
   });
@@ -209,13 +216,13 @@ logger.debug(
     paymentId: maskId(id),
   }
 );
-
+const { key } = getPiConfig();
 const data =
   await piRequest<PiPaymentData>(
     `/v2/payments/${id}`, {
     method: "GET",
     headers: {
-      Authorization: `Key ${PI_KEY}`,
+     Authorization: `Key ${key}`,
     },
   });
 logger.info(
@@ -267,12 +274,12 @@ export async function piApprovePayment(
   if (!id) {
     throw new Error("MISSING_PI_PAYMENT_ID");
   }
-
+const { key } = getPiConfig();
   await piRequest<unknown>(
   `/v2/payments/${id}/approve`, {
     method: "POST",
     headers: {
-      Authorization: `Key ${PI_KEY}`,
+      Authorization: `Key ${key}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({}),
@@ -308,18 +315,25 @@ export async function piCompletePayment(
     throw new Error("MISSING_TXID");
   }
 
+  const { api, key } = getPiConfig();
+
   const res = await fetch(
-  `${PI_API}/v2/payments/${id}/complete`, {
-    method: "POST",
-    headers: {
-      Authorization: `Key ${PI_KEY}`,
-      "Content-Type": "application/json",
-    },
-    cache: "no-store",
-    body: JSON.stringify({ txid: tx }),
-  });
+    `${api}/v2/payments/${id}/complete`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Key ${key}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+      body: JSON.stringify({
+        txid: tx,
+      }),
+    }
+  );
 
   const text = await res.text();
+
 
   if (!res.ok) {
     if (text.includes("already_completed")) {
