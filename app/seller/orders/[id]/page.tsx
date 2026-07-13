@@ -269,13 +269,6 @@ export default function SellerOrderDetailPage() {
 
         <Timeline order={order} />
 
-        {/* ================= SUMMARY ================= */}
-
-        <Summary
-          order={order}
-          total={total}
-        />
-
         {/* ================= ITEMS ================= */}
 
         <div className="mt-6 overflow-x-auto">
