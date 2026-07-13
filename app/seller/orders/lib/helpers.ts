@@ -19,9 +19,6 @@ export function normalizeStatus(
     case "pending":
       return "pending";
 
-    case "pending_fulfillment":
-      return "pending_fulfillment";
-
     case "processing":
       return "processing";
 
@@ -36,6 +33,9 @@ export function normalizeStatus(
 
     case "cancelled":
       return "cancelled";
+
+    case "refunded":
+      return "refunded";
 
     default:
       return "pending";
@@ -424,8 +424,6 @@ export function calculateStats(
 
     pending: 0,
 
-    pending_fulfillment: 0,
-
     processing: 0,
 
     shipped: 0,
@@ -435,16 +433,14 @@ export function calculateStats(
     completed: 0,
 
     cancelled: 0,
+
+    refunded: 0,
   };
 
   for (const order of orders) {
     switch (order.fulfillment_status) {
       case "pending":
         stats.pending++;
-        break;
-
-      case "pending_fulfillment":
-        stats.pending_fulfillment++;
         break;
 
       case "processing":
@@ -465,6 +461,10 @@ export function calculateStats(
 
       case "cancelled":
         stats.cancelled++;
+        break;
+
+      case "refunded":
+        stats.refunded++;
         break;
     }
   }
