@@ -208,7 +208,7 @@ export async function getSellerOrderById(
             'quantity', oi.quantity,
             'unit_price', oi.unit_price,
             'total_price', oi.total_price,
-            'fulfillment_status', oi.fulfillment_status,
+            'fulfillment_status', oi.fulfillment_status
           )
         ) FILTER (
           WHERE oi.id IS NOT NULL
