@@ -289,7 +289,7 @@ export default function OrderDetailPage() {
   if (authLoading || isLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <p className="text-sm text-muted">
+        <p className="text-sm text-[var(--text-muted)]">
           {t.loading_order ??
             "Loading order..."}
         </p>
@@ -300,7 +300,7 @@ export default function OrderDetailPage() {
   if (!order) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-red-500">
+        <p className="text-[var(--color-danger)]">
           {t.order_not_found ??
             "Order not found"}
         </p>
@@ -329,13 +329,13 @@ export default function OrderDetailPage() {
   return (
     <main className="min-h-screen bg-[var(--background)] pb-24">
 
-      <div className="border-b border-black/5 bg-card p-4">
+      <div className="border-b border-[var(--border-color)] bg-[var(--card-bg)] p-4">
 
         <button
           onClick={() =>
             router.back()
           }
-          className="mb-4 text-sm text-muted"
+          className="mb-4 text-sm text-[var(--text-muted)]"
         >
           ← {t.back ?? "Back"}
         </button>
@@ -349,7 +349,7 @@ export default function OrderDetailPage() {
               {order.order_number}
             </h1>
 
-            <p className="text-xs text-muted mt-1">
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
               {formatDate(
                 order.created_at
               )}
@@ -376,7 +376,7 @@ export default function OrderDetailPage() {
 
       </div>
 
-      <section className="bg-card mt-3 p-4">
+      <section className="mt-3 rounded-2xl bg-[var(--card-bg)] p-4">
 
         <h2 className="font-semibold mb-3">
           {t.order_timeline ??
@@ -391,7 +391,7 @@ export default function OrderDetailPage() {
               className="flex gap-3"
             >
 
-              <div className="mt-1 h-2 w-2 rounded-full bg-green-500" />
+              <div className="mt-1 h-2 w-2 rounded-full bg-[var(--color-success)]" />
 
               <div>
 
@@ -399,7 +399,7 @@ export default function OrderDetailPage() {
                   {item.label}
                 </p>
 
-                <p className="text-xs text-muted">
+                <p className="text-xs text-[var(--text-muted)]">
                   {formatDate(
                     item.date
                   )}
@@ -570,7 +570,7 @@ export default function OrderDetailPage() {
 
             <div
               key={item.id}
-              className="flex gap-3 border-b border-black/5 p-4"
+              className="flex gap-3 border-b border-[var(--border-color)] p-4"
             >
 
               <Image
@@ -594,7 +594,7 @@ export default function OrderDetailPage() {
                 </p>
 
                 {item.variant_name && (
-                  <p className="mt-1 text-xs text-muted">
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">
                     {item.variant_name}
                     {item.variant_value
                       ? ` : ${item.variant_value}`
@@ -717,8 +717,8 @@ export default function OrderDetailPage() {
               );
 
             }}
-            className="w-full rounded-xl border border-black/10 bg-card py-3 font-semibold"
-          >
+            className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] py-3 font-semibold text-[var(--text-primary)]"
+            >
             {t.buy_again ??
               "Buy Again"}
           </button>
@@ -726,7 +726,7 @@ export default function OrderDetailPage() {
 
         <button
           onClick={() => mutate()}
-          className="w-full rounded-xl border border-black/10 py-3"
+          className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] py-3 text-[var(--text-primary)]"
         >
           {t.refresh ??
             "Refresh"}
