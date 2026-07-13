@@ -47,26 +47,25 @@ function DialogBase({
 
    <div
   className="
-    absolute
-    bottom-0
-    left-0
-    right-0
-    max-h-[80vh]
-    overflow-y-auto
-    rounded-t-3xl
-    bg-white
-    dark:bg-zinc-900
-    p-5
-    shadow-2xl
-    animate-in
-    slide-in-from-bottom
-    duration-200
-  "
+  absolute
+  bottom-0
+  left-0
+  right-0
+  max-h-[80vh]
+  overflow-y-auto
+  rounded-t-3xl
+  bg-[var(--card-bg)]
+  p-5
+  shadow-2xl
+  animate-in
+  slide-in-from-bottom
+  duration-200
+"
 >
       {/* Handle */}
 
       <div className="mb-4 flex justify-center">
-        <div className="h-1.5 w-12 rounded-full bg-gray-300 dark:bg-zinc-700" />
+        <div className="h-1.5 w-12 rounded-full bg-[var(--border-color)]" />
       </div>
 
       <p className="mb-4 text-center text-base font-semibold">
@@ -81,11 +80,14 @@ function DialogBase({
           type="button"
           onClick={onClose}
           className="
-            rounded-xl
-            border
-            py-3
-            font-medium
-          "
+  rounded-xl
+  border
+  border-[var(--border-color)]
+  bg-[var(--card-bg)]
+  py-3
+  font-medium
+  text-[var(--text-primary)]
+"
         >
           {cancelText ??
             t.close ??
@@ -170,7 +172,16 @@ export function ConfirmDialog({
             e.target.value
           )
         }
-        className="w-full rounded-xl border p-3 text-sm"
+        className="
+w-full
+rounded-xl
+border
+border-[var(--border-color)]
+bg-[var(--card-bg)]
+p-3
+text-sm
+text-[var(--text-primary)]
+"
       />
     </DialogBase>
   );
@@ -238,8 +249,8 @@ export function CancelDialog({
             }
             className={`w-full rounded-xl border px-3 py-2 text-left ${
               selected === reason
-                ? "border-red-500 bg-red-50 text-red-600"
-                : "border-gray-200"
+  ? "border-[var(--color-danger)] bg-[color:color-mix(in_srgb,var(--color-danger)_10%,transparent)] text-[var(--color-danger)]"
+  : "border-[var(--border-color)]"
             }`}
           >
             {reason}
@@ -258,7 +269,16 @@ export function CancelDialog({
               e.target.value
             )
           }
-          className="mt-3 w-full rounded-xl border p-3"
+          className="
+mt-3
+w-full
+rounded-xl
+border
+border-[var(--border-color)]
+bg-[var(--card-bg)]
+p-3
+text-[var(--text-primary)]
+"
           placeholder={
             t.enter_reason ??
             "Enter reason"
