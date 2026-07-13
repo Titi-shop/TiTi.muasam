@@ -24,7 +24,7 @@ import jsPDF from "jspdf";
 import { useAuth } from "@/context/AuthContext";
 import { formatPi } from "@/lib/pi";
 import AppLoading from "@/components/AppLoading";
-
+import PrintableInvoice from "./components/PrintableInvoice";
 import type { Order } from "./types";
 
 import { getOrder } from "./lib/api";
@@ -33,22 +33,6 @@ import Header from "./components/Header";
 import Timeline from "./components/Timeline";
 
 
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function formatDate(
-  value: string
-) {
-  const date =
-    new Date(value);
-
-  return Number.isNaN(
-    date.getTime()
-  )
-    ? "—"
-    : date.toLocaleString();
-}
 /* =========================================================
    PAGE
 ========================================================= */
