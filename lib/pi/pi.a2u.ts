@@ -9,45 +9,52 @@ import {
   maskId,
   maskWallet,
 } from "@/lib/logger";
-const PI_API =
-  process.env.PI_API_URL;
+function getPiConfig() {
+  const PI_API = process.env.PI_API_URL;
+  const PI_KEY = process.env.PI_API_KEY;
+  const PI_SEED =
+    process.env.PI_WALLET_PRIVATE_SEED;
 
-const PI_KEY =
-  process.env.PI_API_KEY;
+  const PI_HORIZON =
+    process.env.PI_HORIZON_URL;
 
-if (!PI_API) {
-  throw new Error(
-    "MISSING_PI_API_URL"
-  );
+  const PI_NETWORK_PASSPHRASE =
+    process.env.PI_NETWORK_PASSPHRASE;
+
+  if (!PI_API) {
+    throw new Error("MISSING_PI_API_URL");
+  }
+
+  if (!PI_KEY) {
+    throw new Error("MISSING_PI_API_KEY");
+  }
+
+  if (!PI_SEED) {
+    throw new Error(
+      "MISSING_PI_WALLET_PRIVATE_SEED"
+    );
+  }
+
+  if (!PI_HORIZON) {
+    throw new Error(
+      "MISSING_PI_HORIZON_URL"
+    );
+  }
+
+  if (!PI_NETWORK_PASSPHRASE) {
+    throw new Error(
+      "MISSING_PI_NETWORK_PASSPHRASE"
+    );
+  }
+
+  return {
+    PI_API,
+    PI_KEY,
+    PI_SEED,
+    PI_HORIZON,
+    PI_NETWORK_PASSPHRASE,
+  };
 }
-
-if (!PI_KEY) {
-  throw new Error(
-    "MISSING_PI_API_KEY"
-  );
-}
-const PI_SEED =
-  process.env
-    .PI_WALLET_PRIVATE_SEED;
-if (!PI_SEED) {
-  throw new Error(
-    "MISSING_PI_WALLET_PRIVATE_SEED"
-  );
-}
-const PI_HORIZON =
-  process.env.PI_HORIZON_URL;
-
-const PI_NETWORK_PASSPHRASE =
-  process.env.PI_NETWORK_PASSPHRASE;
-
-if (!PI_HORIZON) {
-  throw new Error("MISSING_PI_HORIZON_URL");
-}
-
-if (!PI_NETWORK_PASSPHRASE) {
-  throw new Error("MISSING_PI_NETWORK_PASSPHRASE");
-}
-
 /* =====================================================
    TYPES
 ===================================================== */
@@ -110,6 +117,7 @@ async function piRequest<T>(
   path: string,
   init: RequestInit
 ): Promise<T> {
+  const { PI_API } = getPiConfig();
   const safePath =
   path.replace(
     /\/payments\/([^/]+)/,
@@ -185,6 +193,7 @@ logger.debug(
 export async function createA2UPayment(
   input: CreateA2UPaymentInput
 ): Promise<string> {
+  const { PI_KEY } = getPiConfig();
   logger.info("PI_A2U.CREATE_START");
 
   const data = await piRequest<A2UPayment>(
@@ -222,6 +231,7 @@ export async function createA2UPayment(
 export async function getA2UPayment(
   paymentId: string
 ): Promise<A2UPayment> {
+  const { PI_KEY } = getPiConfig();
   logger.debug("PI_A2U.GET_START");
 
   const data =
@@ -250,6 +260,7 @@ export async function completeA2UPayment(
   paymentId: string,
   txid: string
 ): Promise<void> {
+  const { PI_KEY } = getPiConfig();
   logger.info("PI_A2U.COMPLETE_START");
 
   await piRequest(
@@ -274,8 +285,15 @@ export async function submitA2UPayment(
   paymentId: string
 ): Promise<A2USubmitResult> {
 
-  logger.info("PI_A2U.SUBMIT_START");
+  const {
+    PI_SEED,
+    PI_HORIZON,
+    PI_NETWORK_PASSPHRASE,
+  } = getPiConfig();
 
+  logger.info(
+    "PI_A2U.SUBMIT_START"
+  );
   const payment =
     await getA2UPayment(
       paymentId
@@ -404,6 +422,8 @@ return {
 export async function cancelA2UPayment(
   paymentId: string
 ): Promise<void> {
+  const { PI_KEY } =
+  getPiConfig();
   logger.info(
   "PI_A2U.CANCEL_START"
 );
