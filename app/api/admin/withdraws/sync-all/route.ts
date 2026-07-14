@@ -15,7 +15,7 @@ import {
 import {
 
   markWithdrawalFailed,
-} from "./wallet.balance";
+} from "./wallet";
 export const runtime =
   "nodejs";
 
