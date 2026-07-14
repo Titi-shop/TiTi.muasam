@@ -193,6 +193,7 @@ export async function createA2UPayment(
   input: CreateA2UPaymentInput
 ): Promise<string> {
   logger.info("PI_A2U.CREATE_START");
+  const { key } = getPiConfig();
   const data =
     await piRequest<A2UPayment>(
       "/v2/payments",
