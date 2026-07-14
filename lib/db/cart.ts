@@ -13,32 +13,27 @@ export type CartItemInput = {
 export type CartRow = {
   product_id: string;
   variant_id: string | null;
-
   quantity: number;
-
   unit_price: string;
   sale_price: string | null;
   final_price: string;
   price_snapshot: string;
 
   currency: string;
-
   stock_snapshot: number;
   is_unlimited: boolean;
-
+  is_selected: boolean;
   is_available: boolean;
   is_out_of_stock: boolean;
-
   is_price_changed: boolean;
   is_product_changed: boolean;
-
   name: string;
   slug: string;
+
   thumbnail: string;
   images: string[];
-
-  is_digital: boolean;
   status: string;
+  is_digital: boolean;
 };
 
 /* =========================================================
@@ -110,19 +105,43 @@ export async function getCart(
     SELECT
       product_id,
       variant_id,
+
       quantity,
-      unit_price::text AS price,
-      final_price::text AS sale_price,
-      is_price_changed,
+
+      unit_price::text,
+      sale_price::text,
+      final_price::text,
+      price_snapshot::text,
+
+      currency,
+
+      stock_snapshot,
+      is_unlimited,
+
+      is_selected,
+      is_available,
       is_out_of_stock,
+
+      is_price_changed,
+      is_product_changed,
+
       product_name AS name,
       product_slug AS slug,
+
       thumbnail,
-      images
+      images,
+
+      status,
+      is_digital
+
     FROM cart_items
-    WHERE user_id = $1
-    AND deleted_at IS NULL
-    ORDER BY created_at DESC
+
+    WHERE
+      user_id = $1
+      AND deleted_at IS NULL
+
+    ORDER BY
+      created_at DESC
     `,
     [userId]
   );
