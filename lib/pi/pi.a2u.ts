@@ -257,18 +257,18 @@ export async function completeA2UPayment(
   const { key } = getPiConfig();
 
   await piRequest(
-    `/v2/payments/${paymentId}/complete`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Key ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        txid,
-      }),
-    }
-  );
+  `/v2/payments/${paymentId}/complete`,
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Key ${PI_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      txid,
+    }),
+  }
+);
 
   logger.info("PI_A2U.COMPLETE_SUCCESS");
 }
