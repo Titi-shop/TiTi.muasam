@@ -193,44 +193,30 @@ export async function createA2UPayment(
   input: CreateA2UPaymentInput
 ): Promise<string> {
   logger.info("PI_A2U.CREATE_START");
+
   const { key } = getPiConfig();
-  const data =
-    await piRequest<A2UPayment>(
-      "/v2/payments",
-      {
-        method: "POST",
 
-        headers: {
-          Authorization: `Key ${key}`,
-          "Content-Type":
-            "application/json",
+  const data = await piRequest<A2UPayment>(
+    "/v2/payments",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Key ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        payment: {
+          uid: input.uid,
+          amount: input.amount,
+          memo: input.memo,
+          metadata: input.metadata,
         },
+      }),
+    }
+  );
 
-        body:
-          JSON.stringify(
-            {
-              payment:
-                {
-                  uid:
-                    input.uid,
-                  amount:
-                    input.amount,
-                  memo:
-                    input.memo,
-                  metadata:
-                    input.metadata,
-                },
-            }
-          ),
-      }
-    );
-}
-  if (
-    !data?.identifier
-  ) {
-    throw new Error(
-      "A2U_CREATE_FAILED"
-    );
+  if (!data?.identifier) {
+    throw new Error("A2U_CREATE_FAILED");
   }
 
   logger.info("PI_A2U.CREATE_SUCCESS");
