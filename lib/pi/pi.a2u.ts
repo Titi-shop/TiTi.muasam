@@ -224,7 +224,7 @@ export async function createA2UPayment(
           ),
       }
     );
-
+}
   if (
     !data?.identifier
   ) {
