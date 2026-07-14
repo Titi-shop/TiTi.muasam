@@ -12,7 +12,7 @@ import {
   getProcessingWithdrawals,
   markWithdrawalCompleted,
   markWithdrawalFailed,
-} from "@/lib/db/wallet/wallet";
+} from "@/lib/db/wallet";
 
 export const runtime =
   "nodejs";
