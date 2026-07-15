@@ -93,9 +93,21 @@ export async function GET() {
 
     const cart = await getCart(auth.userId);
 
-console.log(
-  "[API][CART][RESPONSE]",
-  JSON.stringify(cart, null, 2)
+logger.info(
+  "CART.GET.PRICE",
+  {
+    itemCount:
+      cart.length,
+
+    unitPrice:
+      cart[0]?.unit_price,
+
+    salePrice:
+      cart[0]?.sale_price,
+
+    finalPrice:
+      cart[0]?.final_price,
+  }
 );
 
 return NextResponse.json(cart);
@@ -127,30 +139,32 @@ export async function POST(
   req: NextRequest
 ) {
   try {
-    console.log(
-      "[API][CART][POST] START"
-    );
+    logger.info(
+  "CART.POST.START"
+);
 
     const auth =
       await requireAuth();
 
     if (!auth.ok) {
-      console.warn(
-        "[API][CART][POST] UNAUTHORIZED"
-      );
+      logger.warn(
+  "CART.POST.UNAUTHORIZED"
+);
 
       return unauthorized(
         "UNAUTHORIZED"
       );
     }
 
-    console.log(
-      "[API][CART][POST] AUTH_OK",
-      {
-        userId:
-          auth.userId,
-      }
-    );
+    logger.info(
+  "CART.POST.AUTH_OK",
+  {
+    userId:
+      maskId(
+        auth.userId
+      ),
+  }
+);
 
     let body: unknown;
 
@@ -158,9 +172,9 @@ export async function POST(
       body =
         await req.json();
     } catch {
-      console.error(
-        "[API][CART][POST] INVALID_JSON"
-      );
+      logger.warn(
+  "CART.POST.INVALID_JSON"
+);
 
       return badRequest(
         "INVALID_JSON"
@@ -234,9 +248,9 @@ export async function POST(
       items
     );
 
-    console.log(
-      "[API][CART][POST] UPSERT_DONE"
-    );
+    logger.info(
+  "CART.POST.UPSERT_DONE"
+);
 
     const updated =
       await getCart(
@@ -273,17 +287,17 @@ export async function PATCH(
   req: NextRequest
 ) {
   try {
-    console.log(
-      "[API][CART][PATCH] START"
-    );
+    logger.info(
+  "CART.PATCH.START"
+);
 
     const auth =
       await requireAuth();
 
     if (!auth.ok) {
-      console.warn(
-        "[API][CART][PATCH] UNAUTHORIZED"
-      );
+      logger.warn(
+  "CART.PATCH.UNAUTHORIZED"
+);
 
       return unauthorized(
         "UNAUTHORIZED"
@@ -296,9 +310,9 @@ export async function PATCH(
       body =
         await req.json();
     } catch {
-      console.error(
-        "[API][CART][PATCH] INVALID_JSON"
-      );
+      logger.warn(
+  "CART.PATCH.INVALID_JSON"
+);
 
       return badRequest(
         "INVALID_JSON"
@@ -366,9 +380,9 @@ export async function PATCH(
       quantity
     );
 
-    console.log(
-      "[API][CART][PATCH] UPDATE_DONE"
-    );
+    logger.info(
+  "CART.PATCH.UPDATE_DONE"
+);
 
     const updated =
       await getCart(
@@ -398,17 +412,17 @@ export async function DELETE(
   req: NextRequest
 ) {
   try {
-    console.log(
-      "[API][CART][DELETE] START"
-    );
+    logger.info(
+  "CART.DELETE.START"
+);
 
     const auth =
       await requireAuth();
 
     if (!auth.ok) {
-      console.warn(
-        "[API][CART][DELETE] UNAUTHORIZED"
-      );
+      logger.warn(
+  "CART.DELETE.UNAUTHORIZED"
+);
 
       return unauthorized(
         "UNAUTHORIZED"
@@ -421,9 +435,9 @@ export async function DELETE(
       body =
         await req.json();
     } catch {
-      console.error(
-        "[API][CART][DELETE] INVALID_JSON"
-      );
+      logger.warn(
+  "CART.DELETE.INVALID_JSON"
+);
 
       return badRequest(
         "INVALID_JSON"
@@ -478,9 +492,9 @@ export async function DELETE(
       variantId
     );
 
-    console.log(
-      "[API][CART][DELETE] DELETE_DONE"
-    );
+    logger.info(
+  "CART.DELETE.DONE"
+);
 
     const updated =
       await getCart(
@@ -491,10 +505,15 @@ export async function DELETE(
       updated
     );
   } catch (err) {
-    console.error(
-      "[API][CART][DELETE] ERROR",
-      err
-    );
+    logger.error(
+  "CART.POST.ERROR",
+  {
+    message:
+      err instanceof Error
+        ? err.message
+        : "UNKNOWN_ERROR",
+  }
+);
 
     return serverError(
       "DELETE_CART_FAILED"
