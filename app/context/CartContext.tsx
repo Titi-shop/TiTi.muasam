@@ -188,16 +188,12 @@ function normalizeCart(
             ? row.slug
             : "",
 
-        price:
-          typeof row.price === "string"
-            ? row.price
-            : "0",
+        price: safeNumber(row.price),
 
         sale_price:
-          typeof row.sale_price ===
-          "string"
-            ? row.sale_price
-            : "0",
+          row.sale_price === null
+          ? null
+            : safeNumber(row.sale_price),
 
         quantity:
           normalizeQuantity(
