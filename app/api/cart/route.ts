@@ -91,18 +91,14 @@ export async function GET() {
 
     logger.info("CART.GET.AUTH_OK");
 
-    const cart =
-      await getCart(
-        auth.userId
-      );
+    const cart = await getCart(auth.userId);
 
-    logger.info("CART.GET.SUCCESS", {
-  count: cart.length,
-});
+console.log(
+  "[API][CART][RESPONSE]",
+  JSON.stringify(cart, null, 2)
+);
 
-    return NextResponse.json(
-      cart
-    );
+return NextResponse.json(cart);
   } catch (err) {
     logger.error("CART.GET.ERROR", {
   message:
