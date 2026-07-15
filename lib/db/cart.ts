@@ -390,104 +390,233 @@ export async function upsertCartItems(
     );
 
     await query(
-      `
-      INSERT INTO cart_items (
-        user_id,
-        product_id,
-        variant_id,
-        seller_id,
-        product_name,
-        product_slug,
-        thumbnail,
-        images,
-        unit_price,
-        final_price,
-        currency,
-        quantity,
-        is_selected,
-        is_available,
-        stock_snapshot,
-        price_snapshot,
-        is_price_changed,
-        is_out_of_stock,
-        created_at,
-        updated_at
-      )
-      SELECT
-        $1,
-        p.id,
-        $3,
-        p.seller_id,
-        p.name,
-        p.slug,
+  `
+  INSERT INTO cart_items (
+    user_id,
+    product_id,
+    variant_id,
+
+    seller_id,
+    product_name,
+    product_slug,
+
+    thumbnail,
+    images,
+
+    unit_price,
+    sale_price,
+    final_price,
+
+    currency,
+
+    quantity,
+
+    is_selected,
+    is_available,
+
+    stock_snapshot,
+    is_unlimited,
+
+    price_snapshot,
+
+    is_price_changed,
+    is_out_of_stock,
+
+    created_at,
+    updated_at
+  )
+
+  SELECT
+    $1,
+
+    p.id,
+    $3,
+
+    p.seller_id,
+    p.name,
+    p.slug,
+
+    COALESCE(
+      p.thumbnail,
+      ''
+    ),
+
+    COALESCE(
+      p.images,
+      '{}'
+    ),
+
+    /* =====================================
+       UNIT PRICE
+    ===================================== */
+
+    COALESCE(
+      v.price,
+      p.price
+    ),
+
+    /* =====================================
+       SALE PRICE
+    ===================================== */
+
+    COALESCE(
+      v.sale_price,
+      p.sale_price
+    ),
+
+    /* =====================================
+       FINAL PRICE
+    ===================================== */
+
+    COALESCE(
+      v.final_price,
+      v.sale_price,
+      v.price,
+
+      p.final_price,
+      p.sale_price,
+      p.price
+    ),
+
+    p.currency,
+
+    $4,
+
+    true,
+
+    p.is_active,
+
+    /* =====================================
+       STOCK
+    ===================================== */
+
+    COALESCE(
+      v.stock,
+      p.stock
+    ),
+
+    COALESCE(
+      v.is_unlimited,
+      p.is_unlimited
+    ),
+
+    /* =====================================
+       PRICE SNAPSHOT
+    ===================================== */
+
+    COALESCE(
+      v.final_price,
+      v.sale_price,
+      v.price,
+
+      p.final_price,
+      p.sale_price,
+      p.price
+    ),
+
+    false,
+
+    /* =====================================
+       OUT OF STOCK
+    ===================================== */
+
+    CASE
+      WHEN
         COALESCE(
-          p.thumbnail,
-          ''
-        ),
+          v.is_unlimited,
+          p.is_unlimited
+        ) = false
+
+        AND
+
         COALESCE(
-          p.images,
-          '{}'
-        ),
-        p.price,
-        COALESCE(
-          p.sale_price,
-          p.final_price,
-          p.price
-        ),
-        p.currency,
-        $4,
-        true,
-        p.is_active,
-        p.stock,
-        COALESCE(
-          p.sale_price,
-          p.final_price,
-          p.price
-        ),
-        false,
-        CASE
-          WHEN p.is_unlimited = false
-          AND p.stock <= 0
-          THEN true
-          ELSE false
-        END,
-        NOW(),
-        NOW()
-      FROM products p
-      WHERE p.id = $2
-      ON CONFLICT (
-  user_id,
-  product_id,
-  variant_key
-)
-      DO UPDATE SET
-        quantity =
-          cart_items.quantity
-          + EXCLUDED.quantity,
-        unit_price =
-          EXCLUDED.unit_price,
-        final_price =
-          EXCLUDED.final_price,
-        stock_snapshot =
-          EXCLUDED.stock_snapshot,
-        price_snapshot =
-          EXCLUDED.price_snapshot,
-        is_out_of_stock =
-          EXCLUDED.is_out_of_stock,
-        is_price_changed =
-          cart_items.final_price
-          IS DISTINCT FROM
-          EXCLUDED.final_price,
-        deleted_at = NULL,
-        updated_at = NOW()
-      `,
-      [
-        userId,
-        item.product_id,
-        item.variant_id,
-        item.quantity,
-      ]
-    );
+          v.stock,
+          p.stock
+        ) <= 0
+
+      THEN true
+
+      ELSE false
+    END,
+
+    NOW(),
+    NOW()
+
+  FROM products p
+
+  LEFT JOIN product_variants v
+    ON v.id = $3
+   AND v.product_id = p.id
+
+  WHERE
+    p.id = $2
+
+    AND
+    COALESCE(
+      v.final_price,
+      v.sale_price,
+      v.price,
+
+      p.final_price,
+      p.sale_price,
+      p.price
+    ) IS NOT NULL
+
+  ON CONFLICT (
+    user_id,
+    product_id,
+    variant_key
+  )
+
+  DO UPDATE SET
+
+    quantity =
+      LEAST(
+        cart_items.quantity
+        + EXCLUDED.quantity,
+        99
+      ),
+
+    unit_price =
+      EXCLUDED.unit_price,
+
+    sale_price =
+      EXCLUDED.sale_price,
+
+    final_price =
+      EXCLUDED.final_price,
+
+    stock_snapshot =
+      EXCLUDED.stock_snapshot,
+
+    is_unlimited =
+      EXCLUDED.is_unlimited,
+
+    price_snapshot =
+      EXCLUDED.price_snapshot,
+
+    is_out_of_stock =
+      EXCLUDED.is_out_of_stock,
+
+    is_available =
+      EXCLUDED.is_available,
+
+    is_price_changed =
+      cart_items.final_price
+      IS DISTINCT FROM
+      EXCLUDED.final_price,
+
+    deleted_at = NULL,
+
+    updated_at = NOW()
+  `,
+  [
+    userId,
+    item.product_id,
+    item.variant_id,
+    item.quantity,
+  ]
+);
   }
 
   console.log(
