@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/app/context/CartContext";
@@ -18,15 +18,19 @@ import AppLoading from "@/components/AppLoading";
 
 export default function CartPage() {
   const { t } = useTranslation();
-  const { cart, updateQty, removeFromCart } = useCart();
-  const { user, pilogin } = useAuth();
+  const {
+    cart,
+    loading,
+    updateQty,
+    removeFromCart,
+} = useCart();
+  const { user } = useAuth();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [openCheckout, setOpenCheckout] = useState(false);
   const [checkoutItem, setCheckoutItem] = useState<any>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [loading, setLoading] =
-  useState(true);
+  
   /* =====================================================
      MESSAGE
   ===================================================== */
