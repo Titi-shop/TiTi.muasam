@@ -66,6 +66,8 @@ type CartContextType = {
   cart: CartItem[];
   total: number;
   loading: boolean;
+  isMerging: boolean;
+  mergeDone: boolean;
   addToCart: (
     payload: AddCartPayload
   ) => Promise<void>;
@@ -322,10 +324,15 @@ export function CartProvider({
   >([]);
 
   const [loading, setLoading] =
-    useState(true);
+  useState(true);
 
-  const mergedRef = useRef(false);
+const [isMerging, setIsMerging] =
+  useState(false);
 
+const [mergeDone, setMergeDone] =
+  useState(false);
+
+const mergedRef = useRef(false);
   /* =========================================================
      API
   ========================================================= */
@@ -352,26 +359,21 @@ export function CartProvider({
      INITIAL LOAD
   ========================================================= */
 
-  useEffect(() => {
-    const boot = async () => {
-      try {
-        /* ================= GUEST ================= */
+  if (!user) {
+  setCart(loadGuestCart());
+  return;
+}
 
-        if (!user) {
-          const guestCart =
-            loadGuestCart();
+const guestCart = loadGuestCart();
 
-          setCart(guestCart);
+if (guestCart.length > 0) {
+  return;
+}
 
-          return;
-        }
+const serverCart =
+  await fetchServerCart();
 
-        /* ================= LOGIN ================= */
-
-        const serverCart =
-          await fetchServerCart();
-
-        setCart(serverCart);
+setCart(serverCart);
       } catch (err) {
         console.error(
           "[CART][BOOT]",
