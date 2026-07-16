@@ -435,13 +435,7 @@ export function CartProvider({
   headers: {
     "Content-Type": "application/json",
   },
-  body: JSON.stringify(
-    guestCart.map((item) => ({
-      product_id: item.product_id,
-      variant_id: item.variant_id,
-      quantity: item.quantity,
-    }))
-  ),
+  body: JSON.stringify(payload),
 });
 
           if (!res.ok) {
@@ -603,18 +597,12 @@ export function CartProvider({
           /* ================= SERVER ================= */
 
           const res = await apiAuthFetch("/api/cart", {
-              method: "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-
-              body: JSON.stringify(
-                normalized
-              ),
-            }
-          );
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(payload),
+});
 
           if (!res.ok) {
             throw new Error(
@@ -673,25 +661,12 @@ export function CartProvider({
           /* ================= SERVER ================= */
 
           const res = await apiAuthFetch("/api/cart", {
-              method: "DELETE",
-
-              headers: {
-                
-                "Content-Type":
-                  "application/json",
-              },
-
-              body: JSON.stringify(
-                {
-                  product_id:
-                    target.product_id,
-
-                  variant_id:
-                    target.variant_id,
-                }
-              ),
-            }
-          );
+  method: "DELETE",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(payload),
+});
 
           if (!res.ok) {
             throw new Error(
@@ -769,30 +744,16 @@ export function CartProvider({
           /* ================= SERVER ================= */
 
           const res = await apiAuthFetch("/api/cart", {
-            "/api/cart",
-            {
-              method: "PATCH",
-
-              headers: {
-                
-                "Content-Type":
-                  "application/json",
-              },
-
-              body: JSON.stringify(
-                {
-                  product_id:
-                    target.product_id,
-
-                  variant_id:
-                    target.variant_id,
-
-                  quantity:
-                    normalizedQuantity,
-                }
-              ),
-            }
-          );
+  method: "PATCH",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    product_id: target.product_id,
+    variant_id: target.variant_id,
+    quantity: normalizedQuantity,
+  }),
+});
 
           if (!res.ok) {
             throw new Error(
