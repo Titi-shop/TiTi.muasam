@@ -46,7 +46,9 @@ export default function CheckoutSheet({
   /* ================= STATE ================= */
 
   const [shipping, setShipping] = useState<ShippingInfo | null>(null);
-  const [qty, setQty] = useState("1");
+  const [qty, setQty] = useState(
+  String(product?.quantity ?? 1)
+);
   const [message, setMessage] = useState<Message | null>(null);
   const showMessage = (
   text: string,
@@ -183,7 +185,16 @@ useEffect(() => {
     setMessage(null);
   }
 }, [open]);
+useEffect(() => {
+  if (!open) return;
 
+  setQty(String(product?.quantity ?? 1));
+}, [
+  open,
+  product?.id,
+  product?.variant_id,
+  product?.quantity,
+]);
   /* ================= PREVIEW ================= */
 
   const previewKey = useMemo(() => {
