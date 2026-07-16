@@ -11,7 +11,6 @@ import React, {
 } from "react";
 
 import { useAuth } from "@/context/AuthContext";
-
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 
 /* =========================================================
@@ -354,37 +353,36 @@ const mergedRef = useRef(false);
   []
 );
 
-  /* =========================================================
-     INITIAL LOAD
-  ========================================================= */
+/* =========================================================
+   INITIAL LOAD
+========================================================= */
 
-  if (!user) {
-  setCart(loadGuestCart());
-  return;
-}
-
-const guestCart = loadGuestCart();
-
-if (guestCart.length > 0) {
-  return;
-}
-
-const serverCart =
-  await fetchServerCart();
-
-setCart(serverCart);
-      } catch (err) {
-        console.error(
-          "[CART][BOOT]",
-          err
-        );
-      } finally {
-        setLoading(false);
+useEffect(() => {
+  const boot = async () => {
+    try {
+      if (!user) {
+        setCart(loadGuestCart());
+        return;
       }
-    };
 
-    boot();
-  }, [user, fetchServerCart]);
+      const guestCart = loadGuestCart();
+
+      if (guestCart.length > 0) {
+        return;
+      }
+
+      const serverCart = await fetchServerCart();
+
+      setCart(serverCart);
+    } catch (err) {
+      console.error("[CART][BOOT]", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  boot();
+}, [user, fetchServerCart]);
 
   /* =========================================================
      MERGE GUEST -> SERVER
@@ -470,12 +468,12 @@ setCart(serverCart);
                 serverCart.length,
             }
           );
-        } catch (err) {
-          console.error(
-            "[CART][MERGE]",
-            err
-          );
-        }
+     } catch (err) {
+  console.error("[CART][MERGE]", err);
+} finally {
+  setIsMerging(false);
+  setMergeDone(true);
+}
       };
 
     mergeGuestCart();
@@ -826,18 +824,20 @@ setCart(serverCart);
   ========================================================= */
 
   return (
-    <CartContext.Provider
-      value={{
-        cart,
-        total,
-        loading,
-        addToCart,
-        removeFromCart,
-        updateQty,
-        clearCart,
-        refreshCart,
-      }}
-    >
+  <CartContext.Provider
+  value={{
+    cart,
+    total,
+    loading,
+    isMerging,
+    mergeDone,
+    addToCart,
+    removeFromCart,
+    updateQty,
+    clearCart,
+    refreshCart,
+  }}
+>
       {children}
     </CartContext.Provider>
   );
