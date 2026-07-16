@@ -35,6 +35,14 @@ export type CartItem = {
   thumbnail: string;
   images: string[];
 
+variant_name: string | null;
+
+option_1: string | null;
+option_2: string | null;
+option_3: string | null;
+
+is_price_changed: boolean;
+
   is_price_changed: boolean;
   is_out_of_stock: boolean;
 };
@@ -231,7 +239,25 @@ function normalizeCart(
                 "string"
             )
           : [],
+variant_name:
+  typeof row.variant_name === "string"
+    ? row.variant_name
+    : null,
 
+option_1:
+  typeof row.option_1 === "string"
+    ? row.option_1
+    : null,
+
+option_2:
+  typeof row.option_2 === "string"
+    ? row.option_2
+    : null,
+
+option_3:
+  typeof row.option_3 === "string"
+    ? row.option_3
+    : null,
         is_price_changed:
           row.is_price_changed ===
           true,
@@ -576,6 +602,7 @@ export function CartProvider({
               }
             } else {
               local.push({
+                
   id,
 
   product_id: normalized.product_id,
@@ -594,6 +621,11 @@ export function CartProvider({
 
   is_price_changed: false,
   is_out_of_stock: false,
+    variant_name: null,
+
+option_1: null,
+option_2: null,
+option_3: null,
 });
             }
             saveGuestCart(local);
