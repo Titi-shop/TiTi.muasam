@@ -430,6 +430,7 @@ style={{
   open={openCheckout}
   onClose={() => setOpenCheckout(false)}
   product={checkoutItem}
+          quantity: item.quantity,
 />
       )}
 
