@@ -406,39 +406,34 @@ export async function upsertCartItems(
     await query(
   `
   INSERT INTO cart_items (
-    user_id,
-    product_id,
-    variant_id,
+  user_id,
+  product_id,
+  variant_id,
 
-    seller_id,
-    product_name,
-    product_slug,
+  seller_id,
+  product_name,
+  product_slug,
 
-    thumbnail,
-    images,
+  thumbnail,
+  images,
 
-    unit_price,
-    sale_price,
-    final_price,
+  unit_price,
+  sale_price,
+  final_price,
 
-    currency,
+  currency,
+  quantity,
+  is_selected,
+  is_available,
+  stock_snapshot,
+  is_unlimited,
+  price_snapshot,
+  is_price_changed,
+  is_out_of_stock,
+  created_at,
+  updated_at
+)
 
-    quantity,
-
-    is_selected,
-    is_available,
-
-    stock_snapshot,
-    is_unlimited,
-
-    price_snapshot,
-
-    is_price_changed,
-    is_out_of_stock,
-
-    created_at,
-    updated_at
-  )
 
   SELECT
     $1,
