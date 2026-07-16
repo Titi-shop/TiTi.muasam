@@ -10,20 +10,7 @@ import CheckoutSheet from "@/app/product/[id]/CheckoutSheet";
 import { getPiAccessToken } from "@/lib/piAuth";
 import { formatPi } from "@/lib/pi";
 import AppLoading from "@/components/AppLoading";
-/* =====================================================
-   TYPES
-===================================================== */
 
-interface ShippingInfo {
-  name: string;
-  phone: string;
-  address_line: string;
-  country?: string;
-  province?: string;
-  district?: string;
-  ward?: string;
-  postal_code?: string | null;
-}
 
 /* =====================================================
    PAGE
@@ -71,56 +58,6 @@ export default function CartPage() {
     return sum + unit * item.quantity;
   }, 0);
 }, [selectedItems]);
-
-  /* =====================================================
-     LOAD SHIPPING
-  ===================================================== */
-
-  useEffect(() => {
-  async function load() {
-    try {
-      if (!user) return;
-
-      const token = await getPiAccessToken();
-
-      const res = await fetch("/api/address", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) return;
-
-      const data = await res.json();
-
-      const def = data.items?.find(
-        (a: any) => a.is_default
-      );
-
-      if (!def) return;
-
-      setShipping({
-    name: def.full_name,
-    phone: def.phone,
-    address_line: def.address_line,
-    country: def.country,
-    province: def.province,
-    district: def.district,
-    ward: def.ward,
-    postal_code: def.postal_code ?? null,
-});
-    } catch (err) {
-      console.error(
-        "[CART][ADDRESS_ERROR]",
-        err
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  void load();
-}, [user]);
 
   /* =====================================================
      TOGGLE ITEM
