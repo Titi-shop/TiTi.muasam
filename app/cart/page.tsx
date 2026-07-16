@@ -140,12 +140,7 @@ export default function CartPage() {
   ===================================================== */
 
   const validate = () => {
-    if (!user) {
-      pilogin?.();
-      showMessage(t.please_login ?? "Please login");
-      return false;
-    }
-
+    
     if (!shipping) {
       showMessage(
         t.please_add_shipping_address ??
