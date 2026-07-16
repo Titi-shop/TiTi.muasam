@@ -435,7 +435,13 @@ export function CartProvider({
   headers: {
     "Content-Type": "application/json",
   },
-  body: JSON.stringify(payload),
+  body: JSON.stringify(
+    guestCart.map((item) => ({
+      product_id: item.product_id,
+      variant_id: item.variant_id,
+      quantity: item.quantity,
+    }))
+  ),
 });
 
           if (!res.ok) {
@@ -601,7 +607,11 @@ export function CartProvider({
   headers: {
     "Content-Type": "application/json",
   },
-  body: JSON.stringify(payload),
+  body: JSON.stringify({
+    product_id: normalized.product_id,
+    variant_id: normalized.variant_id,
+    quantity: normalized.quantity,
+  }),
 });
 
           if (!res.ok) {
@@ -665,7 +675,10 @@ export function CartProvider({
   headers: {
     "Content-Type": "application/json",
   },
-  body: JSON.stringify(payload),
+  body: JSON.stringify({
+    product_id: target.product_id,
+    variant_id: target.variant_id,
+  }),
 });
 
           if (!res.ok) {
