@@ -41,8 +41,6 @@ option_1: string | null;
 option_2: string | null;
 option_3: string | null;
 
-is_price_changed: boolean;
-
   is_price_changed: boolean;
   is_out_of_stock: boolean;
 };
@@ -55,6 +53,7 @@ type AddCartPayload = {
   slug: string;
   price: number;
   sale_price?: number | null;
+  final_price: number;
   thumbnail: string;
   images?: string[];
   variant_name?: string;
@@ -616,7 +615,11 @@ export function CartProvider({
 
   price: payload.price ?? 0,
   sale_price: payload.sale_price ?? null,
-
+  final_price:
+      payload.final_price ??
+      payload.sale_price ??
+      payload.price ??
+      0,
   quantity: normalized.quantity,
 
   thumbnail: payload.thumbnail ?? "",
