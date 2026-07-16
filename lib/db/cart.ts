@@ -585,11 +585,10 @@ export async function upsertCartItems(
   DO UPDATE SET
 
     quantity =
-      LEAST(
-        cart_items.quantity
-        + EXCLUDED.quantity,
-        99
-      ),
+LEAST(
+EXCLUDED.quantity,
+99
+)
 
     unit_price =
       EXCLUDED.unit_price,
