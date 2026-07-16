@@ -57,6 +57,10 @@ type AddCartPayload = {
   sale_price?: number | null;
   thumbnail: string;
   images?: string[];
+  variant_name?: string;
+option_1?: string;
+option_2?: string;
+option_3?: string;
 };
 
 type CartContextType = {
@@ -602,7 +606,6 @@ export function CartProvider({
               }
             } else {
               local.push({
-                
   id,
 
   product_id: normalized.product_id,
@@ -619,13 +622,14 @@ export function CartProvider({
   thumbnail: payload.thumbnail ?? "",
   images: payload.images ?? [],
 
+  variant_name: payload.variant_name ?? null,
+
+  option_1: payload.option_1 ?? null,
+  option_2: payload.option_2 ?? null,
+  option_3: payload.option_3 ?? null,
+
   is_price_changed: false,
   is_out_of_stock: false,
-    variant_name: null,
-
-option_1: null,
-option_2: null,
-option_3: null,
 });
             }
             saveGuestCart(local);
