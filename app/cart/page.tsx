@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+
 import { useCart } from "@/app/context/CartContext";
-import { useAuth } from "@/context/AuthContext";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import CheckoutSheet from "@/app/product/[id]/CheckoutSheet";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
