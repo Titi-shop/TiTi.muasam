@@ -187,9 +187,27 @@ export default function CartPage() {
     ) ?? null;
 
   setCheckoutItem({
-    ...product,
-    selectedVariant,
-  });
+  ...product,
+  selectedVariant,
+
+  quantity: item.quantity,
+
+  stock:
+    selectedVariant?.stock ??
+    product.stock,
+
+  price:
+    selectedVariant?.price ??
+    product.price,
+
+  sale_price:
+    selectedVariant?.sale_price ??
+    product.sale_price,
+
+  final_price:
+    selectedVariant?.final_price ??
+    product.final_price,
+});
 
   setOpenCheckout(true);
 };
@@ -430,7 +448,7 @@ style={{
   open={openCheckout}
   onClose={() => setOpenCheckout(false)}
   product={checkoutItem}
-          quantity: item.quantity,
+          
 />
       )}
 
