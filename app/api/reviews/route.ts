@@ -1,9 +1,13 @@
-import { NextResponse } from "next/server";
+import {
+  NextRequest,
+  NextResponse,
+} from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 
 import {
   createReview,
   getReviewsByUser,
+  getReviewsByProduct,
 } from "@/lib/db/reviews";
 
 /* =========================================================
@@ -130,31 +134,65 @@ export async function POST(req: Request) {
    GET /api/reviews
    - Lấy review của user hiện tại
 ========================================================= */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const auth = await getUserFromBearer();
+    /* ==========================================
+       PRODUCT REVIEWS
+    ========================================== */
+
+    const productId =
+      req.nextUrl.searchParams.get("product_id");
+
+    if (productId) {
+      const reviews =
+        await getReviewsByProduct(productId);
+
+      return NextResponse.json({
+        reviews,
+      });
+    }
+
+    /* ==========================================
+       MY REVIEWS
+    ========================================== */
+
+    const auth =
+      await getUserFromBearer();
 
     if (!auth) {
       return NextResponse.json(
-        { error: "UNAUTHORIZED" },
-        { status: 401 }
+        {
+          error: "UNAUTHORIZED",
+        },
+        {
+          status: 401,
+        }
       );
     }
 
-    const userId = auth.userId;
-
-    const reviews = await getReviewsByUser(userId);
+    const reviews =
+      await getReviewsByUser(
+        auth.userId
+      );
 
     return NextResponse.json({
       reviews,
     });
 
   } catch (error) {
-    console.error("GET REVIEWS ERROR:", error);
+    console.error(
+      "GET REVIEWS ERROR:",
+      error
+    );
 
     return NextResponse.json(
-      { error: "INTERNAL_ERROR" },
-      { status: 500 }
+      {
+        error:
+          "INTERNAL_ERROR",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
