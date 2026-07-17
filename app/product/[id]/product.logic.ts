@@ -155,6 +155,11 @@ export function useProduct(
 
   return {
     product,
+    reviews,
+    relatedProducts,
+    refreshProduct,
+    refreshReviews,
+    refreshRelated,
     isLoading,
-  };
+};
 }
