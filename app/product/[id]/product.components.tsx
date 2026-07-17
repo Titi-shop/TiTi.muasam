@@ -394,21 +394,10 @@ let newScale =
     backgroundColor: "var(--card-bg)",
   }}
 >
-
-  <div
-    className="
-      flex
-      items-center
-      justify-between
-      text-sm
-    "
-  >
+  <div className="flex items-center justify-between text-sm">
 
     <div className="flex items-center gap-1">
-
-      <span className="text-yellow-400">
-        ⭐
-      </span>
+      <span className="text-yellow-400">⭐</span>
 
       <span className="font-medium">
         {Number(product.rating_avg ?? 0).toFixed(1)}
@@ -419,9 +408,8 @@ let newScale =
           color: "var(--text-muted)",
         }}
       >
-        ({product.rating_count ?? 0})
+        ({product.rating_count ?? 0} {t.reviews})
       </span>
-
     </div>
 
     <div
@@ -429,7 +417,7 @@ let newScale =
         color: "var(--text-muted)",
       }}
     >
-      ❤️ 0
+      ❤️ {product.favorite_count ?? 0} {t.favorites}
     </div>
 
     <div
@@ -437,7 +425,7 @@ let newScale =
         color: "var(--text-muted)",
       }}
     >
-      👁 {product.views ?? 0}
+      👁 {product.views ?? 0} {t.views}
     </div>
 
     <div
@@ -445,11 +433,10 @@ let newScale =
         color: "var(--text-muted)",
       }}
     >
-      🛒 {product.sold ?? 0}
+      🛒 {product.sold ?? 0} {t.sold}
     </div>
 
   </div>
-
 </div>
 
       {/* ===== STOCK ===== */}
