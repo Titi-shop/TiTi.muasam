@@ -278,6 +278,7 @@ if (!product) {
     <>
       <ProductView
         product={product}
+        reviews={reviews}
         t={t}
         router={router}
         add={add}
