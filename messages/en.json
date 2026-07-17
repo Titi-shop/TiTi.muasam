@@ -773,8 +773,8 @@
   "opening_pi_wallet": "Opening Pi Wallet...",
   "verifying_payment": "Verifying payment...",
   "finalizing_order": "Finalizing your order...",
-  "continue_payment": "Continuing payment..."
-  "login_to_checkout": "Please sign in before proceeding to checkout.",
+  "continue_payment": "Continuing payment...",
+  "login_to_checkout": "Please sign in before proceeding to checkout."
 
 
 
