@@ -7,6 +7,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
 import { ShoppingCart } from "lucide-react";
 import { prefetchProduct } from "@/lib/prefetch";
+import ProductReviews from "./ProductReviews";
 import type {
   ProductRecord,
   ProductVariantView,
@@ -24,7 +25,7 @@ import "swiper/css/pagination";
 
 type ProductViewProps = {
   product: ProductRecord;
-
+  reviews: ProductReview[];
   t: Record<string, string>;
   router: {
     push: (path: string) => void;
@@ -87,6 +88,7 @@ const [favorite, setFavorite] = useState(false);
     selectedStock,
     hasVariants,
     relatedProducts,
+     reviews,
   } = props;
 
   console.log("🧪 SALE_BADGE_CHECK", {
@@ -587,7 +589,12 @@ style={{
     ),
   }}
 />
-
+<ProductReviews
+    t={t}
+    ratingAvg={Number(product.rating_avg ?? 0)}
+    ratingCount={product.rating_count ?? 0}
+    reviews={reviews}
+/>
       {/* ===== RELATED ===== */}
       {relatedProducts?.length > 0 && (
         <div
