@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-
+import type { ProductReview } from "./ProductReviews";
 import { useTranslationClient as useTranslation } from "@/app/lib/i18n/client";
 import { useCart } from "@/app/context/CartContext";
 import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
@@ -37,8 +37,10 @@ export default function ProductDetail() {
     useState<ProductVariant | null>(null);
 
   const [related, setRelated] = useState<ProductRecord[]>([]);
+  const [reviews, setReviews] =
+  useState<ProductReview[]>([]);
   const [openCheckout, setOpenCheckout] = useState(false);
-const [zoomImage, setZoomImage] =
+  const [zoomImage, setZoomImage] =
   useState<string | null>(null);
 
 const [scale, setScale] =
@@ -136,7 +138,36 @@ const [initialScale, setInitialScale] =
 
   void loadRelatedProducts();
 }, [product?.category_id]);
+/* ================= PRODUCT REVIEWS ================= */
 
+useEffect(() => {
+  const loadReviews = async () => {
+    if (!product?.id) return;
+
+    try {
+      const res = await apiAuthFetch(
+        `/api/reviews?product_id=${product.id}`
+      );
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      setReviews(
+        Array.isArray(data.reviews)
+          ? data.reviews
+          : []
+      );
+    } catch (err) {
+      console.error(
+        "[PRODUCT REVIEWS]",
+        err
+      );
+    }
+  };
+
+  void loadReviews();
+}, [product?.id]);
 /* ================= GUARD ================= */
 
 if (isLoading) {
