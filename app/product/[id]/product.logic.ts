@@ -154,12 +154,7 @@ export function useProduct(
   }, [data]);
 
   return {
-    product,
-    reviews,
-    relatedProducts,
-    refreshProduct,
-    refreshReviews,
-    refreshRelated,
-    isLoading,
+  product,
+  isLoading,
 };
 }
