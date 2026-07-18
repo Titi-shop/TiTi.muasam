@@ -22,7 +22,8 @@ import {
 ===================================================== */
 
 export async function getProductService(
-  id: string
+  id: string,
+  userId: string | null
 ) {
   log(
   "GET_START",
@@ -41,8 +42,10 @@ export async function getProductService(
     }
 
     const product =
-      await getProductById(id);
-
+  await getProductById(
+    id,
+    userId
+  );
     if (!product) {
       return {
         error:
