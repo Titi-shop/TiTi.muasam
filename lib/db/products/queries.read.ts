@@ -75,19 +75,19 @@ export async function getProductById(
   "GET_BY_ID_START",
   {
     productId:
-      maskId(product_id),
+      maskId(productId),
   }
 );
 
   try {
     if (
-      !product_id ||
-      !isUUID(product_id)
+  !productId ||
+  !isUUID(productId)
     ) {
       log(
-        "GET_BY_ID_INVALID_ID",
-        product_id
-      );
+  "GET_BY_ID_INVALID_ID",
+  productId
+);
 
       return null;
     }
@@ -95,13 +95,32 @@ export async function getProductById(
     const result =
       await query<ProductRow>(
         `
-        SELECT *
-        FROM products
-        WHERE id = $1
-          AND deleted_at IS NULL
-        LIMIT 1
+        SELECT
+    p.*,
+
+    (
+        SELECT COUNT(*)
+        FROM product_favorites pf
+        WHERE pf.product_id = p.id
+    )::int AS favorite_count,
+
+    EXISTS (
+        SELECT 1
+        FROM product_favorites pf
+        WHERE pf.product_id = p.id
+          AND pf.user_id = $2
+    ) AS is_favorite
+
+FROM products p
+
+WHERE p.id = $1
+AND p.deleted_at IS NULL
+
+LIMIT 1
         `,
-        [product_id]
+        [
+  productId,
+  userId,]
       );
 
     const row =
