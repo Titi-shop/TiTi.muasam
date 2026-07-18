@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getUserFromBearer } from "@/lib/auth/getUserFromBearer";
 
 import {
@@ -6,12 +6,24 @@ import {
   getFavoriteProductsByUser,
 } from "@/lib/db/product-favorites";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 /* =========================================================
-   POST /api/product-favorites
+   POST /api/products/[id]/favorite
    Toggle favorite
 ========================================================= */
 
-export async function POST(req: Request) {
+export async function POST(
+  _req: NextRequest,
+  {
+    params,
+  }: {
+    params: {
+      id: string;
+    };
+  }
+) {
   try {
     const auth = await getUserFromBearer();
 
@@ -22,21 +34,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const body: unknown = await req.json().catch(() => null);
-
-    if (!body || typeof body !== "object") {
-      return NextResponse.json(
-        { error: "INVALID_BODY" },
-        { status: 400 }
-      );
-    }
-
-    const b = body as Record<string, unknown>;
-
-    const productId =
-      typeof b.product_id === "string"
-        ? b.product_id
-        : null;
+    const productId = params.id;
 
     if (!productId) {
       return NextResponse.json(
@@ -57,7 +55,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error(
-      "TOGGLE FAVORITE ERROR:",
+      "[PRODUCT_FAVORITE][POST]",
       error
     );
 
@@ -69,8 +67,8 @@ export async function POST(req: Request) {
 }
 
 /* =========================================================
-   GET /api/product-favorites
-   Current user's favorites
+   GET /api/products/[id]/favorite
+   Current user's favorite products
 ========================================================= */
 
 export async function GET() {
@@ -94,7 +92,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error(
-      "GET FAVORITES ERROR:",
+      "[PRODUCT_FAVORITE][GET]",
       error
     );
 
