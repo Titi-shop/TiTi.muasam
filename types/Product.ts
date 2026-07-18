@@ -301,9 +301,13 @@ export interface ProductDB {
   sold: number;
 
   views: number;
-  rating_avg: number;
-  rating_count: number;
-  meta_title: string;
+rating_avg: number;
+rating_count: number;
+
+favorite_count: number;
+is_favorite: boolean;
+meta_title: string;
+meta_description: string;
   meta_description: string;
   status: ProductStatus;
   is_active: boolean;
