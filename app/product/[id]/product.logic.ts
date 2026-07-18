@@ -1,7 +1,10 @@
 "use client";
 
 import useSWR from "swr";
-import { useMemo } from "react";
+import {
+  useMemo,
+  useEffect,
+} from "react";
 
 import type {
   ProductRecord,
@@ -32,8 +35,11 @@ const fetcher = async (url: string) => {
 export function useProduct(
   id: string
 ) {
-  const { data, isLoading } =
-    useSWR(
+  const {
+  data,
+  isLoading,
+  mutate,
+} = useSWR(
       id
         ? `/api/products/${id}`
         : null,
@@ -44,7 +50,38 @@ export function useProduct(
         keepPreviousData: true,
       }
     );
+useEffect(() => {
+  if (!id) {
+    return;
+  }
 
+  const run = async () => {
+    try {
+      await apiAuthFetch(
+        "/api/products/view",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            id,
+          }),
+        }
+      );
+
+      await mutate();
+    } catch (error) {
+      console.error(
+        "[PRODUCT_VIEW]",
+        error
+      );
+    }
+  };
+
+  void run();
+}, [id, mutate]);
   const product = useMemo(() => {
     if (
       !data ||
