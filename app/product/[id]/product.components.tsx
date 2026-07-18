@@ -1,7 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
+import {
+  useState,
+  useEffect,
+} from "react";
 import { formatPi } from "@/lib/pi";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
@@ -62,16 +65,7 @@ availableVariants: ProductVariantView[];
   relatedProducts: RelatedProduct[];
 };
 export function ProductView(props: ProductViewProps) {
-  const [activeImage, setActiveImage] = useState<string | null>(null);
-const [favorite, setFavorite] = useState(
-  product.is_favorite
-);
-const [favoriteCount, setFavoriteCount] =
-  useState(
-    product.favorite_count
-  );
-const [favoriteLoading, setFavoriteLoading] =
-  useState(false);
+
   const {
     product,
     t,
@@ -99,9 +93,22 @@ const [favoriteLoading, setFavoriteLoading] =
     selectedStock,
     hasVariants,
     relatedProducts,
-     reviews,
+    reviews,
   } = props;
 
+  const [activeImage, setActiveImage] =
+    useState<string | null>(null);
+
+  const [favorite, setFavorite] =
+    useState(product.is_favorite);
+
+  const [favoriteCount, setFavoriteCount] =
+    useState(product.favorite_count);
+
+  const [favoriteLoading, setFavoriteLoading] =
+    useState(false);
+  const [lastTap, setLastTap] =
+  useState(0);
   console.log("🧪 SALE_BADGE_CHECK", {
     hasVariants,
 
