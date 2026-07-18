@@ -68,7 +68,8 @@ export async function getAllProducts(
 ========================================================= */
 
 export async function getProductById(
-  product_id: string
+    productId: string,
+    userId: string | null
 ): Promise<ProductRecord | null> {
   log(
   "GET_BY_ID_START",
