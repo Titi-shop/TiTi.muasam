@@ -97,26 +97,54 @@ function ProductCard({
   `}
 >
       {/* IMAGE - FIX PROPORTION */}
-     <div className="relative aspect-square w-full overflow-hidden bg-surface-2">
+    <div className="relative aspect-square w-full overflow-hidden bg-surface-2">
   <Image
     src={getMainImage(product)}
     alt={product.name}
     fill
-    sizes="(max-width:768px) 50vw, 25vw"
+    sizes="(max-width:768px) 50vw,25vw"
     className="
       object-cover
       transition-transform
       duration-500
-      group-hover:scale-105
     "
   />
 
-        {product.sale_price && (
-          <div className="absolute left-2 top-2 rounded bg-red-600 px-2 py-[2px] text-[10px] font-bold text-white">
-            -{getDiscount(product)}%
-          </div>
-        )}
-      </div>
+  {product.sale_price && (
+    <div className="absolute left-2 top-2 rounded bg-red-600 px-2 py-[2px] text-[10px] font-bold text-white">
+      -{getDiscount(product)}%
+    </div>
+  )}
+
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+
+      onAddToCart?.(product);
+    }}
+    className="
+      absolute
+      bottom-2
+      right-2
+      flex
+      h-9
+      w-9
+      items-center
+      justify-center
+      rounded-xl
+      shadow-lg
+      active:scale-95
+    "
+    style={{
+      background:
+        "rgba(255,255,255,.95)",
+      color:
+        "var(--foreground)",
+    }}
+  >
+    <ShoppingCart size={18} />
+  </button>
+</div>
 
       {/* CONTENT */}
       <div className="flex flex-col flex-1 p-2">
@@ -126,11 +154,45 @@ function ProductCard({
         </p>
 
         {/* META */}
-        <div className="mt-1 flex items-center gap-1 text-[10px] text-muted">
-          <Star size={11} className="fill-yellow-400 text-yellow-400" />
-          {product.rating_avg || 5}
-          <span>• {product.sold || 0}</span>
-        </div>
+        <div
+  className="
+    mt-2
+    flex
+    items-center
+    gap-2
+    text-[10px]
+  "
+  style={{
+    color:
+      "var(--text-muted)",
+  }}
+>
+  <span className="flex items-center gap-1">
+    <Star
+      size={11}
+      className="
+        fill-yellow-400
+        text-yellow-400
+      "
+    />
+
+    {Number(
+      product.rating_avg ?? 0
+    ).toFixed(1)}
+  </span>
+
+  <span>
+    ❤️ {product.favorite_count ?? 0}
+  </span>
+
+  <span>
+    👁 {product.views ?? 0}
+  </span>
+
+  <span>
+    🛒 {product.sold ?? 0}
+  </span>
+</div>
 
         {/* PRICE */}
         <div className="mt-auto flex items-end justify-between">
@@ -140,6 +202,27 @@ function ProductCard({
             </p>
 
             {product.sale_price && (
+  {product.has_variants && (
+  <div
+    className="
+      absolute
+      right-2
+      top-2
+      rounded-full
+      px-2
+      py-1
+      text-[10px]
+      font-semibold
+    "
+    style={{
+      background:
+        "rgba(0,0,0,.65)",
+      color: "#fff",
+    }}
+  >
+    Size
+  </div>
+)}
               <p className="text-[10px] text-gray-400 line-through">
                 {formatPi(product.price)} π
               </p>
@@ -319,13 +402,19 @@ useEffect(() => {
     (product.options?.size?.length ?? 0) > 0;
 
   if (hasVariant) {
-    showMessage(
-      t.please_select_variant ||
-        "Please select variant before adding to cart"
-    );
+  showMessage(
+    t.please_select_variant ||
+      "Please select variant"
+  );
 
-    return;
-  }
+  setTimeout(() => {
+    router.push(
+      `/product/${product.id}`
+    );
+  }, 500);
+
+  return;
+}
 
   addToCart({
     id: String(product.id),
