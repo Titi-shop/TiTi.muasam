@@ -206,22 +206,30 @@ export default function CategoriesClient() {
     return;
   }
 
-  const isOutOfStock =
-    !product.is_unlimited &&
-    (product.stock ?? 0) <= 0;
-
-  if (isOutOfStock) {
-    showMessage(
-      t.out_of_stock || "Out of stock"
-    );
-    return;
-  }
-
-  // 🔥 TYPE SAFE VARIANT CHECK (NO ANY)
   const hasVariant =
-    Boolean(product.has_variants) ||
-    (product.variants?.length ?? 0) > 0 ||
-    (product.options?.size?.length ?? 0) > 0;
+  Boolean(product.has_variants) ||
+  (product.variants?.length ?? 0) > 0;
+
+if (hasVariant) {
+  showMessage(
+    t.please_select_variant ??
+    "Please select variant"
+  );
+
+  return;
+}
+
+const isOutOfStock =
+  !product.is_unlimited &&
+  (product.stock ?? 0) <= 0;
+
+if (isOutOfStock) {
+  showMessage(
+    t.out_of_stock
+  );
+
+  return;
+}
 
   if (hasVariant) {
     showMessage(
