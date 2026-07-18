@@ -96,8 +96,8 @@ function ProductCard({
     ${compact ? "h-[270px]" : "h-[320px]"}
   `}
 >
-      {/* IMAGE - FIX PROPORTION */}
-    <div className="relative aspect-square w-full overflow-hidden bg-surface-2">
+     {/* IMAGE */}
+<div className="relative aspect-square w-full overflow-hidden bg-surface-2">
   <Image
     src={getMainImage(product)}
     alt={product.name}
@@ -110,16 +110,40 @@ function ProductCard({
     "
   />
 
+  {/* SALE */}
   {product.sale_price && (
     <div className="absolute left-2 top-2 rounded bg-red-600 px-2 py-[2px] text-[10px] font-bold text-white">
       -{getDiscount(product)}%
     </div>
   )}
 
+  {/* VARIANT */}
+  {product.has_variants && (
+    <div
+      className="
+        absolute
+        right-2
+        top-2
+        rounded-full
+        px-2
+        py-1
+        text-[10px]
+        font-semibold
+      "
+      style={{
+        background:
+          "rgba(0,0,0,.65)",
+        color: "#fff",
+      }}
+    >
+      Size
+    </div>
+  )}
+
+  {/* ADD TO CART */}
   <button
     onClick={(e) => {
       e.stopPropagation();
-
       onAddToCart?.(product);
     }}
     className="
@@ -194,46 +218,24 @@ function ProductCard({
   </span>
 </div>
 
-        {/* PRICE */}
-        <div className="mt-auto flex items-end justify-between">
-          <div className="flex flex-col">
-           <p className="text-sm font-black text-primary">
-              {formatPi(product.final_price || product.price)} π
-            </p>
+      {/* PRICE */}
+<div className="mt-auto flex items-end justify-between">
+  <div className="flex flex-col">
+    <p className="text-sm font-black text-primary">
+      {formatPi(
+        product.final_price ||
+          product.price
+      )}{" "}
+      π
+    </p>
 
-          {product.sale_price && (
-  <div className="absolute left-2 top-2 rounded bg-red-600 px-2 py-[2px] text-[10px] font-bold text-white">
-    -{getDiscount(product)}%
-  </div>
-)}
-
-{product.has_variants && (
-  <div
-    className="
-      absolute
-      right-2
-      top-2
-      rounded-full
-      px-2
-      py-1
-      text-[10px]
-      font-semibold
-    "
-    style={{
-      background:
-        "rgba(0,0,0,.65)",
-      color: "#fff",
-    }}
-  >
-    Size
-  </div>
-)}
-              <p className="text-[10px] text-gray-400 line-through">
-                {formatPi(product.price)} π
-              </p>
-            )}
-          </div>
-        </div>
+    {product.sale_price && (
+      <p className="text-[10px] text-gray-400 line-through">
+        {formatPi(product.price)} π
+      </p>
+    )}
+     </div>
+    </div>
       </div>
     </div>
   );
