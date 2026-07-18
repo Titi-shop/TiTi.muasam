@@ -619,40 +619,26 @@ style={{
     color: "var(--text-muted)",
   }}
 >
-                        <Star
-                          size={14}
-                          className="fill-yellow-400 text-yellow-400"
-                        />
-
-                        {product.rating_avg ||
-                          5}
-              <div
-  className="mt-2 flex gap-2 text-[11px]"
+                        <div
+  className="
+    mt-2
+    flex
+    items-center
+    justify-between
+    text-[10px]
+  "
   style={{
-    color:
-      "var(--text-muted)",
+    color: "var(--text-muted)",
   }}
 >
-  <span>
-    ❤️{" "}
-    {product.favorite_count ??
-      0}
-  </span>
+  <span>⭐ 4.8</span>
 
-  <span>
-    👁{" "}
-    {product.views ?? 0}
-  </span>
+  <span>❤️ 52</span>
+
+  <span>👁 1.2K</span>
+
+  <span>🛒 324</span>
 </div>
-                        <span>
-                          •{" "}
-                          {
-                            product.sold
-                          }{" "}
-                          {t.sold ||
-                            "sold"}
-                        </span>
-                      </div>
 
                       <div className="mt-4 flex items-end justify-between">
                         <div>
