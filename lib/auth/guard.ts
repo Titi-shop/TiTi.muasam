@@ -137,3 +137,24 @@ export async function requireAdmin(): Promise<GuardResult> {
 
   return auth;
 }
+/* ================= OPTIONAL AUTH ================= */
+export async function optionalAuth(): Promise<{
+  userId: string | null;
+  role: Role | null;
+}> {
+  const auth = await getUserFromBearer();
+
+  if (!auth) {
+    return {
+      userId: null,
+      role: null,
+    };
+  }
+
+  const role = await resolveRole(auth.userId);
+
+  return {
+    userId: auth.userId,
+    role,
+  };
+}
