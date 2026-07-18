@@ -201,8 +201,13 @@ function ProductCard({
               {formatPi(product.final_price || product.price)} π
             </p>
 
-            {product.sale_price && (
-  {product.has_variants && (
+          {product.sale_price && (
+  <div className="absolute left-2 top-2 rounded bg-red-600 px-2 py-[2px] text-[10px] font-bold text-white">
+    -{getDiscount(product)}%
+  </div>
+)}
+
+{product.has_variants && (
   <div
     className="
       absolute
