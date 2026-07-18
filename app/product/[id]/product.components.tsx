@@ -146,36 +146,35 @@ useEffect(() => {
   const gallery =
     displayImages.length > 0 ? displayImages : ["/placeholder.png"];
 const toggleFavorite = async () => {
-  if (favoriteLoading) {
-    return;
-  }
+  if (favoriteLoading) return;
 
   try {
     setFavoriteLoading(true);
 
-    const method = favorite
-      ? "DELETE"
-      : "POST";
-
-    const res =
-      await apiAuthFetch(
-        `/api/products/${product.id}/favorite`,
-        {
-          method,
-        }
-      );
+    const res = await apiAuthFetch(
+      `/api/products/${product.id}/favorite`,
+      {
+        method: "POST",
+      }
+    );
 
     if (!res.ok) {
       return;
     }
 
-    setFavorite(!favorite);
+    const data = await res.json();
 
-    setFavoriteCount((v) =>
-      favorite
-        ? Math.max(0, v - 1)
-        : v + 1
-    );
+    setFavorite(data.favorited);
+
+    if (typeof data.favorite_count === "number") {
+      setFavoriteCount(data.favorite_count);
+    } else {
+      setFavoriteCount((v) =>
+        data.favorited
+          ? v + 1
+          : Math.max(0, v - 1)
+      );
+    }
   } finally {
     setFavoriteLoading(false);
   }
