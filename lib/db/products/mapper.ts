@@ -82,19 +82,27 @@ export function mapRow(
     ),
 
   rating_avg:
-    safeNumber(
-      row.rating_avg
-    ),
+  safeNumber(
+    row.rating_avg
+  ),
 
-  rating_count:
-    safeNumber(
-      row.rating_count
-    ),
+rating_count:
+  safeNumber(
+    row.rating_count
+  ),
 
-  images:
-    normalizeImages(
-      row.images
-    ),
+favorite_count:
+  safeNumber(
+    row.favorite_count
+  ),
+
+is_favorite:
+  row.is_favorite === true,
+
+images:
+  normalizeImages(
+    row.images
+  ),
 
   detail_images:
     normalizeImages(
