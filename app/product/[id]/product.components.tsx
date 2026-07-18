@@ -7,6 +7,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
 import { ShoppingCart } from "lucide-react";
 import { prefetchProduct } from "@/lib/prefetch";
+import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
 import ProductReviews, {
   type ProductReview,
 } from "./ProductReviews";
@@ -62,7 +63,15 @@ availableVariants: ProductVariantView[];
 };
 export function ProductView(props: ProductViewProps) {
   const [activeImage, setActiveImage] = useState<string | null>(null);
-const [favorite, setFavorite] = useState(false);
+const [favorite, setFavorite] = useState(
+  product.is_favorite
+);
+const [favoriteCount, setFavoriteCount] =
+  useState(
+    product.favorite_count
+  );
+const [favoriteLoading, setFavoriteLoading] =
+  useState(false);
   const {
     product,
     t,
@@ -109,7 +118,13 @@ const [favorite, setFavorite] = useState(false);
         }
       : null,
   });
-
+useEffect(() => {
+  setFavorite(product.is_favorite);
+  setFavoriteCount(product.favorite_count);
+}, [
+  product.is_favorite,
+  product.favorite_count,
+]);
   /* ================= SAFE ================= */
   if (!product) return null;
 
@@ -123,7 +138,41 @@ const [favorite, setFavorite] = useState(false);
 
   const gallery =
     displayImages.length > 0 ? displayImages : ["/placeholder.png"];
+const toggleFavorite = async () => {
+  if (favoriteLoading) {
+    return;
+  }
 
+  try {
+    setFavoriteLoading(true);
+
+    const method = favorite
+      ? "DELETE"
+      : "POST";
+
+    const res =
+      await apiAuthFetch(
+        `/api/products/${product.id}/favorite`,
+        {
+          method,
+        }
+      );
+
+    if (!res.ok) {
+      return;
+    }
+
+    setFavorite(!favorite);
+
+    setFavoriteCount((v) =>
+      favorite
+        ? Math.max(0, v - 1)
+        : v + 1
+    );
+  } finally {
+    setFavoriteLoading(false);
+  }
+};
   /* ================= UI ================= */
 
   return (
@@ -134,7 +183,8 @@ const [favorite, setFavorite] = useState(false);
 >
         {/* Favorite */}
 <button
-  onClick={() => setFavorite(!favorite)}
+  onClick={toggleFavorite}
+  disabled={favoriteLoading}
   className="
     absolute
     top-3
@@ -420,7 +470,7 @@ let newScale =
         color: "var(--text-muted)",
       }}
     >
-      ❤️ {product.favorite_count ?? 0} {t.favorites}
+      ❤️ {favoriteCount} {t.favorites}
     </div>
 
     <div
