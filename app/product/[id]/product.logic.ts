@@ -101,7 +101,12 @@ export function useProduct(
       views: Number(
         api.views ?? 0
       ),
+favorite_count: Number(
+  api.favorite_count ?? 0
+),
 
+is_favorite:
+  api.is_favorite === true,
       price: Number(
         api.price ?? 0
       ),
