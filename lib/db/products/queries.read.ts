@@ -357,11 +357,15 @@ export async function getProductsByCategory(
         FROM products p
 
         WHERE p.category_id = $1
-          AND p.deleted_at IS NULL
+  AND p.deleted_at IS NULL
+  AND p.is_active = true
 
-        ORDER BY p.created_at DESC
+ORDER BY
+  p.sold DESC,
+  p.rating_avg DESC,
+  p.created_at DESC
 
-        LIMIT $2
+LIMIT $2
         `,
         [
           categoryId,
