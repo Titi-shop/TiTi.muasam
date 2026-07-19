@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
+import { getHomeService } from "@/lib/services/home";
 
-import {
-  getHomeService,
-} from "@/lib/services/home";
+export async function GET() {
+  const data = await getHomeService();
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+  return NextResponse.json(data);
+}
 
 /* =========================================================
    GET HOME
