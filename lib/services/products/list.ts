@@ -1,7 +1,7 @@
-
 import {
   getAllProducts,
   getProductsByIds,
+  getProductsByCategory,
 } from "@/lib/db/products";
 
 import {
@@ -57,11 +57,16 @@ const categoryId =
        LOAD PRODUCTS
     ========================= */
 
-    const products = ids
-      ? await getProductsByIds(
-          ids
-            .split(",")
-            .filter(Boolean)
+    const products =
+  ids
+    ? await getProductsByIds(
+        ids
+          .split(",")
+          .filter(Boolean)
+      )
+    : categoryId
+      ? await getProductsByCategory(
+          categoryId
         )
       : await getAllProducts();
 
