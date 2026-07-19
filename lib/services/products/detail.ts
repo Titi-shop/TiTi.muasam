@@ -1,7 +1,9 @@
 import {
-  getProductById,
+  getProductService,
+} from "@/lib/services/products/by-id/get";
+
+import {
   getProductsByCategory,
-  getSoldByProduct,
 } from "@/lib/db/products";
 
 import {
@@ -12,25 +14,30 @@ export async function getProductDetailService(
   productId: string,
   userId: string | null
 ) {
+  /* ================= PRODUCT ================= */
+
   const product =
-    await getProductById(
+    await getProductService(
       productId,
       userId
     );
 
-  if (!product) {
+  if (
+    !product ||
+    "error" in product
+  ) {
     return {
       product: null,
       reviews: [],
       related: [],
-      sold: 0,
     };
   }
+
+  /* ================= LOAD EXTRA ================= */
 
   const [
     reviews,
     related,
-    sold,
   ] = await Promise.all([
     getReviewsByProduct(
       product.id
@@ -40,23 +47,21 @@ export async function getProductDetailService(
       product.category_id,
       10
     ),
-
-    getSoldByProduct(
-      product.id
-    ),
   ]);
+
+  /* ================= RESPONSE ================= */
 
   return {
     product,
 
     reviews,
 
-    sold,
-
     related:
-      related.filter(
-        (p) =>
-          p.id !== product.id
-      ),
+      related
+        .filter(
+          (p) =>
+            p.id !== product.id
+        )
+        .slice(0, 10),
   };
 }
