@@ -111,11 +111,13 @@ function ProductCard({
   />
 
  {/* SALE */}
-{product.sale_price && (
+{product.sale_price &&
+ product.price > product.sale_price &&
+ getDiscount(product) > 0 && (
   <div
     className="
       absolute
-      left-2
+      right-2
       top-2
       rounded-full
       bg-red-600
@@ -127,26 +129,6 @@ function ProductCard({
     "
   >
     -{getDiscount(product)}%
-  </div>
-)}
-
-{/* SIZE */}
-{product.has_variants && (
-  <div
-    className="
-      absolute
-      right-2
-      top-2
-      rounded-full
-      bg-black/70
-      px-2
-      py-1
-      text-[9px]
-      font-bold
-      text-white
-    "
-  >
-    SIZE
   </div>
 )}
 
@@ -408,17 +390,13 @@ useEffect(() => {
     (product.options?.size?.length ?? 0) > 0;
 
   if (hasVariant) {
-    showMessage(
-      t.please_select_variant ||
-      "Please select size"
-    );
+  showMessage(
+    t.please_select_variant ||
+    "Please select size"
+  );
 
-    setTimeout(() => {
-      router.push(`/product/${product.id}`);
-    }, 500);
-
-    return;
-  }
+  return;
+}
 
   // sau đó mới kiểm tra tồn kho
   const isOutOfStock =
