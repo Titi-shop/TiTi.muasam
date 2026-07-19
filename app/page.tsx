@@ -54,18 +54,20 @@ function getMainImage(product: Product) {
 }
 
 function getDiscount(product: Product) {
-  const final =
-    product.final_price ||
-    product.sale_price ||
-    product.price;
+  const price = Number(product.price || 0);
 
-  if (product.price > final) {
+  const final = Number(
+    product.final_price ??
+    product.sale_price ??
+    product.price
+  );
+
+  if (price > final) {
     return Math.round(
-      ((product.price - final) /
-        product.price) *
-        100
+      ((price - final) / price) * 100
     );
   }
+
   return 0;
 }
 
