@@ -54,17 +54,18 @@ function getMainImage(product: Product) {
 }
 
 function getDiscount(product: Product) {
-  if (
-    product.sale_price &&
-    product.price > product.sale_price
-  ) {
+  const final =
+    product.final_price ||
+    product.sale_price ||
+    product.price;
+
+  if (product.price > final) {
     return Math.round(
-      ((product.price - product.sale_price) /
+      ((product.price - final) /
         product.price) *
         100
     );
   }
-
   return 0;
 }
 
@@ -111,9 +112,7 @@ function ProductCard({
   />
 
  {/* SALE */}
-{product.sale_price &&
- product.price > product.sale_price &&
- getDiscount(product) > 0 && (
+{getDiscount(product) > 0 && (
   <div
     className="
       absolute
