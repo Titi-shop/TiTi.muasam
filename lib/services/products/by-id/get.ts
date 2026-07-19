@@ -83,6 +83,20 @@ export async function getProductService(
   getShippingRatesByProduct(id),
 ]);
 
+log(
+  "VARIANTS_LOAD_DONE",
+  {
+    count: variants.length,
+  }
+);
+
+log(
+  "SHIPPING_LOAD_DONE",
+  {
+    count: shippingRates.length,
+  }
+);
+
 const {
   enrichedVariants,
   minPrice,
