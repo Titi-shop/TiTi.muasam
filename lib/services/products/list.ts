@@ -73,12 +73,22 @@ export async function listProductsService(
         (product) =>
           product.id
       );
-const allVariants =
+const [
+  allVariants,
+  shippingRows,
+] = await Promise.all([
   productIds.length > 0
-    ? await getVariantsByProductIds(
+    ? getVariantsByProductIds(
         productIds
       )
-    : [];
+    : Promise.resolve([]),
+
+  productIds.length > 0
+    ? getShippingRatesByProducts(
+        productIds
+      )
+    : Promise.resolve([]),
+]);
     const variantMap =
   new Map<
     string,
@@ -106,13 +116,6 @@ for (const variant of allVariants) {
     /* =========================
        SHIPPING
     ========================= */
-
-    const shippingRows =
-      productIds.length > 0
-        ? await getShippingRatesByProducts(
-            productIds
-          )
-        : [];
 
     log(
       "SHIPPING_LOADED",
@@ -156,9 +159,8 @@ for (const variant of allVariants) {
        ENRICH PRODUCTS
     ========================= */
 
-    return await Promise.all(
-      products.map(
-        async (product) => {
+    return products.map(
+  (product) => {
           const hasVariants =
             product.has_variants ===
             true;
@@ -214,17 +216,20 @@ for (const variant of allVariants) {
     product.id
   ) ?? [];
 
-          log(
-            "VARIANTS_LOADED",
-            {
-              productId:
-                maskId(
-                  product.id
-                ),
-              variantCount:
-                variants.length,
-            }
-          );
+          if (
+  process.env.NODE_ENV ===
+  "development"
+) {
+  log(
+    "VARIANTS_LOADED",
+    {
+      productId:
+        maskId(product.id),
+      variantCount:
+        variants.length,
+    }
+  );
+}
 
           const enrichedVariants =
             variants.map(
@@ -275,17 +280,20 @@ for (const variant of allVariants) {
                 v.sale_enabled
             );
 
-          log(
-            "VARIANT_SUMMARY",
-            {
-              productId:
-                maskId(
-                  product.id
-                ),
-              variantCount:
-                enrichedVariants.length,
-            }
-          );
+          if (
+  process.env.NODE_ENV ===
+  "development"
+) {
+  log(
+    "VARIANT_SUMMARY",
+    {
+      productId:
+        maskId(product.id),
+      variantCount:
+        enrichedVariants.length,
+    }
+  );
+}
 
           return {
             ...product,
