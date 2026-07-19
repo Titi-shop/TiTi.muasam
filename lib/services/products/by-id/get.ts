@@ -72,49 +72,23 @@ export async function getProductService(
   }
 );
 
-    const variants =
-      product.has_variants
-        ? await getVariantsByProductId(
-            id
-          )
-        : [];
+    const [
+  variants,
+  shippingRates,
+] = await Promise.all([
+  product.has_variants
+    ? getVariantsByProductId(id)
+    : Promise.resolve([]),
 
-    log(
-  "VARIANTS_LOAD_DONE",
-  {
-    count:
-      variants.length,
-  }
-);
+  getShippingRatesByProduct(id),
+]);
 
-    const {
-      enrichedVariants,
-      minPrice,
-      maxPrice,
-    } =
-      calculatePriceSummary(
-        variants
-      );
-
-    log(
-  "PRICE_SUMMARY_READY",
-  {
-    hasVariants:
-      product.has_variants,
-  }
-);
-
-    const shippingRates =
-      await getShippingRatesByProduct(
-        id
-      );
-
-    log(
-  "SHIPPING_LOAD_DONE",
-  {
-    count:
-      shippingRates.length,
-  }
+const {
+  enrichedVariants,
+  minPrice,
+  maxPrice,
+} = calculatePriceSummary(
+  variants
 );
 
     return {
