@@ -12,13 +12,11 @@ import type {
   ShippingRate,
 } from "@/types/Product";
 
-import { apiAuthFetch } from "@/lib/api/apiAuthFetch";
-
 /* =========================================================
    FETCHER
 ========================================================= */
 const fetcher = async (url: string) => {
-  const res = await apiAuthFetch(url, {
+  const res = await fetch(url, {
     cache: "no-store",
   });
 
@@ -53,17 +51,13 @@ export function useProduct(
 useEffect(() => {
   if (!id) return;
 
-  void apiAuthFetch(
-    "/api/products/view",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type":
-          "application/json",
-      },
-      body: JSON.stringify({ id }),
-    }
-  );
+  void fetch("/api/products/view", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ id }),
+  });
 }, [id]);
   const product = useMemo(() => {
     if (
