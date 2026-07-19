@@ -1,3 +1,5 @@
+app/product/[id]/product.logic.ts
+
 "use client";
 
 import useSWR from "swr";
@@ -37,26 +39,17 @@ export function useProduct(
   data,
   isLoading,
 } = useSWR(
-  id
-    ? `/api/products/${id}/detail`
-    : null,
-  fetcher,
-  {
-    revalidateOnFocus: false,
-    revalidateIfStale: false,
-    keepPreviousData: true,
-    dedupingInterval: 60000,
-  }
-);
-  const reviews =
-  Array.isArray(data?.reviews)
-    ? data.reviews
-    : [];
-
-const related =
-  Array.isArray(data?.related)
-    ? data.related
-    : [];
+      id
+        ? `/api/products/${id}`
+        : null,
+      fetcher,
+      {
+  revalidateOnFocus: false,
+  revalidateIfStale: false,
+  keepPreviousData: true,
+  dedupingInterval: 60000,
+}
+    );
 useEffect(() => {
   if (!id) return;
 
@@ -77,8 +70,7 @@ useEffect(() => {
     }
 
     const api =
-  data?.product as
-    Partial<ProductRecord>;
+  data as Partial<ProductRecord>;
 
     const normalizedProduct = {
       ...api,
@@ -184,8 +176,6 @@ is_favorite:
 
   return {
   product,
-  reviews,
-  related,
   isLoading,
 };
 }
