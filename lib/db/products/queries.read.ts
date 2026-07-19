@@ -71,84 +71,84 @@ LIMIT $1
 }
 
 /* =========================================================
-   GET PRODUCT BY ID
+   GET PRODUCTS BY IDS
 ========================================================= */
 
-export async function getProductById(
-  productId: string,
-  userId: string | null
-): Promise<ProductRecord | null> {
-  log("GET_BY_ID_START", {
-    productId: maskId(productId),
-  });
+export async function getProductsByIds(
+  ids: string[]
+): Promise<ProductRecord[]> {
+
+  log(
+    "GET_BY_IDS_START",
+    {
+      count: ids.length,
+    }
+  );
 
   try {
-    if (!productId || !isUUID(productId)) {
-      log("GET_BY_ID_INVALID_ID", {
-        productId,
-      });
 
-      return null;
+    if (!Array.isArray(ids)) {
+      throw new Error(
+        "INVALID_PRODUCT_IDS"
+      );
     }
 
-    const { rows } = await query<ProductRow>(
-      `
-      SELECT
-        p.*,
+    const validIds =
+      ids.filter(isUUID);
 
-        (
-          SELECT COUNT(*)
-          FROM product_favorites pf
-          WHERE pf.product_id = p.id
-        )::int AS favorite_count,
+    if (
+      validIds.length === 0
+    ) {
 
-        COALESCE(
-          EXISTS (
-            SELECT 1
+      log(
+        "GET_BY_IDS_EMPTY"
+      );
+
+      return [];
+    }
+
+    const result =
+      await query<ProductRow>(
+        `
+        SELECT
+          p.*,
+
+          (
+            SELECT COUNT(*)
             FROM product_favorites pf
             WHERE pf.product_id = p.id
-              AND pf.user_id = $2
-          ),
-          FALSE
-        ) AS is_favorite
+          )::int AS favorite_count
 
-      FROM products p
+        FROM products p
 
-      WHERE p.id = $1
-        AND p.deleted_at IS NULL
+        WHERE p.id = ANY($1::uuid[])
+          AND p.deleted_at IS NULL
+        `,
+        [validIds]
+      );
 
-      LIMIT 1
-      `,
-      [
-        productId,
-        userId,
-      ]
+    log(
+      "GET_BY_IDS_SUCCESS",
+      {
+        count:
+          result.rows.length,
+      }
     );
 
-    const row = rows[0] ?? null;
+    return result.rows.map(
+      mapRow
+    );
 
-    if (!row) {
-      log("GET_BY_ID_NOT_FOUND", {
-        productId: maskId(productId),
-      });
-
-      return null;
-    }
-
-    const product = mapRow(row);
-
-    log("GET_BY_ID_SUCCESS", {
-      productId: maskId(productId),
-    });
-
-    return product;
   } catch (error) {
-    logError("GET_BY_ID_ERROR", error);
+
+    logError(
+      "GET_BY_IDS_ERROR",
+      error
+    );
 
     throw error;
   }
 }
-
 /* =========================================================
    GET PRODUCTS BY IDS
 ========================================================= */
@@ -323,20 +323,33 @@ export async function getProductsByCategory(
   log(
     "GET_BY_CATEGORY_START",
     {
-      categoryId: maskId(categoryId),
+      categoryId:
+        maskId(categoryId),
       limit,
     }
   );
 
   try {
+
     const result =
       await query<ProductRow>(
         `
-        SELECT *
-        FROM products
-        WHERE category_id = $1
-          AND deleted_at IS NULL
-        ORDER BY created_at DESC
+        SELECT
+          p.*,
+
+          (
+            SELECT COUNT(*)
+            FROM product_favorites pf
+            WHERE pf.product_id = p.id
+          )::int AS favorite_count
+
+        FROM products p
+
+        WHERE p.category_id = $1
+          AND p.deleted_at IS NULL
+
+        ORDER BY p.created_at DESC
+
         LIMIT $2
         `,
         [
