@@ -16,7 +16,6 @@ import {
   mapRow,
 } from "./mapper";
 
-
 /* =========================================================
    GET ALL PRODUCTS
 ========================================================= */
@@ -41,7 +40,9 @@ export async function getAllProducts(
     FROM product_favorites pf
     WHERE pf.product_id = p.id
   )::int AS favorite_count
+
 FROM products p
+
 WHERE p.deleted_at IS NULL
 ORDER BY p.created_at DESC
 LIMIT $1
@@ -70,6 +71,84 @@ LIMIT $1
   }
 }
 
+/* =========================================================
+   GET PRODUCT BY ID
+========================================================= */
+
+export async function getProductById(
+  productId: string,
+  userId: string | null
+): Promise<ProductRecord | null> {
+  log("GET_BY_ID_START", {
+    productId: maskId(productId),
+  });
+
+  try {
+    if (!productId || !isUUID(productId)) {
+      log("GET_BY_ID_INVALID_ID", {
+        productId,
+      });
+
+      return null;
+    }
+
+    const { rows } = await query<ProductRow>(
+      `
+      SELECT
+        p.*,
+
+        (
+          SELECT COUNT(*)
+          FROM product_favorites pf
+          WHERE pf.product_id = p.id
+        )::int AS favorite_count,
+
+        COALESCE(
+          EXISTS (
+            SELECT 1
+            FROM product_favorites pf
+            WHERE pf.product_id = p.id
+              AND pf.user_id = $2
+          ),
+          FALSE
+        ) AS is_favorite
+
+      FROM products p
+
+      WHERE p.id = $1
+        AND p.deleted_at IS NULL
+
+      LIMIT 1
+      `,
+      [
+        productId,
+        userId,
+      ]
+    );
+
+    const row = rows[0] ?? null;
+
+    if (!row) {
+      log("GET_BY_ID_NOT_FOUND", {
+        productId: maskId(productId),
+      });
+
+      return null;
+    }
+
+    const product = mapRow(row);
+
+    log("GET_BY_ID_SUCCESS", {
+      productId: maskId(productId),
+    });
+
+    return product;
+  } catch (error) {
+    logError("GET_BY_ID_ERROR", error);
+
+    throw error;
+  }
+}
 /* =========================================================
    GET PRODUCTS BY IDS
 ========================================================= */
