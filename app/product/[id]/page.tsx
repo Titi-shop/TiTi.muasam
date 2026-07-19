@@ -92,9 +92,9 @@ const [initialScale, setInitialScale] =
       if (!product?.category_id) return;
 
       try {
-        const res = await apiAuthFetch(
-          `/api/products?category_id=${product.category_id}`
-        );
+        const res = await fetch(
+  `/api/products?category_id=${product.category_id}`
+);
 
         if (!res.ok) return;
 
@@ -130,9 +130,9 @@ useEffect(() => {
     if (!product?.id) return;
 
     try {
-      const res = await apiAuthFetch(
-        `/api/reviews?product_id=${product.id}`
-      );
+      const res = await fetch(
+  `/api/reviews?product_id=${product.id}`
+);
 
       if (!res.ok) return;
 
