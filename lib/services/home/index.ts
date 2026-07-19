@@ -1,39 +1,21 @@
-import {
-  getAllProducts,
-} from "@/lib/db/products";
-
-import {
-  getAllCategories,
-} from "@/lib/db/categories";
+import { getAllProducts } from "@/lib/db/products";
 
 export async function getHomeService() {
-  const [
-    products,
-    categories,
-  ] = await Promise.all([
-    getAllProducts(20),
-    getAllCategories(),
-  ]);
+  const products =
+    await getAllProducts(20);
 
   const trending =
     [...products]
-      .sort(
-        (a, b) =>
-          (b.sold ?? 0) -
-          (a.sold ?? 0)
-      )
+      .sort((a, b) => b.sold - a.sold)
       .slice(0, 8);
 
   const flashSale =
     products
-      .filter(
-        (p) => p.sale_price
-      )
+      .filter((p) => p.sale_price)
       .slice(0, 10);
 
   return {
     products,
-    categories,
     trending,
     flashSale,
   };
