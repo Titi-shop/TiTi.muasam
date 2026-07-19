@@ -304,3 +304,59 @@ ORDER BY p.created_at DESC
     throw error;
   }
 }
+/* =========================================================
+   GET PRODUCTS BY CATEGORY
+========================================================= */
+
+export async function getProductsByCategory(
+  categoryId: string,
+  limit = 10
+): Promise<ProductRecord[]> {
+
+  log(
+    "GET_BY_CATEGORY_START",
+    {
+      categoryId: maskId(categoryId),
+      limit,
+    }
+  );
+
+  try {
+    const result =
+      await query<ProductRow>(
+        `
+        SELECT *
+        FROM products
+        WHERE category_id = $1
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT $2
+        `,
+        [
+          categoryId,
+          limit,
+        ]
+      );
+
+    log(
+      "GET_BY_CATEGORY_SUCCESS",
+      {
+        count:
+          result.rows.length,
+      }
+    );
+
+    return result.rows.map(
+      mapRow
+    );
+
+  } catch (error) {
+
+    logError(
+      "GET_BY_CATEGORY_ERROR",
+      error
+    );
+
+    throw error;
+  }
+}
