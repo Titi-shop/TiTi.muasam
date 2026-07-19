@@ -346,9 +346,7 @@ for (const variant of allVariants) {
                 product.id
               ) ?? [],
           };
-        }
-      )
-    );
+        });
   } catch (error) {
     logError(
       "LIST_ERROR",
