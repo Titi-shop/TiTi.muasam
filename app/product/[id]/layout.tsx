@@ -1,53 +1,143 @@
-import type { Metadata } from "next";
+import type {
+  Metadata,
+} from "next";
+
+import {
+  getProductService,
+} from "@/lib/services/products/by-id";
+
+export const runtime =
+  "nodejs";
+
+export const dynamic =
+  "force-dynamic";
 
 export async function generateMetadata(
-  props: {
+  {
+    params,
+  }: {
     params: Promise<{
       id: string;
     }>;
   }
 ): Promise<Metadata> {
-   // lấy id
-   // gọi getProductService(id)
-   // trả về metadata của sản phẩm
-},
+  const { id } =
+    await params;
 
-  description:
-    "Sàn thương mại điện tử Pi Network",
+  const result =
+    await getProductService(
+      id
+    );
 
-  openGraph: {
-    title: "TiTi Shop",
-    description:
-      "Sàn thương mại điện tử Pi Network",
+  if (
+    !result ||
+    "error" in result
+  ) {
+    return {
+      title:
+        "TiTi Shop",
 
-    type: "website",
+      description:
+        "Sàn thương mại điện tử Pi Network",
 
-    images: [
-      {
-        url: "/logo.png",
+      openGraph: {
+        title:
+          "TiTi Shop",
+
+        description:
+          "Sàn thương mại điện tử Pi Network",
+
+        type:
+          "website",
+
+        images: [
+          {
+            url:
+              "/logo.png",
+          },
+        ],
       },
-    ],
-  },
 
-  twitter: {
-    card: "summary_large_image",
+      twitter: {
+        card:
+          "summary_large_image",
 
-    title:
-      "TiTi Shop",
+        title:
+          "TiTi Shop",
 
-    description:
-      "Sàn thương mại điện tử Pi Network",
+        description:
+          "Sàn thương mại điện tử Pi Network",
 
-    images: [
-      "/logo.png",
-    ],
-  },
-};
+        images: [
+          "/logo.png",
+        ],
+      },
+    };
+  }
 
-export default function ProductLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+  const title =
+    result.name;
+
+  const description =
+    result.short_description?.trim()
+      ? result.short_description
+      : result.description
+          ?.replace(
+            /<[^>]*>/g,
+            ""
+          )
+          .slice(
+            0,
+            160
+          ) ??
+        "Sàn thương mại điện tử Pi Network";
+
+  const image =
+    result.thumbnail ||
+    "/logo.png";
+
+  return {
+    title,
+
+    description,
+
+    openGraph: {
+      title,
+
+      description,
+
+      type:
+        "website",
+
+      images: [
+        {
+          url:
+            image,
+        },
+      ],
+    },
+
+    twitter: {
+      card:
+        "summary_large_image",
+
+      title,
+
+      description,
+
+      images: [
+        image,
+      ],
+    },
+  };
+}
+
+export default function ProductLayout(
+  {
+    children,
+  }: {
+    children: React.ReactNode;
+  }
+) {
   return children;
 }
