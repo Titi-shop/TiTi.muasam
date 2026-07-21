@@ -54,6 +54,29 @@ export async function getPiAccessToken(
   forceRefresh = false
 ): Promise<string> {
 
+  // Ưu tiên Pi Sign-In OAuth
+  if (
+    !forceRefresh &&
+    typeof window !== "undefined"
+  ) {
+    const oauthToken =
+      localStorage.getItem(
+        "pi_access_token"
+      );
+
+    if (oauthToken) {
+      cachedToken =
+        oauthToken;
+
+      logger.debug(
+        "PI.AUTH.OAUTH_TOKEN_FOUND"
+      );
+
+      return oauthToken;
+    }
+  }
+
+  // Cache hiện tại
   if (!forceRefresh && cachedToken) {
     return cachedToken;
   }
@@ -211,4 +234,16 @@ logger.debug(
 export function clearPiToken(): void {
   cachedToken = null;
   authPromise = null;
+
+  if (
+    typeof window !== "undefined"
+  ) {
+    localStorage.removeItem(
+      "pi_access_token"
+    );
+  }
+
+  logger.info(
+    "PI.AUTH.CLEARED"
+  );
 }
