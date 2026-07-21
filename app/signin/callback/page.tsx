@@ -48,12 +48,34 @@ if (oauthState !== expectedState) {
   return;
 }
 
-sessionStorage.removeItem("pi_oauth_state");
-    if (accessToken) {
-      setStatus("Access token received.");
-    } else {
-      setStatus("Access token not found.");
-    }
+sessionStorage.removeItem(
+  "pi_oauth_state"
+);
+
+if (accessToken) {
+
+  // Lưu token cho OAuth login
+  localStorage.setItem(
+    "pi_access_token",
+    accessToken
+  );
+
+  setStatus(
+    "Login successful."
+  );
+
+  // Cho phép xem token 1 giây
+  setTimeout(() => {
+    window.location.href =
+      "/";
+  }, 1000);
+
+  return;
+}
+
+setStatus(
+  "Access token not found."
+);
   }, []);
 
   return (
