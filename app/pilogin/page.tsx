@@ -63,11 +63,26 @@ const login = async () => {
     return;
   }
 
-  // Pi Browser
-  if (typeof window !== "undefined" && window.Pi) {
+  const canUsePiBrowserAuth =
+    typeof window !== "undefined" &&
+    !!window.Pi &&
+    typeof window.Pi.authenticate ===
+      "function";
+
+  if (canUsePiBrowserAuth) {
+
+    console.log(
+      "[LOGIN] PI_BROWSER"
+    );
+
     await pilogin();
+
     return;
   }
+
+  console.log(
+    "[LOGIN] PI_SIGNIN_OAUTH"
+  );
 
   // OAuth (Chrome/Safari/Desktop)
   const state =
