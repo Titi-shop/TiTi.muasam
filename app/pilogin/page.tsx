@@ -283,37 +283,20 @@ export default function PiLoginPage() {
           {/* ======================
             LOGIN
         ====================== */}
-
-       <button
-  onClick={
-    isPiBrowser
-      ? pilogin
-      : () => {
-          const state =
-            crypto.randomUUID();
-
-          sessionStorage.setItem(
-            "pi_oauth_state",
-            state
-          );
-
-          window.Pi?.signIn?.({
-            clientId:
-              process.env
-                .NEXT_PUBLIC_PI_CLIENT_ID!,
-            redirectUri:
-              "https://app.titi.onl/signin/callback",
-            scopes: [
-              "username",
-            ],
-            state,
-          });
-        }
+<button
+  onClick={pilogin}
+  disabled={
+    !piReady ||
+    !agreed
+  }
+  className={
+    piReady && agreed
+      ? "btn-primary mt-8 h-14 w-full"
+      : "btn-primary mt-8 h-14 w-full opacity-50 cursor-not-allowed"
   }
 >
-  {isPiBrowser
-    ? "Continue with Pi Network"
-    : "Sign in with Pi"}
+  {t.continue_with_pi ??
+    "Continue with Pi Network"}
 </button>
 
         {/* ======================
