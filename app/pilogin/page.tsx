@@ -110,9 +110,9 @@ const login = async () => {
   );
 
   url.searchParams.set(
-    "redirect_uri",
-    "https://app.titi.onl/signin/callback"
-  );
+  "redirect_uri",
+  `${window.location.origin}/signin/callback`
+);
 
   url.searchParams.set(
     "scope",
